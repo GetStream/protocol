@@ -56,8 +56,6 @@ fi
 if command -v yarn &> /dev/null
 then
   mkdir $PROTOC_DIR/.typescript-protobuf
-  (cd $PROTOC_DIR/.typescript-protobuf && yarn init && yarn add @protobuf-ts/plugin@2.8.1 twirp-ts@2.5.0 ts-proto@1.140.0)
+  (cd $PROTOC_DIR/.typescript-protobuf && yarn add @protobuf-ts/plugin@2.8.1 --no-lockfile --disable-pnp)
   ln -s $PROTOC_DIR/.typescript-protobuf/node_modules/.bin/protoc-gen-ts $PROTOC_DIR/bin/protoc-gen-ts
-  ln -s $PROTOC_DIR/.typescript-protobuf/node_modules/.bin/protoc-gen-twirp_ts $PROTOC_DIR/bin/protoc-gen-twirp_ts
-  ln -s $PROTOC_DIR/.typescript-protobuf/node_modules/.bin/protoc-gen-ts_proto $PROTOC_DIR/bin/protoc-gen-ts_proto
 fi
