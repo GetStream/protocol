@@ -1,0 +1,42 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - release/v*
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  pull-request-on-release:
+    name: Create Release PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Derive from branch name
+        run: |
+          VERSION=${GITHUB_REF##*/}
+          echo "PULL_REQUEST_TITLE=chore(release): ${VERSION}" >> $GITHUB_ENV
+      - uses: actions/checkout@v2
+      - name: Create changelog
+        id: create_changelog
+        uses: mikepenz/release-changelog-builder-action@v1.8.3
+        with:
+          toTag: ${{ github.ref }}
+          configuration: .github/changelog.json
+          ignorePreReleases: true
+        env:
+      - name: pull-request-action
+        uses: vsoch/pull-request-action@1.0.17
+        env:
+          PULL_REQUEST_BRANCH: "main"
+          PULL_REQUEST_UPDATE: true
+          BRANCH_PREFIX: release/v
+          PULL_REQUEST_BODY: |
+            Changelog
+            ${{steps.create_changelog.outputs.changelog}}
