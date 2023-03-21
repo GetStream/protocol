@@ -6,6 +6,8 @@ This repository contains manifests that describe Stream public APIs, documentati
 
 Stream REST API is described with OpenAPI specs, each product has its own openapi spec file.
 
+At the moment client generation from OpenAPI specs is done inside the specific SDK repositories, generation scripts are not yet part of this repository.
+
 ## Protobuf and Twirp
 
 Stream video servers use Twirp to expose an HTTP RPC layer. Websocket events sent by the video server are encoded using protobuf.
@@ -50,8 +52,7 @@ For detailed option settings, check out `generate.sh`
 
 To generate code for your language, do this:
 
-1. Switch to the protobuf directory: `cd protobuf`
-2. Install dependencies: `./install.sh`
-3. Generate: `./generate.sh <language> <output_dir>`
-   - `profile: language to generate code for
+1. Install dependencies: `./install.sh`
+2. Generate: `./generate.sh <language> <output_dir>`
+   - `language`: language to generate code for can be `ts`, `dart` or `swift`
    - `output_dir` is a directory where you want to put generated code in
