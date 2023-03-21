@@ -1,6 +1,16 @@
-# Video Protobuf
+# Protocol
 
-## Dependencies
+This repository contains manifests that describe Stream public APIs, documentation and SDK clients can be generated using this manifests.
+
+## OpenAPI
+
+Stream REST API is described with OpenAPI specs, each product has its own openapi spec file.
+
+## Protobuf and Twirp
+
+Stream video servers use Twirp to expose an HTTP RPC layer. Websocket events sent by the video server are encoded using protobuf.
+
+### Dependencies
 
 Before generating, you have to install necessary dependencies using `./install.sh` script.
 
@@ -21,14 +31,14 @@ If you have an issue with `realpath` in generation, try:
 REALPATH=grealpath ./generate.sh
 ```
 
-## Go Code Generation
+### Go Code Generation
 
 To generate Go and put artifacts into this project, just run `./generate.sh` without arguments or run `go generate`.
 You can also change the output directory, for example, to put generated code to the public Go SDK repo, but this will likely require
 import prefix change. To change the import prefix, run `./generate.sh go <output_path> <import_prefix>`. Default import prefix
 is `github.com/GetStream/video-proto/protobuf`.
 
-## Client Code Generation
+### Client Code Generation
 
 We support generation for some client languages here:
 
@@ -46,6 +56,8 @@ To generate code for your language, do this:
    - `profile: language to generate code for
    - `output_dir` is a directory where you want to put generated code in
 
-## Mock SFU generation for Coordinator QA testing
+### Mock SFU generation for REST QA testing
+
+Mostly an internal thing, if you do not work at Stream you probably do not need this :)
 
 Run `./generate.sh ts-node <output>`. This will generate a TypeScript Node.js server, the generated code will only contain SFU endpoints and models that are required by the coordinator API.
