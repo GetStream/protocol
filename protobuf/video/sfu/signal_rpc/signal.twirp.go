@@ -16,7 +16,7 @@ import proto "google.golang.org/protobuf/proto"
 import twirp "github.com/twitchtv/twirp"
 import ctxsetters "github.com/twitchtv/twirp/ctxsetters"
 
-import stream_video_sfu_models "github.com/GetStream/video-proto/protobuf/video/sfu/models"
+import stream_video_sfu_models "github.com/GetStream/protocol/protobuf/video/sfu/models"
 
 import bytes "bytes"
 import errors "errors"

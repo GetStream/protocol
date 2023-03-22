@@ -7,7 +7,7 @@ package sfu_events
 import (
 	binary "encoding/binary"
 	fmt "fmt"
-	models "github.com/GetStream/video-proto/protobuf/video/sfu/models"
+	models "github.com/GetStream/protocol/protobuf/video/sfu/models"
 	proto "google.golang.org/protobuf/proto"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	io "io"

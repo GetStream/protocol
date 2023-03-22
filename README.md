@@ -38,7 +38,7 @@ REALPATH=grealpath ./generate.sh
 To generate Go and put artifacts into this project, just run `./generate.sh` without arguments or run `go generate`.
 You can also change the output directory, for example, to put generated code to the public Go SDK repo, but this will likely require
 import prefix change. To change the import prefix, run `./generate.sh go <output_path> <import_prefix>`. Default import prefix
-is `github.com/GetStream/video-proto/protobuf`.
+is `github.com/GetStream/protocol/protobuf`.
 
 ### Client Code Generation
 
