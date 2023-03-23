@@ -55,9 +55,3 @@ To generate code for your language, do this:
 3. Generate: `./generate.sh <language> <output_dir>`
    - `profile: language to generate code for
    - `output_dir` is a directory where you want to put generated code in
-
-### Mock SFU generation for REST QA testing
-
-Mostly an internal thing, if you do not work at Stream you probably do not need this :)
-
-Run `./generate.sh ts-node <output>`. This will generate a TypeScript Node.js server, the generated code will only contain SFU endpoints and models that are required by the coordinator API.
