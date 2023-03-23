@@ -7,7 +7,7 @@
 package sfu_signal_rpc
 
 import (
-	models "github.com/GetStream/video-proto/protobuf/video/sfu/models"
+	models "github.com/GetStream/protocol/protobuf/video/sfu/models"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"

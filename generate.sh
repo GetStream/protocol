@@ -17,7 +17,7 @@ REALPATH=${REALPATH:-realpath}
 
 GEN_PROFILE=${1:-go}
 GEN_OUTPUT=$(${REALPATH} ${2:-${PB}})
-GEN_GO_IMPORT_PREFIX=${3:-github.com/GetStream/video-proto/protobuf}
+GEN_GO_IMPORT_PREFIX=${3:-github.com/GetStream/protocol/protobuf}
 
 mkdir -p $GEN_OUTPUT
 
