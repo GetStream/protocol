@@ -1,4 +1,4 @@
-module github.com/GetStream/video-proto
+module github.com/GetStream/protocol
 
 go 1.19
 
