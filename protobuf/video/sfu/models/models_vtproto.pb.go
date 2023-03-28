@@ -2,7 +2,7 @@
 // protoc-gen-go-vtproto version: v0.3.0
 // source: video/sfu/models/models.proto
 
-package sfu_models
+package models
 
 import (
 	binary "encoding/binary"
