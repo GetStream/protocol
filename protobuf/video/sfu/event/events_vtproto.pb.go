@@ -2,7 +2,7 @@
 // protoc-gen-go-vtproto version: v0.3.0
 // source: video/sfu/event/events.proto
 
-package sfu_events
+package event
 
 import (
 	binary "encoding/binary"

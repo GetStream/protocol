@@ -42,7 +42,7 @@ fi
 # Swift also requires installing Xcode and other tools which are required for iOS
 # development. Without this it will error out complaining that the module 'PackageDescription'
 # is not found while building. Hence, providing an option to disable it altogether.
-if [[ -z DISABLE_SWIFT ]]; then
+if [[ -z $DISABLE_SWIFT ]]; then
   if command -v swift &> /dev/null
   then
     git clone --depth 1 --branch 1.20.2 https://github.com/apple/swift-protobuf $PROTOC_DIR/.swift-protobuf
