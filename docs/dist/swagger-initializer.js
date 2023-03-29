@@ -2,11 +2,11 @@ window.onload = function() {
   window.ui = SwaggerUIBundle({
     urls: [
       {
-        name: "Chat API",
+        name: "Chat",
         url:"https://raw.githubusercontent.com/GetStream/protocol/main/openapi/chat-openapi.yaml"
       },
       {
-        name: "Video API",
+        name: "Video",
         url:"https://raw.githubusercontent.com/GetStream/protocol/main/openapi/video-openapi.yaml"
       }
     ],
