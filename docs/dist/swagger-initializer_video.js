@@ -1,6 +1,6 @@
 window.onload = function() {
   window.ui = SwaggerUIBundle({
-    url: "openapi/video-openapi.yaml",
+    url: "https://raw.githubusercontent.com/GetStream/protocol/main/openapi/video-openapi.yaml",
     dom_id: '#swagger-ui',
     deepLinking: true,
     presets: [

@@ -1,6 +1,6 @@
 window.onload = function() {
   window.ui = SwaggerUIBundle({
-    url: "openapi/chat-openapi.yaml",
+    url: "https://raw.githubusercontent.com/GetStream/protocol/main/openapi/chat-openapi.yaml",
     dom_id: '#swagger-ui',
     deepLinking: true,
     presets: [
