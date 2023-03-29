@@ -212,6 +212,7 @@ components:
       x-stream-is-event: true
     CallCreatedEvent:
       description: sent when a call is created
+      nullable: true
       properties:
         call:
           $ref: '#/components/schemas/CallResponse'
@@ -248,6 +249,7 @@ components:
       x-stream-is-event: true
     CallEndedEvent:
       description: sent when a call is mark as ended for all its participants
+      nullable: true
       properties:
         call_cid:
           type: string
@@ -645,6 +647,7 @@ components:
       - updated_at
       type: object
     CallUpdatedEvent:
+      nullable: true
       properties:
         call:
           $ref: '#/components/schemas/CallResponse'
@@ -2281,21 +2284,21 @@ components:
           health.check: '#/components/schemas/HealthCheckEvent'
         propertyName: type
       oneOf:
+      - $ref: '#/components/schemas/CallEndedEvent'
+      - $ref: '#/components/schemas/UpdatedCallPermissionsEvent'
+      - $ref: '#/components/schemas/CallRecordingStoppedEvent'
+      - $ref: '#/components/schemas/UnblockedUserEvent'
+      - $ref: '#/components/schemas/CallReactionEvent'
       - $ref: '#/components/schemas/PermissionRequestEvent'
       - $ref: '#/components/schemas/CustomVideoEvent'
-      - $ref: '#/components/schemas/UpdatedCallPermissionsEvent'
-      - $ref: '#/components/schemas/CallRecordingStartedEvent'
-      - $ref: '#/components/schemas/CallRecordingStoppedEvent'
-      - $ref: '#/components/schemas/CallCreatedEvent'
-      - $ref: '#/components/schemas/CallUpdatedEvent'
-      - $ref: '#/components/schemas/CallEndedEvent'
       - $ref: '#/components/schemas/BlockedUserEvent'
-      - $ref: '#/components/schemas/UnblockedUserEvent'
+      - $ref: '#/components/schemas/HealthCheckEvent'
+      - $ref: '#/components/schemas/CallRecordingStartedEvent'
+      - $ref: '#/components/schemas/CallCreatedEvent'
       - $ref: '#/components/schemas/CallAcceptedEvent'
       - $ref: '#/components/schemas/CallRejectedEvent'
       - $ref: '#/components/schemas/CallCancelledEvent'
-      - $ref: '#/components/schemas/HealthCheckEvent'
-      - $ref: '#/components/schemas/CallReactionEvent'
+      - $ref: '#/components/schemas/CallUpdatedEvent'
   securitySchemes:
     JWT:
       description: |
@@ -2398,6 +2401,8 @@ paths:
               schema:
                 type: integer
       summary: Get Call
+      tags:
+      - Video Calls
     patch:
       operationId: UpdateCall
       parameters:
@@ -2533,6 +2538,13 @@ paths:
       summary: Get or create a call
       tags:
       - Video Calls
+      x-stream-events:
+        call.created: ""
+      x-stream-events-v2:
+        call.created:
+          description: ""
+          schema:
+            ref: '#/components/schemas/CallCreatedEvent'
   /call/{type}/{id}/{session}/recordings:
     get:
       description: Lists recordings
@@ -2601,6 +2613,8 @@ paths:
               schema:
                 type: integer
       summary: List recordings
+      tags:
+      - Recording
       x-stream-permissions:
         ListRecordings: To list recordings
   /call/{type}/{id}/block:
@@ -2671,7 +2685,7 @@ paths:
                 type: integer
       summary: Block user on a call
       tags:
-      - Video Calls
+      - Moderation
       x-stream-events:
         call.blocked_user: ""
       x-stream-events-v2:
@@ -2906,6 +2920,13 @@ paths:
       summary: Set call as live
       tags:
       - Video Calls
+      x-stream-events:
+        call.updated: ""
+      x-stream-events-v2:
+        call.updated:
+          description: ""
+          schema:
+            ref: '#/components/schemas/CallUpdatedEvent'
   /call/{type}/{id}/join:
     post:
       description: Request to join a call
@@ -3044,6 +3065,13 @@ paths:
       summary: End call
       tags:
       - Video Calls
+      x-stream-events:
+        call.ended: ""
+      x-stream-events-v2:
+        call.ended:
+          description: ""
+          schema:
+            ref: '#/components/schemas/CallEndedEvent'
   /call/{type}/{id}/mute_users:
     post:
       description: Mutes users in a call
@@ -3109,7 +3137,7 @@ paths:
                 type: integer
       summary: Mute users
       tags:
-      - Video Calls
+      - Moderation
   /call/{type}/{id}/reaction:
     post:
       description: Sends reaction to the call
@@ -3174,6 +3202,8 @@ paths:
               schema:
                 type: integer
       summary: Send reaction to the call
+      tags:
+      - Video Calls
       x-stream-events:
         call.reaction_new: ""
       x-stream-events-v2:
@@ -3249,6 +3279,8 @@ paths:
               schema:
                 type: integer
       summary: Request permission
+      tags:
+      - Moderation
       x-stream-events:
         call.permission_request: Permission request event
       x-stream-events-v2:
@@ -3308,6 +3340,8 @@ paths:
               schema:
                 type: integer
       summary: Start broadcasting
+      tags:
+      - Livestreaming
   /call/{type}/{id}/start_recording:
     post:
       description: Starts recording
@@ -3423,6 +3457,8 @@ paths:
               schema:
                 type: integer
       summary: Stop broadcasting
+      tags:
+      - Livestreaming
   /call/{type}/{id}/stop_live:
     post:
       operationId: StopLive
@@ -3486,6 +3522,7 @@ paths:
       summary: Set call as not live
       tags:
       - Video Calls
+      - Livestreaming
   /call/{type}/{id}/stop_recording:
     post:
       description: Stops recording
@@ -3538,6 +3575,9 @@ paths:
               schema:
                 type: integer
       summary: Stop recording
+      tags:
+      - Recording
+      - Livestreaming
       x-stream-events:
         call.recording_stopped: ""
       x-stream-events-v2:
@@ -3616,6 +3656,7 @@ paths:
       summary: Unblocks user on a call
       tags:
       - Video Calls
+      - Moderation
       x-stream-events:
         call.unblocked_user: ""
       x-stream-events-v2:
@@ -3689,6 +3730,8 @@ paths:
               schema:
                 type: integer
       summary: Update user permissions
+      tags:
+      - Moderation
       x-stream-docs-page-id: update_user_permissions
       x-stream-events:
         call.permissions_updated: Includes the new capabilities for the user
@@ -3796,6 +3839,8 @@ paths:
               schema:
                 type: integer
       summary: Query call
+      tags:
+      - Video Calls
   /calltypes:
     get:
       operationId: ListCallTypes
@@ -3832,6 +3877,8 @@ paths:
               schema:
                 type: integer
       summary: List Call Type
+      tags:
+      - Call types
       x-stream-server-side: true
     post:
       operationId: CreateCallType
@@ -3915,6 +3962,8 @@ paths:
               schema:
                 type: integer
       summary: Delete Call Type
+      tags:
+      - Call types
       x-stream-server-side: true
     get:
       operationId: GetCallType
@@ -3961,6 +4010,8 @@ paths:
               schema:
                 type: integer
       summary: Get Call Type
+      tags:
+      - Call types
     put:
       operationId: UpdateCallType
       parameters:
@@ -4012,6 +4063,8 @@ paths:
               schema:
                 type: integer
       summary: Update Call Type
+      tags:
+      - Call types
       x-stream-server-side: true
   /edges:
     get:
