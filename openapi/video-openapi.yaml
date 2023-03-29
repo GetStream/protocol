@@ -53,21 +53,6 @@ components:
       - details
       title: Error response
       type: object
-    AnyEvent:
-      properties:
-        created_at:
-          format: date-time
-          type: string
-          x-stream-index: "001.002"
-        type:
-          type: string
-          x-stream-index: "001.001"
-      required:
-      - type
-      - created_at
-      title: AnyEvent
-      type: object
-      x-stream-is-event: true
     AudioSettings:
       properties:
         access_request_enabled:
@@ -279,6 +264,7 @@ components:
       type: object
       x-stream-is-event: true
     CallReactionEvent:
+      description: this event is sent when a reaction is sent to a call
       nullable: true
       properties:
         call_cid:
@@ -290,6 +276,7 @@ components:
           x-stream-index: "001.002"
         reaction:
           $ref: '#/components/schemas/ReactionResponse'
+          description: the reaction object sent by the user on the call
           title: reaction
           x-stream-index: "003"
         type:
@@ -1227,10 +1214,6 @@ components:
     JoinCallRequest:
       nullable: true
       properties:
-        connection_id:
-          title: ConnectionID
-          type: string
-          x-stream-index: "002"
         data:
           $ref: '#/components/schemas/CallRequest'
           x-stream-index: "001.004"
@@ -1557,9 +1540,6 @@ components:
     QueryCallsRequest:
       nullable: true
       properties:
-        connection_id:
-          type: string
-          x-stream-index: "002"
         filter_conditions:
           additionalProperties: {}
           type: object
@@ -2261,6 +2241,41 @@ components:
       - user_details
       - token
       type: object
+    WSResponse:
+      discriminator:
+        mapping:
+          call.accepted: '#/components/schemas/CallAcceptedEvent'
+          call.blocked_user: '#/components/schemas/BlockedUserEvent'
+          call.cancelled: '#/components/schemas/CallCancelledEvent'
+          call.created: '#/components/schemas/CallCreatedEvent'
+          call.ended: '#/components/schemas/CallEndedEvent'
+          call.permission_request: '#/components/schemas/PermissionRequestEvent'
+          call.permissions_updated: '#/components/schemas/UpdatedCallPermissionsEvent'
+          call.reaction_new: '#/components/schemas/CallReactionEvent'
+          call.recording_started: '#/components/schemas/CallRecordingStartedEvent'
+          call.recording_stopped: '#/components/schemas/CallRecordingStoppedEvent'
+          call.rejected: '#/components/schemas/CallRejectedEvent'
+          call.unblocked_user: '#/components/schemas/UnblockedUserEvent'
+          call.updated: '#/components/schemas/CallUpdatedEvent'
+          custom: '#/components/schemas/CustomVideoEvent'
+          health.check: '#/components/schemas/HealthCheckEvent'
+        propertyName: type
+      oneOf:
+      - $ref: '#/components/schemas/CallCancelledEvent'
+      - $ref: '#/components/schemas/CallEndedEvent'
+      - $ref: '#/components/schemas/CallAcceptedEvent'
+      - $ref: '#/components/schemas/CallUpdatedEvent'
+      - $ref: '#/components/schemas/BlockedUserEvent'
+      - $ref: '#/components/schemas/UnblockedUserEvent'
+      - $ref: '#/components/schemas/CallRejectedEvent'
+      - $ref: '#/components/schemas/UpdatedCallPermissionsEvent'
+      - $ref: '#/components/schemas/CallRecordingStoppedEvent'
+      - $ref: '#/components/schemas/CallRecordingStartedEvent'
+      - $ref: '#/components/schemas/HealthCheckEvent'
+      - $ref: '#/components/schemas/CallReactionEvent'
+      - $ref: '#/components/schemas/CallCreatedEvent'
+      - $ref: '#/components/schemas/CustomVideoEvent'
+      - $ref: '#/components/schemas/PermissionRequestEvent'
   securitySchemes:
     JWT:
       description: |
@@ -2305,7 +2320,7 @@ externalDocs:
   url: https://getstream.io/video/docs/
 info:
   title: Stream Video API
-  version: v79.33.0-2-ga048c8b5a
+  version: v79.33.0-3-ga3ee35060
 openapi: 3.0.3
 paths:
   /call/{type}/{id}:
@@ -2901,6 +2916,7 @@ paths:
             schema:
               title: ConnectionID
               type: string
+              writeOnly: true
               x-stream-index: "002"
         in: query
         name: connection_id
@@ -3717,6 +3733,7 @@ paths:
           application/json:
             schema:
               type: string
+              writeOnly: true
               x-stream-index: "002"
         in: query
         name: connection_id
@@ -4044,6 +4061,7 @@ paths:
             schema:
               title: ConnectionID
               type: string
+              writeOnly: true
               x-stream-index: "002"
         in: query
         name: connection_id
