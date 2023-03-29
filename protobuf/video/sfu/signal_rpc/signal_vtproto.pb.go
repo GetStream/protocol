@@ -2,7 +2,7 @@
 // protoc-gen-go-vtproto version: v0.3.0
 // source: video/sfu/signal_rpc/signal.proto
 
-package sfu_signal_rpc
+package signal_rpc
 
 import (
 	fmt "fmt"
