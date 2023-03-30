@@ -1221,6 +1221,71 @@ func (x *ClientDetails) GetBrowser() string {
 	return ""
 }
 
+// CallGrants is sent to users when they join a call
+// and when the call permissions change
+type CallGrants struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	CanPublishAudio bool `protobuf:"varint,1,opt,name=can_publish_audio,json=canPublishAudio,proto3" json:"can_publish_audio,omitempty"`
+	CanPublishVideo bool `protobuf:"varint,2,opt,name=can_publish_video,json=canPublishVideo,proto3" json:"can_publish_video,omitempty"`
+	CanScreenshare  bool `protobuf:"varint,3,opt,name=can_screenshare,json=canScreenshare,proto3" json:"can_screenshare,omitempty"`
+}
+
+func (x *CallGrants) Reset() {
+	*x = CallGrants{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_video_sfu_models_models_proto_msgTypes[11]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CallGrants) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CallGrants) ProtoMessage() {}
+
+func (x *CallGrants) ProtoReflect() protoreflect.Message {
+	mi := &file_video_sfu_models_models_proto_msgTypes[11]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CallGrants.ProtoReflect.Descriptor instead.
+func (*CallGrants) Descriptor() ([]byte, []int) {
+	return file_video_sfu_models_models_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *CallGrants) GetCanPublishAudio() bool {
+	if x != nil {
+		return x.CanPublishAudio
+	}
+	return false
+}
+
+func (x *CallGrants) GetCanPublishVideo() bool {
+	if x != nil {
+		return x.CanPublishVideo
+	}
+	return false
+}
+
+func (x *CallGrants) GetCanScreenshare() bool {
+	if x != nil {
+		return x.CanScreenshare
+	}
+	return false
+}
+
 var File_video_sfu_models_models_proto protoreflect.FileDescriptor
 
 var file_video_sfu_models_models_proto_rawDesc = []byte{
@@ -1366,7 +1431,16 @@ var file_video_sfu_models_models_proto_rawDesc = []byte{
 	0x72, 0x73, 0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x07, 0x76, 0x65, 0x72,
 	0x73, 0x69, 0x6f, 0x6e, 0x12, 0x0e, 0x0a, 0x02, 0x6f, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09,
 	0x52, 0x02, 0x6f, 0x73, 0x12, 0x18, 0x0a, 0x07, 0x62, 0x72, 0x6f, 0x77, 0x73, 0x65, 0x72, 0x18,
-	0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x62, 0x72, 0x6f, 0x77, 0x73, 0x65, 0x72, 0x2a, 0x49,
+	0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x62, 0x72, 0x6f, 0x77, 0x73, 0x65, 0x72, 0x22, 0x8d,
+	0x01, 0x0a, 0x0a, 0x43, 0x61, 0x6c, 0x6c, 0x47, 0x72, 0x61, 0x6e, 0x74, 0x73, 0x12, 0x2a, 0x0a,
+	0x11, 0x63, 0x61, 0x6e, 0x5f, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x73, 0x68, 0x5f, 0x61, 0x75, 0x64,
+	0x69, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x0f, 0x63, 0x61, 0x6e, 0x50, 0x75, 0x62,
+	0x6c, 0x69, 0x73, 0x68, 0x41, 0x75, 0x64, 0x69, 0x6f, 0x12, 0x2a, 0x0a, 0x11, 0x63, 0x61, 0x6e,
+	0x5f, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x73, 0x68, 0x5f, 0x76, 0x69, 0x64, 0x65, 0x6f, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x08, 0x52, 0x0f, 0x63, 0x61, 0x6e, 0x50, 0x75, 0x62, 0x6c, 0x69, 0x73, 0x68,
+	0x56, 0x69, 0x64, 0x65, 0x6f, 0x12, 0x27, 0x0a, 0x0f, 0x63, 0x61, 0x6e, 0x5f, 0x73, 0x63, 0x72,
+	0x65, 0x65, 0x6e, 0x73, 0x68, 0x61, 0x72, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x08, 0x52, 0x0e,
+	0x63, 0x61, 0x6e, 0x53, 0x63, 0x72, 0x65, 0x65, 0x6e, 0x73, 0x68, 0x61, 0x72, 0x65, 0x2a, 0x49,
 	0x0a, 0x08, 0x50, 0x65, 0x65, 0x72, 0x54, 0x79, 0x70, 0x65, 0x12, 0x23, 0x0a, 0x1f, 0x50, 0x45,
 	0x45, 0x52, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x50, 0x55, 0x42, 0x4c, 0x49, 0x53, 0x48, 0x45,
 	0x52, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12,
@@ -1461,7 +1535,7 @@ func file_video_sfu_models_models_proto_rawDescGZIP() []byte {
 }
 
 var file_video_sfu_models_models_proto_enumTypes = make([]protoimpl.EnumInfo, 6)
-var file_video_sfu_models_models_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_video_sfu_models_models_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_video_sfu_models_models_proto_goTypes = []interface{}{
 	(PeerType)(0),                 // 0: stream.video.sfu.models.PeerType
 	(ConnectionQuality)(0),        // 1: stream.video.sfu.models.ConnectionQuality
@@ -1480,24 +1554,25 @@ var file_video_sfu_models_models_proto_goTypes = []interface{}{
 	(*Call)(nil),                  // 14: stream.video.sfu.models.Call
 	(*Error)(nil),                 // 15: stream.video.sfu.models.Error
 	(*ClientDetails)(nil),         // 16: stream.video.sfu.models.ClientDetails
-	(*timestamppb.Timestamp)(nil), // 17: google.protobuf.Timestamp
-	(*structpb.Struct)(nil),       // 18: google.protobuf.Struct
+	(*CallGrants)(nil),            // 17: stream.video.sfu.models.CallGrants
+	(*timestamppb.Timestamp)(nil), // 18: google.protobuf.Timestamp
+	(*structpb.Struct)(nil),       // 19: google.protobuf.Struct
 }
 var file_video_sfu_models_models_proto_depIdxs = []int32{
 	7,  // 0: stream.video.sfu.models.CallState.participants:type_name -> stream.video.sfu.models.Participant
 	3,  // 1: stream.video.sfu.models.Participant.published_tracks:type_name -> stream.video.sfu.models.TrackType
-	17, // 2: stream.video.sfu.models.Participant.joined_at:type_name -> google.protobuf.Timestamp
+	18, // 2: stream.video.sfu.models.Participant.joined_at:type_name -> google.protobuf.Timestamp
 	1,  // 3: stream.video.sfu.models.Participant.connection_quality:type_name -> stream.video.sfu.models.ConnectionQuality
-	18, // 4: stream.video.sfu.models.Participant.custom:type_name -> google.protobuf.Struct
+	19, // 4: stream.video.sfu.models.Participant.custom:type_name -> google.protobuf.Struct
 	2,  // 5: stream.video.sfu.models.StreamQuality.video_quality:type_name -> stream.video.sfu.models.VideoQuality
 	9,  // 6: stream.video.sfu.models.VideoLayer.video_dimension:type_name -> stream.video.sfu.models.VideoDimension
 	2,  // 7: stream.video.sfu.models.VideoLayer.quality:type_name -> stream.video.sfu.models.VideoQuality
 	0,  // 8: stream.video.sfu.models.ICETrickle.peer_type:type_name -> stream.video.sfu.models.PeerType
 	3,  // 9: stream.video.sfu.models.TrackInfo.track_type:type_name -> stream.video.sfu.models.TrackType
 	10, // 10: stream.video.sfu.models.TrackInfo.layers:type_name -> stream.video.sfu.models.VideoLayer
-	18, // 11: stream.video.sfu.models.Call.custom:type_name -> google.protobuf.Struct
-	17, // 12: stream.video.sfu.models.Call.created_at:type_name -> google.protobuf.Timestamp
-	17, // 13: stream.video.sfu.models.Call.updated_at:type_name -> google.protobuf.Timestamp
+	19, // 11: stream.video.sfu.models.Call.custom:type_name -> google.protobuf.Struct
+	18, // 12: stream.video.sfu.models.Call.created_at:type_name -> google.protobuf.Timestamp
+	18, // 13: stream.video.sfu.models.Call.updated_at:type_name -> google.protobuf.Timestamp
 	4,  // 14: stream.video.sfu.models.Error.code:type_name -> stream.video.sfu.models.ErrorCode
 	15, // [15:15] is the sub-list for method output_type
 	15, // [15:15] is the sub-list for method input_type
@@ -1644,6 +1719,18 @@ func file_video_sfu_models_models_proto_init() {
 				return nil
 			}
 		}
+		file_video_sfu_models_models_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CallGrants); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -1651,7 +1738,7 @@ func file_video_sfu_models_models_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_video_sfu_models_models_proto_rawDesc,
 			NumEnums:      6,
-			NumMessages:   11,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
