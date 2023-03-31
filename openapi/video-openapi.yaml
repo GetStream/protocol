@@ -2350,13 +2350,16 @@ externalDocs:
   url: https://getstream.io/video/docs/
 info:
   title: Stream Video API
-  version: v79.33.0-37-g16875f7d1
+  version: v79.33.0-38-g7969e9e81
 openapi: 3.0.3
 paths:
   /call/{type}/{id}:
     get:
-      description: |2+
+      description: |2
 
+
+        Required permissions:
+        - ReadCall
       operationId: GetCall
       parameters:
       - content:
@@ -2412,9 +2415,17 @@ paths:
       summary: Get Call
       tags:
       - Video Calls
+      x-stream-permissions:
+        ReadCall: To retrieve a call
     patch:
-      description: |2+
+      description: |2
 
+
+        Sends events:
+        - call.updated
+
+        Required permissions:
+        - UpdateCall
       operationId: UpdateCall
       parameters:
       - content:
@@ -2480,12 +2491,26 @@ paths:
       summary: Update Call
       tags:
       - Video Calls
+      x-stream-events:
+        call.updated: ""
+      x-stream-events-v2:
+        call.updated:
+          description: ""
+          schema:
+            ref: '#/components/schemas/CallUpdatedEvent'
+      x-stream-permissions:
+        UpdateCall: To update a call
     post:
       description: |
         Gets or creates a new call
 
         Sends events:
         - call.created
+
+        Required permissions:
+        - CreateCall
+        - ReadCall
+        - UpdateCallSettings
       operationId: GetOrCreateCall
       parameters:
       - content:
@@ -2560,6 +2585,10 @@ paths:
           description: ""
           schema:
             ref: '#/components/schemas/CallCreatedEvent'
+      x-stream-permissions:
+        CreateCall: To create a call
+        ReadCall: To retrieve a call
+        UpdateCallSettings: To create a call with different settings
   /call/{type}/{id}/{session}/recordings:
     get:
       description: |
@@ -2819,8 +2848,11 @@ paths:
         SendEvent: To send events
   /call/{type}/{id}/get_edge_server:
     post:
-      description: |2+
+      description: |
+        Retrieve the edge server information and credentials for a call.
 
+        Required permissions:
+        - JoinCall
       operationId: GetCallEdgeServer
       parameters:
       - content:
@@ -2888,6 +2920,8 @@ paths:
       summary: Get Call Edge Server
       tags:
       - Video Calls
+      x-stream-permissions:
+        JoinCall: To join a call
   /call/{type}/{id}/go_live:
     post:
       description: |2
@@ -2895,6 +2929,9 @@ paths:
 
         Sends events:
         - call.updated
+
+        Required permissions:
+        - UpdateCall
       operationId: GoLive
       parameters:
       - content:
@@ -2963,10 +3000,16 @@ paths:
           description: ""
           schema:
             ref: '#/components/schemas/CallUpdatedEvent'
+      x-stream-permissions:
+        UpdateCall: To update a call
   /call/{type}/{id}/join:
     post:
       description: |
         Request to join a call
+
+        Required permissions:
+        - CreateCall
+        - JoinCall
       operationId: JoinCall_type_id_1
       parameters:
       - content:
@@ -3039,6 +3082,9 @@ paths:
       summary: Join call (type, id)
       tags:
       - Video Calls
+      x-stream-permissions:
+        CreateCall: To create a call
+        JoinCall: To join a call
   /call/{type}/{id}/mark_ended:
     post:
       description: |2
@@ -3046,6 +3092,9 @@ paths:
 
         Sends events:
         - call.ended
+
+        Required permissions:
+        - EndCall
       operationId: EndCall
       parameters:
       - content:
@@ -3114,10 +3163,15 @@ paths:
           description: ""
           schema:
             ref: '#/components/schemas/CallEndedEvent'
+      x-stream-permissions:
+        EndCall: To end a call
   /call/{type}/{id}/mute_users:
     post:
       description: |
         Mutes users in a call
+
+        Required permissions:
+        - MuteUsers
       operationId: MuteUsers
       parameters:
       - content:
@@ -3181,6 +3235,8 @@ paths:
       summary: Mute users
       tags:
       - Moderation
+      x-stream-permissions:
+        MuteUsers: To mute users on a call
   /call/{type}/{id}/reaction:
     post:
       description: |
@@ -3526,8 +3582,14 @@ paths:
       - Livestreaming
   /call/{type}/{id}/stop_live:
     post:
-      description: |2+
+      description: |2
 
+
+        Sends events:
+        - call.updated
+
+        Required permissions:
+        - UpdateCall
       operationId: StopLive
       parameters:
       - content:
@@ -3590,6 +3652,15 @@ paths:
       tags:
       - Video Calls
       - Livestreaming
+      x-stream-events:
+        call.updated: ""
+      x-stream-events-v2:
+        call.updated:
+          description: ""
+          schema:
+            ref: '#/components/schemas/CallUpdatedEvent'
+      x-stream-permissions:
+        UpdateCall: To update a call
   /call/{type}/{id}/stop_recording:
     post:
       description: |
@@ -3833,6 +3904,9 @@ paths:
     post:
       description: |
         Query call members with filter query
+
+        Required permissions:
+        - ReadCall
       operationId: QueryMembers
       requestBody:
         content:
@@ -3875,10 +3949,15 @@ paths:
       summary: Query call members
       tags:
       - Video Calls
+      x-stream-permissions:
+        ReadCall: To retrieve a call
   /calls:
     post:
       description: |
         Query calls with filter query
+
+        Required permissions:
+        - ReadCall
       operationId: QueryCalls
       parameters:
       - content:
@@ -3930,6 +4009,8 @@ paths:
       summary: Query call
       tags:
       - Video Calls
+      x-stream-permissions:
+        ReadCall: To retrieve a call
   /calltypes:
     get:
       description: |2+
@@ -4169,8 +4250,8 @@ paths:
       x-stream-server-side: true
   /edges:
     get:
-      description: |2+
-
+      description: |
+        Returns the list of all edges available for video calls.
       operationId: GetEdges
       responses:
         "200":
@@ -4211,6 +4292,10 @@ paths:
     post:
       description: |
         Request to join a call
+
+        Required permissions:
+        - CreateCall
+        - JoinCall
       operationId: JoinCall_type_id_0
       parameters:
       - content:
@@ -4283,6 +4368,9 @@ paths:
       summary: Join call (type, id)
       tags:
       - Video Calls
+      x-stream-permissions:
+        CreateCall: To create a call
+        JoinCall: To join a call
   /video/connect:
     get:
       description: |
