@@ -1725,6 +1725,10 @@ func (x *ChangePublishQuality) GetVideoSenders() []*VideoSender {
 	return nil
 }
 
+// CallGrants is sent to users when there is a change in the call permissions
+// to publish audio, video or share the screen for a user or a role. This is
+// idempotent and can be sent at any time. Only the latest call grants message
+// should be considered for setting client grants.
 type CallGrants struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

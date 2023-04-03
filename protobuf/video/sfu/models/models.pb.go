@@ -1221,8 +1221,8 @@ func (x *ClientDetails) GetBrowser() string {
 	return ""
 }
 
-// CallGrants is sent to users when they join a call
-// and when the call permissions change
+// CallGrants represents the set of permissions given
+// to the user for the current call.
 type CallGrants struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
