@@ -203,7 +203,7 @@ components:
       properties:
         call:
           $ref: '#/components/schemas/CallResponse'
-          description: Call response
+          description: Call object
           title: Call
           x-stream-index: "003"
         call_cid:
@@ -268,6 +268,161 @@ components:
       - created_at
       - call_cid
       title: CallEndedEvent
+      type: object
+      x-stream-is-event: true
+    CallMemberAddedEvent:
+      description: This event is sent when one or more members are added to a call
+      properties:
+        call:
+          $ref: '#/components/schemas/CallResponse'
+          description: Call object
+          title: Call
+          x-stream-index: "003"
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        members:
+          description: the members added to this call
+          items:
+            $ref: '#/components/schemas/MemberResponse'
+          title: Members
+          type: array
+          x-stream-index: "004"
+        type:
+          description: 'The type of event: "call.member_added" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - call
+      - members
+      title: CallMemberAddedEvent
+      type: object
+      x-stream-is-event: true
+    CallMemberRemovedEvent:
+      description: This event is sent when one or more members are removed from a
+        call
+      properties:
+        call:
+          $ref: '#/components/schemas/CallResponse'
+          description: Call object
+          title: Call
+          x-stream-index: "003"
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        members:
+          description: the list of member IDs removed from the call
+          items:
+            type: string
+          title: Members
+          type: array
+          x-stream-index: "004"
+        type:
+          description: 'The type of event: "call.member_added" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - call
+      - members
+      title: CallMemberRemovedEvent
+      type: object
+      x-stream-is-event: true
+    CallMemberUpdatedEvent:
+      description: This event is sent when one or more members are updated
+      properties:
+        call:
+          $ref: '#/components/schemas/CallResponse'
+          description: Call object
+          title: Call
+          x-stream-index: "003"
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        members:
+          description: The list of members that were updated
+          items:
+            $ref: '#/components/schemas/MemberResponse'
+          title: Members
+          type: array
+          x-stream-index: "004"
+        type:
+          description: 'The type of event: "call.member_added" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - call
+      - members
+      title: CallMemberUpdatedEvent
+      type: object
+      x-stream-is-event: true
+    CallMemberUpdatedPermissionEvent:
+      description: This event is sent when one or more members get its role updated
+      properties:
+        call:
+          $ref: '#/components/schemas/CallResponse'
+          description: Call object
+          title: Call
+          x-stream-index: "003"
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        capabilities_by_role:
+          additionalProperties:
+            items:
+              type: string
+            type: array
+          description: The capabilities by role for this call
+          title: CapabilitiesByRole
+          type: object
+          x-stream-index: "004"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        members:
+          description: The list of members that were updated
+          items:
+            $ref: '#/components/schemas/MemberResponse'
+          title: Members
+          type: array
+          x-stream-index: "005"
+        type:
+          description: 'The type of event: "call.member_added" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - call
+      - capabilities_by_role
+      - members
+      title: CallMemberUpdatedPermissionEvent
       type: object
       x-stream-is-event: true
     CallReactionEvent:
@@ -661,7 +816,7 @@ components:
       properties:
         call:
           $ref: '#/components/schemas/CallResponse'
-          description: The call object
+          description: Call object
           title: Call
           x-stream-index: "003"
         call_cid:
@@ -1460,6 +1615,7 @@ components:
       - join-ended-call
       - mute-users
       - read-call
+      - remove-call-member
       - screenshare
       - send-audio
       - send-video
@@ -1468,6 +1624,7 @@ components:
       - stop-broadcast-call
       - stop-record-call
       - update-call
+      - update-call-member
       - update-call-permissions
       - update-call-settings
       title: OwnCapability
@@ -2000,13 +2157,52 @@ components:
       title: UnblockedUserEvent
       type: object
       x-stream-is-event: true
+    UpdateCallMemberRequest:
+      nullable: true
+      properties:
+        remove_members:
+          description: List of userID to remove
+          items:
+            type: string
+          maximum: 100
+          title: Remove Members
+          type: array
+          x-stream-index: "004"
+        update_members:
+          description: List of members to update or insert
+          items:
+            $ref: '#/components/schemas/MemberRequest'
+          maximum: 100
+          title: Update Members
+          type: array
+          x-stream-index: "005"
+      required:
+      - remove_members
+      type: object
+    UpdateCallMemberResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+        members:
+          items:
+            $ref: '#/components/schemas/MemberResponse'
+          type: array
+          x-stream-index: "002"
+      required:
+      - duration
+      - members
+      type: object
     UpdateCallRequest:
       nullable: true
       properties:
         custom:
           additionalProperties: {}
-          description: call custom data
-          title: Custom
+          description: Custom data for this object
+          title: Custom data
           type: object
           x-stream-index: "004"
         settings_override:
@@ -2308,6 +2504,9 @@ components:
           call.blocked_user: '#/components/schemas/BlockedUserEvent'
           call.created: '#/components/schemas/CallCreatedEvent'
           call.ended: '#/components/schemas/CallEndedEvent'
+          call.member_added: '#/components/schemas/CallMemberAddedEvent'
+          call.member_removed: '#/components/schemas/CallMemberRemovedEvent'
+          call.member_updated: '#/components/schemas/CallMemberUpdatedEvent'
           call.permission_request: '#/components/schemas/PermissionRequestEvent'
           call.permissions_updated: '#/components/schemas/UpdatedCallPermissionsEvent'
           call.reaction_new: '#/components/schemas/CallReactionEvent'
@@ -2316,6 +2515,7 @@ components:
           call.rejected: '#/components/schemas/CallRejectedEvent'
           call.unblocked_user: '#/components/schemas/UnblockedUserEvent'
           call.updated: '#/components/schemas/CallUpdatedEvent'
+          call.updated_permission: '#/components/schemas/CallMemberUpdatedPermissionEvent'
           connection.ok: '#/components/schemas/WSConnectedEvent'
           custom: '#/components/schemas/CustomVideoEvent'
           health.check: '#/components/schemas/HealthCheckEvent'
@@ -2325,6 +2525,10 @@ components:
       - $ref: '#/components/schemas/CallAcceptedEvent'
       - $ref: '#/components/schemas/CallCreatedEvent'
       - $ref: '#/components/schemas/CallEndedEvent'
+      - $ref: '#/components/schemas/CallMemberAddedEvent'
+      - $ref: '#/components/schemas/CallMemberRemovedEvent'
+      - $ref: '#/components/schemas/CallMemberUpdatedEvent'
+      - $ref: '#/components/schemas/CallMemberUpdatedPermissionEvent'
       - $ref: '#/components/schemas/CallReactionEvent'
       - $ref: '#/components/schemas/CallRecordingStartedEvent'
       - $ref: '#/components/schemas/CallRecordingStoppedEvent'
@@ -2380,7 +2584,7 @@ externalDocs:
   url: https://getstream.io/video/docs/
 info:
   title: Stream Video API
-  version: v79.39.1-3-g65179f746
+  version: v79.34.0-39-g2182ba422
 openapi: 3.0.3
 paths:
   /call/{type}/{id}:
@@ -2461,6 +2665,7 @@ paths:
       - content:
           application/json:
             schema:
+              description: The type of call
               maxLength: 64
               title: Type
               type: string
@@ -2472,6 +2677,7 @@ paths:
       - content:
           application/json:
             schema:
+              description: Call ID
               maxLength: 64
               title: ID
               type: string
@@ -3847,6 +4053,86 @@ paths:
             ref: '#/components/schemas/UnblockedUserEvent'
       x-stream-permissions:
         BlockUser: To block / unblock a user from a call
+  /call/{type}/{id}/update_member:
+    post:
+      description: |2
+
+
+        Required permissions:
+        - RemoveCallMember
+        - UpdateCallMember
+        - UpdateCallMemberRole
+      operationId: UpdateCallMember
+      parameters:
+      - content:
+          application/json:
+            schema:
+              description: The type of call
+              maxLength: 64
+              title: Type
+              type: string
+              writeOnly: true
+              x-stream-index: "002"
+        in: path
+        name: type
+        required: true
+      - content:
+          application/json:
+            schema:
+              description: Call ID
+              maxLength: 64
+              title: ID
+              type: string
+              writeOnly: true
+              x-stream-index: "003"
+        in: path
+        name: id
+        required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCallMemberRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateCallMemberResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+          headers:
+            X-RateLimit-Limit:
+              description: The number of allowed requests in the current period
+              schema:
+                type: integer
+            X-RateLimit-Remaining:
+              description: The number of remaining requests in the current period
+              schema:
+                type: integer
+            X-RateLimit-Reset:
+              description: Timestamp when number of requests will be reset
+              schema:
+                type: integer
+      summary: Update Call Member
+      tags:
+      - Video Calls
+      x-stream-permissions:
+        RemoveCallMember: To remove participant
+        UpdateCallMember: To upsert participant
+        UpdateCallMemberRole: To update members role
   /call/{type}/{id}/user_permissions:
     post:
       description: |
