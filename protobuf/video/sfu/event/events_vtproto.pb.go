@@ -351,15 +351,15 @@ func (m *SfuEvent_Error) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	}
 	return len(dAtA) - i, nil
 }
-func (m *SfuEvent_CallGrants) MarshalToVT(dAtA []byte) (int, error) {
+func (m *SfuEvent_CallGrantsUpdated) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *SfuEvent_CallGrants) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *SfuEvent_CallGrantsUpdated) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	i := len(dAtA)
-	if m.CallGrants != nil {
-		size, err := m.CallGrants.MarshalToSizedBufferVT(dAtA[:i])
+	if m.CallGrantsUpdated != nil {
+		size, err := m.CallGrantsUpdated.MarshalToSizedBufferVT(dAtA[:i])
 		if err != nil {
 			return 0, err
 		}
@@ -1700,7 +1700,7 @@ func (m *ChangePublishQuality) MarshalToSizedBufferVT(dAtA []byte) (int, error) 
 	return len(dAtA) - i, nil
 }
 
-func (m *CallGrants) MarshalVT() (dAtA []byte, err error) {
+func (m *CallGrantsUpdated) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -1713,12 +1713,12 @@ func (m *CallGrants) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *CallGrants) MarshalToVT(dAtA []byte) (int, error) {
+func (m *CallGrantsUpdated) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *CallGrants) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *CallGrantsUpdated) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -1730,8 +1730,8 @@ func (m *CallGrants) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.Grants != nil {
-		if marshalto, ok := interface{}(m.Grants).(interface {
+	if m.CurrentGrants != nil {
+		if marshalto, ok := interface{}(m.CurrentGrants).(interface {
 			MarshalToSizedBufferVT([]byte) (int, error)
 		}); ok {
 			size, err := marshalto.MarshalToSizedBufferVT(dAtA[:i])
@@ -1741,7 +1741,7 @@ func (m *CallGrants) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 			i -= size
 			i = encodeVarint(dAtA, i, uint64(size))
 		} else {
-			encoded, err := proto.Marshal(m.Grants)
+			encoded, err := proto.Marshal(m.CurrentGrants)
 			if err != nil {
 				return 0, err
 			}
@@ -1955,14 +1955,14 @@ func (m *SfuEvent_Error) SizeVT() (n int) {
 	}
 	return n
 }
-func (m *SfuEvent_CallGrants) SizeVT() (n int) {
+func (m *SfuEvent_CallGrantsUpdated) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.CallGrants != nil {
-		l = m.CallGrants.SizeVT()
+	if m.CallGrantsUpdated != nil {
+		l = m.CallGrantsUpdated.SizeVT()
 		n += 2 + l + sov(uint64(l))
 	}
 	return n
@@ -2524,19 +2524,19 @@ func (m *ChangePublishQuality) SizeVT() (n int) {
 	return n
 }
 
-func (m *CallGrants) SizeVT() (n int) {
+func (m *CallGrantsUpdated) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.Grants != nil {
-		if size, ok := interface{}(m.Grants).(interface {
+	if m.CurrentGrants != nil {
+		if size, ok := interface{}(m.CurrentGrants).(interface {
 			SizeVT() int
 		}); ok {
 			l = size.SizeVT()
 		} else {
-			l = proto.Size(m.Grants)
+			l = proto.Size(m.CurrentGrants)
 		}
 		n += 1 + l + sov(uint64(l))
 	}
@@ -3173,7 +3173,7 @@ func (m *SfuEvent) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 19:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field CallGrants", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field CallGrantsUpdated", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -3200,16 +3200,16 @@ func (m *SfuEvent) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if oneof, ok := m.EventPayload.(*SfuEvent_CallGrants); ok {
-				if err := oneof.CallGrants.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+			if oneof, ok := m.EventPayload.(*SfuEvent_CallGrantsUpdated); ok {
+				if err := oneof.CallGrantsUpdated.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
 			} else {
-				v := &CallGrants{}
+				v := &CallGrantsUpdated{}
 				if err := v.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
-				m.EventPayload = &SfuEvent_CallGrants{v}
+				m.EventPayload = &SfuEvent_CallGrantsUpdated{v}
 			}
 			iNdEx = postIndex
 		default:
@@ -6033,7 +6033,7 @@ func (m *ChangePublishQuality) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *CallGrants) UnmarshalVT(dAtA []byte) error {
+func (m *CallGrantsUpdated) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -6056,15 +6056,15 @@ func (m *CallGrants) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: CallGrants: wiretype end group for non-group")
+			return fmt.Errorf("proto: CallGrantsUpdated: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: CallGrants: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: CallGrantsUpdated: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Grants", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field CurrentGrants", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -6091,17 +6091,17 @@ func (m *CallGrants) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Grants == nil {
-				m.Grants = &models.CallGrants{}
+			if m.CurrentGrants == nil {
+				m.CurrentGrants = &models.CallGrants{}
 			}
-			if unmarshal, ok := interface{}(m.Grants).(interface {
+			if unmarshal, ok := interface{}(m.CurrentGrants).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
 				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
 			} else {
-				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.Grants); err != nil {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.CurrentGrants); err != nil {
 					return err
 				}
 			}

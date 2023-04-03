@@ -26,7 +26,7 @@ message SfuEvent {
     TrackPublished track_published = 16;
     TrackUnpublished track_unpublished = 17;
     Error error = 18;
-    CallGrants call_grants = 19;
+    CallGrantsUpdated call_grants_updated = 19;
   }
 }
 
@@ -182,8 +182,24 @@ message ChangePublishQuality {
 
 // CallGrants is sent to users when there is a change in the call permissions
 // to publish audio, video or share the screen for a user or a role. This is
-// idempotent and can be sent at any time. Only the latest call grants message
-// should be considered for setting client grants.
-message CallGrants {
-  models.CallGrants grants = 1;
+// idempotent and can be sent at any time. Only the current_grants in the latest
+// message should be considered. In other words, this is not dependent on any
+// other message (including previous call_grants_updated message)
+//
+// When this message is received, the client (say, React component) could gray
+// out the audio, video or screenshare buttons if the current grants for them
+// is false or re-enable them if they are granted. If there is no change then
+// they don't have to do anything.
+//
+// Let us say, the first message has grants {audio:true, video:true}, the client
+// component would gray out screenshare button as it is not allowed. Suppose, the
+// next update has grants {audio: true} (video and screenshare are not present
+// in the message), then the client component would gray out video and screenshare
+// along with the mute icon. SFU will mute the respective tracks if they are being
+// published at the time of permission update. Nevertheless, the clients should
+// stop publishing the tracks which are not permitted anymore. In the previous
+// example, the video should be stopped and the button to turn on the video is
+// disabled along with "muted video" icon.
+message CallGrantsUpdated {
+  models.CallGrants current_grants = 1;
 }
