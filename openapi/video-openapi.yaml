@@ -123,12 +123,6 @@ components:
         the user is the current user, the client should leave the call screen as well"
       nullable: true
       properties:
-        blocked_by_user:
-          $ref: '#/components/schemas/UserResponse'
-          description: The user that blocked the user, null if the user was blocked
-            by server-side
-          title: Blocked by
-          x-stream-index: "004"
         call_cid:
           type: string
           x-stream-index: "002.001"
@@ -141,16 +135,16 @@ components:
           title: Event Type
           type: string
           x-stream-index: "001.001"
-        user:
-          $ref: '#/components/schemas/UserResponse'
-          description: The user that was blocked
-          title: User
+        user_id:
+          description: The ID of the user that got blocked
+          title: UserID
+          type: string
           x-stream-index: "003"
       required:
       - type
       - created_at
       - call_cid
-      - user
+      - user_id
       title: BlockedUserEvent
       type: object
       x-stream-is-event: true
@@ -193,6 +187,37 @@ components:
       - call_cid
       - user
       title: CallAcceptedEvent
+      type: object
+      x-stream-is-event: true
+    CallCancelledEvent:
+      description: "This event is sent when the user initiating a call cancels it.
+        Clients receiving this event \nshould dismiss the call screen and consider
+        the call as cancelled by the caller"
+      nullable: true
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        type:
+          description: 'The type of event: "call.cancelled" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          description: The user who cancelled the call
+          title: User
+          x-stream-index: "003"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - user
+      title: CallCancelledEvent
       type: object
       x-stream-is-event: true
     CallCreatedEvent:
@@ -654,15 +679,10 @@ components:
       - updated_at
       type: object
     CallUpdatedEvent:
-      description: "This event is sent when a call is updated, clients should use
-        this update the local state of the call. \nThis event also contains the capabilities
-        by role for the call, clients should update the own_capability for the current."
       nullable: true
       properties:
         call:
           $ref: '#/components/schemas/CallResponse'
-          description: The call object
-          title: Call
           x-stream-index: "003"
         call_cid:
           type: string
@@ -672,8 +692,6 @@ components:
             items:
               type: string
             type: array
-          description: The capabilities by role for this call
-          title: CapabilitiesByRole
           type: object
           x-stream-index: "004"
         created_at:
@@ -681,8 +699,6 @@ components:
           type: string
           x-stream-index: "001.002"
         type:
-          description: 'The type of event: "call.ended" in this case'
-          title: Event Type
           type: string
           x-stream-index: "001.001"
       required:
@@ -1207,8 +1223,6 @@ components:
     HealthCheckEvent:
       properties:
         connection_id:
-          description: The connection_id for this client
-          title: Connection ID
           type: string
           x-stream-index: "002"
         created_at:
@@ -1217,7 +1231,6 @@ components:
           x-stream-index: "001.002"
         me:
           $ref: '#/components/schemas/OwnUserResponse'
-          description: The full user object as it is stored on the server
           title: OwnUserResponse
           x-stream-index: "003"
         type:
@@ -1991,16 +2004,16 @@ components:
           title: Event Type
           type: string
           x-stream-index: "001.001"
-        user:
-          $ref: '#/components/schemas/UserResponse'
-          description: The user that was unblocked
-          title: User
+        user_id:
+          description: The ID of the user that was unblocked
+          title: UserID
+          type: string
           x-stream-index: "003"
       required:
       - type
       - created_at
       - call_cid
-      - user
+      - user_id
       title: UnblockedUserEvent
       type: object
       x-stream-is-event: true
@@ -2139,7 +2152,7 @@ components:
           x-stream-index: "001.001"
         user:
           $ref: '#/components/schemas/UserResponse'
-          description: The user who received the new permissions
+          description: The user who got the new permissions
           title: User
           x-stream-index: "003"
       required:
@@ -2278,6 +2291,7 @@ components:
         mapping:
           call.accepted: '#/components/schemas/CallAcceptedEvent'
           call.blocked_user: '#/components/schemas/BlockedUserEvent'
+          call.cancelled: '#/components/schemas/CallCancelledEvent'
           call.created: '#/components/schemas/CallCreatedEvent'
           call.ended: '#/components/schemas/CallEndedEvent'
           call.permission_request: '#/components/schemas/PermissionRequestEvent'
@@ -2294,6 +2308,7 @@ components:
       oneOf:
       - $ref: '#/components/schemas/BlockedUserEvent'
       - $ref: '#/components/schemas/CallAcceptedEvent'
+      - $ref: '#/components/schemas/CallCancelledEvent'
       - $ref: '#/components/schemas/CallCreatedEvent'
       - $ref: '#/components/schemas/CallEndedEvent'
       - $ref: '#/components/schemas/CallReactionEvent'
@@ -2350,16 +2365,11 @@ externalDocs:
   url: https://getstream.io/video/docs/
 info:
   title: Stream Video API
-  version: v79.33.0-38-g7969e9e81
+  version: v79.39.1
 openapi: 3.0.3
 paths:
   /call/{type}/{id}:
     get:
-      description: |2
-
-
-        Required permissions:
-        - ReadCall
       operationId: GetCall
       parameters:
       - content:
@@ -2415,17 +2425,7 @@ paths:
       summary: Get Call
       tags:
       - Video Calls
-      x-stream-permissions:
-        ReadCall: To retrieve a call
     patch:
-      description: |2
-
-
-        Sends events:
-        - call.updated
-
-        Required permissions:
-        - UpdateCall
       operationId: UpdateCall
       parameters:
       - content:
@@ -2491,26 +2491,8 @@ paths:
       summary: Update Call
       tags:
       - Video Calls
-      x-stream-events:
-        call.updated: ""
-      x-stream-events-v2:
-        call.updated:
-          description: ""
-          schema:
-            ref: '#/components/schemas/CallUpdatedEvent'
-      x-stream-permissions:
-        UpdateCall: To update a call
     post:
-      description: |
-        Gets or creates a new call
-
-        Sends events:
-        - call.created
-
-        Required permissions:
-        - CreateCall
-        - ReadCall
-        - UpdateCallSettings
+      description: Gets or creates a new call
       operationId: GetOrCreateCall
       parameters:
       - content:
@@ -2585,17 +2567,9 @@ paths:
           description: ""
           schema:
             ref: '#/components/schemas/CallCreatedEvent'
-      x-stream-permissions:
-        CreateCall: To create a call
-        ReadCall: To retrieve a call
-        UpdateCallSettings: To create a call with different settings
   /call/{type}/{id}/{session}/recordings:
     get:
-      description: |
-        Lists recordings
-
-        Required permissions:
-        - ListRecordings
+      description: Lists recordings
       operationId: ListRecordings
       parameters:
       - content:
@@ -2667,14 +2641,8 @@ paths:
         ListRecordings: To list recordings
   /call/{type}/{id}/block:
     post:
-      description: |
-        Block a user, preventing them from joining the call until they are unblocked.
-
-        Sends events:
-        - call.blocked_user
-
-        Required permissions:
-        - BlockUser
+      description: Block a user, preventing them from joining the call until they
+        are unblocked.
       operationId: BlockUser
       parameters:
       - content:
@@ -2751,16 +2719,7 @@ paths:
         BlockUser: To block a user from a call
   /call/{type}/{id}/event:
     post:
-      description: |
-        Sends event to the call
-
-        Sends events:
-        - call.accepted
-        - call.rejected
-        - custom
-
-        Required permissions:
-        - SendEvent
+      description: Sends event to the call
       operationId: SendEvent
       parameters:
       - content:
@@ -2829,6 +2788,7 @@ paths:
       x-stream-docs-page-id: event_object
       x-stream-events:
         call.accepted: ""
+        call.cancelled: ""
         call.rejected: ""
         custom: ""
       x-stream-events-v2:
@@ -2836,6 +2796,10 @@ paths:
           description: ""
           schema:
             ref: '#/components/schemas/CallAcceptedEvent'
+        call.cancelled:
+          description: ""
+          schema:
+            ref: '#/components/schemas/CallCancelledEvent'
         call.rejected:
           description: ""
           schema:
@@ -2848,11 +2812,6 @@ paths:
         SendEvent: To send events
   /call/{type}/{id}/get_edge_server:
     post:
-      description: |
-        Retrieve the edge server information and credentials for a call.
-
-        Required permissions:
-        - JoinCall
       operationId: GetCallEdgeServer
       parameters:
       - content:
@@ -2920,18 +2879,8 @@ paths:
       summary: Get Call Edge Server
       tags:
       - Video Calls
-      x-stream-permissions:
-        JoinCall: To join a call
   /call/{type}/{id}/go_live:
     post:
-      description: |2
-
-
-        Sends events:
-        - call.updated
-
-        Required permissions:
-        - UpdateCall
       operationId: GoLive
       parameters:
       - content:
@@ -3000,16 +2949,9 @@ paths:
           description: ""
           schema:
             ref: '#/components/schemas/CallUpdatedEvent'
-      x-stream-permissions:
-        UpdateCall: To update a call
   /call/{type}/{id}/join:
     post:
-      description: |
-        Request to join a call
-
-        Required permissions:
-        - CreateCall
-        - JoinCall
+      description: Request to join a call
       operationId: JoinCall_type_id_1
       parameters:
       - content:
@@ -3082,19 +3024,8 @@ paths:
       summary: Join call (type, id)
       tags:
       - Video Calls
-      x-stream-permissions:
-        CreateCall: To create a call
-        JoinCall: To join a call
   /call/{type}/{id}/mark_ended:
     post:
-      description: |2
-
-
-        Sends events:
-        - call.ended
-
-        Required permissions:
-        - EndCall
       operationId: EndCall
       parameters:
       - content:
@@ -3163,15 +3094,9 @@ paths:
           description: ""
           schema:
             ref: '#/components/schemas/CallEndedEvent'
-      x-stream-permissions:
-        EndCall: To end a call
   /call/{type}/{id}/mute_users:
     post:
-      description: |
-        Mutes users in a call
-
-        Required permissions:
-        - MuteUsers
+      description: Mutes users in a call
       operationId: MuteUsers
       parameters:
       - content:
@@ -3235,18 +3160,9 @@ paths:
       summary: Mute users
       tags:
       - Moderation
-      x-stream-permissions:
-        MuteUsers: To mute users on a call
   /call/{type}/{id}/reaction:
     post:
-      description: |
-        Sends reaction to the call
-
-        Sends events:
-        - call.reaction_new
-
-        Required permissions:
-        - CreateCallReaction
+      description: Sends reaction to the call
       operationId: SendVideoReaction
       parameters:
       - content:
@@ -3321,11 +3237,7 @@ paths:
         CreateCallReaction: To send reactions
   /call/{type}/{id}/request_permission:
     post:
-      description: |
-        Request permission to perform an action
-
-        Sends events:
-        - call.permission_request
+      description: Request permission to perform an action
       operationId: RequestPermission
       parameters:
       - content:
@@ -3400,8 +3312,7 @@ paths:
             ref: '#/components/schemas/PermissionRequestEvent'
   /call/{type}/{id}/start_broadcasting:
     post:
-      description: |
-        Starts broadcasting
+      description: Starts broadcasting
       operationId: StartBroadcasting
       parameters:
       - content:
@@ -3455,14 +3366,7 @@ paths:
       - Livestreaming
   /call/{type}/{id}/start_recording:
     post:
-      description: |
-        Starts recording
-
-        Sends events:
-        - call.recording_started
-
-        Required permissions:
-        - StopRecording
+      description: Starts recording
       operationId: StartRecording
       parameters:
       - content:
@@ -3527,8 +3431,7 @@ paths:
         StopRecording: To start recording
   /call/{type}/{id}/stop_broadcasting:
     post:
-      description: |
-        Stops broadcasting
+      description: Stops broadcasting
       operationId: StopBroadcasting
       parameters:
       - content:
@@ -3582,14 +3485,6 @@ paths:
       - Livestreaming
   /call/{type}/{id}/stop_live:
     post:
-      description: |2
-
-
-        Sends events:
-        - call.updated
-
-        Required permissions:
-        - UpdateCall
       operationId: StopLive
       parameters:
       - content:
@@ -3652,25 +3547,9 @@ paths:
       tags:
       - Video Calls
       - Livestreaming
-      x-stream-events:
-        call.updated: ""
-      x-stream-events-v2:
-        call.updated:
-          description: ""
-          schema:
-            ref: '#/components/schemas/CallUpdatedEvent'
-      x-stream-permissions:
-        UpdateCall: To update a call
   /call/{type}/{id}/stop_recording:
     post:
-      description: |
-        Stops recording
-
-        Sends events:
-        - call.recording_stopped
-
-        Required permissions:
-        - StopRecording
+      description: Stops recording
       operationId: StopRecording
       parameters:
       - content:
@@ -3734,14 +3613,8 @@ paths:
         StopRecording: To stop recording
   /call/{type}/{id}/unblock:
     post:
-      description: |
-        Removes the block for a user on a call. The user will be able to join the call again.
-
-        Sends events:
-        - call.unblocked_user
-
-        Required permissions:
-        - BlockUser
+      description: Removes the block for a user on a call. The user will be able to
+        join the call again.
       operationId: UnblockUser
       parameters:
       - content:
@@ -3819,14 +3692,7 @@ paths:
         BlockUser: To block / unblock a user from a call
   /call/{type}/{id}/user_permissions:
     post:
-      description: |
-        Updates user permissions
-
-        Sends events:
-        - call.permissions_updated
-
-        Required permissions:
-        - UpdateCallPermissions
+      description: Updates user permissions
       operationId: UpdateUserPermissions
       parameters:
       - content:
@@ -3902,11 +3768,7 @@ paths:
         UpdateCallPermissions: To update user permissions
   /call/members:
     post:
-      description: |
-        Query call members with filter query
-
-        Required permissions:
-        - ReadCall
+      description: Query call members with filter query
       operationId: QueryMembers
       requestBody:
         content:
@@ -3949,15 +3811,9 @@ paths:
       summary: Query call members
       tags:
       - Video Calls
-      x-stream-permissions:
-        ReadCall: To retrieve a call
   /calls:
     post:
-      description: |
-        Query calls with filter query
-
-        Required permissions:
-        - ReadCall
+      description: Query calls with filter query
       operationId: QueryCalls
       parameters:
       - content:
@@ -4009,12 +3865,8 @@ paths:
       summary: Query call
       tags:
       - Video Calls
-      x-stream-permissions:
-        ReadCall: To retrieve a call
   /calltypes:
     get:
-      description: |2+
-
       operationId: ListCallTypes
       responses:
         "200":
@@ -4053,8 +3905,6 @@ paths:
       - Call types
       x-stream-server-side: true
     post:
-      description: |2+
-
       operationId: CreateCallType
       requestBody:
         content:
@@ -4100,8 +3950,6 @@ paths:
       x-stream-server-side: true
   /calltypes/{name}:
     delete:
-      description: |2+
-
       operationId: DeleteCallType
       parameters:
       - content:
@@ -4144,8 +3992,6 @@ paths:
       - Call types
       x-stream-server-side: true
     get:
-      description: |2+
-
       operationId: GetCallType
       parameters:
       - content:
@@ -4193,8 +4039,6 @@ paths:
       tags:
       - Call types
     put:
-      description: |2+
-
       operationId: UpdateCallType
       parameters:
       - content:
@@ -4250,8 +4094,6 @@ paths:
       x-stream-server-side: true
   /edges:
     get:
-      description: |
-        Returns the list of all edges available for video calls.
       operationId: GetEdges
       responses:
         "200":
@@ -4290,12 +4132,7 @@ paths:
       - Video Calls
   /join_call/{type}/{id}:
     post:
-      description: |
-        Request to join a call
-
-        Required permissions:
-        - CreateCall
-        - JoinCall
+      description: Request to join a call
       operationId: JoinCall_type_id_0
       parameters:
       - content:
@@ -4368,13 +4205,9 @@ paths:
       summary: Join call (type, id)
       tags:
       - Video Calls
-      x-stream-permissions:
-        CreateCall: To create a call
-        JoinCall: To join a call
   /video/connect:
     get:
-      description: |
-        Establishes WebSocket connection for user to video
+      description: Establishes WebSocket connection for user to video
       operationId: VideoConnect
       requestBody:
         content:
