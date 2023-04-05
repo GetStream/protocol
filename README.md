@@ -6,7 +6,20 @@ This repository contains manifests that describe Stream public APIs, documentati
 
 Stream REST API is described with OpenAPI specs, each product has its own openapi spec file.
 
-At the moment client generation from OpenAPI specs is done inside the specific SDK repositories, generation scripts are not yet part of this repository.
+At the moment client generation from OpenAPI specs is done inside the specific SDK repositories, generation scripts are not yet part of this repository and should be done using our dockerized fork of [openapi-generator](https://github.com/GetStream/openapi-generator).
+
+```sh
+docker pull ghcr.io/getstream/openapi-generator:master
+
+docker run --rm -v "${PWD}:/local" ghcr.io/getstream/openapi-generator:master generate \
+   -i https://raw.githubusercontent.com/GetStream/protocol/main/openapi/video-openapi.yaml \
+   -g typescript-fetch \
+   --additional-properties=supportsES6=true \
+   --additional-properties=modelPropertyNaming=original \
+   --additional-properties=enumPropertyNaming=original \
+   --additional-properties=withoutRuntimeChecks=true \
+   -o /local/src/gen/openapi-temp
+```
 
 ## Protobuf and Twirp
 
