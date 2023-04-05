@@ -186,20 +186,17 @@ message ChangePublishQuality {
 // message should be considered. In other words, this is not dependent on any
 // other message (including previous call_grants_updated message)
 //
-// When this message is received, the client (say, React component) could gray
-// out the audio, video or screenshare buttons if the current grants for them
-// is false or re-enable them if they are granted. If there is no change then
-// they don't have to do anything.
+// When this message is received, the client (say, React component) should mute
+// the tracks which are not allowed anymore. For example, if the message has
+// grants {audio:true, video:false} while the user is publishing video, then the
+// client component should mute the video track and gray out the video button.
+// This way, the user will not be able to publish video until the permissions
+// are granted again. Also, muting the track on the client side will prevent
+// the SFU from receiving the video track and will save bandwidth.
 //
-// Let us say, the first message has grants {audio:true, video:true}, the client
-// component would gray out screenshare button as it is not allowed. Suppose, the
-// next update has grants {audio: true} (video and screenshare are not present
-// in the message), then the client component would gray out video and screenshare
-// along with the mute icon. SFU will mute the respective tracks if they are being
-// published at the time of permission update. Nevertheless, the clients should
-// stop publishing the tracks which are not permitted anymore. In the previous
-// example, the video should be stopped and the button to turn on the video is
-// disabled along with "muted video" icon.
+// In simple words, this is exactly the same as muting a track on the client.
+// Here, instead of the user instructing the client, SFU would be doing it.
 message CallGrantsUpdated {
   models.CallGrants current_grants = 1;
+  string message = 2;
 }
