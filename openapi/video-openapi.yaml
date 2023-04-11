@@ -994,6 +994,35 @@ components:
       - updated_at
       - duration
       type: object
+    CreateGuestRequest:
+      nullable: true
+      properties:
+        user:
+          $ref: '#/components/schemas/UserRequest'
+          x-stream-index: "001"
+      required:
+      - user
+      type: object
+    CreateGuestResponse:
+      nullable: true
+      properties:
+        access_token:
+          description: the access token to authenticate the user
+          title: Access token
+          type: string
+          x-stream-index: "002"
+        duration:
+          type: string
+          x-stream-index: "003.001"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          title: User
+          x-stream-index: "001"
+      required:
+      - user
+      - access_token
+      - duration
+      type: object
     Credentials:
       properties:
         ice_servers:
@@ -1734,6 +1763,7 @@ components:
       - id
       - custom
       - role
+      - teams
       - created_at
       - updated_at
       - devices
@@ -2492,6 +2522,7 @@ components:
       - id
       - custom
       - role
+      - teams
       - created_at
       - updated_at
       type: object
@@ -2636,7 +2667,7 @@ externalDocs:
   url: https://getstream.io/video/docs/
 info:
   title: Stream Video API
-  version: v79.45.1
+  version: v79.46.0-2-gc33e7ee4e
 openapi: 3.0.3
 paths:
   /call/{type}/{id}:
@@ -4778,6 +4809,50 @@ paths:
       summary: Get Edges
       tags:
       - Video Calls
+  /guest:
+    post:
+      description: |2+
+
+      operationId: CreateGuest
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGuestRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateGuestResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+          headers:
+            X-RateLimit-Limit:
+              description: The number of allowed requests in the current period
+              schema:
+                type: integer
+            X-RateLimit-Remaining:
+              description: The number of remaining requests in the current period
+              schema:
+                type: integer
+            X-RateLimit-Reset:
+              description: Timestamp when number of requests will be reset
+              schema:
+                type: integer
+      summary: Create Guest
   /join_call/{type}/{id}:
     post:
       description: |
