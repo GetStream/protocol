@@ -1001,7 +1001,6 @@ func (x *TrackInfo) GetRed() bool {
 	return false
 }
 
-// todo remove this
 type Call struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
