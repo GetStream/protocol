@@ -201,6 +201,60 @@ components:
       x-stream-event-call-type: true
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    CallBroadcastingStartedEvent:
+      description: This event is sent when call broadcasting has started
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        hls_playlist_url:
+          type: string
+          x-stream-index: "003"
+        type:
+          default: call.broadcasting_started
+          description: 'The type of event: "call.broadcasting_started" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - hls_playlist_url
+      title: CallBroadcastingStartedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallBroadcastingStoppedEvent:
+      description: This event is sent when call broadcasting has stopped
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        type:
+          default: call.broadcasting_stopped
+          description: 'The type of event: "call.broadcasting_stopped" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      title: CallBroadcastingStoppedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     CallCreatedEvent:
       description: "This event is sent when a call is created. Clients receiving this
         event should check if the ringing \nfield is set to true and if so, show the
@@ -2349,6 +2403,12 @@ components:
           description: the settings to change for this call
           title: Settings Override
           x-stream-index: "005"
+        starts_at:
+          description: the time the call is scheduled to start
+          format: date-time
+          title: Starts At
+          type: string
+          x-stream-index: "006"
       type: object
     UpdateCallResponse:
       description: Represents a call
@@ -2575,6 +2635,8 @@ components:
         mapping:
           call.accepted: '#/components/schemas/CallAcceptedEvent'
           call.blocked_user: '#/components/schemas/BlockedUserEvent'
+          call.broadcasting_started: '#/components/schemas/CallBroadcastingStartedEvent'
+          call.broadcasting_stopped: '#/components/schemas/CallBroadcastingStoppedEvent'
           call.created: '#/components/schemas/CallCreatedEvent'
           call.ended: '#/components/schemas/CallEndedEvent'
           call.member_added: '#/components/schemas/CallMemberAddedEvent'
@@ -2596,6 +2658,8 @@ components:
       oneOf:
       - $ref: '#/components/schemas/BlockedUserEvent'
       - $ref: '#/components/schemas/CallAcceptedEvent'
+      - $ref: '#/components/schemas/CallBroadcastingStartedEvent'
+      - $ref: '#/components/schemas/CallBroadcastingStoppedEvent'
       - $ref: '#/components/schemas/CallCreatedEvent'
       - $ref: '#/components/schemas/CallEndedEvent'
       - $ref: '#/components/schemas/CallMemberAddedEvent'
@@ -2709,7 +2773,7 @@ externalDocs:
   url: https://getstream.io/video/docs/
 info:
   title: Stream Video API
-  version: v79.48.0-5-gd6bc48054
+  version: v79.48.0-6-g23dc95e0a
 openapi: 3.0.3
 paths:
   /call/{type}/{id}:
@@ -2739,6 +2803,14 @@ paths:
         in: path
         name: id
         required: true
+      - content:
+          application/json:
+            schema:
+              type: string
+              writeOnly: true
+              x-stream-index: "003"
+        in: query
+        name: connection_id
       responses:
         "200":
           content:
@@ -2898,6 +2970,14 @@ paths:
         in: path
         name: id
         required: true
+      - content:
+          application/json:
+            schema:
+              type: string
+              writeOnly: true
+              x-stream-index: "007"
+        in: query
+        name: connection_id
       requestBody:
         content:
           application/json:
