@@ -1079,6 +1079,32 @@ components:
       - updated_at
       - duration
       type: object
+    CreateDeviceRequest:
+      nullable: true
+      properties:
+        id:
+          maxLength: 255
+          minLength: 1
+          type: string
+          x-stream-index: "001"
+        push_provider:
+          enum:
+          - firebase
+          - apn
+          - huawei
+          - xiaomi
+          type: string
+          x-stream-index: "002"
+        push_provider_name:
+          type: string
+          x-stream-index: "003"
+        user:
+          $ref: '#/components/schemas/UserRequest'
+          x-stream-index: "004.002"
+        user_id:
+          type: string
+          x-stream-index: "004.001"
+      type: object
     CreateGuestRequest:
       nullable: true
       properties:
@@ -1181,41 +1207,36 @@ components:
       - coordinates
       type: object
     Device:
-      nullable: true
       properties:
         created_at:
           description: Date/time of creation
           format: date-time
           title: Created at
           type: string
-          x-stream-index: "002.002"
+          x-stream-index: "004"
         disabled:
           description: Whether device is disabled or not
           title: Disabled
           type: boolean
-          x-stream-index: "002.003"
+          x-stream-index: "005"
         disabled_reason:
           description: Reason explaining why device had been disabled
           title: Reason
           type: string
-          x-stream-index: "002.004"
+          x-stream-index: "006"
         id:
           type: string
-          x-stream-index: 002.001.004
+          x-stream-index: "003"
         push_provider:
           type: string
-          x-stream-index: 002.001.001
+          x-stream-index: "001"
         push_provider_name:
           type: string
-          x-stream-index: 002.001.003
-        user_id:
-          type: string
-          x-stream-index: "004"
+          x-stream-index: "002"
       required:
       - push_provider
       - id
       - created_at
-      - user_id
       title: Device
       type: object
     DeviceFieldsRequest:
@@ -1239,6 +1260,9 @@ components:
           title: Push provider name
           type: string
           x-stream-index: "003"
+      required:
+      - push_provider
+      - id
       type: object
     EdgeResponse:
       properties:
@@ -1661,6 +1685,23 @@ components:
           x-stream-index: "002.001"
       required:
       - call_types
+      - duration
+      type: object
+    ListDevicesResponse:
+      nullable: true
+      properties:
+        devices:
+          description: List of devices
+          items:
+            $ref: '#/components/schemas/Device'
+          title: Devices
+          type: array
+          x-stream-index: "001"
+        duration:
+          type: string
+          x-stream-index: "002.001"
+      required:
+      - devices
       - duration
       type: object
     ListRecordingsResponse:
@@ -2108,6 +2149,17 @@ components:
         duration:
           type: string
           x-stream-index: "001.001"
+      required:
+      - duration
+      type: object
+    Response:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "001"
       required:
       - duration
       type: object
@@ -2777,7 +2829,7 @@ externalDocs:
   url: https://getstream.io/video/docs/
 info:
   title: Stream Video API
-  version: v80.2.0
+  version: v80.3.0
 openapi: 3.0.3
 paths:
   /call/{type}/{id}:
@@ -4895,6 +4947,160 @@ paths:
       tags:
       - Call types
       x-stream-server-side: true
+  /devices:
+    delete:
+      description: |
+        Deletes one device
+      operationId: DeleteDevice
+      parameters:
+      - content:
+          application/json:
+            schema:
+              description: Device ID to delete
+              title: ID
+              type: string
+              writeOnly: true
+              x-stream-index: "001"
+        in: query
+        name: id
+      - content:
+          application/json:
+            schema:
+              description: '**Server-side only**. User ID which server acts upon'
+              title: User ID
+              type: string
+              writeOnly: true
+              x-stream-index: "002.001"
+        in: query
+        name: user_id
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+          headers:
+            X-RateLimit-Limit:
+              description: The number of allowed requests in the current period
+              schema:
+                type: integer
+            X-RateLimit-Remaining:
+              description: The number of remaining requests in the current period
+              schema:
+                type: integer
+            X-RateLimit-Reset:
+              description: Timestamp when number of requests will be reset
+              schema:
+                type: integer
+      summary: Delete device
+      tags:
+      - Devices
+      x-stream-docs-page-id: push_devices
+    get:
+      description: |
+        Returns all available devices
+      operationId: ListDevices
+      parameters:
+      - content:
+          application/json:
+            schema:
+              description: '**Server-side only**. User ID which server acts upon'
+              title: User ID
+              type: string
+              writeOnly: true
+              x-stream-index: "001.001"
+        in: query
+        name: user_id
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListDevicesResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+          headers:
+            X-RateLimit-Limit:
+              description: The number of allowed requests in the current period
+              schema:
+                type: integer
+            X-RateLimit-Remaining:
+              description: The number of remaining requests in the current period
+              schema:
+                type: integer
+            X-RateLimit-Reset:
+              description: Timestamp when number of requests will be reset
+              schema:
+                type: integer
+      summary: List devices
+      tags:
+      - Devices
+      x-stream-docs-page-id: push_devices
+    post:
+      description: |
+        Adds a new device to a user, if the same device already exists the call will have no effect
+      operationId: CreateDevice
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDeviceRequest'
+        required: true
+      responses:
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+          headers:
+            X-RateLimit-Limit:
+              description: The number of allowed requests in the current period
+              schema:
+                type: integer
+            X-RateLimit-Remaining:
+              description: The number of remaining requests in the current period
+              schema:
+                type: integer
+            X-RateLimit-Reset:
+              description: Timestamp when number of requests will be reset
+              schema:
+                type: integer
+      summary: Create device
+      tags:
+      - Devices
+      - Push
+      x-stream-docs-page-id: push_devices
   /edges:
     get:
       description: |
