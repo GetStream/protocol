@@ -427,13 +427,23 @@ func (TrackUnpublishReason) EnumDescriptor() ([]byte, []int) {
 	return file_video_sfu_models_models_proto_rawDescGZIP(), []int{6}
 }
 
+// CallState is the current state of the call
+// as seen by an SFU.
 type CallState struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Participants []*Participant         `protobuf:"bytes,1,rep,name=participants,proto3" json:"participants,omitempty"`
-	StartedAt    *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
+	// participants is the list of participants in the call.
+	// In large calls, the list could be truncated in which
+	// case, the list of participants contains fewer participants
+	// than the counts returned in participant_count. Anonymous
+	// participants are **NOT** included in the list.
+	Participants []*Participant `protobuf:"bytes,1,rep,name=participants,proto3" json:"participants,omitempty"`
+	// started_at is the time the call session actually started.
+	StartedAt *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
+	// participant_count contains the summary of the counts.
+	ParticipantCount *ParticipantCount `protobuf:"bytes,3,opt,name=participant_count,json=participantCount,proto3" json:"participant_count,omitempty"`
 }
 
 func (x *CallState) Reset() {
@@ -482,6 +492,71 @@ func (x *CallState) GetStartedAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *CallState) GetParticipantCount() *ParticipantCount {
+	if x != nil {
+		return x.ParticipantCount
+	}
+	return nil
+}
+
+type ParticipantCount struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Total number of participants in the call including
+	// the anonymous participants.
+	Total uint32 `protobuf:"varint,1,opt,name=total,proto3" json:"total,omitempty"`
+	// Total number of anonymous participants in the call.
+	Anonymous uint32 `protobuf:"varint,2,opt,name=anonymous,proto3" json:"anonymous,omitempty"`
+}
+
+func (x *ParticipantCount) Reset() {
+	*x = ParticipantCount{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_video_sfu_models_models_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ParticipantCount) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ParticipantCount) ProtoMessage() {}
+
+func (x *ParticipantCount) ProtoReflect() protoreflect.Message {
+	mi := &file_video_sfu_models_models_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ParticipantCount.ProtoReflect.Descriptor instead.
+func (*ParticipantCount) Descriptor() ([]byte, []int) {
+	return file_video_sfu_models_models_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *ParticipantCount) GetTotal() uint32 {
+	if x != nil {
+		return x.Total
+	}
+	return 0
+}
+
+func (x *ParticipantCount) GetAnonymous() uint32 {
+	if x != nil {
+		return x.Anonymous
+	}
+	return 0
+}
+
 // those who are online in the call
 type Participant struct {
 	state         protoimpl.MessageState
@@ -507,7 +582,7 @@ type Participant struct {
 func (x *Participant) Reset() {
 	*x = Participant{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_video_sfu_models_models_proto_msgTypes[1]
+		mi := &file_video_sfu_models_models_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -520,7 +595,7 @@ func (x *Participant) String() string {
 func (*Participant) ProtoMessage() {}
 
 func (x *Participant) ProtoReflect() protoreflect.Message {
-	mi := &file_video_sfu_models_models_proto_msgTypes[1]
+	mi := &file_video_sfu_models_models_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -533,7 +608,7 @@ func (x *Participant) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Participant.ProtoReflect.Descriptor instead.
 func (*Participant) Descriptor() ([]byte, []int) {
-	return file_video_sfu_models_models_proto_rawDescGZIP(), []int{1}
+	return file_video_sfu_models_models_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Participant) GetUserId() string {
@@ -639,7 +714,7 @@ type StreamQuality struct {
 func (x *StreamQuality) Reset() {
 	*x = StreamQuality{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_video_sfu_models_models_proto_msgTypes[2]
+		mi := &file_video_sfu_models_models_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -652,7 +727,7 @@ func (x *StreamQuality) String() string {
 func (*StreamQuality) ProtoMessage() {}
 
 func (x *StreamQuality) ProtoReflect() protoreflect.Message {
-	mi := &file_video_sfu_models_models_proto_msgTypes[2]
+	mi := &file_video_sfu_models_models_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -665,7 +740,7 @@ func (x *StreamQuality) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StreamQuality.ProtoReflect.Descriptor instead.
 func (*StreamQuality) Descriptor() ([]byte, []int) {
-	return file_video_sfu_models_models_proto_rawDescGZIP(), []int{2}
+	return file_video_sfu_models_models_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *StreamQuality) GetVideoQuality() VideoQuality {
@@ -694,7 +769,7 @@ type VideoDimension struct {
 func (x *VideoDimension) Reset() {
 	*x = VideoDimension{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_video_sfu_models_models_proto_msgTypes[3]
+		mi := &file_video_sfu_models_models_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -707,7 +782,7 @@ func (x *VideoDimension) String() string {
 func (*VideoDimension) ProtoMessage() {}
 
 func (x *VideoDimension) ProtoReflect() protoreflect.Message {
-	mi := &file_video_sfu_models_models_proto_msgTypes[3]
+	mi := &file_video_sfu_models_models_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -720,7 +795,7 @@ func (x *VideoDimension) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VideoDimension.ProtoReflect.Descriptor instead.
 func (*VideoDimension) Descriptor() ([]byte, []int) {
-	return file_video_sfu_models_models_proto_rawDescGZIP(), []int{3}
+	return file_video_sfu_models_models_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *VideoDimension) GetWidth() uint32 {
@@ -754,7 +829,7 @@ type VideoLayer struct {
 func (x *VideoLayer) Reset() {
 	*x = VideoLayer{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_video_sfu_models_models_proto_msgTypes[4]
+		mi := &file_video_sfu_models_models_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -767,7 +842,7 @@ func (x *VideoLayer) String() string {
 func (*VideoLayer) ProtoMessage() {}
 
 func (x *VideoLayer) ProtoReflect() protoreflect.Message {
-	mi := &file_video_sfu_models_models_proto_msgTypes[4]
+	mi := &file_video_sfu_models_models_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -780,7 +855,7 @@ func (x *VideoLayer) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VideoLayer.ProtoReflect.Descriptor instead.
 func (*VideoLayer) Descriptor() ([]byte, []int) {
-	return file_video_sfu_models_models_proto_rawDescGZIP(), []int{4}
+	return file_video_sfu_models_models_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *VideoLayer) GetRid() string {
@@ -834,7 +909,7 @@ type Codec struct {
 func (x *Codec) Reset() {
 	*x = Codec{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_video_sfu_models_models_proto_msgTypes[5]
+		mi := &file_video_sfu_models_models_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -847,7 +922,7 @@ func (x *Codec) String() string {
 func (*Codec) ProtoMessage() {}
 
 func (x *Codec) ProtoReflect() protoreflect.Message {
-	mi := &file_video_sfu_models_models_proto_msgTypes[5]
+	mi := &file_video_sfu_models_models_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -860,7 +935,7 @@ func (x *Codec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Codec.ProtoReflect.Descriptor instead.
 func (*Codec) Descriptor() ([]byte, []int) {
-	return file_video_sfu_models_models_proto_rawDescGZIP(), []int{5}
+	return file_video_sfu_models_models_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *Codec) GetPayloadType() uint32 {
@@ -918,7 +993,7 @@ type ICETrickle struct {
 func (x *ICETrickle) Reset() {
 	*x = ICETrickle{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_video_sfu_models_models_proto_msgTypes[6]
+		mi := &file_video_sfu_models_models_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -931,7 +1006,7 @@ func (x *ICETrickle) String() string {
 func (*ICETrickle) ProtoMessage() {}
 
 func (x *ICETrickle) ProtoReflect() protoreflect.Message {
-	mi := &file_video_sfu_models_models_proto_msgTypes[6]
+	mi := &file_video_sfu_models_models_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -944,7 +1019,7 @@ func (x *ICETrickle) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ICETrickle.ProtoReflect.Descriptor instead.
 func (*ICETrickle) Descriptor() ([]byte, []int) {
-	return file_video_sfu_models_models_proto_rawDescGZIP(), []int{6}
+	return file_video_sfu_models_models_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ICETrickle) GetPeerType() PeerType {
@@ -986,7 +1061,7 @@ type TrackInfo struct {
 func (x *TrackInfo) Reset() {
 	*x = TrackInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_video_sfu_models_models_proto_msgTypes[7]
+		mi := &file_video_sfu_models_models_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -999,7 +1074,7 @@ func (x *TrackInfo) String() string {
 func (*TrackInfo) ProtoMessage() {}
 
 func (x *TrackInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_video_sfu_models_models_proto_msgTypes[7]
+	mi := &file_video_sfu_models_models_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1012,7 +1087,7 @@ func (x *TrackInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TrackInfo.ProtoReflect.Descriptor instead.
 func (*TrackInfo) Descriptor() ([]byte, []int) {
-	return file_video_sfu_models_models_proto_rawDescGZIP(), []int{7}
+	return file_video_sfu_models_models_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *TrackInfo) GetTrackId() string {
@@ -1086,7 +1161,7 @@ type Call struct {
 func (x *Call) Reset() {
 	*x = Call{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_video_sfu_models_models_proto_msgTypes[8]
+		mi := &file_video_sfu_models_models_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1099,7 +1174,7 @@ func (x *Call) String() string {
 func (*Call) ProtoMessage() {}
 
 func (x *Call) ProtoReflect() protoreflect.Message {
-	mi := &file_video_sfu_models_models_proto_msgTypes[8]
+	mi := &file_video_sfu_models_models_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1112,7 +1187,7 @@ func (x *Call) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Call.ProtoReflect.Descriptor instead.
 func (*Call) Descriptor() ([]byte, []int) {
-	return file_video_sfu_models_models_proto_rawDescGZIP(), []int{8}
+	return file_video_sfu_models_models_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *Call) GetType() string {
@@ -1177,7 +1252,7 @@ type Error struct {
 func (x *Error) Reset() {
 	*x = Error{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_video_sfu_models_models_proto_msgTypes[9]
+		mi := &file_video_sfu_models_models_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1190,7 +1265,7 @@ func (x *Error) String() string {
 func (*Error) ProtoMessage() {}
 
 func (x *Error) ProtoReflect() protoreflect.Message {
-	mi := &file_video_sfu_models_models_proto_msgTypes[9]
+	mi := &file_video_sfu_models_models_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1203,7 +1278,7 @@ func (x *Error) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Error.ProtoReflect.Descriptor instead.
 func (*Error) Descriptor() ([]byte, []int) {
-	return file_video_sfu_models_models_proto_rawDescGZIP(), []int{9}
+	return file_video_sfu_models_models_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *Error) GetCode() ErrorCode {
@@ -1241,7 +1316,7 @@ type ClientDetails struct {
 func (x *ClientDetails) Reset() {
 	*x = ClientDetails{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_video_sfu_models_models_proto_msgTypes[10]
+		mi := &file_video_sfu_models_models_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1254,7 +1329,7 @@ func (x *ClientDetails) String() string {
 func (*ClientDetails) ProtoMessage() {}
 
 func (x *ClientDetails) ProtoReflect() protoreflect.Message {
-	mi := &file_video_sfu_models_models_proto_msgTypes[10]
+	mi := &file_video_sfu_models_models_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1267,7 +1342,7 @@ func (x *ClientDetails) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClientDetails.ProtoReflect.Descriptor instead.
 func (*ClientDetails) Descriptor() ([]byte, []int) {
-	return file_video_sfu_models_models_proto_rawDescGZIP(), []int{10}
+	return file_video_sfu_models_models_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ClientDetails) GetSdk() *Sdk {
@@ -1312,7 +1387,7 @@ type Sdk struct {
 func (x *Sdk) Reset() {
 	*x = Sdk{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_video_sfu_models_models_proto_msgTypes[11]
+		mi := &file_video_sfu_models_models_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1325,7 +1400,7 @@ func (x *Sdk) String() string {
 func (*Sdk) ProtoMessage() {}
 
 func (x *Sdk) ProtoReflect() protoreflect.Message {
-	mi := &file_video_sfu_models_models_proto_msgTypes[11]
+	mi := &file_video_sfu_models_models_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1338,7 +1413,7 @@ func (x *Sdk) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Sdk.ProtoReflect.Descriptor instead.
 func (*Sdk) Descriptor() ([]byte, []int) {
-	return file_video_sfu_models_models_proto_rawDescGZIP(), []int{11}
+	return file_video_sfu_models_models_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *Sdk) GetType() SdkType {
@@ -1382,7 +1457,7 @@ type OS struct {
 func (x *OS) Reset() {
 	*x = OS{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_video_sfu_models_models_proto_msgTypes[12]
+		mi := &file_video_sfu_models_models_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1395,7 +1470,7 @@ func (x *OS) String() string {
 func (*OS) ProtoMessage() {}
 
 func (x *OS) ProtoReflect() protoreflect.Message {
-	mi := &file_video_sfu_models_models_proto_msgTypes[12]
+	mi := &file_video_sfu_models_models_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1408,7 +1483,7 @@ func (x *OS) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OS.ProtoReflect.Descriptor instead.
 func (*OS) Descriptor() ([]byte, []int) {
-	return file_video_sfu_models_models_proto_rawDescGZIP(), []int{12}
+	return file_video_sfu_models_models_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *OS) GetName() string {
@@ -1444,7 +1519,7 @@ type Browser struct {
 func (x *Browser) Reset() {
 	*x = Browser{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_video_sfu_models_models_proto_msgTypes[13]
+		mi := &file_video_sfu_models_models_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1457,7 +1532,7 @@ func (x *Browser) String() string {
 func (*Browser) ProtoMessage() {}
 
 func (x *Browser) ProtoReflect() protoreflect.Message {
-	mi := &file_video_sfu_models_models_proto_msgTypes[13]
+	mi := &file_video_sfu_models_models_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1470,7 +1545,7 @@ func (x *Browser) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Browser.ProtoReflect.Descriptor instead.
 func (*Browser) Descriptor() ([]byte, []int) {
-	return file_video_sfu_models_models_proto_rawDescGZIP(), []int{13}
+	return file_video_sfu_models_models_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *Browser) GetName() string {
@@ -1499,7 +1574,7 @@ type Device struct {
 func (x *Device) Reset() {
 	*x = Device{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_video_sfu_models_models_proto_msgTypes[14]
+		mi := &file_video_sfu_models_models_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1512,7 +1587,7 @@ func (x *Device) String() string {
 func (*Device) ProtoMessage() {}
 
 func (x *Device) ProtoReflect() protoreflect.Message {
-	mi := &file_video_sfu_models_models_proto_msgTypes[14]
+	mi := &file_video_sfu_models_models_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1525,7 +1600,7 @@ func (x *Device) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Device.ProtoReflect.Descriptor instead.
 func (*Device) Descriptor() ([]byte, []int) {
-	return file_video_sfu_models_models_proto_rawDescGZIP(), []int{14}
+	return file_video_sfu_models_models_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *Device) GetName() string {
@@ -1557,7 +1632,7 @@ type CallGrants struct {
 func (x *CallGrants) Reset() {
 	*x = CallGrants{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_video_sfu_models_models_proto_msgTypes[15]
+		mi := &file_video_sfu_models_models_proto_msgTypes[16]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1570,7 +1645,7 @@ func (x *CallGrants) String() string {
 func (*CallGrants) ProtoMessage() {}
 
 func (x *CallGrants) ProtoReflect() protoreflect.Message {
-	mi := &file_video_sfu_models_models_proto_msgTypes[15]
+	mi := &file_video_sfu_models_models_proto_msgTypes[16]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1583,7 +1658,7 @@ func (x *CallGrants) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CallGrants.ProtoReflect.Descriptor instead.
 func (*CallGrants) Descriptor() ([]byte, []int) {
-	return file_video_sfu_models_models_proto_rawDescGZIP(), []int{15}
+	return file_video_sfu_models_models_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *CallGrants) GetCanPublishAudio() bool {
@@ -1617,7 +1692,7 @@ var file_video_sfu_models_models_proto_rawDesc = []byte{
 	0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2f, 0x73, 0x74, 0x72, 0x75, 0x63, 0x74,
 	0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x1f, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2f, 0x70,
 	0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2f, 0x74, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d,
-	0x70, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x90, 0x01, 0x0a, 0x09, 0x43, 0x61, 0x6c, 0x6c,
+	0x70, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0xe8, 0x01, 0x0a, 0x09, 0x43, 0x61, 0x6c, 0x6c,
 	0x53, 0x74, 0x61, 0x74, 0x65, 0x12, 0x48, 0x0a, 0x0c, 0x70, 0x61, 0x72, 0x74, 0x69, 0x63, 0x69,
 	0x70, 0x61, 0x6e, 0x74, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x24, 0x2e, 0x73, 0x74,
 	0x72, 0x65, 0x61, 0x6d, 0x2e, 0x76, 0x69, 0x64, 0x65, 0x6f, 0x2e, 0x73, 0x66, 0x75, 0x2e, 0x6d,
@@ -1626,7 +1701,17 @@ var file_video_sfu_models_models_proto_rawDesc = []byte{
 	0x39, 0x0a, 0x0a, 0x73, 0x74, 0x61, 0x72, 0x74, 0x65, 0x64, 0x5f, 0x61, 0x74, 0x18, 0x02, 0x20,
 	0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f,
 	0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52,
-	0x09, 0x73, 0x74, 0x61, 0x72, 0x74, 0x65, 0x64, 0x41, 0x74, 0x22, 0xbb, 0x04, 0x0a, 0x0b, 0x50,
+	0x09, 0x73, 0x74, 0x61, 0x72, 0x74, 0x65, 0x64, 0x41, 0x74, 0x12, 0x56, 0x0a, 0x11, 0x70, 0x61,
+	0x72, 0x74, 0x69, 0x63, 0x69, 0x70, 0x61, 0x6e, 0x74, 0x5f, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x18,
+	0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x29, 0x2e, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x2e, 0x76,
+	0x69, 0x64, 0x65, 0x6f, 0x2e, 0x73, 0x66, 0x75, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e,
+	0x50, 0x61, 0x72, 0x74, 0x69, 0x63, 0x69, 0x70, 0x61, 0x6e, 0x74, 0x43, 0x6f, 0x75, 0x6e, 0x74,
+	0x52, 0x10, 0x70, 0x61, 0x72, 0x74, 0x69, 0x63, 0x69, 0x70, 0x61, 0x6e, 0x74, 0x43, 0x6f, 0x75,
+	0x6e, 0x74, 0x22, 0x46, 0x0a, 0x10, 0x50, 0x61, 0x72, 0x74, 0x69, 0x63, 0x69, 0x70, 0x61, 0x6e,
+	0x74, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x74, 0x6f, 0x74, 0x61, 0x6c, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x05, 0x74, 0x6f, 0x74, 0x61, 0x6c, 0x12, 0x1c, 0x0a, 0x09,
+	0x61, 0x6e, 0x6f, 0x6e, 0x79, 0x6d, 0x6f, 0x75, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0d, 0x52,
+	0x09, 0x61, 0x6e, 0x6f, 0x6e, 0x79, 0x6d, 0x6f, 0x75, 0x73, 0x22, 0xbb, 0x04, 0x0a, 0x0b, 0x50,
 	0x61, 0x72, 0x74, 0x69, 0x63, 0x69, 0x70, 0x61, 0x6e, 0x74, 0x12, 0x17, 0x0a, 0x07, 0x75, 0x73,
 	0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x75, 0x73, 0x65,
 	0x72, 0x49, 0x64, 0x12, 0x1d, 0x0a, 0x0a, 0x73, 0x65, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x5f, 0x69,
@@ -1900,7 +1985,7 @@ func file_video_sfu_models_models_proto_rawDescGZIP() []byte {
 }
 
 var file_video_sfu_models_models_proto_enumTypes = make([]protoimpl.EnumInfo, 7)
-var file_video_sfu_models_models_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
+var file_video_sfu_models_models_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
 var file_video_sfu_models_models_proto_goTypes = []interface{}{
 	(PeerType)(0),                 // 0: stream.video.sfu.models.PeerType
 	(ConnectionQuality)(0),        // 1: stream.video.sfu.models.ConnectionQuality
@@ -1910,51 +1995,53 @@ var file_video_sfu_models_models_proto_goTypes = []interface{}{
 	(SdkType)(0),                  // 5: stream.video.sfu.models.SdkType
 	(TrackUnpublishReason)(0),     // 6: stream.video.sfu.models.TrackUnpublishReason
 	(*CallState)(nil),             // 7: stream.video.sfu.models.CallState
-	(*Participant)(nil),           // 8: stream.video.sfu.models.Participant
-	(*StreamQuality)(nil),         // 9: stream.video.sfu.models.StreamQuality
-	(*VideoDimension)(nil),        // 10: stream.video.sfu.models.VideoDimension
-	(*VideoLayer)(nil),            // 11: stream.video.sfu.models.VideoLayer
-	(*Codec)(nil),                 // 12: stream.video.sfu.models.Codec
-	(*ICETrickle)(nil),            // 13: stream.video.sfu.models.ICETrickle
-	(*TrackInfo)(nil),             // 14: stream.video.sfu.models.TrackInfo
-	(*Call)(nil),                  // 15: stream.video.sfu.models.Call
-	(*Error)(nil),                 // 16: stream.video.sfu.models.Error
-	(*ClientDetails)(nil),         // 17: stream.video.sfu.models.ClientDetails
-	(*Sdk)(nil),                   // 18: stream.video.sfu.models.Sdk
-	(*OS)(nil),                    // 19: stream.video.sfu.models.OS
-	(*Browser)(nil),               // 20: stream.video.sfu.models.Browser
-	(*Device)(nil),                // 21: stream.video.sfu.models.Device
-	(*CallGrants)(nil),            // 22: stream.video.sfu.models.CallGrants
-	(*timestamppb.Timestamp)(nil), // 23: google.protobuf.Timestamp
-	(*structpb.Struct)(nil),       // 24: google.protobuf.Struct
+	(*ParticipantCount)(nil),      // 8: stream.video.sfu.models.ParticipantCount
+	(*Participant)(nil),           // 9: stream.video.sfu.models.Participant
+	(*StreamQuality)(nil),         // 10: stream.video.sfu.models.StreamQuality
+	(*VideoDimension)(nil),        // 11: stream.video.sfu.models.VideoDimension
+	(*VideoLayer)(nil),            // 12: stream.video.sfu.models.VideoLayer
+	(*Codec)(nil),                 // 13: stream.video.sfu.models.Codec
+	(*ICETrickle)(nil),            // 14: stream.video.sfu.models.ICETrickle
+	(*TrackInfo)(nil),             // 15: stream.video.sfu.models.TrackInfo
+	(*Call)(nil),                  // 16: stream.video.sfu.models.Call
+	(*Error)(nil),                 // 17: stream.video.sfu.models.Error
+	(*ClientDetails)(nil),         // 18: stream.video.sfu.models.ClientDetails
+	(*Sdk)(nil),                   // 19: stream.video.sfu.models.Sdk
+	(*OS)(nil),                    // 20: stream.video.sfu.models.OS
+	(*Browser)(nil),               // 21: stream.video.sfu.models.Browser
+	(*Device)(nil),                // 22: stream.video.sfu.models.Device
+	(*CallGrants)(nil),            // 23: stream.video.sfu.models.CallGrants
+	(*timestamppb.Timestamp)(nil), // 24: google.protobuf.Timestamp
+	(*structpb.Struct)(nil),       // 25: google.protobuf.Struct
 }
 var file_video_sfu_models_models_proto_depIdxs = []int32{
-	8,  // 0: stream.video.sfu.models.CallState.participants:type_name -> stream.video.sfu.models.Participant
-	23, // 1: stream.video.sfu.models.CallState.started_at:type_name -> google.protobuf.Timestamp
-	3,  // 2: stream.video.sfu.models.Participant.published_tracks:type_name -> stream.video.sfu.models.TrackType
-	23, // 3: stream.video.sfu.models.Participant.joined_at:type_name -> google.protobuf.Timestamp
-	1,  // 4: stream.video.sfu.models.Participant.connection_quality:type_name -> stream.video.sfu.models.ConnectionQuality
-	24, // 5: stream.video.sfu.models.Participant.custom:type_name -> google.protobuf.Struct
-	2,  // 6: stream.video.sfu.models.StreamQuality.video_quality:type_name -> stream.video.sfu.models.VideoQuality
-	10, // 7: stream.video.sfu.models.VideoLayer.video_dimension:type_name -> stream.video.sfu.models.VideoDimension
-	2,  // 8: stream.video.sfu.models.VideoLayer.quality:type_name -> stream.video.sfu.models.VideoQuality
-	0,  // 9: stream.video.sfu.models.ICETrickle.peer_type:type_name -> stream.video.sfu.models.PeerType
-	3,  // 10: stream.video.sfu.models.TrackInfo.track_type:type_name -> stream.video.sfu.models.TrackType
-	11, // 11: stream.video.sfu.models.TrackInfo.layers:type_name -> stream.video.sfu.models.VideoLayer
-	24, // 12: stream.video.sfu.models.Call.custom:type_name -> google.protobuf.Struct
-	23, // 13: stream.video.sfu.models.Call.created_at:type_name -> google.protobuf.Timestamp
-	23, // 14: stream.video.sfu.models.Call.updated_at:type_name -> google.protobuf.Timestamp
-	4,  // 15: stream.video.sfu.models.Error.code:type_name -> stream.video.sfu.models.ErrorCode
-	18, // 16: stream.video.sfu.models.ClientDetails.sdk:type_name -> stream.video.sfu.models.Sdk
-	19, // 17: stream.video.sfu.models.ClientDetails.os:type_name -> stream.video.sfu.models.OS
-	20, // 18: stream.video.sfu.models.ClientDetails.browser:type_name -> stream.video.sfu.models.Browser
-	21, // 19: stream.video.sfu.models.ClientDetails.device:type_name -> stream.video.sfu.models.Device
-	5,  // 20: stream.video.sfu.models.Sdk.type:type_name -> stream.video.sfu.models.SdkType
-	21, // [21:21] is the sub-list for method output_type
-	21, // [21:21] is the sub-list for method input_type
-	21, // [21:21] is the sub-list for extension type_name
-	21, // [21:21] is the sub-list for extension extendee
-	0,  // [0:21] is the sub-list for field type_name
+	9,  // 0: stream.video.sfu.models.CallState.participants:type_name -> stream.video.sfu.models.Participant
+	24, // 1: stream.video.sfu.models.CallState.started_at:type_name -> google.protobuf.Timestamp
+	8,  // 2: stream.video.sfu.models.CallState.participant_count:type_name -> stream.video.sfu.models.ParticipantCount
+	3,  // 3: stream.video.sfu.models.Participant.published_tracks:type_name -> stream.video.sfu.models.TrackType
+	24, // 4: stream.video.sfu.models.Participant.joined_at:type_name -> google.protobuf.Timestamp
+	1,  // 5: stream.video.sfu.models.Participant.connection_quality:type_name -> stream.video.sfu.models.ConnectionQuality
+	25, // 6: stream.video.sfu.models.Participant.custom:type_name -> google.protobuf.Struct
+	2,  // 7: stream.video.sfu.models.StreamQuality.video_quality:type_name -> stream.video.sfu.models.VideoQuality
+	11, // 8: stream.video.sfu.models.VideoLayer.video_dimension:type_name -> stream.video.sfu.models.VideoDimension
+	2,  // 9: stream.video.sfu.models.VideoLayer.quality:type_name -> stream.video.sfu.models.VideoQuality
+	0,  // 10: stream.video.sfu.models.ICETrickle.peer_type:type_name -> stream.video.sfu.models.PeerType
+	3,  // 11: stream.video.sfu.models.TrackInfo.track_type:type_name -> stream.video.sfu.models.TrackType
+	12, // 12: stream.video.sfu.models.TrackInfo.layers:type_name -> stream.video.sfu.models.VideoLayer
+	25, // 13: stream.video.sfu.models.Call.custom:type_name -> google.protobuf.Struct
+	24, // 14: stream.video.sfu.models.Call.created_at:type_name -> google.protobuf.Timestamp
+	24, // 15: stream.video.sfu.models.Call.updated_at:type_name -> google.protobuf.Timestamp
+	4,  // 16: stream.video.sfu.models.Error.code:type_name -> stream.video.sfu.models.ErrorCode
+	19, // 17: stream.video.sfu.models.ClientDetails.sdk:type_name -> stream.video.sfu.models.Sdk
+	20, // 18: stream.video.sfu.models.ClientDetails.os:type_name -> stream.video.sfu.models.OS
+	21, // 19: stream.video.sfu.models.ClientDetails.browser:type_name -> stream.video.sfu.models.Browser
+	22, // 20: stream.video.sfu.models.ClientDetails.device:type_name -> stream.video.sfu.models.Device
+	5,  // 21: stream.video.sfu.models.Sdk.type:type_name -> stream.video.sfu.models.SdkType
+	22, // [22:22] is the sub-list for method output_type
+	22, // [22:22] is the sub-list for method input_type
+	22, // [22:22] is the sub-list for extension type_name
+	22, // [22:22] is the sub-list for extension extendee
+	0,  // [0:22] is the sub-list for field type_name
 }
 
 func init() { file_video_sfu_models_models_proto_init() }
@@ -1976,7 +2063,7 @@ func file_video_sfu_models_models_proto_init() {
 			}
 		}
 		file_video_sfu_models_models_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Participant); i {
+			switch v := v.(*ParticipantCount); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1988,7 +2075,7 @@ func file_video_sfu_models_models_proto_init() {
 			}
 		}
 		file_video_sfu_models_models_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*StreamQuality); i {
+			switch v := v.(*Participant); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2000,7 +2087,7 @@ func file_video_sfu_models_models_proto_init() {
 			}
 		}
 		file_video_sfu_models_models_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*VideoDimension); i {
+			switch v := v.(*StreamQuality); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2012,7 +2099,7 @@ func file_video_sfu_models_models_proto_init() {
 			}
 		}
 		file_video_sfu_models_models_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*VideoLayer); i {
+			switch v := v.(*VideoDimension); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2024,7 +2111,7 @@ func file_video_sfu_models_models_proto_init() {
 			}
 		}
 		file_video_sfu_models_models_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Codec); i {
+			switch v := v.(*VideoLayer); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2036,7 +2123,7 @@ func file_video_sfu_models_models_proto_init() {
 			}
 		}
 		file_video_sfu_models_models_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ICETrickle); i {
+			switch v := v.(*Codec); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2048,7 +2135,7 @@ func file_video_sfu_models_models_proto_init() {
 			}
 		}
 		file_video_sfu_models_models_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*TrackInfo); i {
+			switch v := v.(*ICETrickle); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2060,7 +2147,7 @@ func file_video_sfu_models_models_proto_init() {
 			}
 		}
 		file_video_sfu_models_models_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Call); i {
+			switch v := v.(*TrackInfo); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2072,7 +2159,7 @@ func file_video_sfu_models_models_proto_init() {
 			}
 		}
 		file_video_sfu_models_models_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Error); i {
+			switch v := v.(*Call); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2084,7 +2171,7 @@ func file_video_sfu_models_models_proto_init() {
 			}
 		}
 		file_video_sfu_models_models_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ClientDetails); i {
+			switch v := v.(*Error); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2096,7 +2183,7 @@ func file_video_sfu_models_models_proto_init() {
 			}
 		}
 		file_video_sfu_models_models_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Sdk); i {
+			switch v := v.(*ClientDetails); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2108,7 +2195,7 @@ func file_video_sfu_models_models_proto_init() {
 			}
 		}
 		file_video_sfu_models_models_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*OS); i {
+			switch v := v.(*Sdk); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2120,7 +2207,7 @@ func file_video_sfu_models_models_proto_init() {
 			}
 		}
 		file_video_sfu_models_models_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Browser); i {
+			switch v := v.(*OS); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2132,7 +2219,7 @@ func file_video_sfu_models_models_proto_init() {
 			}
 		}
 		file_video_sfu_models_models_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Device); i {
+			switch v := v.(*Browser); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2144,6 +2231,18 @@ func file_video_sfu_models_models_proto_init() {
 			}
 		}
 		file_video_sfu_models_models_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Device); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_video_sfu_models_models_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CallGrants); i {
 			case 0:
 				return &v.state
@@ -2162,7 +2261,7 @@ func file_video_sfu_models_models_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_video_sfu_models_models_proto_rawDesc,
 			NumEnums:      7,
-			NumMessages:   16,
+			NumMessages:   17,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
