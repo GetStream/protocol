@@ -1,6 +1,6 @@
 module github.com/GetStream/video/tools
 
-go 1.19
+go 1.20
 
 require (
 	github.com/envoyproxy/protoc-gen-validate v0.6.7
