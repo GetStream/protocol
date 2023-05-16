@@ -1259,6 +1259,20 @@ components:
       x-stream-event-client-type: true
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    Coordinates:
+      properties:
+        latitude:
+          format: float
+          type: number
+          x-stream-index: "001"
+        longitude:
+          format: float
+          type: number
+          x-stream-index: "002"
+      required:
+      - latitude
+      - longitude
+      type: object
     CreateCallTypeRequest:
       nullable: true
       properties:
@@ -1434,6 +1448,22 @@ components:
       x-stream-event-call-type: true
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    DatacenterResponse:
+      properties:
+        coordinates:
+          $ref: '#/components/schemas/Coordinates'
+          x-stream-index: "003"
+        latency_url:
+          type: string
+          x-stream-index: "002"
+        name:
+          type: string
+          x-stream-index: "001"
+      required:
+      - name
+      - latency_url
+      - coordinates
+      type: object
     Device:
       properties:
         created_at:
@@ -1848,8 +1878,8 @@ components:
         data:
           $ref: '#/components/schemas/CallRequest'
           x-stream-index: "004"
-        location:
-          title: Location
+        datacenter_hinted_id:
+          title: DatacenterHintedID
           type: string
           x-stream-index: "008"
         members_limit:
@@ -1864,8 +1894,6 @@ components:
           title: Ring
           type: boolean
           x-stream-index: "005"
-      required:
-      - location
       type: object
     JoinCallResponse:
       nullable: true
@@ -1882,13 +1910,15 @@ components:
           title: Created
           type: boolean
           x-stream-index: "002"
-        credentials:
-          $ref: '#/components/schemas/Credentials'
-          title: Credentials
-          x-stream-index: "003"
         duration:
           type: string
           x-stream-index: 001.002.001
+        edges:
+          items:
+            $ref: '#/components/schemas/DatacenterResponse'
+          title: Edges
+          type: array
+          x-stream-index: "003"
         members:
           items:
             $ref: '#/components/schemas/MemberResponse'
@@ -1903,7 +1933,7 @@ components:
       - blocked_users
       - duration
       - created
-      - credentials
+      - edges
       type: object
     ListCallTypeResponse:
       nullable: true
@@ -2462,13 +2492,9 @@ components:
         url:
           type: string
           x-stream-index: "002"
-        ws_endpoint:
-          type: string
-          x-stream-index: "003"
       required:
       - edge_name
       - url
-      - ws_endpoint
       type: object
     ScreensharingSettings:
       properties:
@@ -3113,7 +3139,7 @@ externalDocs:
   url: https://getstream.io/video/docs/
 info:
   title: Stream Video API
-  version: v81.0.0-17-g50958dfa3
+  version: v81.1.0
 openapi: 3.0.3
 paths:
   /call/{type}/{id}:
