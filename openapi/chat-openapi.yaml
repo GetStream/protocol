@@ -11,9 +11,42 @@ components:
           x-stream-index: "004"
         code:
           description: API error code
+          enum:
+          - internal-error
+          - access-key-error
+          - input-error
+          - auth-failed
+          - duplicate-username
+          - rate-limited
+          - not-found
+          - not-allowed
+          - event-not-supported
+          - channel-feature-not-supported
+          - message-too-long
+          - multiple-nesting-level
+          - payload-too-big
+          - expired-token
+          - token-not-valid-yet
+          - token-used-before-iat
+          - invalid-token-signature
+          - custom-command-endpoint-missing
+          - custom-command-endpoint=call-error
+          - connection-id-not-found
+          - cool-down
+          - query-channel-permissions-mismatch
+          - too-many-connections
+          - not-supported-in-push-v1
+          - moderation-failed
+          - video-provider-not-configured
+          - video-invalid-call-id
+          - video-create-call-failed
+          - app-suspended
+          - video-no-datacenters-available
+          - video-join-call-failure
+          - query-calls-permissions-mismatch
           format: int32
           title: Code
-          type: integer
+          type: string
           x-stream-index: "001"
         details:
           description: Additional error-specific information
@@ -127,6 +160,18 @@ components:
           type: string
           x-stream-index: "006.003"
       type: object
+    APNS:
+      properties:
+        body:
+          type: string
+          x-stream-index: "002"
+        title:
+          type: string
+          x-stream-index: "001"
+      required:
+      - title
+      - body
+      type: object
     Action:
       nullable: true
       properties:
@@ -185,7 +230,7 @@ components:
           type: string
           x-stream-index: "001.002"
         type:
-          default: any
+          default: custom
           type: string
           x-stream-index: "001.001"
       required:
@@ -553,16 +598,24 @@ components:
         access_request_enabled:
           type: boolean
           x-stream-index: "001"
+        mic_default_on:
+          type: boolean
+          x-stream-index: "004"
         opus_dtx_enabled:
           type: boolean
           x-stream-index: "002"
         redundant_coding_enabled:
           type: boolean
           x-stream-index: "003"
+        speaker_default_on:
+          type: boolean
+          x-stream-index: "005"
       required:
       - access_request_enabled
       - opus_dtx_enabled
       - redundant_coding_enabled
+      - mic_default_on
+      - speaker_default_on
       type: object
     AutomodDetails:
       properties:
@@ -793,6 +846,9 @@ components:
           type: string
           writeOnly: true
           x-stream-index: "004"
+        NotificationSettings:
+          $ref: '#/components/schemas/NotificationSettings'
+          x-stream-index: "008"
         PK:
           format: int32
           type: integer
@@ -3620,15 +3676,14 @@ components:
           type: string
           x-stream-index: "003"
         user:
-          $ref: '#/components/schemas/UserObjectRequest'
-          description: '**Server-side only**. User object which server acts upon'
-          title: User
-          x-stream-index: "004.002"
+          $ref: '#/components/schemas/UserRequest'
+          x-stream-index: "005.002"
         user_id:
-          description: '**Server-side only**. User ID which server acts upon'
-          title: User ID
           type: string
-          x-stream-index: "004.001"
+          x-stream-index: "005.001"
+        voip_token:
+          type: boolean
+          x-stream-index: "004"
       type: object
     CreateImportRequest:
       nullable: true
@@ -4007,39 +4062,45 @@ components:
       nullable: true
       properties:
         created_at:
-          description: Date/time of creation
           format: date-time
-          title: Created at
           type: string
           x-stream-index: "002.002"
         disabled:
-          description: Whether device is disabled or not
-          title: Disabled
           type: boolean
           x-stream-index: "002.003"
         disabled_reason:
-          description: Reason explaining why device had been disabled
-          title: Reason
           type: string
           x-stream-index: "002.004"
         id:
+          description: Device ID
+          title: ID
           type: string
           x-stream-index: 002.001.004
         push_provider:
+          enum:
+          - firebase
+          - apn
+          - huawei
+          - xiaomi
+          title: Push provider
           type: string
           x-stream-index: 002.001.001
         push_provider_name:
+          description: Name of the push provider configuration
+          title: Push provider name
           type: string
           x-stream-index: 002.001.003
         user_id:
           type: string
           x-stream-index: "004"
+        voip:
+          type: boolean
+          x-stream-index: 002.001.005
       required:
       - push_provider
       - id
       - created_at
       - user_id
-      title: Device
       type: object
     DeviceErrorInfo:
       properties:
@@ -4078,39 +4139,54 @@ components:
           title: Push provider name
           type: string
           x-stream-index: "003"
+        voip:
+          type: boolean
+          x-stream-index: "005"
+      required:
+      - push_provider
+      - id
       type: object
     DeviceRequest:
       nullable: true
       properties:
         created_at:
-          description: Date/time of creation
           format: date-time
-          title: Created at
           type: string
           x-stream-index: "002.002"
         disabled:
-          description: Whether device is disabled or not
-          title: Disabled
           type: boolean
           x-stream-index: "002.003"
         disabled_reason:
-          description: Reason explaining why device had been disabled
-          title: Reason
           type: string
           x-stream-index: "002.004"
         id:
+          description: Device ID
+          title: ID
           type: string
           x-stream-index: 002.001.004
         push_provider:
+          enum:
+          - firebase
+          - apn
+          - huawei
+          - xiaomi
+          title: Push provider
           type: string
           x-stream-index: 002.001.001
         push_provider_name:
+          description: Name of the push provider configuration
+          title: Push provider name
           type: string
           x-stream-index: 002.001.003
         user_id:
           type: string
           x-stream-index: "004"
-      title: Device
+        voip:
+          type: boolean
+          x-stream-index: 002.001.005
+      required:
+      - push_provider
+      - id
       type: object
     ErrorResult:
       properties:
@@ -4227,6 +4303,18 @@ components:
       title: Event
       type: object
       x-stream-docs-page-id: event_object
+    EventNotificationSettings:
+      properties:
+        apns:
+          $ref: '#/components/schemas/APNS'
+          x-stream-index: "002"
+        enabled:
+          type: boolean
+          x-stream-index: "001"
+      required:
+      - enabled
+      - apns
+      type: object
     EventRequest:
       additionalProperties: true
       description: Represents an BaseEvent that happened in Stream Chat
@@ -5773,7 +5861,7 @@ components:
           x-stream-index: "002.001"
         push_providers:
           items:
-            $ref: '#/components/schemas/PushProvider'
+            $ref: '#/components/schemas/PushProviderResponse'
           type: array
           x-stream-index: "001"
       required:
@@ -5829,7 +5917,7 @@ components:
           type: string
           x-stream-index: "002.001"
         event:
-          $ref: '#/components/schemas/Event'
+          $ref: '#/components/schemas/MessageReadEvent'
           description: Mark read event
           title: Event
           x-stream-index: "001"
@@ -6525,7 +6613,6 @@ components:
           x-stream-index: "002"
       type: object
     MessageReadEvent:
-      nullable: true
       properties:
         channel_id:
           type: string
@@ -6540,6 +6627,9 @@ components:
           format: date-time
           type: string
           x-stream-index: "004.002"
+        last_read_message_id:
+          type: string
+          x-stream-index: "005"
         team:
           type: string
           x-stream-index: "003.001"
@@ -7515,6 +7605,9 @@ components:
           format: date-time
           type: string
           x-stream-index: "006"
+        last_read_message_id:
+          type: string
+          x-stream-index: "011"
         team:
           type: string
           x-stream-index: "002.001"
@@ -7659,6 +7752,26 @@ components:
       x-stream-event-client-type: true
       x-stream-is-event: true
       x-stream-ws-base-event-name: ChatEvent
+    NotificationSettings:
+      properties:
+        call_created:
+          $ref: '#/components/schemas/EventNotificationSettings'
+          x-stream-index: "002"
+        call_live_started:
+          $ref: '#/components/schemas/EventNotificationSettings'
+          x-stream-index: "003"
+        enabled:
+          type: boolean
+          x-stream-index: "001"
+        session_started:
+          $ref: '#/components/schemas/EventNotificationSettings'
+          x-stream-index: "004"
+      required:
+      - enabled
+      - call_created
+      - call_live_started
+      - session_started
+      type: object
     OnlyUserIDRequest:
       properties:
         id:
@@ -8226,6 +8339,9 @@ components:
         firebase_data_template:
           type: string
           x-stream-index: "023"
+        firebase_host:
+          type: string
+          x-stream-index: "026"
         firebase_notification_template:
           type: string
           x-stream-index: "024"
@@ -8234,10 +8350,10 @@ components:
           x-stream-index: "021"
         huawei_app_id:
           type: string
-          x-stream-index: "026"
+          x-stream-index: "027"
         huawei_app_secret:
           type: string
-          x-stream-index: "027"
+          x-stream-index: "028"
         name:
           maxLength: 36
           minLength: 1
@@ -8252,10 +8368,10 @@ components:
           x-stream-index: "009"
         xiaomi_app_secret:
           type: string
-          x-stream-index: "029"
+          x-stream-index: "030"
         xiaomi_package_name:
           type: string
-          x-stream-index: "028"
+          x-stream-index: "029"
       required:
       - name
       - type
@@ -8316,6 +8432,9 @@ components:
         firebase_data_template:
           type: string
           x-stream-index: "023"
+        firebase_host:
+          type: string
+          x-stream-index: "026"
         firebase_notification_template:
           type: string
           x-stream-index: "024"
@@ -8324,10 +8443,10 @@ components:
           x-stream-index: "021"
         huawei_app_id:
           type: string
-          x-stream-index: "026"
+          x-stream-index: "027"
         huawei_app_secret:
           type: string
-          x-stream-index: "027"
+          x-stream-index: "028"
         name:
           maxLength: 36
           minLength: 1
@@ -8342,12 +8461,107 @@ components:
           x-stream-index: "009"
         xiaomi_app_secret:
           type: string
-          x-stream-index: "029"
+          x-stream-index: "030"
         xiaomi_package_name:
           type: string
-          x-stream-index: "028"
+          x-stream-index: "029"
       required:
       - name
+      type: object
+    PushProviderResponse:
+      properties:
+        apn_auth_key:
+          type: string
+          x-stream-index: "008"
+        apn_auth_type:
+          type: string
+          x-stream-index: "013"
+        apn_development:
+          type: boolean
+          x-stream-index: "014"
+        apn_host:
+          type: string
+          x-stream-index: "015"
+        apn_key_id:
+          type: string
+          x-stream-index: "009"
+        apn_p12_cert:
+          type: string
+          x-stream-index: "010"
+        apn_sandbox_certificate:
+          type: boolean
+          x-stream-index: "016"
+        apn_supports_remote_notifications:
+          type: boolean
+          x-stream-index: "018"
+        apn_supports_voip_notifications:
+          type: boolean
+          x-stream-index: "017"
+        apn_team_id:
+          type: string
+          x-stream-index: "011"
+        apn_topic:
+          type: string
+          x-stream-index: "012"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "004"
+        description:
+          type: string
+          x-stream-index: "003"
+        disabled_at:
+          format: date-time
+          type: string
+          x-stream-index: "006"
+        disabled_reason:
+          type: string
+          x-stream-index: "007"
+        firebase_apn_template:
+          type: string
+          x-stream-index: "023"
+        firebase_credentials:
+          type: string
+          x-stream-index: "020"
+        firebase_data_template:
+          type: string
+          x-stream-index: "021"
+        firebase_host:
+          type: string
+          x-stream-index: "024"
+        firebase_notification_template:
+          type: string
+          x-stream-index: "022"
+        firebase_server_key:
+          type: string
+          x-stream-index: "019"
+        huawei_app_id:
+          type: string
+          x-stream-index: "025"
+        huawei_app_secret:
+          type: string
+          x-stream-index: "026"
+        name:
+          type: string
+          x-stream-index: "001"
+        type:
+          type: string
+          x-stream-index: "002"
+        updated_at:
+          format: date-time
+          type: string
+          x-stream-index: "005"
+        xiaomi_app_secret:
+          type: string
+          x-stream-index: "028"
+        xiaomi_package_name:
+          type: string
+          x-stream-index: "027"
+      required:
+      - name
+      - type
+      - created_at
+      - updated_at
       type: object
     QueryBannedUsersRequest:
       properties:
@@ -9181,6 +9395,9 @@ components:
           format: date-time
           type: string
           x-stream-index: "002"
+        last_read_message_id:
+          type: string
+          x-stream-index: "004"
         unread_messages:
           format: int32
           type: integer
@@ -9980,6 +10197,30 @@ components:
       required:
       - events
       - duration
+      type: object
+    TargetResolution:
+      properties:
+        bitrate:
+          format: int32
+          maximum: 6000000
+          type: integer
+          x-stream-index: "003"
+        height:
+          format: int32
+          maximum: 2560
+          minimum: 240
+          type: integer
+          x-stream-index: "002"
+        width:
+          format: int32
+          maximum: 2560
+          minimum: 240
+          type: integer
+          x-stream-index: "001"
+      required:
+      - width
+      - height
+      - bitrate
       type: object
     TestCampaignRequest:
       nullable: true
@@ -11088,7 +11329,7 @@ components:
           type: string
           x-stream-index: "002.001"
         push_provider:
-          $ref: '#/components/schemas/PushProvider'
+          $ref: '#/components/schemas/PushProviderResponse'
           x-stream-index: "001"
       required:
       - push_provider
@@ -11540,6 +11781,40 @@ components:
       x-stream-event-client-type: true
       x-stream-is-event: true
       x-stream-ws-base-event-name: ChatEvent
+    UserRequest:
+      properties:
+        custom:
+          additionalProperties: {}
+          title: Custom
+          type: object
+          x-stream-index: "004"
+        id:
+          description: User ID
+          title: ID
+          type: string
+          x-stream-index: "001"
+        image:
+          title: Image
+          type: string
+          x-stream-index: "003"
+        name:
+          description: Optional name of user
+          title: Name
+          type: string
+          x-stream-index: "002"
+        role:
+          title: Role
+          type: string
+          x-stream-index: "005"
+        teams:
+          items:
+            type: string
+          title: Teams
+          type: array
+          x-stream-index: "006"
+      required:
+      - id
+      type: object
     UserResponse:
       additionalProperties: true
       nullable: true
@@ -11839,12 +12114,28 @@ components:
         access_request_enabled:
           type: boolean
           x-stream-index: "002"
+        camera_default_on:
+          type: boolean
+          x-stream-index: "004"
+        camera_facing:
+          enum:
+          - front
+          - back
+          - external
+          type: string
+          x-stream-index: "005"
         enabled:
           type: boolean
           x-stream-index: "001"
+        target_resolution:
+          $ref: '#/components/schemas/TargetResolution'
+          x-stream-index: "003"
       required:
       - enabled
       - access_request_enabled
+      - target_resolution
+      - camera_default_on
+      - camera_facing
       type: object
     WSClientEvent:
       description: This is just a placeholder for all client events
@@ -11927,7 +12218,7 @@ externalDocs:
   url: https://getstream.io/chat/docs/
 info:
   title: Stream Chat API
-  version: v79.49.0-3-gd697f1f87
+  version: v81.1.0-18-gd896c8c30
 openapi: 3.0.3
 paths:
   /app:
@@ -15274,7 +15565,7 @@ paths:
   /devices:
     delete:
       description: |
-        Deletes device
+        Deletes one device
       operationId: DeleteDevice
       parameters:
       - content:
@@ -15294,7 +15585,7 @@ paths:
               title: User ID
               type: string
               writeOnly: true
-              x-stream-index: "002"
+              x-stream-index: "002.001"
         in: query
         name: user_id
       responses:
@@ -15345,7 +15636,7 @@ paths:
               title: User ID
               type: string
               writeOnly: true
-              x-stream-index: "001"
+              x-stream-index: "001.001"
         in: query
         name: user_id
       responses:
@@ -15395,12 +15686,6 @@ paths:
               $ref: '#/components/schemas/CreateDeviceRequest'
         required: true
       responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Response'
-          description: Successful response
         "400":
           content:
             application/json:
