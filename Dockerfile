@@ -1,21 +1,28 @@
 FROM swift:latest
 
-ENV LANGUAGE=go
-ENV FOLDER=go-sdk
 ARG DEBIAN_FRONTEND=noninteractive
-
 RUN apt-get update && apt-get install -y --no-install-recommends wget git curl unzip software-properties-common apt-transport-https ca-certificates gnupg lsb-release
 
+ARG TARGETPLATFORM
+ARG TARGETARCH
+RUN ARCH=${TARGETPLATFORM#*/} && TARGETARCH=${ARCH}
+
+ENV LANGUAGE=go
+ENV FOLDER=go-sdk
+
 # Install Go
-RUN wget https://golang.org/dl/go1.20.4.linux-arm64.tar.gz
-RUN tar -C /usr/local -xzf go1.20.4.linux-arm64.tar.gz
-RUN rm go1.20.4.linux-arm64.tar.gz
+RUN wget https://golang.org/dl/go1.20.4.linux-$TARGETARCH.tar.gz
+RUN tar -C /usr/local -xzf go1.20.4.linux-$TARGETARCH.tar.gz
+RUN rm go1.20.4.linux-$TARGETARCH.tar.gz
 ENV PATH="$PATH:/usr/local/go/bin"
 
 # Install Dart
-RUN wget https://storage.googleapis.com/dart-archive/channels/stable/release/3.0.0/sdk/dartsdk-linux-arm64-release.zip
-RUN unzip dartsdk-linux-arm64-release.zip
-RUN rm dartsdk-linux-arm64-release.zip
+ENV DART_ARCH="arm64"
+RUN if [ "$TARGETARCH" = "amd64" ]; then export DART_ARCH="x64"; fi
+RUN echo $TARGETARCH $DART_ARCH
+RUN wget https://storage.googleapis.com/dart-archive/channels/stable/release/3.0.0/sdk/dartsdk-linux-$DART_ARCH-release.zip
+RUN unzip dartsdk-linux-$DART_ARCH-release.zip
+RUN rm dartsdk-linux-$DART_ARCH-release.zip
 RUN mv dart-sdk /opt/dart-sdk
 ENV PATH="$PATH:/opt/dart-sdk/bin"
 RUN echo 'export PATH="$PATH:/opt/dart-sdk/bin"' >> ~/.bashrc
