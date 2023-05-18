@@ -4,37 +4,54 @@ set -e
 
 REPO="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 PB=$REPO/protobuf
-PROTOC_DIR=${REPO}/.protoc
+PROTOC_DIR=/opt/.protoc
+echo "Installing protoc and plugins in $PROTOC_DIR"
 
-cd $PB
+cd "$PB"
 
 rm -rf $PROTOC_DIR && mkdir -p $PROTOC_DIR
 
-source $REPO/versions.sh
+source "$REPO/versions.sh"
 
 PROTO_ARCH="linux-x86_64"
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
+  echo "MacOS detected"
   PROTO_ARCH="osx-x86_64"
   if [[ $(uname -m) == 'arm64' ]]; then
+    echo "ARM64 detected"
     PROTO_ARCH="osx-aarch_64"
   fi
 fi
 
-wget -nv -O $PROTOC_DIR/protoc-${PROTOC_VERSION}-${PROTO_ARCH}.zip https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-${PROTO_ARCH}.zip
-unzip -qq -o $PROTOC_DIR/protoc-${PROTOC_VERSION}-${PROTO_ARCH}.zip -d ${PROTOC_DIR}
-rm -f $PROTOC_DIR/protoc-${PROTOC_VERSION}-${PROTO_ARCH}.zip $PROTOC_DIR/readme.txt
-GOBIN=$PROTOC_DIR/bin go install github.com/twitchtv/twirp/protoc-gen-twirp@${PROTO_TWIRP_VERSION}
-GOBIN=$PROTOC_DIR/bin go install google.golang.org/protobuf/cmd/protoc-gen-go@${PROTO_GO_VERSION}
-GOBIN=$PROTOC_DIR/bin go install github.com/planetscale/vtprotobuf/cmd/protoc-gen-go-vtproto@${PROTO_VTPROTO_VERSION}
-GOBIN=$PROTOC_DIR/bin go install github.com/yoheimuta/protolint/cmd/protolint@${PROTO_LINT_VERSION}
+if [[ "$OSTYPE" == "linux"* ]]; then
+  echo "Linux detected"
+  PROTO_ARCH="linux-x86_64"
+  if [[ $(uname -m) == 'aarch64' ]]; then
+    echo "ARM64 detected"
+    PROTO_ARCH="linux-aarch_64"
+  fi
+fi
+
+mkdir -p $PROTOC_DIR/bin
+
+wget -nv -O "$PROTOC_DIR/protoc-${PROTOC_VERSION}-${PROTO_ARCH}.zip" https://github.com/protocolbuffers/protobuf/releases/download/v"${PROTOC_VERSION}"/protoc-"${PROTOC_VERSION}"-"${PROTO_ARCH}".zip
+unzip -qq -o $PROTOC_DIR/protoc-"${PROTOC_VERSION}"-${PROTO_ARCH}.zip -d "${PROTOC_DIR}"
+rm -f $PROTOC_DIR/protoc-"${PROTOC_VERSION}"-${PROTO_ARCH}.zip "$PROTOC_DIR/readme.txt"
+GOBIN=$PROTOC_DIR/bin go install github.com/twitchtv/twirp/protoc-gen-twirp@"${PROTO_TWIRP_VERSION}"
+GOBIN=$PROTOC_DIR/bin go install google.golang.org/protobuf/cmd/protoc-gen-go@"${PROTO_GO_VERSION}"
+GOBIN=$PROTOC_DIR/bin go install github.com/planetscale/vtprotobuf/cmd/protoc-gen-go-vtproto@"${PROTO_VTPROTO_VERSION}"
+GOBIN=$PROTOC_DIR/bin go install github.com/yoheimuta/protolint/cmd/protolint@"${PROTO_LINT_VERSION}"
 (
-  cd $REPO/tools
+  cd "$REPO/tools"
   ./install.sh
 )
 
+echo "Installing plugins..."
+
 if command -v dart &> /dev/null
 then
+  echo "Installing dart protoc plugin"
   PUB_CACHE=${PROTOC_DIR}/.pub-cache dart pub global activate protoc_plugin 20.0.1
   cp ${PROTOC_DIR}/.pub-cache/bin/protoc-gen-dart ${PROTOC_DIR}/bin/protoc-gen-dart
 fi
@@ -45,6 +62,7 @@ fi
 if [[ -z $DISABLE_SWIFT ]]; then
   if command -v swift &> /dev/null
   then
+    echo "Installing swift protoc plugin"
     git clone --depth 1 --branch 1.20.2 https://github.com/apple/swift-protobuf $PROTOC_DIR/.swift-protobuf
     (cd $PROTOC_DIR/.swift-protobuf && swift build -c release)
     ln -s $PROTOC_DIR/.swift-protobuf/.build/release/protoc-gen-swift $PROTOC_DIR/bin/protoc-gen-swift
@@ -55,7 +73,10 @@ fi
 
 if command -v yarn &> /dev/null
 then
+  echo "Installing typescript protoc plugin"
   mkdir $PROTOC_DIR/.typescript-protobuf
   (cd $PROTOC_DIR/.typescript-protobuf && yarn add @protobuf-ts/plugin@2.8.1 --no-lockfile --disable-pnp)
   ln -s $PROTOC_DIR/.typescript-protobuf/node_modules/.bin/protoc-gen-ts $PROTOC_DIR/bin/protoc-gen-ts
 fi
+
+echo "Finished installing plugins"

@@ -54,3 +54,11 @@ publish-staging:
 release-changelog:
 	$(eval VERSION := $(CURRENT_VERSION_MAJOR).$(CURRENT_VERSION_MINOR).$(CURRENT_VERSION_BUG))
 	git log v$(VERSION)..HEAD  --oneline --shortstat
+
+.PHONY: build-docker-image
+build-docker-image:
+	@docker buildx build \
+			-f Dockerfile \
+			--platform linux/arm64 --load \
+			-t ghcr.io/getstream/protocol:latest \
+			.
