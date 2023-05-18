@@ -74,7 +74,7 @@ To generate code for your language, do this:
 ## Generate sdk with docker
 
 ```zsh
-docker run -it -e LANGUAGE=ts -e FOLDER=/local/ts-sdk -v $(pwd):/local ghcr.io/getstream/protocol
+docker run -e LANGUAGE=ts -e FOLDER=/local/ts-sdk -v $(pwd):/local ghcr.io/getstream/protocol
 ```
 
 Where `/local` is folder mounted to container from `PWD`.
