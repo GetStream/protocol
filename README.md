@@ -74,8 +74,7 @@ To generate code for your language, do this:
 ## Generate sdk with docker
 
 ```zsh
-docker run -e LANGUAGE=ts -e FOLDER=/local/ts-sdk -v $(pwd):/local ghcr.io/getstream/protocol
+docker run -v $(pwd):/local ghcr.io/getstream/protocol dart dart-sdk
 ```
 
 Where `/local` is folder mounted to container from `PWD`.
-LANGUAGE is one of `ts`, `dart`, `swift`.

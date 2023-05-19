@@ -7,9 +7,6 @@ ARG TARGETPLATFORM
 ARG TARGETARCH
 RUN ARCH=${TARGETPLATFORM#*/} && TARGETARCH=${ARCH}
 
-ENV LANGUAGE=go
-ENV FOLDER=go-sdk
-
 # Install Go
 RUN wget https://golang.org/dl/go1.20.4.linux-$TARGETARCH.tar.gz
 RUN tar -C /usr/local -xzf go1.20.4.linux-$TARGETARCH.tar.gz
@@ -36,5 +33,4 @@ RUN apt-get update && apt-get install -y --no-install-recommends yarn
 COPY . /home/
 WORKDIR /home
 RUN ./install.sh
-RUN echo 'alias generate="/home/generate.sh"' >> ~/.bashrc
-ENTRYPOINT /home/generate.sh $LANGUAGE $FOLDER
+ENTRYPOINT ["/home/docker_entrypoint.sh"]
