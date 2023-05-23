@@ -67,6 +67,6 @@ build-docker-image:
 push-docker-image:
 	@docker buildx build \
 			-f Dockerfile \
-			--platform linux/arm64 \
+			--platform linux/arm64,linux/amd64 \
 			-t ghcr.io/getstream/protocol:latest \
 			. --push
