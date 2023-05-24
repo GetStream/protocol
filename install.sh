@@ -35,6 +35,7 @@ fi
 
 mkdir -p $PROTOC_DIR/bin
 
+echo "Installing protoc $PROTOC_VERSION for $PROTO_ARCH"
 wget -nv -O "$PROTOC_DIR/protoc-${PROTOC_VERSION}-${PROTO_ARCH}.zip" https://github.com/protocolbuffers/protobuf/releases/download/v"${PROTOC_VERSION}"/protoc-"${PROTOC_VERSION}"-"${PROTO_ARCH}".zip
 unzip -qq -o $PROTOC_DIR/protoc-"${PROTOC_VERSION}"-${PROTO_ARCH}.zip -d "${PROTOC_DIR}"
 rm -f $PROTOC_DIR/protoc-"${PROTOC_VERSION}"-${PROTO_ARCH}.zip "$PROTOC_DIR/readme.txt"

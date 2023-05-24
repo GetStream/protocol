@@ -59,7 +59,7 @@ release-changelog:
 build-docker-image:
 	@docker buildx build \
 			-f Dockerfile \
-			--platform linux/arm64 --load \
+			--platform linux/amd64 --load \
 			-t ghcr.io/getstream/protocol:latest \
 			.
 
