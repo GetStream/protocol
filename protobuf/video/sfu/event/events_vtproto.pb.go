@@ -803,6 +803,13 @@ func (m *JoinRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x22
 	}
+	if len(m.SubscriberSdp) > 0 {
+		i -= len(m.SubscriberSdp)
+		copy(dAtA[i:], m.SubscriberSdp)
+		i = encodeVarint(dAtA, i, uint64(len(m.SubscriberSdp)))
+		i--
+		dAtA[i] = 0x1a
+	}
 	if len(m.SessionId) > 0 {
 		i -= len(m.SessionId)
 		copy(dAtA[i:], m.SessionId)
@@ -1952,6 +1959,10 @@ func (m *JoinRequest) SizeVT() (n int) {
 		n += 1 + l + sov(uint64(l))
 	}
 	l = len(m.SessionId)
+	if l > 0 {
+		n += 1 + l + sov(uint64(l))
+	}
+	l = len(m.SubscriberSdp)
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
 	}
@@ -3805,6 +3816,38 @@ func (m *JoinRequest) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.SessionId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SubscriberSdp", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.SubscriberSdp = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
