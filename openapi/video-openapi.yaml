@@ -112,28 +112,42 @@ components:
         access_request_enabled:
           type: boolean
           x-stream-index: "001"
+        mic_default_on:
+          type: boolean
+          x-stream-index: "004"
         opus_dtx_enabled:
           type: boolean
           x-stream-index: "002"
         redundant_coding_enabled:
           type: boolean
           x-stream-index: "003"
+        speaker_default_on:
+          type: boolean
+          x-stream-index: "005"
       required:
       - access_request_enabled
       - opus_dtx_enabled
       - redundant_coding_enabled
+      - mic_default_on
+      - speaker_default_on
       type: object
     AudioSettingsRequest:
       properties:
         access_request_enabled:
           type: boolean
           x-stream-index: "001"
+        mic_default_on:
+          type: boolean
+          x-stream-index: "004"
         opus_dtx_enabled:
           type: boolean
           x-stream-index: "002"
         redundant_coding_enabled:
           type: boolean
           x-stream-index: "003"
+        speaker_default_on:
+          type: boolean
+          x-stream-index: "005"
       type: object
     BackstageSettings:
       properties:
@@ -1259,20 +1273,6 @@ components:
       x-stream-event-client-type: true
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
-    Coordinates:
-      properties:
-        latitude:
-          format: float
-          type: number
-          x-stream-index: "001"
-        longitude:
-          format: float
-          type: number
-          x-stream-index: "002"
-      required:
-      - latitude
-      - longitude
-      type: object
     CreateCallTypeRequest:
       nullable: true
       properties:
@@ -1448,22 +1448,6 @@ components:
       x-stream-event-call-type: true
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
-    DatacenterResponse:
-      properties:
-        coordinates:
-          $ref: '#/components/schemas/Coordinates'
-          x-stream-index: "003"
-        latency_url:
-          type: string
-          x-stream-index: "002"
-        name:
-          type: string
-          x-stream-index: "001"
-      required:
-      - name
-      - latency_url
-      - coordinates
-      type: object
     Device:
       properties:
         created_at:
@@ -1878,8 +1862,8 @@ components:
         data:
           $ref: '#/components/schemas/CallRequest'
           x-stream-index: "004"
-        datacenter_hinted_id:
-          title: DatacenterHintedID
+        location:
+          title: Location
           type: string
           x-stream-index: "008"
         members_limit:
@@ -1894,6 +1878,8 @@ components:
           title: Ring
           type: boolean
           x-stream-index: "005"
+      required:
+      - location
       type: object
     JoinCallResponse:
       nullable: true
@@ -1910,15 +1896,13 @@ components:
           title: Created
           type: boolean
           x-stream-index: "002"
+        credentials:
+          $ref: '#/components/schemas/Credentials'
+          title: Credentials
+          x-stream-index: "003"
         duration:
           type: string
           x-stream-index: 001.002.001
-        edges:
-          items:
-            $ref: '#/components/schemas/DatacenterResponse'
-          title: Edges
-          type: array
-          x-stream-index: "003"
         members:
           items:
             $ref: '#/components/schemas/MemberResponse'
@@ -1933,7 +1917,7 @@ components:
       - blocked_users
       - duration
       - created
-      - edges
+      - credentials
       type: object
     ListCallTypeResponse:
       nullable: true
@@ -2492,9 +2476,13 @@ components:
         url:
           type: string
           x-stream-index: "002"
+        ws_endpoint:
+          type: string
+          x-stream-index: "003"
       required:
       - edge_name
       - url
+      - ws_endpoint
       type: object
     ScreensharingSettings:
       properties:
@@ -2619,6 +2607,50 @@ components:
       type: object
     StopTranscriptionRequest:
       nullable: true
+      type: object
+    TargetResolution:
+      properties:
+        bitrate:
+          format: int32
+          maximum: 6000000
+          type: integer
+          x-stream-index: "003"
+        height:
+          format: int32
+          maximum: 2560
+          minimum: 240
+          type: integer
+          x-stream-index: "002"
+        width:
+          format: int32
+          maximum: 2560
+          minimum: 240
+          type: integer
+          x-stream-index: "001"
+      required:
+      - width
+      - height
+      - bitrate
+      type: object
+    TargetResolutionRequest:
+      properties:
+        bitrate:
+          format: int32
+          maximum: 6000000
+          type: integer
+          x-stream-index: "003"
+        height:
+          format: int32
+          maximum: 2560
+          minimum: 240
+          type: integer
+          x-stream-index: "002"
+        width:
+          format: int32
+          maximum: 2560
+          minimum: 240
+          type: integer
+          x-stream-index: "001"
       type: object
     TranscriptionSettings:
       properties:
@@ -3051,21 +3083,50 @@ components:
         access_request_enabled:
           type: boolean
           x-stream-index: "002"
+        camera_default_on:
+          type: boolean
+          x-stream-index: "004"
+        camera_facing:
+          enum:
+          - front
+          - back
+          - external
+          type: string
+          x-stream-index: "005"
         enabled:
           type: boolean
           x-stream-index: "001"
+        target_resolution:
+          $ref: '#/components/schemas/TargetResolution'
+          x-stream-index: "003"
       required:
       - enabled
       - access_request_enabled
+      - target_resolution
+      - camera_default_on
+      - camera_facing
       type: object
     VideoSettingsRequest:
       properties:
         access_request_enabled:
           type: boolean
           x-stream-index: "002"
+        camera_default_on:
+          type: boolean
+          x-stream-index: "004"
+        camera_facing:
+          enum:
+          - front
+          - back
+          - external
+          type: string
+          x-stream-index: "005"
         enabled:
           type: boolean
           x-stream-index: "001"
+        target_resolution:
+          $ref: '#/components/schemas/TargetResolutionRequest'
+          x-stream-index: "003"
       type: object
     WSAuthMessageRequest:
       nullable: true
@@ -3084,7 +3145,7 @@ components:
     WSCallEvent:
       description: This is just a placeholder for all client events
       properties:
-        call_id:
+        call_cid:
           type: string
       type: object
       x-stream-is-ws-call-event: true
@@ -3139,7 +3200,7 @@ externalDocs:
   url: https://getstream.io/video/docs/
 info:
   title: Stream Video API
-  version: v81.1.0
+  version: v81.3.0
 openapi: 3.0.3
 paths:
   /call/{type}/{id}:
