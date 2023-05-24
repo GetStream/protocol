@@ -826,13 +826,8 @@ func (m *JoinRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.IsMigrating {
-		i--
-		if m.IsMigrating {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
+	if m.JoinMode != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.JoinMode))
 		i--
 		dAtA[i] = 0x28
 	}
@@ -2261,8 +2256,8 @@ func (m *JoinRequest) SizeVT() (n int) {
 		}
 		n += 1 + l + sov(uint64(l))
 	}
-	if m.IsMigrating {
-		n += 2
+	if m.JoinMode != 0 {
+		n += 1 + sov(uint64(m.JoinMode))
 	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
@@ -4376,9 +4371,9 @@ func (m *JoinRequest) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 5:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field IsMigrating", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field JoinMode", wireType)
 			}
-			var v int
+			m.JoinMode = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflow
@@ -4388,12 +4383,11 @@ func (m *JoinRequest) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				v |= int(b&0x7F) << shift
+				m.JoinMode |= models.JoinMode(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			m.IsMigrating = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])
