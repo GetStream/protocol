@@ -107,6 +107,18 @@ components:
           type: string
           x-stream-index: "001"
       type: object
+    AcceptCallRequest:
+      nullable: true
+      type: object
+    AcceptCallResponse:
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      type: object
     AudioSettings:
       properties:
         access_request_enabled:
@@ -238,11 +250,13 @@ components:
       - hls
       type: object
     CallAcceptedEvent:
-      description: |-
-        This event is sent by a user accepting an incoming ringing call.
-        Clients receiving this event should dismiss the call screen and move to the call.
+      description: This event is sent when a user accepts a notification to join a
+        call.
       nullable: true
       properties:
+        call:
+          $ref: '#/components/schemas/CallResponse'
+          x-stream-index: "003"
         call_cid:
           type: string
           x-stream-index: "002.001"
@@ -252,17 +266,20 @@ components:
           x-stream-index: "001.002"
         type:
           default: call.accepted
+          description: 'The type of event: "call.accepted" in this case'
+          title: Event Type
           type: string
           x-stream-index: "001.001"
         user:
           $ref: '#/components/schemas/UserResponse'
           description: The user who accepted the call
           title: User
-          x-stream-index: "003"
+          x-stream-index: "004"
       required:
       - type
       - created_at
       - call_cid
+      - call
       - user
       title: CallAcceptedEvent
       type: object
@@ -348,11 +365,6 @@ components:
           title: Members
           type: array
           x-stream-index: "004"
-        ringing:
-          description: true when the call was created with ring enabled
-          title: Ringing
-          type: boolean
-          x-stream-index: "005"
         type:
           default: call.created
           description: 'The type of event: "call.created" in this case'
@@ -365,7 +377,6 @@ components:
       - call_cid
       - call
       - members
-      - ringing
       title: CallCreatedEvent
       type: object
       x-stream-event-call-type: true
@@ -512,7 +523,7 @@ components:
           x-stream-index: "004"
         type:
           default: call.member_removed
-          description: 'The type of event: "call.member_added" in this case'
+          description: 'The type of event: "call.member_removed" in this case'
           title: Event Type
           type: string
           x-stream-index: "001.001"
@@ -552,7 +563,7 @@ components:
           x-stream-index: "004"
         type:
           default: call.member_updated
-          description: 'The type of event: "call.member_added" in this case'
+          description: 'The type of event: "call.member_updated" in this case'
           title: Event Type
           type: string
           x-stream-index: "001.001"
@@ -616,6 +627,72 @@ components:
       x-stream-event-call-type: true
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    CallNotificationEvent:
+      description: This event is sent to all call members to notify they are getting
+        called
+      nullable: true
+      properties:
+        call:
+          $ref: '#/components/schemas/CallResponse'
+          description: Call object
+          title: Call
+          x-stream-index: "004"
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        members:
+          description: Call members
+          items:
+            $ref: '#/components/schemas/MemberResponse'
+          title: Members
+          type: array
+          x-stream-index: "005"
+        session_id:
+          description: Call session ID
+          title: Session ID
+          type: string
+          x-stream-index: "003.001"
+        type:
+          default: call.notification
+          description: 'The type of event: "call.notification" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          description: The user that sent the call notification
+          title: User
+          x-stream-index: "006"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - session_id
+      - call
+      - members
+      - user
+      title: CallNotificationEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallParticipantResponse:
+      properties:
+        joined_at:
+          format: date-time
+          type: string
+          x-stream-index: "002"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          x-stream-index: "001"
+      required:
+      - user
+      - joined_at
+      type: object
     CallReactionEvent:
       description: This event is sent when a reaction is sent in a call, clients should
         use this to show the reaction in the call screen
@@ -724,11 +801,13 @@ components:
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
     CallRejectedEvent:
-      description: "This event is sent when a user rejects a ringing call. Clients
-        receiving this event should dismiss \nthe call screen unless the call includes
-        more users."
+      description: This event is sent when a user rejects a notification to join a
+        call.
       nullable: true
       properties:
+        call:
+          $ref: '#/components/schemas/CallResponse'
+          x-stream-index: "003"
         call_cid:
           type: string
           x-stream-index: "002.001"
@@ -746,11 +825,12 @@ components:
           $ref: '#/components/schemas/UserResponse'
           description: The user who rejected the call
           title: User
-          x-stream-index: "003"
+          x-stream-index: "004"
       required:
       - type
       - created_at
       - call_cid
+      - call
       - user
       title: CallRejectedEvent
       type: object
@@ -852,6 +932,9 @@ components:
         recording:
           type: boolean
           x-stream-index: "011"
+        session:
+          $ref: '#/components/schemas/CallSessionResponse'
+          x-stream-index: "022"
         settings:
           $ref: '#/components/schemas/CallSettingsResponse'
           x-stream-index: "018"
@@ -898,6 +981,59 @@ components:
       - ingress
       title: Call
       type: object
+    CallRingEvent:
+      description: This event is sent to all call members to notify they are getting
+        called
+      nullable: true
+      properties:
+        call:
+          $ref: '#/components/schemas/CallResponse'
+          description: Call object
+          title: Call
+          x-stream-index: "005"
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        members:
+          description: Call members
+          items:
+            $ref: '#/components/schemas/MemberResponse'
+          title: Members
+          type: array
+          x-stream-index: "006"
+        session_id:
+          description: Call session ID
+          title: Session ID
+          type: string
+          x-stream-index: "003.001"
+        type:
+          default: call.ring
+          description: 'The type of event: "call.notification" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          description: The user that sent the call notification
+          title: User
+          x-stream-index: "007"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - session_id
+      - call
+      - members
+      - user
+      title: CallRingEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     CallSessionEndedEvent:
       description: This event is sent when a call session ends
       properties:
@@ -1011,6 +1147,49 @@ components:
       x-stream-event-call-type: true
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    CallSessionResponse:
+      properties:
+        accepted_by:
+          additionalProperties:
+            format: date-time
+            type: string
+          type: object
+          x-stream-index: "007"
+        ended_at:
+          format: date-time
+          type: string
+          x-stream-index: "003"
+        id:
+          type: string
+          x-stream-index: "001"
+        participants:
+          items:
+            $ref: '#/components/schemas/CallParticipantResponse'
+          type: array
+          x-stream-index: "004"
+        participants_count_by_role:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "005"
+        rejected_by:
+          additionalProperties:
+            format: date-time
+            type: string
+          type: object
+          x-stream-index: "006"
+        started_at:
+          format: date-time
+          type: string
+          x-stream-index: "002"
+      required:
+      - id
+      - participants
+      - participants_count_by_role
+      - rejected_by
+      - accepted_by
+      type: object
     CallSessionStartedEvent:
       description: This event is sent when a call session starts
       properties:
@@ -1730,10 +1909,15 @@ components:
           format: int32
           maximum: 100
           type: integer
+          x-stream-index: "007"
+        notify:
+          description: if provided it sends a notification event to the members for
+            this call
+          title: Notify
+          type: boolean
           x-stream-index: "006"
         ring:
-          description: if provided it overrides the default ring setting for this
-            call
+          description: if provided it sends a ring event to the members for this call
           title: Ring
           type: boolean
           x-stream-index: "005"
@@ -1865,12 +2049,15 @@ components:
         location:
           title: Location
           type: string
-          x-stream-index: "008"
+          x-stream-index: "009"
         members_limit:
           format: int32
           maximum: 100
           title: The amount of members that should be returned
           type: integer
+          x-stream-index: "007"
+        notify:
+          type: boolean
           x-stream-index: "006"
         ring:
           description: if true and the call is created, the notification will include
@@ -2067,38 +2254,45 @@ components:
       type: object
     NotificationSettings:
       properties:
-        call_created:
-          $ref: '#/components/schemas/EventNotificationSettings'
-          x-stream-index: "002"
         call_live_started:
           $ref: '#/components/schemas/EventNotificationSettings'
-          x-stream-index: "003"
+          x-stream-index: "002"
+        call_notification:
+          $ref: '#/components/schemas/EventNotificationSettings'
+          x-stream-index: "004"
+        call_ring:
+          $ref: '#/components/schemas/EventNotificationSettings'
+          x-stream-index: "005"
         enabled:
           type: boolean
           x-stream-index: "001"
         session_started:
           $ref: '#/components/schemas/EventNotificationSettings'
-          x-stream-index: "004"
+          x-stream-index: "003"
       required:
       - enabled
-      - call_created
       - call_live_started
       - session_started
+      - call_notification
+      - call_ring
       type: object
     NotificationSettingsRequest:
       properties:
-        call_created:
-          $ref: '#/components/schemas/EventNotificationSettingsRequest'
-          x-stream-index: "002"
         call_live_started:
           $ref: '#/components/schemas/EventNotificationSettingsRequest'
-          x-stream-index: "003"
+          x-stream-index: "002"
+        call_notification:
+          $ref: '#/components/schemas/EventNotificationSettingsRequest'
+          x-stream-index: "004"
+        call_ring:
+          $ref: '#/components/schemas/EventNotificationSettingsRequest'
+          x-stream-index: "005"
         enabled:
           type: boolean
           x-stream-index: "001"
         session_started:
           $ref: '#/components/schemas/EventNotificationSettingsRequest'
-          x-stream-index: "004"
+          x-stream-index: "003"
       type: object
     OwnCapability:
       description: All possibility of string to use
@@ -2411,6 +2605,18 @@ components:
           type: string
           x-stream-index: "003"
       type: object
+    RejectCallRequest:
+      nullable: true
+      type: object
+    RejectCallResponse:
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      type: object
     RequestPermissionRequest:
       nullable: true
       properties:
@@ -2449,12 +2655,12 @@ components:
           format: int32
           type: integer
           x-stream-index: "002"
-        auto_reject_timeout_ms:
+        incoming_call_timeout_ms:
           format: int32
           type: integer
           x-stream-index: "001"
       required:
-      - auto_reject_timeout_ms
+      - incoming_call_timeout_ms
       - auto_cancel_timeout_ms
       type: object
     RingSettingsRequest:
@@ -2463,7 +2669,7 @@ components:
           format: int32
           type: integer
           x-stream-index: "002"
-        auto_reject_timeout_ms:
+        incoming_call_timeout_ms:
           format: int32
           type: integer
           x-stream-index: "001"
@@ -2512,13 +2718,7 @@ components:
           additionalProperties: {}
           title: Custom
           type: object
-          x-stream-index: "005"
-        type:
-          title: Event type
-          type: string
           x-stream-index: "004"
-      required:
-      - type
       type: object
     SendEventResponse:
       nullable: true
@@ -2575,14 +2775,58 @@ components:
     StartBroadcastingRequest:
       nullable: true
       type: object
+    StartBroadcastingResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+        playlist_url:
+          type: string
+          x-stream-index: "002"
+      required:
+      - duration
+      - playlist_url
+      type: object
     StartRecordingRequest:
       nullable: true
+      type: object
+    StartRecordingResponse:
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
       type: object
     StartTranscriptionRequest:
       nullable: true
       type: object
+    StartTranscriptionResponse:
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      type: object
     StopBroadcastingRequest:
       nullable: true
+      type: object
+    StopBroadcastingResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
       type: object
     StopLiveRequest:
       nullable: true
@@ -2605,8 +2849,30 @@ components:
     StopRecordingRequest:
       nullable: true
       type: object
+    StopRecordingResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      type: object
     StopTranscriptionRequest:
       nullable: true
+      type: object
+    StopTranscriptionResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
       type: object
     TargetResolution:
       properties:
@@ -3035,12 +3301,14 @@ components:
           call.member_removed: '#/components/schemas/CallMemberRemovedEvent'
           call.member_updated: '#/components/schemas/CallMemberUpdatedEvent'
           call.member_updated_permission: '#/components/schemas/CallMemberUpdatedPermissionEvent'
+          call.notification: '#/components/schemas/CallNotificationEvent'
           call.permission_request: '#/components/schemas/PermissionRequestEvent'
           call.permissions_updated: '#/components/schemas/UpdatedCallPermissionsEvent'
           call.reaction_new: '#/components/schemas/CallReactionEvent'
           call.recording_started: '#/components/schemas/CallRecordingStartedEvent'
           call.recording_stopped: '#/components/schemas/CallRecordingStoppedEvent'
           call.rejected: '#/components/schemas/CallRejectedEvent'
+          call.ring: '#/components/schemas/CallRingEvent'
           call.session_ended: '#/components/schemas/CallSessionEndedEvent'
           call.session_participant_joined: '#/components/schemas/CallSessionParticipantJoinedEvent'
           call.session_participant_left: '#/components/schemas/CallSessionParticipantLeftEvent'
@@ -3063,10 +3331,12 @@ components:
       - $ref: '#/components/schemas/CallMemberRemovedEvent'
       - $ref: '#/components/schemas/CallMemberUpdatedEvent'
       - $ref: '#/components/schemas/CallMemberUpdatedPermissionEvent'
+      - $ref: '#/components/schemas/CallNotificationEvent'
       - $ref: '#/components/schemas/CallReactionEvent'
       - $ref: '#/components/schemas/CallRecordingStartedEvent'
       - $ref: '#/components/schemas/CallRecordingStoppedEvent'
       - $ref: '#/components/schemas/CallRejectedEvent'
+      - $ref: '#/components/schemas/CallRingEvent'
       - $ref: '#/components/schemas/CallSessionEndedEvent'
       - $ref: '#/components/schemas/CallSessionParticipantJoinedEvent'
       - $ref: '#/components/schemas/CallSessionParticipantLeftEvent'
@@ -3200,7 +3470,7 @@ externalDocs:
   url: https://getstream.io/video/docs/
 info:
   title: Stream Video API
-  version: v81.3.0
+  version: v81.4.0
 openapi: 3.0.3
 paths:
   /call/{type}/{id}:
@@ -3238,6 +3508,33 @@ paths:
               x-stream-index: "003"
         in: query
         name: connection_id
+      - content:
+          application/json:
+            schema:
+              format: int32
+              maximum: 100
+              minimum: 0
+              type: integer
+              writeOnly: true
+              x-stream-index: "004"
+        in: query
+        name: members_limit
+      - content:
+          application/json:
+            schema:
+              type: boolean
+              writeOnly: true
+              x-stream-index: "005"
+        in: query
+        name: ring
+      - content:
+          application/json:
+            schema:
+              type: boolean
+              writeOnly: true
+              x-stream-index: "006"
+        in: query
+        name: notify
       responses:
         "200":
           content:
@@ -3366,6 +3663,8 @@ paths:
 
         Sends events:
         - call.created
+        - call.notification
+        - call.ring
 
         Required permissions:
         - CreateCall
@@ -3402,7 +3701,7 @@ paths:
             schema:
               type: string
               writeOnly: true
-              x-stream-index: "007"
+              x-stream-index: "008"
         in: query
         name: connection_id
       requestBody:
@@ -3448,11 +3747,21 @@ paths:
       - Video Calls
       x-stream-events:
         call.created: ""
+        call.notification: ""
+        call.ring: ""
       x-stream-events-v2:
         call.created:
           description: ""
           schema:
             ref: '#/components/schemas/CallCreatedEvent'
+        call.notification:
+          description: ""
+          schema:
+            ref: '#/components/schemas/CallNotificationEvent'
+        call.ring:
+          description: ""
+          schema:
+            ref: '#/components/schemas/CallRingEvent'
       x-stream-permissions:
         CreateCall: To create a call
         ReadCall: To retrieve a call
@@ -3533,6 +3842,80 @@ paths:
       - Recording
       x-stream-permissions:
         ListRecordings: To list recordings
+  /call/{type}/{id}/accept:
+    post:
+      description: |2
+
+
+        Sends events:
+        - call.accepted
+
+        Required permissions:
+        - JoinCall
+      operationId: AcceptCall
+      parameters:
+      - content:
+          application/json:
+            schema:
+              type: string
+              writeOnly: true
+              x-stream-index: "001"
+        in: path
+        name: type
+        required: true
+      - content:
+          application/json:
+            schema:
+              type: string
+              writeOnly: true
+              x-stream-index: "002"
+        in: path
+        name: id
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcceptCallResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+          headers:
+            X-RateLimit-Limit:
+              description: The number of allowed requests in the current period
+              schema:
+                type: integer
+            X-RateLimit-Remaining:
+              description: The number of remaining requests in the current period
+              schema:
+                type: integer
+            X-RateLimit-Reset:
+              description: Timestamp when number of requests will be reset
+              schema:
+                type: integer
+      summary: Accept Call
+      tags:
+      - Video Calls
+      x-stream-events:
+        call.accepted: ""
+      x-stream-events-v2:
+        call.accepted:
+          description: ""
+          schema:
+            ref: '#/components/schemas/CallAcceptedEvent'
+      x-stream-permissions:
+        JoinCall: ""
   /call/{type}/{id}/block:
     post:
       description: |
@@ -3620,11 +4003,9 @@ paths:
   /call/{type}/{id}/event:
     post:
       description: |
-        Sends event to the call
+        Sends custom event to the call
 
         Sends events:
-        - call.accepted
-        - call.rejected
         - custom
 
         Required permissions:
@@ -3635,7 +4016,7 @@ paths:
           application/json:
             schema:
               maxLength: 64
-              title: Event type
+              title: Type
               type: string
               writeOnly: true
               x-stream-index: "002"
@@ -3691,29 +4072,19 @@ paths:
               description: Timestamp when number of requests will be reset
               schema:
                 type: integer
-      summary: Send event
+      summary: Send custom event
       tags:
       - Events
       x-stream-docs-page-id: event_object
       x-stream-events:
-        call.accepted: ""
-        call.rejected: ""
         custom: ""
       x-stream-events-v2:
-        call.accepted:
-          description: ""
-          schema:
-            ref: '#/components/schemas/CallAcceptedEvent'
-        call.rejected:
-          description: ""
-          schema:
-            ref: '#/components/schemas/CallRejectedEvent'
         custom:
           description: ""
           schema:
             ref: '#/components/schemas/CustomVideoEvent'
       x-stream-permissions:
-        SendEvent: To send events
+        SendEvent: To send custom events
   /call/{type}/{id}/get_edge_server:
     post:
       description: |
@@ -3906,7 +4277,7 @@ paths:
               title: ConnectionID
               type: string
               writeOnly: true
-              x-stream-index: "007"
+              x-stream-index: "008"
         in: query
         name: connection_id
       requestBody:
@@ -4289,6 +4660,80 @@ paths:
             ref: '#/components/schemas/CallReactionEvent'
       x-stream-permissions:
         CreateCallReaction: To send reactions
+  /call/{type}/{id}/reject:
+    post:
+      description: |2
+
+
+        Sends events:
+        - call.rejected
+
+        Required permissions:
+        - JoinCall
+      operationId: RejectCall
+      parameters:
+      - content:
+          application/json:
+            schema:
+              type: string
+              writeOnly: true
+              x-stream-index: "001"
+        in: path
+        name: type
+        required: true
+      - content:
+          application/json:
+            schema:
+              type: string
+              writeOnly: true
+              x-stream-index: "002"
+        in: path
+        name: id
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RejectCallResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+          headers:
+            X-RateLimit-Limit:
+              description: The number of allowed requests in the current period
+              schema:
+                type: integer
+            X-RateLimit-Remaining:
+              description: The number of remaining requests in the current period
+              schema:
+                type: integer
+            X-RateLimit-Reset:
+              description: Timestamp when number of requests will be reset
+              schema:
+                type: integer
+      summary: Reject Call
+      tags:
+      - Video Calls
+      x-stream-events:
+        call.rejected: ""
+      x-stream-events-v2:
+        call.rejected:
+          description: ""
+          schema:
+            ref: '#/components/schemas/CallRejectedEvent'
+      x-stream-permissions:
+        JoinCall: ""
   /call/{type}/{id}/request_permission:
     post:
       description: |
@@ -4372,6 +4817,9 @@ paths:
     post:
       description: |
         Starts broadcasting
+
+        Required permissions:
+        - StartBroadcasting
       operationId: StartBroadcasting
       parameters:
       - content:
@@ -4395,6 +4843,12 @@ paths:
         name: id
         required: true
       responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartBroadcastingResponse'
+          description: Successful response
         "400":
           content:
             application/json:
@@ -4423,6 +4877,8 @@ paths:
       summary: Start broadcasting
       tags:
       - Livestreaming
+      x-stream-permissions:
+        StartBroadcasting: To start broadcasting
   /call/{type}/{id}/start_recording:
     post:
       description: |
@@ -4458,6 +4914,12 @@ paths:
         name: id
         required: true
       responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartRecordingResponse'
+          description: Successful response
         "400":
           content:
             application/json:
@@ -4527,6 +4989,12 @@ paths:
         name: id
         required: true
       responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartTranscriptionResponse'
+          description: Successful response
         "400":
           content:
             application/json:
@@ -4561,6 +5029,9 @@ paths:
     post:
       description: |
         Stops broadcasting
+
+        Required permissions:
+        - StopBroadcasting
       operationId: StopBroadcasting
       parameters:
       - content:
@@ -4584,6 +5055,12 @@ paths:
         name: id
         required: true
       responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StopBroadcastingResponse'
+          description: Successful response
         "400":
           content:
             application/json:
@@ -4612,6 +5089,8 @@ paths:
       summary: Stop broadcasting
       tags:
       - Livestreaming
+      x-stream-permissions:
+        StopBroadcasting: Allows the user to stop broadcasting
   /call/{type}/{id}/stop_live:
     post:
       description: |2
@@ -4726,6 +5205,12 @@ paths:
         name: id
         required: true
       responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StopRecordingResponse'
+          description: Successful response
         "400":
           content:
             application/json:
@@ -4794,6 +5279,12 @@ paths:
         name: id
         required: true
       responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StopTranscriptionResponse'
+          description: Successful response
         "400":
           content:
             application/json:
@@ -5206,6 +5697,12 @@ paths:
         name: name
         required: true
       responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+          description: Successful response
         "400":
           content:
             application/json:
@@ -5284,6 +5781,7 @@ paths:
       summary: Get Call Type
       tags:
       - Call types
+      x-stream-server-side: true
     put:
       description: |2+
 
@@ -5464,6 +5962,12 @@ paths:
               $ref: '#/components/schemas/CreateDeviceRequest'
         required: true
       responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+          description: Successful response
         "400":
           content:
             application/json:
