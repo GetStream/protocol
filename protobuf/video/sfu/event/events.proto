@@ -35,11 +35,6 @@ message Error{
   models.Error error = 4;
 }
 
-message ICETrickle {
-  models.PeerType peer_type = 1;
-  string ice_candidate = 2;
-}
-
 
 // SfuRequest is a message that is sent from the client to the SFU.
 message SfuRequest {
@@ -56,6 +51,8 @@ message HealthCheckResponse {
   models.ParticipantCount participant_count = 1;
 }
 
+// TrackPublished is sent when a track is published by a participant
+// or a previously muted track is unmuted to resume it.
 message TrackPublished {
   string user_id = 1;
   string session_id = 2;
@@ -69,6 +66,8 @@ message TrackPublished {
   models.Participant participant = 4;
 }
 
+// TrackUnpublished is sent when a track which was previously published is muted.
+// The `cause` field indicates why the track was muted.
 message TrackUnpublished {
   string user_id = 1;
   string session_id = 2;
@@ -83,18 +82,18 @@ message TrackUnpublished {
   models.Participant participant = 5;
 }
 
+// JoinRequest is sent by the participant to join a call. The
+// call ID of the call should be encoded in the auth token.
 message JoinRequest {
   string token = 1;
   string session_id = 2;
   // dumb SDP that allow us to extract subscriber's decode codecs
   string subscriber_sdp = 3;
   models.ClientDetails client_details = 4;
-  // TODO: we should know if this is going to be
-  // - publishing and subscribing, or just subscribing for future routing
 }
 
+// JoinResponse is sent as a confirmation of the participant joining the call
 message JoinResponse {
-  // TODO: include full list of participants with track and audio info
   models.CallState call_state = 1;
 }
 
@@ -116,6 +115,7 @@ message SubscriberOffer {
   string sdp = 2;
 }
 
+// PublisherAnswer is sent by the SFU as an answer to the publisher's offer
 message PublisherAnswer {
   string sdp = 1;
 }
@@ -151,46 +151,18 @@ message AudioLevelChanged {
   repeated AudioLevel audio_levels = 1;
 }
 
-message AudioMediaRequest {
-  int32 channel_count = 1;
-}
-
-message AudioSender {
-  AudioMediaRequest media_request = 1;
-  models.Codec codec = 2;
-}
-
-message VideoMediaRequest {
-  int32 ideal_height = 1;
-  int32 ideal_width = 2;
-  int32 ideal_frame_rate = 3;
-}
-
-
 message VideoLayerSetting {
   string name = 1;
   bool active = 2;
-  int32 max_bitrate = 3;
-  float scale_resolution_down_by = 4;
-  enum Priority {
-    PRIORITY_HIGH_UNSPECIFIED = 0;
-    PRIORITY_LOW = 1;
-    PRIORITY_MEDIUM = 2;
-    PRIORITY_VERY_LOW = 3;
-  }
-  Priority priority = 5;
-  models.Codec codec = 6;
 }
 
 message VideoSender {
-  VideoMediaRequest media_request = 1;
   models.Codec codec = 2;
   repeated VideoLayerSetting layers = 3;
 }
 
 // sent to users when they need to change the quality of their video
 message ChangePublishQuality {
-  repeated AudioSender audio_senders = 1;
   repeated VideoSender video_senders = 2;
 }
 
