@@ -75,7 +75,7 @@ To generate code for your language, do this:
 ## Generate sdk with docker
 For Go
 ```zsh
-docker run -v $(pwd):/local ghcr.io/getstream/protocol go /local/protocol
+docker run -v $(pwd):/local ghcr.io/getstream/protocol go /local/protobuf
 ```
 
 For Dart
