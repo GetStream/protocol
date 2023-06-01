@@ -2,10 +2,10 @@
 
 set -e
 
-REPO="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+REPO=$PWD
 PB=$REPO/protobuf
 
-export PATH=$REPO/.protoc/bin:$PATH
+export PATH=/opt/.protoc/bin:$PATH
 
 # In some systems like Mac OS 13.0.1, the realpath defaults to
 # the system installed one which does not support flags like
@@ -16,11 +16,11 @@ export PATH=$REPO/.protoc/bin:$PATH
 REALPATH=${REALPATH:-realpath}
 
 GEN_PROFILE=${1:-go}
-GEN_OUTPUT=$(${REALPATH} ${2:-${PB}})
+GEN_OUTPUT=$(${REALPATH} ${2:-${GEN_PROFILE}-sdk})
 GEN_GO_IMPORT_PREFIX=${3:-github.com/GetStream/protocol/protobuf}
 
 mkdir -p $GEN_OUTPUT
-
+echo "Generating $GEN_PROFILE SDK in $GEN_OUTPUT"
 cd $PB
 
 
@@ -143,14 +143,14 @@ done
 
 if [[ $GEN_PROFILE = "go" ]]; then
   # Replace proto.(Un)Marshal with *VT methods
-  TWIRP_FILES=$(find $GEN_OUTPUT -name '*.twirp.go')
+  TWIRP_FILES=$(find "$GEN_OUTPUT" -name '*.twirp.go')
   for FILE in $TWIRP_FILES; do
     if [[ "$OSTYPE" == "darwin"* ]]; then
       sed -i '' -e 's/respBytes, err := proto.Marshal(respContent)/respBytes, err := respContent.MarshalVT()/g' "$FILE"
       sed -i '' -e 's/if err = proto.Unmarshal(buf, reqContent); err != nil {/if err = reqContent.UnmarshalVT(buf); err != nil {/g' "$FILE"
     else
-      sed -i'' -e 's/respBytes, err := proto.Marshal(respContent)/respBytes, err := respContent.MarshalVT()/g' "$FILE"
-      sed -i'' -e 's/if err = proto.Unmarshal(buf, reqContent); err != nil {/if err = reqContent.UnmarshalVT(buf); err != nil {/g' "$FILE"
+      sed 's/respBytes, err := proto.Marshal(respContent)/respBytes, err := respContent.MarshalVT()/g' "$FILE" > output.txt && mv output.txt "$FILE"
+      sed 's/if err = proto.Unmarshal(buf, reqContent); err != nil {/if err = reqContent.UnmarshalVT(buf); err != nil {/g' "$FILE" > output.txt && mv output.txt "$FILE"
     fi
   done
 fi

@@ -69,3 +69,13 @@ To generate code for your language, do this:
 2. Generate: `./generate.sh <language> <output_dir>`
    - `language`: language to generate code for can be `ts`, `dart` or `swift`
    - `output_dir` is a directory where you want to put generated code in
+
+
+## Generate sdk with docker
+
+```zsh
+docker run -v $(pwd):/local ghcr.io/getstream/protocol dart /local/dart-sdk
+```
+
+Where `/local` is folder mounted to container from `PWD`.
+In this way you will find the `dart-sdk` folder in your current directory.
