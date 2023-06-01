@@ -5,7 +5,7 @@ set -e
 REPO=$PWD
 PB=$REPO/protobuf
 
-export PATH=/opt/.protoc/bin:$PATH
+export PATH=/opt/.protoc/bin:$PWD/.protoc/bin:$PATH
 
 # In some systems like Mac OS 13.0.1, the realpath defaults to
 # the system installed one which does not support flags like
