@@ -372,15 +372,15 @@ func (m *SfuEvent_CallGrantsUpdated) MarshalToSizedBufferVT(dAtA []byte) (int, e
 	}
 	return len(dAtA) - i, nil
 }
-func (m *SfuEvent_Evict) MarshalToVT(dAtA []byte) (int, error) {
+func (m *SfuEvent_GoAway) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *SfuEvent_Evict) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *SfuEvent_GoAway) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	i := len(dAtA)
-	if m.Evict != nil {
-		size, err := m.Evict.MarshalToSizedBufferVT(dAtA[:i])
+	if m.GoAway != nil {
+		size, err := m.GoAway.MarshalToSizedBufferVT(dAtA[:i])
 		if err != nil {
 			return 0, err
 		}
@@ -1871,7 +1871,7 @@ func (m *CallGrantsUpdated) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *Evict) MarshalVT() (dAtA []byte, err error) {
+func (m *GoAway) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -1884,12 +1884,12 @@ func (m *Evict) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *Evict) MarshalToVT(dAtA []byte) (int, error) {
+func (m *GoAway) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *Evict) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *GoAway) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -2121,14 +2121,14 @@ func (m *SfuEvent_CallGrantsUpdated) SizeVT() (n int) {
 	}
 	return n
 }
-func (m *SfuEvent_Evict) SizeVT() (n int) {
+func (m *SfuEvent_GoAway) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.Evict != nil {
-		l = m.Evict.SizeVT()
+	if m.GoAway != nil {
+		l = m.GoAway.SizeVT()
 		n += 2 + l + sov(uint64(l))
 	}
 	return n
@@ -2756,7 +2756,7 @@ func (m *CallGrantsUpdated) SizeVT() (n int) {
 	return n
 }
 
-func (m *Evict) SizeVT() (n int) {
+func (m *GoAway) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -3439,7 +3439,7 @@ func (m *SfuEvent) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 20:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Evict", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field GoAway", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -3466,16 +3466,16 @@ func (m *SfuEvent) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if oneof, ok := m.EventPayload.(*SfuEvent_Evict); ok {
-				if err := oneof.Evict.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+			if oneof, ok := m.EventPayload.(*SfuEvent_GoAway); ok {
+				if err := oneof.GoAway.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
 			} else {
-				v := &Evict{}
+				v := &GoAway{}
 				if err := v.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
-				m.EventPayload = &SfuEvent_Evict{v}
+				m.EventPayload = &SfuEvent_GoAway{v}
 			}
 			iNdEx = postIndex
 		default:
@@ -6602,7 +6602,7 @@ func (m *CallGrantsUpdated) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *Evict) UnmarshalVT(dAtA []byte) error {
+func (m *GoAway) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -6625,10 +6625,10 @@ func (m *Evict) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: Evict: wiretype end group for non-group")
+			return fmt.Errorf("proto: GoAway: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Evict: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: GoAway: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -6645,7 +6645,7 @@ func (m *Evict) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Reason |= models.EvictReason(b&0x7F) << shift
+				m.Reason |= models.GoAwayReason(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
