@@ -85,3 +85,9 @@ docker run -v $(pwd):/local ghcr.io/getstream/protocol dart /local/dart-sdk
 
 Where `/local` is folder mounted to container from `PWD`.
 In this way you will find the `dart-sdk` folder in your current directory.
+
+### Generate for a specific branch
+
+```zsh
+docker run -v $(pwd):/local ghcr.io/getstream/protocol dart /local/dart-sdk --branch=my-branch
+```
