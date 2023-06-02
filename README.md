@@ -12,7 +12,8 @@ At the moment client generation from OpenAPI specs is done inside the specific S
 docker pull ghcr.io/getstream/openapi-generator:master
 
 docker run --rm -v "${PWD}:/local" ghcr.io/getstream/openapi-generator:master generate \
-   -i https://raw.githubusercontent.com/GetStream/protocol/main/openapi/video-openapi.yaml \
+   -i https://raw.githubusercontent.com/GetStream/protocol/main/openapi/
+   video-openapi.yaml \
    -g typescript-fetch \
    --additional-properties=supportsES6=true \
    --additional-properties=modelPropertyNaming=original \
@@ -72,7 +73,12 @@ To generate code for your language, do this:
 
 
 ## Generate sdk with docker
+For Go
+```zsh
+docker run -v $(pwd):/local ghcr.io/getstream/protocol go /local/protobuf
+```
 
+For Dart
 ```zsh
 docker run -v $(pwd):/local ghcr.io/getstream/protocol dart /local/dart-sdk
 ```
