@@ -161,7 +161,6 @@ def hello_world():
 <TabItem value="go" label="Golang">
 
 ```go
-
 func main() {
 	apiKey := os.Getenv("API_KEY")
 	apiSecret := os.Getenv("API_SECRET")
@@ -205,6 +204,74 @@ func main() {
 </Tabs>
 
 ## Updating a call
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+function helloWorld() {
+    console.log('Hello, world!');
+}
+```
+
+</TabItem>
+<TabItem value="py" label="Python">
+
+```py
+def hello_world():
+    print("Hello, world!")
+```
+
+</TabItem>
+<TabItem value="go" label="Golang">
+
+```go
+func main() {
+	apiKey := os.Getenv("API_KEY")
+	apiSecret := os.Getenv("API_SECRET")
+	userID := os.Getenv("USER_ID")
+	url := os.Getenv("URL")
+
+	if apiKey == "" || apiSecret == "" || userID == "" || url == "" {
+		panic("API_KEY, API_SECRET, USER_ID and URL env variables must be set")
+	}
+
+	tokenProvider := videosdk.UserToken(apiSecret, userID, 24*time.Hour)
+	sdk := videosdk.New(apiKey, tokenProvider)
+
+	token, err := tokenProvider(sdk.APIKey())
+	if err != nil {
+		panic(err)
+	}
+
+	client := videosdk.NewCoordinatorClientSDK(url, sdk.APIKey(), token)
+
+	// get an already created call or create one
+	id := fmt.Sprintf("call-%d", rand.Int())
+	response, err := client.GetOrCreateCall("default", id, &models.GetOrCreateCallRequest{})
+	if err != nil {
+		panic(err)
+	}
+
+    updateResponse, err := client.UpdateCall("default", callID, &models.UpdateCallRequest{
+        Type:   "default",
+        ID:     callID,
+        Custom: nil,
+        SettingsOverride: &models.CallSettingsRequest{
+            Video: &models.VideoSettingsRequest{Enabled: PtrTo(true)},
+        },
+        StartsAt: nil,
+    })
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("response", updateResponse)
+}
+```
+
+</TabItem>
+</Tabs>
 
 ## Start HLS broadcasting
 
