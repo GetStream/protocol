@@ -35,55 +35,55 @@ fi
 
 mkdir -p $PROTOC_DIR/bin
 
-#echo "Installing protoc $PROTOC_VERSION for $PROTO_ARCH"
-#wget -nv -O "$PROTOC_DIR/protoc-${PROTOC_VERSION}-${PROTO_ARCH}.zip" https://github.com/protocolbuffers/protobuf/releases/download/v"${PROTOC_VERSION}"/protoc-"${PROTOC_VERSION}"-"${PROTO_ARCH}".zip
-#unzip -qq -o $PROTOC_DIR/protoc-"${PROTOC_VERSION}"-${PROTO_ARCH}.zip -d "${PROTOC_DIR}"
-#rm -f $PROTOC_DIR/protoc-"${PROTOC_VERSION}"-${PROTO_ARCH}.zip "$PROTOC_DIR/readme.txt"
-#GOBIN=$PROTOC_DIR/bin go install github.com/twitchtv/twirp/protoc-gen-twirp@"${PROTO_TWIRP_VERSION}"
-#GOBIN=$PROTOC_DIR/bin go install google.golang.org/protobuf/cmd/protoc-gen-go@"${PROTO_GO_VERSION}"
-#GOBIN=$PROTOC_DIR/bin go install github.com/planetscale/vtprotobuf/cmd/protoc-gen-go-vtproto@"${PROTO_VTPROTO_VERSION}"
-#GOBIN=$PROTOC_DIR/bin go install github.com/yoheimuta/protolint/cmd/protolint@"${PROTO_LINT_VERSION}"
-#(
-#  cd "$REPO/tools"
-#  ./install.sh
-#)
+echo "Installing protoc $PROTOC_VERSION for $PROTO_ARCH"
+wget -nv -O "$PROTOC_DIR/protoc-${PROTOC_VERSION}-${PROTO_ARCH}.zip" https://github.com/protocolbuffers/protobuf/releases/download/v"${PROTOC_VERSION}"/protoc-"${PROTOC_VERSION}"-"${PROTO_ARCH}".zip
+unzip -qq -o $PROTOC_DIR/protoc-"${PROTOC_VERSION}"-${PROTO_ARCH}.zip -d "${PROTOC_DIR}"
+rm -f $PROTOC_DIR/protoc-"${PROTOC_VERSION}"-${PROTO_ARCH}.zip "$PROTOC_DIR/readme.txt"
+GOBIN=$PROTOC_DIR/bin go install github.com/twitchtv/twirp/protoc-gen-twirp@"${PROTO_TWIRP_VERSION}"
+GOBIN=$PROTOC_DIR/bin go install google.golang.org/protobuf/cmd/protoc-gen-go@"${PROTO_GO_VERSION}"
+GOBIN=$PROTOC_DIR/bin go install github.com/planetscale/vtprotobuf/cmd/protoc-gen-go-vtproto@"${PROTO_VTPROTO_VERSION}"
+GOBIN=$PROTOC_DIR/bin go install github.com/yoheimuta/protolint/cmd/protolint@"${PROTO_LINT_VERSION}"
+(
+  cd "$REPO/tools"
+  ./install.sh
+)
 
 echo "Installing plugins..."
 
-#if command -v dart &> /dev/null
-#then
-#  echo "Installing dart protoc plugin"
-#  PUB_CACHE=${PROTOC_DIR}/.pub-cache dart pub global activate protoc_plugin 20.0.1
-#  cp ${PROTOC_DIR}/.pub-cache/bin/protoc-gen-dart ${PROTOC_DIR}/bin/protoc-gen-dart
-#else
-#  echo 'Dart is not installed. Skipping...'
-#fi
+if command -v dart &> /dev/null
+then
+  echo "Installing dart protoc plugin"
+  PUB_CACHE=${PROTOC_DIR}/.pub-cache dart pub global activate protoc_plugin 20.0.1
+  cp ${PROTOC_DIR}/.pub-cache/bin/protoc-gen-dart ${PROTOC_DIR}/bin/protoc-gen-dart
+else
+  echo 'Dart is not installed. Skipping...'
+fi
 
 # Swift also requires installing Xcode and other tools which are required for iOS
 # development. Without this it will error out complaining that the module 'PackageDescription'
 # is not found while building. Hence, providing an option to disable it altogether.
-#if [[ -z $DISABLE_SWIFT ]]; then
-#  if command -v swift &> /dev/null
-#  then
-#    echo "Installing swift protoc plugin"
-#    git clone --depth 1 --branch 1.22.0 https://github.com/apple/swift-protobuf $PROTOC_DIR/.swift-protobuf
-#    (cd $PROTOC_DIR/.swift-protobuf && swift build -c release)
-#    ln -s $PROTOC_DIR/.swift-protobuf/.build/release/protoc-gen-swift $PROTOC_DIR/bin/protoc-gen-swift
-#  else
-#    echo 'Swift compiler is not installed. Skipping...'
-#  fi
-#else
-#  echo 'Swift is disabled. Skipping...'
-#fi
+if [[ -z $DISABLE_SWIFT ]]; then
+  if command -v swift &> /dev/null
+  then
+    echo "Installing swift protoc plugin"
+    git clone --depth 1 --branch 1.22.0 https://github.com/apple/swift-protobuf $PROTOC_DIR/.swift-protobuf
+    (cd $PROTOC_DIR/.swift-protobuf && swift build -c release)
+    ln -s $PROTOC_DIR/.swift-protobuf/.build/release/protoc-gen-swift $PROTOC_DIR/bin/protoc-gen-swift
+  else
+    echo 'Swift compiler is not installed. Skipping...'
+  fi
+else
+  echo 'Swift is disabled. Skipping...'
+fi
 
-#if command -v yarn &> /dev/null
-#then
-#  echo "Installing typescript protoc plugin"
-#  mkdir $PROTOC_DIR/.typescript-protobuf
-#  (cd $PROTOC_DIR/.typescript-protobuf && yarn add @protobuf-ts/plugin@2.8.1 --no-lockfile --disable-pnp)
-#  ln -s $PROTOC_DIR/.typescript-protobuf/node_modules/.bin/protoc-gen-ts $PROTOC_DIR/bin/protoc-gen-ts
-#else
-#  echo 'yarn is not installed. Skipping...'
-#fi
+if command -v yarn &> /dev/null
+then
+  echo "Installing typescript protoc plugin"
+  mkdir $PROTOC_DIR/.typescript-protobuf
+  (cd $PROTOC_DIR/.typescript-protobuf && yarn add @protobuf-ts/plugin@2.8.1 --no-lockfile --disable-pnp)
+  ln -s $PROTOC_DIR/.typescript-protobuf/node_modules/.bin/protoc-gen-ts $PROTOC_DIR/bin/protoc-gen-ts
+else
+  echo 'yarn is not installed. Skipping...'
+fi
 
 echo "Finished installing plugins"
