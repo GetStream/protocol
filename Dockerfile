@@ -16,19 +16,19 @@ RUN rm go1.20.4.linux-$TARGETARCH.tar.gz
 ENV PATH="$PATH:/usr/local/go/bin"
 
 # Install Dart
-#RUN if [ "$TARGETARCH" = "amd64" ]; then \
-#      echo "amd64"; \
-#      wget https://storage.googleapis.com/dart-archive/channels/be/raw/latest/sdk/dartsdk-linux-x64-release.zip && \
-#      unzip dartsdk-linux-x64-release.zip && rm dartsdk-linux-x64-release.zip; \
-#    else  \
-#      echo "arm64"; \
-#      wget https://storage.googleapis.com/dart-archive/channels/be/raw/latest/sdk/dartsdk-linux-arm64-release.zip && \
-#      unzip dartsdk-linux-arm64-release.zip && rm dartsdk-linux-arm64-release.zip; \
-#    fi
-#
-#RUN mv dart-sdk /opt/
-#ENV PATH="$PATH:/opt/dart-sdk/bin"
-#RUN echo 'export PATH="$PATH:/opt/dart-sdk/bin"' >> ~/.bashrc
+RUN if [ "$TARGETARCH" = "amd64" ]; then \
+      echo "amd64"; \
+      wget https://storage.googleapis.com/dart-archive/channels/be/raw/latest/sdk/dartsdk-linux-x64-release.zip && \
+      unzip dartsdk-linux-x64-release.zip && rm dartsdk-linux-x64-release.zip; \
+    else  \
+      echo "arm64"; \
+      wget https://storage.googleapis.com/dart-archive/channels/be/raw/latest/sdk/dartsdk-linux-arm64-release.zip && \
+      unzip dartsdk-linux-arm64-release.zip && rm dartsdk-linux-arm64-release.zip; \
+    fi
+
+RUN mv dart-sdk /opt/
+ENV PATH="$PATH:/opt/dart-sdk/bin"
+RUN echo 'export PATH="$PATH:/opt/dart-sdk/bin"' >> ~/.bashrc
 
 # Install TypeScript + NodeJS + Yarn
 #RUN apt-get update && apt-get install -y --no-install-recommends nodejs && rm -rf /var/lib/apt/lists/*
