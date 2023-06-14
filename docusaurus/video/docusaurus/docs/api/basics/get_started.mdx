@@ -5,8 +5,8 @@ slug: /
 title: Get started
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
 
 ## Installation
 
@@ -14,9 +14,9 @@ import TabItem from '@theme/TabItem';
 <TabItem value="js" label="JavaScript">
 
 ```bash
-npm add xyz
+npm install @stream-io/video-client
 // or using yarn
-yarn ...
+yarn add @stream-io/video-client
 ```
 
 </TabItem>
@@ -36,15 +36,50 @@ go get github.com/GetStream/video-go-sdk
 </TabItem>
 </Tabs>
 
+## Creating client
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+const client = new StreamVideoClient("<Your API key>", {
+  secret: "<API secret>",
+});
+```
+
+</TabItem>
+<TabItem value="py" label="Python">
+
+```py
+TODO
+```
+
+</TabItem>
+<TabItem value="go" label="Golang">
+
+```go
+TODO
+```
+
+</TabItem>
+</Tabs>
+
 ## Creating user tokens
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
 
 ```js
-function helloWorld() {
-    console.log('Hello, world!');
-}
+const userId = "john";
+// exp and iat are optional
+// the token will be valid for 1hour
+const exp = Math.round(new Date().getTime() / 1000) + 60 * 60;
+const iat = Math.round(new Date().getTime() / 1000);
+client.createToken(userId, exp, iat);
+
+// optionally provide call cids
+const call_cids = ["default:call1", "livestream:call2"];
+client.createToken(userId, exp, iat, call_cids);
 ```
 
 </TabItem>
@@ -94,9 +129,18 @@ func main() {
 <TabItem value="js" label="JavaScript">
 
 ```js
-function helloWorld() {
-    console.log('Hello, world!');
-}
+const callType = "default";
+const callId = "my-first-call";
+const call = client.call(callType, callId);
+call.getOrCreate({ data: { created_by_id: "john" } });
+
+// optionally provide additional data
+call.getOrCreate({
+  data: {
+    created_by_id: "john",
+    members: [{ user_id: "john", role: "admin" }, { user_id: "jack" }],
+  },
+});
 ```
 
 </TabItem>
@@ -162,9 +206,9 @@ func main() {
 <TabItem value="js" label="JavaScript">
 
 ```js
-function helloWorld() {
-    console.log('Hello, world!');
-}
+call.updateCallMembers({
+  update_members: [{ user_id: "sara" }, { user_id: "emily", role: "admin" }],
+});
 ```
 
 </TabItem>
@@ -179,7 +223,6 @@ def something():
 <TabItem value="go" label="Golang">
 
 ```go
-
 func main() {
 	apiKey := os.Getenv("API_KEY")
 	apiSecret := os.Getenv("API_SECRET")
@@ -224,6 +267,75 @@ func main() {
 
 ## Updating a call
 
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+call.update({ settings_override: { audio: { mic_default_on: true } } });
+
+// or to update custom data
+call.update({ custom: { color: "red" } });
+```
+
+</TabItem>
+<TabItem value="py" label="Python">
+
+```py
+def hello_world():
+    print("Hello, world!")
+```
+
+</TabItem>
+<TabItem value="go" label="Golang">
+
+```go
+func main() {
+	apiKey := os.Getenv("API_KEY")
+	apiSecret := os.Getenv("API_SECRET")
+	userID := os.Getenv("USER_ID")
+	url := os.Getenv("URL")
+
+	if apiKey == "" || apiSecret == "" || userID == "" || url == "" {
+		panic("API_KEY, API_SECRET, USER_ID and URL env variables must be set")
+	}
+
+	tokenProvider := videosdk.UserToken(apiSecret, userID, 24*time.Hour)
+	sdk := videosdk.New(apiKey, tokenProvider)
+
+	token, err := tokenProvider(sdk.APIKey())
+	if err != nil {
+		panic(err)
+	}
+
+	client := videosdk.NewCoordinatorClientSDK(url, sdk.APIKey(), token)
+
+	// get an already created call or create one
+	id := fmt.Sprintf("call-%d", rand.Int())
+	response, err := client.GetOrCreateCall("default", id, &models.GetOrCreateCallRequest{})
+	if err != nil {
+		panic(err)
+	}
+
+    updateResponse, err := client.UpdateCall("default", callID, &models.UpdateCallRequest{
+        Type:   "default",
+        ID:     callID,
+        Custom: nil,
+        SettingsOverride: &models.CallSettingsRequest{
+            Video: &models.VideoSettingsRequest{Enabled: PtrTo(true)},
+        },
+        StartsAt: nil,
+    })
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("response", updateResponse)
+}
+```
+
+</TabItem>
+</Tabs>
+
 ## Start HLS broadcasting
 
 
@@ -231,9 +343,10 @@ func main() {
 <TabItem value="js" label="JavaScript">
 
 ```js
-function helloWorld() {
-    console.log('Hello, world!');
-}
+call.startBroadcasting();
+
+// to end broadcasting
+call.stopBroadcasting();
 ```
 
 </TabItem>
@@ -255,9 +368,43 @@ client.video.stop_broadcasting(callid=call_id, call_type=call_type)
 <TabItem value="go" label="Golang">
 
 ```go
-
 func main() {
-	fmt.Println("Hello, world!")
+	apiKey := os.Getenv("API_KEY")
+	apiSecret := os.Getenv("API_SECRET")
+	userID := os.Getenv("USER_ID")
+	url := os.Getenv("URL")
+
+	if apiKey == "" || apiSecret == "" || userID == "" || url == "" {
+		panic("API_KEY, API_SECRET, USER_ID and URL env variables must be set")
+	}
+
+	tokenProvider := videosdk.UserToken(apiSecret, userID, 24*time.Hour)
+	sdk := videosdk.New(apiKey, tokenProvider)
+
+	token, err := tokenProvider(sdk.APIKey())
+	if err != nil {
+		panic(err)
+	}
+
+	client := videosdk.NewCoordinatorClientSDK(url, sdk.APIKey(), token)
+
+	// get an already created call or create one
+	id := fmt.Sprintf("call-%d", rand.Int())
+	callResponse, err := client.JoinCall(models.CallTypeDefault, callID, &models.JoinCallRequest{
+		Type: "default", ID: callID, Location: "AMS", Create: PtrTo(true),
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	updateResponse, err := client.StartBroadcasting("default", callID, &models.StartBroadcastingRequest{
+		Type: "default", ID: callID,
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("response", updateResponse)
 }
 ```
 
@@ -266,6 +413,88 @@ func main() {
 
 ## Set up a call for RTMP
 
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+const resp = await call.getOrCreate();
+const address = `${resp.call.ingress.rtmp.address}/<callType>/<callID>/<apiKey>/<token>`;
+```
+
+</TabItem>
+<TabItem value="py" label="Python">
+
+```py
+def hello_world():
+    print("Hello, world!")
+```
+
+</TabItem>
+<TabItem value="go" label="Golang">
+
+```go
+TODO
+```
+
+</TabItem>
+</Tabs>
+
 ## Start call recording
 
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+call.startRecording();
+
+// to stop recording
+call.stopRecording();
+```
+
+</TabItem>
+<TabItem value="py" label="Python">
+
+```py
+def hello_world():
+    print("Hello, world!")
+```
+
+</TabItem>
+<TabItem value="go" label="Golang">
+
+```go
+TODO
+```
+
+</TabItem>
+</Tabs>
+
 ## List recordings for a call
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+call.queryRecordings();
+
+// optionally query recordings for a specific session
+call.queryRecordings("<session ID>");
+```
+
+</TabItem>
+<TabItem value="py" label="Python">
+
+```py
+def hello_world():
+    print("Hello, world!")
+```
+
+</TabItem>
+<TabItem value="go" label="Golang">
+
+```go
+TODO
+```
+
+</TabItem>
+</Tabs>
