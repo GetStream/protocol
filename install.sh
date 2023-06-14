@@ -35,18 +35,18 @@ fi
 
 mkdir -p $PROTOC_DIR/bin
 
-echo "Installing protoc $PROTOC_VERSION for $PROTO_ARCH"
-wget -nv -O "$PROTOC_DIR/protoc-${PROTOC_VERSION}-${PROTO_ARCH}.zip" https://github.com/protocolbuffers/protobuf/releases/download/v"${PROTOC_VERSION}"/protoc-"${PROTOC_VERSION}"-"${PROTO_ARCH}".zip
-unzip -qq -o $PROTOC_DIR/protoc-"${PROTOC_VERSION}"-${PROTO_ARCH}.zip -d "${PROTOC_DIR}"
-rm -f $PROTOC_DIR/protoc-"${PROTOC_VERSION}"-${PROTO_ARCH}.zip "$PROTOC_DIR/readme.txt"
-GOBIN=$PROTOC_DIR/bin go install github.com/twitchtv/twirp/protoc-gen-twirp@"${PROTO_TWIRP_VERSION}"
-GOBIN=$PROTOC_DIR/bin go install google.golang.org/protobuf/cmd/protoc-gen-go@"${PROTO_GO_VERSION}"
-GOBIN=$PROTOC_DIR/bin go install github.com/planetscale/vtprotobuf/cmd/protoc-gen-go-vtproto@"${PROTO_VTPROTO_VERSION}"
-GOBIN=$PROTOC_DIR/bin go install github.com/yoheimuta/protolint/cmd/protolint@"${PROTO_LINT_VERSION}"
-(
-  cd "$REPO/tools"
-  ./install.sh
-)
+#echo "Installing protoc $PROTOC_VERSION for $PROTO_ARCH"
+#wget -nv -O "$PROTOC_DIR/protoc-${PROTOC_VERSION}-${PROTO_ARCH}.zip" https://github.com/protocolbuffers/protobuf/releases/download/v"${PROTOC_VERSION}"/protoc-"${PROTOC_VERSION}"-"${PROTO_ARCH}".zip
+#unzip -qq -o $PROTOC_DIR/protoc-"${PROTOC_VERSION}"-${PROTO_ARCH}.zip -d "${PROTOC_DIR}"
+#rm -f $PROTOC_DIR/protoc-"${PROTOC_VERSION}"-${PROTO_ARCH}.zip "$PROTOC_DIR/readme.txt"
+#GOBIN=$PROTOC_DIR/bin go install github.com/twitchtv/twirp/protoc-gen-twirp@"${PROTO_TWIRP_VERSION}"
+#GOBIN=$PROTOC_DIR/bin go install google.golang.org/protobuf/cmd/protoc-gen-go@"${PROTO_GO_VERSION}"
+#GOBIN=$PROTOC_DIR/bin go install github.com/planetscale/vtprotobuf/cmd/protoc-gen-go-vtproto@"${PROTO_VTPROTO_VERSION}"
+#GOBIN=$PROTOC_DIR/bin go install github.com/yoheimuta/protolint/cmd/protolint@"${PROTO_LINT_VERSION}"
+#(
+#  cd "$REPO/tools"
+#  ./install.sh
+#)
 
 echo "Installing plugins..."
 
