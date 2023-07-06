@@ -60,7 +60,7 @@ build-docker-image:
 	@docker buildx build \
 			-f Dockerfile \
 			--platform linux/amd64 --load \
-			-t ghcr.io/getstream/protocol:latest \
+			-t ghcr.io/getstream/protobuf-generate:latest \
 			.
 
 .PHONY: push-docker-image
@@ -68,5 +68,5 @@ push-docker-image:
 	@docker buildx build \
 			-f Dockerfile \
 			--platform linux/arm64,linux/amd64 \
-			-t ghcr.io/getstream/protocol:latest \
+			-t ghcr.io/getstream/protobuf-generate:latest \
 			. --push
