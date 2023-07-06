@@ -73,14 +73,14 @@ To generate code for your language, do this:
 
 
 ## Generate sdk with docker
-For Go
+For TS
 ```zsh
-docker run -v $(pwd):/local ghcr.io/getstream/protocol go /local/protobuf
+docker run -v $(pwd):/local ghcr.io/getstream/protobuf-generate ts /local/packages/client/src/gen
 ```
 
 For Dart
 ```zsh
-docker run -v $(pwd):/local ghcr.io/getstream/protocol dart /local/dart-sdk
+docker run -v $(pwd):/local ghcr.io/getstream/protobuf-generate dart /local/dart-sdk
 ```
 
 Where `/local` is folder mounted to container from `PWD`.
@@ -89,5 +89,5 @@ In this way you will find the `dart-sdk` folder in your current directory.
 ### Generate for a specific branch
 
 ```zsh
-docker run -v $(pwd):/local ghcr.io/getstream/protocol dart /local/dart-sdk --branch=my-branch
+docker run -v $(pwd):/local ghcr.io/getstream/protobuf-generate dart /local/dart-sdk --branch=my-branch
 ```

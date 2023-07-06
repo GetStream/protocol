@@ -16,7 +16,13 @@ export PATH=/opt/.protoc/bin:$PWD/.protoc/bin:$PATH
 REALPATH=${REALPATH:-realpath}
 
 GEN_PROFILE=${1:-go}
-GEN_OUTPUT=$(${REALPATH} ${2:-${GEN_PROFILE}-sdk})
+
+if [[ $GEN_PROFILE = "go" ]]; then
+    GEN_OUTPUT=$(${REALPATH} ${2:-${PB}})
+  else
+    GEN_OUTPUT=$(${REALPATH} ${2:-${GEN_PROFILE}-sdk})
+fi
+
 GEN_GO_IMPORT_PREFIX=${3:-github.com/GetStream/protocol/protobuf}
 
 mkdir -p $GEN_OUTPUT
