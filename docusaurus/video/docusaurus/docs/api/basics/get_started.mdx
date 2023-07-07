@@ -62,7 +62,15 @@ client = Stream(
 <TabItem value="go" label="Golang">
 
 ```go
-TODO
+	tokenProvider := videosdk.UserToken(apiSecret, userID, 24*time.Hour)
+	sdk := videosdk.New(apiKey, tokenProvider)
+
+	token, err := tokenProvider(sdk.APIKey())
+	if err != nil {
+		panic(err)
+	}
+
+	client := videosdk.NewCoordinatorClientSDK(url, sdk.APIKey(), token)
 ```
 
 </TabItem>
@@ -202,6 +210,23 @@ func main() {
 ```
 
 </TabItem>
+
+<TabItem value="curl" label="cURL">
+
+```bash
+curl -X POST "https://video.stream-io-api.com/video/call/default/${CALL_ID}?api_key=${API_KEY}" \
+-H "Content-Type: application/json" \
+-H "Authorization: ${JWT_TOKEN}" \
+-d '{
+  "data": {
+    "created_by_id": "sacha@getstream.io",
+    "settings_override": { "audio": { "access_request_enabled": false } }
+  },
+  "members": [ { "role": "speaker", "user_id": "sacha@getstream.io" } ]
+}'
+```
+
+</TabItem>
 </Tabs>
 
 ## Adding members to a call
@@ -272,6 +297,21 @@ func main() {
 
 	fmt.Println("response", updateResponse)
 }
+```
+
+</TabItem>
+<TabItem value="curl" label="cURL">
+
+```bash
+curl -X PUT "https://video.stream-io-api.com/video/call/default/${CALL_ID}/members?api_key=${API_KEY}" \
+-H "Content-Type: application/json" \
+-H "Authorization: ${JWT_TOKEN}" \
+-d '{
+  "update_members": [
+    { "user_id": "sara" },
+    { "user_id": "emily", "role": "admin" }
+  ]
+}'
 ```
 
 </TabItem>
@@ -355,6 +395,23 @@ func main() {
 ```
 
 </TabItem>
+<TabItem value="curl" label="cURL">
+
+```bash
+curl -X PUT "https://video.stream-io-api.com/video/call/default/${CALL_ID}?api_key=${API_KEY}" \
+-H "Content-Type: application/json" \
+-H "Authorization: ${JWT_TOKEN}" \
+-d '{
+  "settings_override": {
+    "audio": {
+      "mic_default_on": true
+    }
+  }
+}'
+
+```
+
+</TabItem>
 </Tabs>
 
 ## Start HLS broadcasting
@@ -430,6 +487,14 @@ func main() {
 ```
 
 </TabItem>
+<TabItem value="curl" label="cURL">
+
+```bash
+curl -X POST "https://video.stream-io-api.com/video/call/default/${CALL_ID}/start_broadcasting?api_key=${API_KEY}" \
+-H "Authorization: ${JWT_TOKEN}"
+```
+
+</TabItem>
 </Tabs>
 
 ## Set up a call for RTMP
@@ -491,7 +556,50 @@ client.video.start_recording(
 <TabItem value="go" label="Golang">
 
 ```go
-TODO
+func main() {
+	apiKey := os.Getenv("API_KEY")
+	apiSecret := os.Getenv("API_SECRET")
+	userID := os.Getenv("USER_ID")
+	url := os.Getenv("URL")
+
+	if apiKey == "" || apiSecret == "" || userID == "" || url == "" {
+		panic("API_KEY, API_SECRET, USER_ID and URL env variables must be set")
+	}
+
+	tokenProvider := videosdk.UserToken(apiSecret, userID, 24*time.Hour)
+	sdk := videosdk.New(apiKey, tokenProvider)
+
+	token, err := tokenProvider(sdk.APIKey())
+	if err != nil {
+		panic(err)
+	}
+
+	client := videosdk.NewCoordinatorClientSDK(url, sdk.APIKey(), token)
+	startResponse, err := client.StartRecording(models.CallTypeDefault, callID, &models.StartRecordingRequest{
+		Type: "default", ID: callID,
+	})
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("response", startResponse)
+
+	stopResponse, err := client.StopRecording(models.CallTypeDefault, callID, &models.StopRecordingRequest{
+		Type: "default", ID: callID,
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("response", stopResponse)
+}
+```
+
+</TabItem>
+<TabItem value="curl" label="cURL">
+
+```bash
+curl -X POST "https://video.stream-io-api.com/video/call/default/${CALL_ID}/start_recording?api_key=${API_KEY}" \
+-H "Authorization: ${JWT_TOKEN}"
 ```
 
 </TabItem>
@@ -525,6 +633,14 @@ recordings = client.video.list_recordings(
 
 ```go
 TODO
+```
+
+</TabItem>
+<TabItem value="curl" label="cURL">
+
+```bash
+curl -X GET "https://video.stream-io-api.com/video/call/default/${CALL_ID}/${SESSION_ID}/recordings?api_key=${API_KEY}" \
+-H "Authorization: ${JWT_TOKEN}"
 ```
 
 </TabItem>

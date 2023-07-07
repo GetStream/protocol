@@ -8,7 +8,7 @@ MAKEFLAGS += -j$(NPROCS)
 
 CURRENT_VERSION_MAJOR = 1
 CURRENT_VERSION_MINOR = 7
-CURRENT_VERSION_BUG = 0
+CURRENT_VERSION_BUG = 1
 
 GIT_DESCRIBE := $(shell git describe)
 GITHUB_HEAD_REF ?= $(shell git branch --show-current)
@@ -60,7 +60,7 @@ build-docker-image:
 	@docker buildx build \
 			-f Dockerfile \
 			--platform linux/amd64 --load \
-			-t ghcr.io/getstream/protocol:latest \
+			-t ghcr.io/getstream/protobuf-generate:latest \
 			.
 
 .PHONY: push-docker-image
@@ -68,5 +68,5 @@ push-docker-image:
 	@docker buildx build \
 			-f Dockerfile \
 			--platform linux/arm64,linux/amd64 \
-			-t ghcr.io/getstream/protocol:latest \
+			-t ghcr.io/getstream/protobuf-generate:latest \
 			. --push

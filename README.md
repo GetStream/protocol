@@ -8,12 +8,9 @@ Stream REST API is described with OpenAPI specs, each product has its own openap
 
 At the moment client generation from OpenAPI specs is done inside the specific SDK repositories, generation scripts are not yet part of this repository and should be done using our dockerized fork of [openapi-generator](https://github.com/GetStream/openapi-generator).
 
-```sh
-docker pull ghcr.io/getstream/openapi-generator:master
-
+```bash
 docker run --rm -v "${PWD}:/local" ghcr.io/getstream/openapi-generator:master generate \
-   -i https://raw.githubusercontent.com/GetStream/protocol/main/openapi/
-   video-openapi.yaml \
+   -i https://raw.githubusercontent.com/GetStream/protocol/main/openapi/video-openapi.yaml \
    -g typescript-fetch \
    --additional-properties=supportsES6=true \
    --additional-properties=modelPropertyNaming=original \
@@ -37,13 +34,13 @@ Swift plugins are not installed if there's no `swift` executable in the PATH and
 
 You need to have `realpath`. It can be installed via:
 
-```sh
+```bash
 brew install coreutils
 ```
 
 If you have an issue with `realpath` in generation, try:
 
-```sh
+```bash
 REALPATH=grealpath ./generate.sh
 ```
 
@@ -73,14 +70,14 @@ To generate code for your language, do this:
 
 
 ## Generate sdk with docker
-For Go
-```zsh
-docker run -v $(pwd):/local ghcr.io/getstream/protocol go /local/protobuf
+For TS
+```bash
+docker run -v $(pwd):/local ghcr.io/getstream/protobuf-generate ts /local/packages/client/src/gen
 ```
 
 For Dart
-```zsh
-docker run -v $(pwd):/local ghcr.io/getstream/protocol dart /local/dart-sdk
+```bash
+docker run -v $(pwd):/local ghcr.io/getstream/protobuf-generate dart /local/dart-sdk
 ```
 
 Where `/local` is folder mounted to container from `PWD`.
@@ -88,6 +85,6 @@ In this way you will find the `dart-sdk` folder in your current directory.
 
 ### Generate for a specific branch
 
-```zsh
-docker run -v $(pwd):/local ghcr.io/getstream/protocol dart /local/dart-sdk --branch=my-branch
+```bash
+docker run -v $(pwd):/local ghcr.io/getstream/protobuf-generate dart /local/dart-sdk --branch=my-branch
 ```
