@@ -52,6 +52,12 @@ case $GEN_PROFILE in
       --twirp_out=paths=source_relative:$GEN_OUTPUT
 EOF
     )
+
+    linter=$(cat << EOF
+    go fmt $GEN_OUTPUT/...
+EOF
+    )
+
     # Map imports
     for DIR in $PROTO_DIRS; do
       DIR=$(${REALPATH} --relative-to "$PB" "$DIR")
@@ -79,6 +85,11 @@ EOF
 EOF
     )
 
+    linter=$(cat << EOF
+    echo
+EOF
+    )
+
     # Map imports
     for DIR in $PROTO_DIRS; do
       DIR=$(${REALPATH} --relative-to "$PB" "$DIR")
@@ -102,6 +113,11 @@ EOF
       --ts_opt eslint_disable
 EOF
     )
+
+    linter=$(cat << EOF
+    prettier --write $GEN_OUTPUT/**/*.ts
+EOF
+    )
     ;;
 
   swift)
@@ -118,6 +134,11 @@ EOF
       --swift_opt=FileNaming=FullPath
       --swift_out=$GEN_OUTPUT
       --swift-twirp_out=paths=source_relative:$GEN_OUTPUT
+EOF
+    )
+
+    linter=$(cat << EOF
+    echo
 EOF
     )
 
@@ -144,6 +165,7 @@ for DIR in $PROTO_DIRS; do
   ARGS=$PROTOC_ARGS
   if [[ ${FILES} ]]; then
     $protoc ${ARGS} ${FILES}
+    $linter
   fi
 done
 
