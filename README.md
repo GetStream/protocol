@@ -73,11 +73,17 @@ To generate code for your language, do this:
 For TS
 ```bash
 docker run -v $(pwd):/local ghcr.io/getstream/protobuf-generate ts /local/packages/client/src/gen
+
+# or
+docker run --platform=linux/amd64 -v $(pwd):/local ghcr.io/getstream/protobuf-generate ts /local/packages/client/src/gen
 ```
 
 For Dart
 ```bash
 docker run -v $(pwd):/local ghcr.io/getstream/protobuf-generate dart /local/dart-sdk
+
+# or
+docker run --platform=linux/amd64 -v $(pwd):/local ghcr.io/getstream/protobuf-generate dart /local/dart-sdk
 ```
 
 Where `/local` is folder mounted to container from `PWD`.
@@ -87,4 +93,7 @@ In this way you will find the `dart-sdk` folder in your current directory.
 
 ```bash
 docker run -v $(pwd):/local ghcr.io/getstream/protobuf-generate dart /local/dart-sdk --branch=my-branch
+
+# or
+docker run --platform=linux/amd64 -v $(pwd):/local ghcr.io/getstream/protobuf-generate dart /local/dart-sdk --branch=my-branch
 ```
