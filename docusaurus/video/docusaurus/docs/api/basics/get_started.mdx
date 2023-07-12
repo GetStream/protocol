@@ -23,7 +23,7 @@ yarn add @stream-io/video-client
 <TabItem value="py" label="Python">
 
 ```bash
-pip install ...
+pip install getstream
 ```
 
 </TabItem>
@@ -51,7 +51,11 @@ const client = new StreamVideoClient("<Your API key>", {
 <TabItem value="py" label="Python">
 
 ```py
-TODO
+client = Stream(
+    api_key=VIDEO_API_KEY,
+    api_secret=VIDEO_API_SECRET,
+    timeout=TIMEOUT
+)
 ```
 
 </TabItem>
@@ -94,8 +98,13 @@ client.createToken(userId, exp, iat, call_cids);
 <TabItem value="py" label="Python">
 
 ```py
-def hello_world():
-    print("Hello, world!")
+from getstream import Stream
+client = Stream(api_key="your_api_key", api_secret="your_api_secret")
+
+user_id = "john"
+# optionally provide call cids
+call_cids = ["default:call1", "livestream:call2"];
+token = client.create_token(user_id=user_id,call_cids=call_cids)
 ```
 
 </TabItem>
@@ -150,8 +159,13 @@ call.getOrCreate({
 <TabItem value="py" label="Python">
 
 ```py
-def hello_world():
-    print("Hello, world!")
+members= [{"role": "speaker", "user_id": "user_id"}]
+data = {
+        "created_by_id": "sacha@getstream.io",
+        "settings_override": {"audio": {"access_request_enabled": False}},
+    }
+call = client.video.call("default", "id")
+call.create(data=data, members=members)
 ```
 
 </TabItem>
@@ -222,8 +236,9 @@ call.updateCallMembers({
 <TabItem value="py" label="Python">
 
 ```py
-def hello_world():
-    print("Hello, world!")
+call.update_call_members([
+            {"user_id": "sara"},
+            {"user_id": "emily", "role": "admin"},])
 ```
 
 </TabItem>
@@ -303,8 +318,15 @@ call.update({ custom: { color: "red" } });
 <TabItem value="py" label="Python">
 
 ```py
-def hello_world():
-    print("Hello, world!")
+call.update(
+    data={
+        "settings_override": {
+            "audio": {
+                "mic_default_on": True
+            }
+        }
+    },
+)
 ```
 
 </TabItem>
@@ -377,6 +399,7 @@ curl -X PUT "https://video.stream-io-api.com/video/call/default/${CALL_ID}?api_k
 
 ## Start HLS broadcasting
 
+
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
 
@@ -391,8 +414,9 @@ call.stopBroadcasting();
 <TabItem value="py" label="Python">
 
 ```py
-def hello_world():
-    print("Hello, world!")
+call.start_broadcasting()
+# to stop recording
+call.stop_broadcasting()
 ```
 
 </TabItem>
@@ -464,8 +488,11 @@ const address = `${resp.call.ingress.rtmp.address}/<callType>/<callID>/<apiKey>/
 <TabItem value="py" label="Python">
 
 ```py
-def hello_world():
-    print("Hello, world!")
+data = {}  # Add any data you need for the get_or_create_call method
+call = client.video.call("livestream", "id")
+response = call.create(data=data,members=[{user_id: "sacha"}])
+rtmp_url = response["call"]["ingress"]["rtmp"]["address"]
+rtmp_stream_key = client.create_token(user_id="sacha")
 ```
 
 </TabItem>
@@ -494,8 +521,10 @@ call.stopRecording();
 <TabItem value="py" label="Python">
 
 ```py
-def hello_world():
-    print("Hello, world!")
+call.start_recording()
+
+# to stop recording
+call.stop_recording()
 ```
 
 </TabItem>
@@ -567,8 +596,7 @@ call.queryRecordings("<session ID>");
 <TabItem value="py" label="Python">
 
 ```py
-def hello_world():
-    print("Hello, world!")
+recordings = call.query_recordings(session_id="your_session_id")
 ```
 
 </TabItem>
