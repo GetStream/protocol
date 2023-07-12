@@ -66,9 +66,10 @@ message SfuEvent {
     // GoAway tells the client to migrate away from the SFU it is connected to.
     // The reason field indicates why this message was sent.
     GoAway go_away = 20;
+    // ICERestart tells the client to perform ICE restart.
+    ICERestart ice_restart = 21;
   }
 }
-
 
 message Error{
   models.Error error = 4;
@@ -79,6 +80,9 @@ message ICETrickle {
   string ice_candidate = 2;
 }
 
+message ICERestart {
+  models.PeerType peer_type = 1;
+}
 
 // SfuRequest is a message that is sent from the client to the SFU.
 message SfuRequest {
@@ -131,6 +135,16 @@ message JoinRequest {
   // TODO: we should know if this is going to be
   // - publishing and subscribing, or just subscribing for future routing
   Migration migration = 5;
+  // Fast reconnect flag explicitly indicates that if the participant session
+  // and the associated state is still present in the SFU, the client is ready
+  // to restore the PeerConnection with an ICE restart. If the SFU replies with
+  // "reconnected: true" in its JoinResponse, then it is safe to perform an ICE
+  // restart or else the existing PeerConnections must be cleaned up.
+  //
+  // For the SFU, fast_reconnect:false indicates that even if it has the state
+  // cached, the client state is not in sync and hence it must be cleaned up before
+  // proceeding further.
+  bool fast_reconnect = 6;
 }
 
 message Migration {
@@ -140,8 +154,8 @@ message Migration {
 }
 
 message JoinResponse {
-  // TODO: include full list of participants with track and audio info
   models.CallState call_state = 1;
+  bool reconnected = 2;
 }
 
 // ParticipantJoined is fired when a user joins a call
