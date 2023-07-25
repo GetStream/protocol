@@ -5,12 +5,323 @@ slug: /calls
 title: Calls
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 ## Creating calls
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+const callType = 'default';
+const callId = 'my-first-call';
+const call = client.call(callType, callId);
+
+call.getOrCreate({ data: { created_by_id: 'john' } });
+
+// optionally provide additional data
+call.getOrCreate({
+  data: {
+    created_by_id: 'john',
+    members: [{ user_id: 'john', role: 'admin' }, { user_id: 'jack' }],
+  },
+});
+```
+
+</TabItem>
+<TabItem value="py" label="Python">
+
+```py
+def hello_world():
+    print("Hello, world!")
+```
+
+</TabItem>
+<TabItem value="go" label="Golang">
+
+```go
+func main() {
+	apiKey := os.Getenv("API_KEY")
+	apiSecret := os.Getenv("API_SECRET")
+	userID := os.Getenv("USER_ID")
+	url := os.Getenv("URL")
+
+	if apiKey == "" || apiSecret == "" || userID == "" || url == "" {
+		panic("API_KEY, API_SECRET, USER_ID and URL env variables must be set")
+	}
+
+	tokenProvider := videosdk.UserToken(apiSecret, userID, 24*time.Hour)
+	sdk := videosdk.New(apiKey, tokenProvider)
+
+	token, err := tokenProvider(sdk.APIKey())
+	if err != nil {
+		panic(err)
+	}
+
+	client := videosdk.NewCoordinatorClientSDK(url, sdk.APIKey(), token)
+	id := fmt.Sprintf("call-%d", rand.Int())
+	response, err := client.GetOrCreateCall("default", id, &models.GetOrCreateCallRequest{})
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("response", response)
+}
+```
+
+</TabItem>
+
+<TabItem value="curl" label="cURL">
+
+```bash
+curl -X POST "https://video.stream-io-api.com/video/call/default/${CALL_ID}?api_key=${API_KEY}" \
+-H "Content-Type: application/json" \
+-H "Authorization: ${JWT_TOKEN}" \
+-d '{
+  "data": {
+    "created_by_id": "sacha@getstream.io",
+    "settings_override": { "audio": { "access_request_enabled": false } }
+  },
+  "members": [ { "role": "speaker", "user_id": "sacha@getstream.io" } ]
+}'
+```
+
+</TabItem>
+</Tabs>
 
 ## Updating calls
 
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+call.update({ settings_override: { audio: { mic_default_on: true } } });
+
+// or to update custom data
+call.update({ custom: { color: 'red' } });
+```
+
+</TabItem>
+<TabItem value="py" label="Python">
+
+```py
+def hello_world():
+    print("Hello, world!")
+```
+
+</TabItem>
+<TabItem value="go" label="Golang">
+
+```go
+func main() {
+	apiKey := os.Getenv("API_KEY")
+	apiSecret := os.Getenv("API_SECRET")
+	userID := os.Getenv("USER_ID")
+	url := os.Getenv("URL")
+
+	if apiKey == "" || apiSecret == "" || userID == "" || url == "" {
+		panic("API_KEY, API_SECRET, USER_ID and URL env variables must be set")
+	}
+
+	tokenProvider := videosdk.UserToken(apiSecret, userID, 24*time.Hour)
+	sdk := videosdk.New(apiKey, tokenProvider)
+
+	token, err := tokenProvider(sdk.APIKey())
+	if err != nil {
+		panic(err)
+	}
+
+	client := videosdk.NewCoordinatorClientSDK(url, sdk.APIKey(), token)
+
+	// get an already created call or create one
+	id := fmt.Sprintf("call-%d", rand.Int())
+	response, err := client.GetOrCreateCall("default", id, &models.GetOrCreateCallRequest{})
+	if err != nil {
+		panic(err)
+	}
+
+    updateResponse, err := client.UpdateCall("default", callID, &models.UpdateCallRequest{
+        Type:   "default",
+        ID:     callID,
+        Custom: nil,
+        SettingsOverride: &models.CallSettingsRequest{
+            Video: &models.VideoSettingsRequest{Enabled: PtrTo(true)},
+        },
+        StartsAt: nil,
+    })
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("response", updateResponse)
+}
+```
+
+</TabItem>
+<TabItem value="curl" label="cURL">
+
+```bash
+curl -X PUT "https://video.stream-io-api.com/video/call/default/${CALL_ID}?api_key=${API_KEY}" \
+-H "Content-Type: application/json" \
+-H "Authorization: ${JWT_TOKEN}" \
+-d '{
+  "settings_override": {
+    "audio": {
+      "mic_default_on": true
+    }
+  }
+}'
+
+```
+
+</TabItem>
+</Tabs>
+
 ## Manage call members
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+// update or add call members
+call.updateCallMembers({
+  update_members: [{ user_id: 'sara' }, { user_id: 'jack', role: 'admin' }],
+});
+
+// remove call members
+call.updateCallMembers({
+  remove_members: ['sara'],
+});
+```
+
+</TabItem>
+<TabItem value="py" label="Python">
+
+```py
+def hello_world():
+    print("Hello, world!")
+```
+
+</TabItem>
+<TabItem value="go" label="Golang">
+
+```go
+func main() {
+	apiKey := os.Getenv("API_KEY")
+	apiSecret := os.Getenv("API_SECRET")
+	userID := os.Getenv("USER_ID")
+	url := os.Getenv("URL")
+
+	if apiKey == "" || apiSecret == "" || userID == "" || url == "" {
+		panic("API_KEY, API_SECRET, USER_ID and URL env variables must be set")
+	}
+
+	tokenProvider := videosdk.UserToken(apiSecret, userID, 24*time.Hour)
+	sdk := videosdk.New(apiKey, tokenProvider)
+
+	token, err := tokenProvider(sdk.APIKey())
+	if err != nil {
+		panic(err)
+	}
+
+	client := videosdk.NewCoordinatorClientSDK(url, sdk.APIKey(), token)
+
+	// get an already created call or create one
+	id := fmt.Sprintf("call-%d", rand.Int())
+	response, err := client.GetOrCreateCall("default", id, &models.GetOrCreateCallRequest{})
+	if err != nil {
+		panic(err)
+	}
+
+	updateResponse, err := client.UpdateMembers("default", id, &models.UpdateCallMembersRequest{
+		Type: "default", ID: id,
+		UpdateMembers: []models.MemberRequest{{UserId: "federico_guerinoni@getstream_io"}},
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("response", updateResponse)
+}
+```
+
+</TabItem>
+<TabItem value="curl" label="cURL">
+
+```bash
+curl -X PUT "https://video.stream-io-api.com/video/call/default/${CALL_ID}/members?api_key=${API_KEY}" \
+-H "Content-Type: application/json" \
+-H "Authorization: ${JWT_TOKEN}" \
+-d '{
+  "update_members": [
+    { "user_id": "sara" },
+    { "user_id": "emily", "role": "admin" }
+  ]
+}'
+```
+
+</TabItem>
+</Tabs>
 
 ## Query calls
 
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+// default sorting
+client.queryCalls();
+
+// sorting and pagination
+const queryCallsReq = {
+  sort: [{ field: 'starts_at', direction: -1 }],
+  limit: 2,
+};
+response = await client.queryCalls(queryCallsReq);
+
+// loading next page
+client.queryCalls({
+  ...queryCallsReq,
+  next: response.next,
+});
+
+// filtering
+client.queryCalls({
+  filter_conditions: { backstage: { $eq: false } },
+});
+```
+
+</TabItem>
+</Tabs>
+
 ## Query call members
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+// default sorting
+call.queryMembers();
+
+// sorting and pagination
+const queryMembersReq = {
+  sort: [{ field: 'user_id', direction: 1 }],
+  limit: 2,
+};
+const response = await call.queryMembers(queryMembersReq);
+
+// loading next page
+call.queryMembers({
+  ...queryMembersReq,
+  next: response.next,
+});
+
+// filtering
+call.queryMembers({
+  filter_conditions: { role: { $eq: 'admin' } },
+});
+```
+
+</TabItem>
+</Tabs>
