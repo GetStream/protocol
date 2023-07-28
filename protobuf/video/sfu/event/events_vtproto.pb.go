@@ -415,15 +415,15 @@ func (m *SfuEvent_IceRestart) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	}
 	return len(dAtA) - i, nil
 }
-func (m *SfuEvent_PinnedSessionsChanged) MarshalToVT(dAtA []byte) (int, error) {
+func (m *SfuEvent_PinsUpdated) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *SfuEvent_PinnedSessionsChanged) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *SfuEvent_PinsUpdated) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	i := len(dAtA)
-	if m.PinnedSessionsChanged != nil {
-		size, err := m.PinnedSessionsChanged.MarshalToSizedBufferVT(dAtA[:i])
+	if m.PinsUpdated != nil {
+		size, err := m.PinsUpdated.MarshalToSizedBufferVT(dAtA[:i])
 		if err != nil {
 			return 0, err
 		}
@@ -436,7 +436,7 @@ func (m *SfuEvent_PinnedSessionsChanged) MarshalToSizedBufferVT(dAtA []byte) (in
 	}
 	return len(dAtA) - i, nil
 }
-func (m *PinnedSessionsChanged) MarshalVT() (dAtA []byte, err error) {
+func (m *PinsChanged) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -449,12 +449,12 @@ func (m *PinnedSessionsChanged) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *PinnedSessionsChanged) MarshalToVT(dAtA []byte) (int, error) {
+func (m *PinsChanged) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *PinnedSessionsChanged) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *PinsChanged) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -466,11 +466,26 @@ func (m *PinnedSessionsChanged) MarshalToSizedBufferVT(dAtA []byte) (int, error)
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.PinnedSessions) > 0 {
-		for iNdEx := len(m.PinnedSessions) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.PinnedSessions[iNdEx])
-			copy(dAtA[i:], m.PinnedSessions[iNdEx])
-			i = encodeVarint(dAtA, i, uint64(len(m.PinnedSessions[iNdEx])))
+	if len(m.Pins) > 0 {
+		for iNdEx := len(m.Pins) - 1; iNdEx >= 0; iNdEx-- {
+			if marshalto, ok := interface{}(m.Pins[iNdEx]).(interface {
+				MarshalToSizedBufferVT([]byte) (int, error)
+			}); ok {
+				size, err := marshalto.MarshalToSizedBufferVT(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarint(dAtA, i, uint64(size))
+			} else {
+				encoded, err := proto.Marshal(m.Pins[iNdEx])
+				if err != nil {
+					return 0, err
+				}
+				i -= len(encoded)
+				copy(dAtA[i:], encoded)
+				i = encodeVarint(dAtA, i, uint64(len(encoded)))
+			}
 			i--
 			dAtA[i] = 0xa
 		}
@@ -2364,27 +2379,33 @@ func (m *SfuEvent_IceRestart) SizeVT() (n int) {
 	}
 	return n
 }
-func (m *SfuEvent_PinnedSessionsChanged) SizeVT() (n int) {
+func (m *SfuEvent_PinsUpdated) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.PinnedSessionsChanged != nil {
-		l = m.PinnedSessionsChanged.SizeVT()
+	if m.PinsUpdated != nil {
+		l = m.PinsUpdated.SizeVT()
 		n += 2 + l + sov(uint64(l))
 	}
 	return n
 }
-func (m *PinnedSessionsChanged) SizeVT() (n int) {
+func (m *PinsChanged) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if len(m.PinnedSessions) > 0 {
-		for _, s := range m.PinnedSessions {
-			l = len(s)
+	if len(m.Pins) > 0 {
+		for _, e := range m.Pins {
+			if size, ok := interface{}(e).(interface {
+				SizeVT() int
+			}); ok {
+				l = size.SizeVT()
+			} else {
+				l = proto.Size(e)
+			}
 			n += 1 + l + sov(uint64(l))
 		}
 	}
@@ -3837,7 +3858,7 @@ func (m *SfuEvent) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 22:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PinnedSessionsChanged", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field PinsUpdated", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -3864,16 +3885,16 @@ func (m *SfuEvent) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if oneof, ok := m.EventPayload.(*SfuEvent_PinnedSessionsChanged); ok {
-				if err := oneof.PinnedSessionsChanged.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+			if oneof, ok := m.EventPayload.(*SfuEvent_PinsUpdated); ok {
+				if err := oneof.PinsUpdated.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
 			} else {
-				v := &PinnedSessionsChanged{}
+				v := &PinsChanged{}
 				if err := v.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
-				m.EventPayload = &SfuEvent_PinnedSessionsChanged{v}
+				m.EventPayload = &SfuEvent_PinsUpdated{v}
 			}
 			iNdEx = postIndex
 		default:
@@ -3898,7 +3919,7 @@ func (m *SfuEvent) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *PinnedSessionsChanged) UnmarshalVT(dAtA []byte) error {
+func (m *PinsChanged) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3921,17 +3942,17 @@ func (m *PinnedSessionsChanged) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: PinnedSessionsChanged: wiretype end group for non-group")
+			return fmt.Errorf("proto: PinsChanged: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: PinnedSessionsChanged: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: PinsChanged: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PinnedSessions", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Pins", wireType)
 			}
-			var stringLen uint64
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflow
@@ -3941,23 +3962,33 @@ func (m *PinnedSessionsChanged) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
+			if msglen < 0 {
 				return ErrInvalidLength
 			}
-			postIndex := iNdEx + intStringLen
+			postIndex := iNdEx + msglen
 			if postIndex < 0 {
 				return ErrInvalidLength
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.PinnedSessions = append(m.PinnedSessions, string(dAtA[iNdEx:postIndex]))
+			m.Pins = append(m.Pins, &models.Pin{})
+			if unmarshal, ok := interface{}(m.Pins[len(m.Pins)-1]).(interface {
+				UnmarshalVT([]byte) error
+			}); ok {
+				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.Pins[len(m.Pins)-1]); err != nil {
+					return err
+				}
+			}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

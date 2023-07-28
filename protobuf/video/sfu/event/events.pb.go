@@ -99,7 +99,7 @@ type SfuEvent struct {
 	//	*SfuEvent_CallGrantsUpdated
 	//	*SfuEvent_GoAway
 	//	*SfuEvent_IceRestart
-	//	*SfuEvent_PinnedSessionsChanged
+	//	*SfuEvent_PinsUpdated
 	EventPayload isSfuEvent_EventPayload `protobuf_oneof:"event_payload"`
 }
 
@@ -261,9 +261,9 @@ func (x *SfuEvent) GetIceRestart() *ICERestart {
 	return nil
 }
 
-func (x *SfuEvent) GetPinnedSessionsChanged() *PinnedSessionsChanged {
-	if x, ok := x.GetEventPayload().(*SfuEvent_PinnedSessionsChanged); ok {
-		return x.PinnedSessionsChanged
+func (x *SfuEvent) GetPinsUpdated() *PinsChanged {
+	if x, ok := x.GetEventPayload().(*SfuEvent_PinsUpdated); ok {
+		return x.PinsUpdated
 	}
 	return nil
 }
@@ -378,9 +378,9 @@ type SfuEvent_IceRestart struct {
 	IceRestart *ICERestart `protobuf:"bytes,21,opt,name=ice_restart,json=iceRestart,proto3,oneof"`
 }
 
-type SfuEvent_PinnedSessionsChanged struct {
-	// PinnedSessionsChanged is sent when the pinned sessions change.
-	PinnedSessionsChanged *PinnedSessionsChanged `protobuf:"bytes,22,opt,name=pinned_sessions_changed,json=pinnedSessionsChanged,proto3,oneof"`
+type SfuEvent_PinsUpdated struct {
+	// PinsChanged is sent the list of pins in the call changes. This event contains the entire list of pins.
+	PinsUpdated *PinsChanged `protobuf:"bytes,22,opt,name=pins_updated,json=pinsUpdated,proto3,oneof"`
 }
 
 func (*SfuEvent_SubscriberOffer) isSfuEvent_EventPayload() {}
@@ -417,22 +417,20 @@ func (*SfuEvent_GoAway) isSfuEvent_EventPayload() {}
 
 func (*SfuEvent_IceRestart) isSfuEvent_EventPayload() {}
 
-func (*SfuEvent_PinnedSessionsChanged) isSfuEvent_EventPayload() {}
+func (*SfuEvent_PinsUpdated) isSfuEvent_EventPayload() {}
 
-// PinnedSessionsChanged is sent when the pinned sessions change.
-type PinnedSessionsChanged struct {
+type PinsChanged struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// pinned_sessions contains the list of sessions that are pinned
-	// in the call. The order of the sessions in the list is the order
-	// in which they are pinned (descending order of priority).
-	PinnedSessions []string `protobuf:"bytes,1,rep,name=pinned_sessions,json=pinnedSessions,proto3" json:"pinned_sessions,omitempty"`
+	// the list of pins in the call.
+	// Pins are ordered in descending order (most important first).
+	Pins []*models.Pin `protobuf:"bytes,1,rep,name=pins,proto3" json:"pins,omitempty"`
 }
 
-func (x *PinnedSessionsChanged) Reset() {
-	*x = PinnedSessionsChanged{}
+func (x *PinsChanged) Reset() {
+	*x = PinsChanged{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_video_sfu_event_events_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -440,13 +438,13 @@ func (x *PinnedSessionsChanged) Reset() {
 	}
 }
 
-func (x *PinnedSessionsChanged) String() string {
+func (x *PinsChanged) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*PinnedSessionsChanged) ProtoMessage() {}
+func (*PinsChanged) ProtoMessage() {}
 
-func (x *PinnedSessionsChanged) ProtoReflect() protoreflect.Message {
+func (x *PinsChanged) ProtoReflect() protoreflect.Message {
 	mi := &file_video_sfu_event_events_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -458,14 +456,14 @@ func (x *PinnedSessionsChanged) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use PinnedSessionsChanged.ProtoReflect.Descriptor instead.
-func (*PinnedSessionsChanged) Descriptor() ([]byte, []int) {
+// Deprecated: Use PinsChanged.ProtoReflect.Descriptor instead.
+func (*PinsChanged) Descriptor() ([]byte, []int) {
 	return file_video_sfu_event_events_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *PinnedSessionsChanged) GetPinnedSessions() []string {
+func (x *PinsChanged) GetPins() []*models.Pin {
 	if x != nil {
-		return x.PinnedSessions
+		return x.Pins
 	}
 	return nil
 }
@@ -2167,7 +2165,7 @@ var file_video_sfu_event_events_proto_rawDesc = []byte{
 	0x75, 0x2f, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2f, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e,
 	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x21, 0x76, 0x69, 0x64, 0x65, 0x6f, 0x2f, 0x73, 0x66, 0x75,
 	0x2f, 0x73, 0x69, 0x67, 0x6e, 0x61, 0x6c, 0x5f, 0x72, 0x70, 0x63, 0x2f, 0x73, 0x69, 0x67, 0x6e,
-	0x61, 0x6c, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0xbd, 0x0c, 0x0a, 0x08, 0x53, 0x66, 0x75,
+	0x61, 0x6c, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x9e, 0x0c, 0x0a, 0x08, 0x53, 0x66, 0x75,
 	0x45, 0x76, 0x65, 0x6e, 0x74, 0x12, 0x54, 0x0a, 0x10, 0x73, 0x75, 0x62, 0x73, 0x63, 0x72, 0x69,
 	0x62, 0x65, 0x72, 0x5f, 0x6f, 0x66, 0x66, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32,
 	0x27, 0x2e, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x2e, 0x76, 0x69, 0x64, 0x65, 0x6f, 0x2e, 0x73,
@@ -2259,19 +2257,17 @@ var file_video_sfu_event_events_proto_rawDesc = []byte{
 	0x65, 0x73, 0x74, 0x61, 0x72, 0x74, 0x18, 0x15, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x22, 0x2e, 0x73,
 	0x74, 0x72, 0x65, 0x61, 0x6d, 0x2e, 0x76, 0x69, 0x64, 0x65, 0x6f, 0x2e, 0x73, 0x66, 0x75, 0x2e,
 	0x65, 0x76, 0x65, 0x6e, 0x74, 0x2e, 0x49, 0x43, 0x45, 0x52, 0x65, 0x73, 0x74, 0x61, 0x72, 0x74,
-	0x48, 0x00, 0x52, 0x0a, 0x69, 0x63, 0x65, 0x52, 0x65, 0x73, 0x74, 0x61, 0x72, 0x74, 0x12, 0x67,
-	0x0a, 0x17, 0x70, 0x69, 0x6e, 0x6e, 0x65, 0x64, 0x5f, 0x73, 0x65, 0x73, 0x73, 0x69, 0x6f, 0x6e,
-	0x73, 0x5f, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x64, 0x18, 0x16, 0x20, 0x01, 0x28, 0x0b, 0x32,
-	0x2d, 0x2e, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x2e, 0x76, 0x69, 0x64, 0x65, 0x6f, 0x2e, 0x73,
-	0x66, 0x75, 0x2e, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x2e, 0x50, 0x69, 0x6e, 0x6e, 0x65, 0x64, 0x53,
-	0x65, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x64, 0x48, 0x00,
-	0x52, 0x15, 0x70, 0x69, 0x6e, 0x6e, 0x65, 0x64, 0x53, 0x65, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x73,
-	0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x64, 0x42, 0x0f, 0x0a, 0x0d, 0x65, 0x76, 0x65, 0x6e, 0x74,
-	0x5f, 0x70, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x22, 0x40, 0x0a, 0x15, 0x50, 0x69, 0x6e, 0x6e,
-	0x65, 0x64, 0x53, 0x65, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65,
-	0x64, 0x12, 0x27, 0x0a, 0x0f, 0x70, 0x69, 0x6e, 0x6e, 0x65, 0x64, 0x5f, 0x73, 0x65, 0x73, 0x73,
-	0x69, 0x6f, 0x6e, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x0e, 0x70, 0x69, 0x6e, 0x6e,
-	0x65, 0x64, 0x53, 0x65, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x22, 0x3d, 0x0a, 0x05, 0x45, 0x72,
+	0x48, 0x00, 0x52, 0x0a, 0x69, 0x63, 0x65, 0x52, 0x65, 0x73, 0x74, 0x61, 0x72, 0x74, 0x12, 0x48,
+	0x0a, 0x0c, 0x70, 0x69, 0x6e, 0x73, 0x5f, 0x75, 0x70, 0x64, 0x61, 0x74, 0x65, 0x64, 0x18, 0x16,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x23, 0x2e, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x2e, 0x76, 0x69,
+	0x64, 0x65, 0x6f, 0x2e, 0x73, 0x66, 0x75, 0x2e, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x2e, 0x50, 0x69,
+	0x6e, 0x73, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x64, 0x48, 0x00, 0x52, 0x0b, 0x70, 0x69, 0x6e,
+	0x73, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x64, 0x42, 0x0f, 0x0a, 0x0d, 0x65, 0x76, 0x65, 0x6e,
+	0x74, 0x5f, 0x70, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x22, 0x3f, 0x0a, 0x0b, 0x50, 0x69, 0x6e,
+	0x73, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x64, 0x12, 0x30, 0x0a, 0x04, 0x70, 0x69, 0x6e, 0x73,
+	0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x2e,
+	0x76, 0x69, 0x64, 0x65, 0x6f, 0x2e, 0x73, 0x66, 0x75, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73,
+	0x2e, 0x50, 0x69, 0x6e, 0x52, 0x04, 0x70, 0x69, 0x6e, 0x73, 0x22, 0x3d, 0x0a, 0x05, 0x45, 0x72,
 	0x72, 0x6f, 0x72, 0x12, 0x34, 0x0a, 0x05, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x18, 0x04, 0x20, 0x01,
 	0x28, 0x0b, 0x32, 0x1e, 0x2e, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x2e, 0x76, 0x69, 0x64, 0x65,
 	0x6f, 0x2e, 0x73, 0x66, 0x75, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x45, 0x72, 0x72,
@@ -2546,7 +2542,7 @@ var file_video_sfu_event_events_proto_msgTypes = make([]protoimpl.MessageInfo, 3
 var file_video_sfu_event_events_proto_goTypes = []interface{}{
 	(VideoLayerSetting_Priority)(0),             // 0: stream.video.sfu.event.VideoLayerSetting.Priority
 	(*SfuEvent)(nil),                            // 1: stream.video.sfu.event.SfuEvent
-	(*PinnedSessionsChanged)(nil),               // 2: stream.video.sfu.event.PinnedSessionsChanged
+	(*PinsChanged)(nil),                         // 2: stream.video.sfu.event.PinsChanged
 	(*Error)(nil),                               // 3: stream.video.sfu.event.Error
 	(*ICETrickle)(nil),                          // 4: stream.video.sfu.event.ICETrickle
 	(*ICERestart)(nil),                          // 5: stream.video.sfu.event.ICERestart
@@ -2576,20 +2572,21 @@ var file_video_sfu_event_events_proto_goTypes = []interface{}{
 	(*CallGrantsUpdated)(nil),                   // 29: stream.video.sfu.event.CallGrantsUpdated
 	(*GoAway)(nil),                              // 30: stream.video.sfu.event.GoAway
 	(*models.ICETrickle)(nil),                   // 31: stream.video.sfu.models.ICETrickle
-	(*models.Error)(nil),                        // 32: stream.video.sfu.models.Error
-	(models.PeerType)(0),                        // 33: stream.video.sfu.models.PeerType
-	(*models.ParticipantCount)(nil),             // 34: stream.video.sfu.models.ParticipantCount
-	(models.TrackType)(0),                       // 35: stream.video.sfu.models.TrackType
-	(*models.Participant)(nil),                  // 36: stream.video.sfu.models.Participant
-	(models.TrackUnpublishReason)(0),            // 37: stream.video.sfu.models.TrackUnpublishReason
-	(*models.ClientDetails)(nil),                // 38: stream.video.sfu.models.ClientDetails
-	(*models.TrackInfo)(nil),                    // 39: stream.video.sfu.models.TrackInfo
-	(*signal_rpc.TrackSubscriptionDetails)(nil), // 40: stream.video.sfu.signal.TrackSubscriptionDetails
-	(*models.CallState)(nil),                    // 41: stream.video.sfu.models.CallState
-	(models.ConnectionQuality)(0),               // 42: stream.video.sfu.models.ConnectionQuality
-	(*models.Codec)(nil),                        // 43: stream.video.sfu.models.Codec
-	(*models.CallGrants)(nil),                   // 44: stream.video.sfu.models.CallGrants
-	(models.GoAwayReason)(0),                    // 45: stream.video.sfu.models.GoAwayReason
+	(*models.Pin)(nil),                          // 32: stream.video.sfu.models.Pin
+	(*models.Error)(nil),                        // 33: stream.video.sfu.models.Error
+	(models.PeerType)(0),                        // 34: stream.video.sfu.models.PeerType
+	(*models.ParticipantCount)(nil),             // 35: stream.video.sfu.models.ParticipantCount
+	(models.TrackType)(0),                       // 36: stream.video.sfu.models.TrackType
+	(*models.Participant)(nil),                  // 37: stream.video.sfu.models.Participant
+	(models.TrackUnpublishReason)(0),            // 38: stream.video.sfu.models.TrackUnpublishReason
+	(*models.ClientDetails)(nil),                // 39: stream.video.sfu.models.ClientDetails
+	(*models.TrackInfo)(nil),                    // 40: stream.video.sfu.models.TrackInfo
+	(*signal_rpc.TrackSubscriptionDetails)(nil), // 41: stream.video.sfu.signal.TrackSubscriptionDetails
+	(*models.CallState)(nil),                    // 42: stream.video.sfu.models.CallState
+	(models.ConnectionQuality)(0),               // 43: stream.video.sfu.models.ConnectionQuality
+	(*models.Codec)(nil),                        // 44: stream.video.sfu.models.Codec
+	(*models.CallGrants)(nil),                   // 45: stream.video.sfu.models.CallGrants
+	(models.GoAwayReason)(0),                    // 46: stream.video.sfu.models.GoAwayReason
 }
 var file_video_sfu_event_events_proto_depIdxs = []int32{
 	16, // 0: stream.video.sfu.event.SfuEvent.subscriber_offer:type_name -> stream.video.sfu.event.SubscriberOffer
@@ -2609,44 +2606,45 @@ var file_video_sfu_event_events_proto_depIdxs = []int32{
 	29, // 14: stream.video.sfu.event.SfuEvent.call_grants_updated:type_name -> stream.video.sfu.event.CallGrantsUpdated
 	30, // 15: stream.video.sfu.event.SfuEvent.go_away:type_name -> stream.video.sfu.event.GoAway
 	5,  // 16: stream.video.sfu.event.SfuEvent.ice_restart:type_name -> stream.video.sfu.event.ICERestart
-	2,  // 17: stream.video.sfu.event.SfuEvent.pinned_sessions_changed:type_name -> stream.video.sfu.event.PinnedSessionsChanged
-	32, // 18: stream.video.sfu.event.Error.error:type_name -> stream.video.sfu.models.Error
-	33, // 19: stream.video.sfu.event.ICETrickle.peer_type:type_name -> stream.video.sfu.models.PeerType
-	33, // 20: stream.video.sfu.event.ICERestart.peer_type:type_name -> stream.video.sfu.models.PeerType
-	11, // 21: stream.video.sfu.event.SfuRequest.join_request:type_name -> stream.video.sfu.event.JoinRequest
-	7,  // 22: stream.video.sfu.event.SfuRequest.health_check_request:type_name -> stream.video.sfu.event.HealthCheckRequest
-	34, // 23: stream.video.sfu.event.HealthCheckResponse.participant_count:type_name -> stream.video.sfu.models.ParticipantCount
-	35, // 24: stream.video.sfu.event.TrackPublished.type:type_name -> stream.video.sfu.models.TrackType
-	36, // 25: stream.video.sfu.event.TrackPublished.participant:type_name -> stream.video.sfu.models.Participant
-	35, // 26: stream.video.sfu.event.TrackUnpublished.type:type_name -> stream.video.sfu.models.TrackType
-	37, // 27: stream.video.sfu.event.TrackUnpublished.cause:type_name -> stream.video.sfu.models.TrackUnpublishReason
-	36, // 28: stream.video.sfu.event.TrackUnpublished.participant:type_name -> stream.video.sfu.models.Participant
-	38, // 29: stream.video.sfu.event.JoinRequest.client_details:type_name -> stream.video.sfu.models.ClientDetails
-	12, // 30: stream.video.sfu.event.JoinRequest.migration:type_name -> stream.video.sfu.event.Migration
-	39, // 31: stream.video.sfu.event.Migration.announced_tracks:type_name -> stream.video.sfu.models.TrackInfo
-	40, // 32: stream.video.sfu.event.Migration.subscriptions:type_name -> stream.video.sfu.signal.TrackSubscriptionDetails
-	41, // 33: stream.video.sfu.event.JoinResponse.call_state:type_name -> stream.video.sfu.models.CallState
-	36, // 34: stream.video.sfu.event.ParticipantJoined.participant:type_name -> stream.video.sfu.models.Participant
-	36, // 35: stream.video.sfu.event.ParticipantLeft.participant:type_name -> stream.video.sfu.models.Participant
-	19, // 36: stream.video.sfu.event.ConnectionQualityChanged.connection_quality_updates:type_name -> stream.video.sfu.event.ConnectionQualityInfo
-	42, // 37: stream.video.sfu.event.ConnectionQualityInfo.connection_quality:type_name -> stream.video.sfu.models.ConnectionQuality
-	21, // 38: stream.video.sfu.event.AudioLevelChanged.audio_levels:type_name -> stream.video.sfu.event.AudioLevel
-	23, // 39: stream.video.sfu.event.AudioSender.media_request:type_name -> stream.video.sfu.event.AudioMediaRequest
-	43, // 40: stream.video.sfu.event.AudioSender.codec:type_name -> stream.video.sfu.models.Codec
-	0,  // 41: stream.video.sfu.event.VideoLayerSetting.priority:type_name -> stream.video.sfu.event.VideoLayerSetting.Priority
-	43, // 42: stream.video.sfu.event.VideoLayerSetting.codec:type_name -> stream.video.sfu.models.Codec
-	25, // 43: stream.video.sfu.event.VideoSender.media_request:type_name -> stream.video.sfu.event.VideoMediaRequest
-	43, // 44: stream.video.sfu.event.VideoSender.codec:type_name -> stream.video.sfu.models.Codec
-	26, // 45: stream.video.sfu.event.VideoSender.layers:type_name -> stream.video.sfu.event.VideoLayerSetting
-	24, // 46: stream.video.sfu.event.ChangePublishQuality.audio_senders:type_name -> stream.video.sfu.event.AudioSender
-	27, // 47: stream.video.sfu.event.ChangePublishQuality.video_senders:type_name -> stream.video.sfu.event.VideoSender
-	44, // 48: stream.video.sfu.event.CallGrantsUpdated.current_grants:type_name -> stream.video.sfu.models.CallGrants
-	45, // 49: stream.video.sfu.event.GoAway.reason:type_name -> stream.video.sfu.models.GoAwayReason
-	50, // [50:50] is the sub-list for method output_type
-	50, // [50:50] is the sub-list for method input_type
-	50, // [50:50] is the sub-list for extension type_name
-	50, // [50:50] is the sub-list for extension extendee
-	0,  // [0:50] is the sub-list for field type_name
+	2,  // 17: stream.video.sfu.event.SfuEvent.pins_updated:type_name -> stream.video.sfu.event.PinsChanged
+	32, // 18: stream.video.sfu.event.PinsChanged.pins:type_name -> stream.video.sfu.models.Pin
+	33, // 19: stream.video.sfu.event.Error.error:type_name -> stream.video.sfu.models.Error
+	34, // 20: stream.video.sfu.event.ICETrickle.peer_type:type_name -> stream.video.sfu.models.PeerType
+	34, // 21: stream.video.sfu.event.ICERestart.peer_type:type_name -> stream.video.sfu.models.PeerType
+	11, // 22: stream.video.sfu.event.SfuRequest.join_request:type_name -> stream.video.sfu.event.JoinRequest
+	7,  // 23: stream.video.sfu.event.SfuRequest.health_check_request:type_name -> stream.video.sfu.event.HealthCheckRequest
+	35, // 24: stream.video.sfu.event.HealthCheckResponse.participant_count:type_name -> stream.video.sfu.models.ParticipantCount
+	36, // 25: stream.video.sfu.event.TrackPublished.type:type_name -> stream.video.sfu.models.TrackType
+	37, // 26: stream.video.sfu.event.TrackPublished.participant:type_name -> stream.video.sfu.models.Participant
+	36, // 27: stream.video.sfu.event.TrackUnpublished.type:type_name -> stream.video.sfu.models.TrackType
+	38, // 28: stream.video.sfu.event.TrackUnpublished.cause:type_name -> stream.video.sfu.models.TrackUnpublishReason
+	37, // 29: stream.video.sfu.event.TrackUnpublished.participant:type_name -> stream.video.sfu.models.Participant
+	39, // 30: stream.video.sfu.event.JoinRequest.client_details:type_name -> stream.video.sfu.models.ClientDetails
+	12, // 31: stream.video.sfu.event.JoinRequest.migration:type_name -> stream.video.sfu.event.Migration
+	40, // 32: stream.video.sfu.event.Migration.announced_tracks:type_name -> stream.video.sfu.models.TrackInfo
+	41, // 33: stream.video.sfu.event.Migration.subscriptions:type_name -> stream.video.sfu.signal.TrackSubscriptionDetails
+	42, // 34: stream.video.sfu.event.JoinResponse.call_state:type_name -> stream.video.sfu.models.CallState
+	37, // 35: stream.video.sfu.event.ParticipantJoined.participant:type_name -> stream.video.sfu.models.Participant
+	37, // 36: stream.video.sfu.event.ParticipantLeft.participant:type_name -> stream.video.sfu.models.Participant
+	19, // 37: stream.video.sfu.event.ConnectionQualityChanged.connection_quality_updates:type_name -> stream.video.sfu.event.ConnectionQualityInfo
+	43, // 38: stream.video.sfu.event.ConnectionQualityInfo.connection_quality:type_name -> stream.video.sfu.models.ConnectionQuality
+	21, // 39: stream.video.sfu.event.AudioLevelChanged.audio_levels:type_name -> stream.video.sfu.event.AudioLevel
+	23, // 40: stream.video.sfu.event.AudioSender.media_request:type_name -> stream.video.sfu.event.AudioMediaRequest
+	44, // 41: stream.video.sfu.event.AudioSender.codec:type_name -> stream.video.sfu.models.Codec
+	0,  // 42: stream.video.sfu.event.VideoLayerSetting.priority:type_name -> stream.video.sfu.event.VideoLayerSetting.Priority
+	44, // 43: stream.video.sfu.event.VideoLayerSetting.codec:type_name -> stream.video.sfu.models.Codec
+	25, // 44: stream.video.sfu.event.VideoSender.media_request:type_name -> stream.video.sfu.event.VideoMediaRequest
+	44, // 45: stream.video.sfu.event.VideoSender.codec:type_name -> stream.video.sfu.models.Codec
+	26, // 46: stream.video.sfu.event.VideoSender.layers:type_name -> stream.video.sfu.event.VideoLayerSetting
+	24, // 47: stream.video.sfu.event.ChangePublishQuality.audio_senders:type_name -> stream.video.sfu.event.AudioSender
+	27, // 48: stream.video.sfu.event.ChangePublishQuality.video_senders:type_name -> stream.video.sfu.event.VideoSender
+	45, // 49: stream.video.sfu.event.CallGrantsUpdated.current_grants:type_name -> stream.video.sfu.models.CallGrants
+	46, // 50: stream.video.sfu.event.GoAway.reason:type_name -> stream.video.sfu.models.GoAwayReason
+	51, // [51:51] is the sub-list for method output_type
+	51, // [51:51] is the sub-list for method input_type
+	51, // [51:51] is the sub-list for extension type_name
+	51, // [51:51] is the sub-list for extension extendee
+	0,  // [0:51] is the sub-list for field type_name
 }
 
 func init() { file_video_sfu_event_events_proto_init() }
@@ -2668,7 +2666,7 @@ func file_video_sfu_event_events_proto_init() {
 			}
 		}
 		file_video_sfu_event_events_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PinnedSessionsChanged); i {
+			switch v := v.(*PinsChanged); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3034,7 +3032,7 @@ func file_video_sfu_event_events_proto_init() {
 		(*SfuEvent_CallGrantsUpdated)(nil),
 		(*SfuEvent_GoAway)(nil),
 		(*SfuEvent_IceRestart)(nil),
-		(*SfuEvent_PinnedSessionsChanged)(nil),
+		(*SfuEvent_PinsUpdated)(nil),
 	}
 	file_video_sfu_event_events_proto_msgTypes[5].OneofWrappers = []interface{}{
 		(*SfuRequest_JoinRequest)(nil),
