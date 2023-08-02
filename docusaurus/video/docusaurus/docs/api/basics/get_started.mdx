@@ -5,8 +5,8 @@ slug: /
 title: Get started
 ---
 
-import Tabs from "@theme/Tabs";
-import TabItem from "@theme/TabItem";
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
 ## Installation
 
@@ -42,8 +42,8 @@ go get github.com/GetStream/video-go-sdk
 <TabItem value="js" label="JavaScript">
 
 ```js
-const client = new StreamVideoClient("<Your API key>", {
-  secret: "<API secret>",
+const client = new StreamVideoServerClient('<Your API key>', {
+  secret: '<API secret>',
 });
 ```
 
@@ -82,15 +82,16 @@ client = Stream(
 <TabItem value="js" label="JavaScript">
 
 ```js
-const userId = "john";
+const userId = 'john';
 // exp and iat are optional
 // the token will be valid for 1hour
 const exp = Math.round(new Date().getTime() / 1000) + 60 * 60;
 const iat = Math.round(new Date().getTime() / 1000);
+
 client.createToken(userId, exp, iat);
 
 // optionally provide call cids
-const call_cids = ["default:call1", "livestream:call2"];
+const call_cids = ['default:call1', 'livestream:call2'];
 client.createToken(userId, exp, iat, call_cids);
 ```
 
@@ -141,16 +142,17 @@ func main() {
 <TabItem value="js" label="JavaScript">
 
 ```js
-const callType = "default";
-const callId = "my-first-call";
+const callType = 'default';
+const callId = 'my-first-call';
 const call = client.call(callType, callId);
-call.getOrCreate({ data: { created_by_id: "john" } });
+
+call.create({ data: { created_by_id: 'john' } });
 
 // optionally provide additional data
-call.getOrCreate({
+call.create({
   data: {
-    created_by_id: "john",
-    members: [{ user_id: "john", role: "admin" }, { user_id: "jack" }],
+    created_by_id: 'john',
+    members: [{ user_id: 'john', role: 'admin' }, { user_id: 'jack' }],
   },
 });
 ```
@@ -228,7 +230,7 @@ curl -X POST "https://video.stream-io-api.com/video/call/default/${CALL_ID}?api_
 
 ```js
 call.updateCallMembers({
-  update_members: [{ user_id: "sara" }, { user_id: "emily", role: "admin" }],
+  update_members: [{ user_id: 'sara' }, { user_id: 'emily', role: 'admin' }],
 });
 ```
 
@@ -311,7 +313,7 @@ curl -X PUT "https://video.stream-io-api.com/video/call/default/${CALL_ID}/membe
 call.update({ settings_override: { audio: { mic_default_on: true } } });
 
 // or to update custom data
-call.update({ custom: { color: "red" } });
+call.update({ custom: { color: 'red' } });
 ```
 
 </TabItem>
@@ -480,8 +482,15 @@ curl -X POST "https://video.stream-io-api.com/video/call/default/${CALL_ID}/star
 <TabItem value="js" label="JavaScript">
 
 ```js
-const resp = await call.getOrCreate();
-const address = `${resp.call.ingress.rtmp.address}/<callType>/<callID>/<apiKey>/<token>`;
+const resp = await call.getOrCreate({ data: { created_by_id: 'john' } });
+// user ID of an existing user
+const userId = 'jane';
+const token = client.createToken(userId);
+
+const address = resp.call.ingress.rtmp.address.replace(
+  '<your_token_here>',
+  token,
+);
 ```
 
 </TabItem>
@@ -499,7 +508,11 @@ rtmp_stream_key = client.create_token(user_id="sacha")
 <TabItem value="go" label="Golang">
 
 ```go
-TODO
+callResponse, err := client.GetOrCreateCall(models.CallTypeDefault, callID, &models.GetOrCreateCallRequest{})
+if err != nil {
+	panic(err)
+}
+addressToUse := callResponse.Call.Ingress.Rtmp.Address
 ```
 
 </TabItem>
@@ -589,7 +602,7 @@ curl -X POST "https://video.stream-io-api.com/video/call/default/${CALL_ID}/star
 call.queryRecordings();
 
 // optionally query recordings for a specific session
-call.queryRecordings("<session ID>");
+call.queryRecordings('<session ID>');
 ```
 
 </TabItem>

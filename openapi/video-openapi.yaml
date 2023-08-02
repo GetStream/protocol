@@ -231,6 +231,15 @@ components:
       - enabled
       - hls
       type: object
+    BroadcastSettingsRequest:
+      properties:
+        enabled:
+          type: boolean
+          x-stream-index: "001"
+        hls:
+          $ref: '#/components/schemas/HLSSettingsRequest'
+          x-stream-index: "002"
+      type: object
     CallAcceptedEvent:
       description: This event is sent when a user accepts a notification to join a
         call.
@@ -1063,6 +1072,11 @@ components:
           format: date-time
           type: string
           x-stream-index: "001.002"
+        participant:
+          $ref: '#/components/schemas/CallParticipantResponse'
+          description: The participant that joined the session
+          title: Participant
+          x-stream-index: "004"
         session_id:
           description: Call session ID
           title: Session ID
@@ -1075,23 +1089,12 @@ components:
           title: Event Type
           type: string
           x-stream-index: "001.001"
-        user:
-          $ref: '#/components/schemas/UserResponse'
-          description: The user that joined the call session
-          title: User
-          x-stream-index: "004"
-        user_session_id:
-          description: The user session ID of the user that joined the call session
-          title: UserSessionID
-          type: string
-          x-stream-index: "005"
       required:
       - type
       - created_at
       - call_cid
       - session_id
-      - user
-      - user_session_id
+      - participant
       title: CallSessionParticipantJoinedEvent
       type: object
       x-stream-event-call-type: true
@@ -1107,6 +1110,11 @@ components:
           format: date-time
           type: string
           x-stream-index: "001.002"
+        participant:
+          $ref: '#/components/schemas/CallParticipantResponse'
+          description: The participant that left the session
+          title: Participant
+          x-stream-index: "004"
         session_id:
           description: Call session ID
           title: Session ID
@@ -1119,23 +1127,12 @@ components:
           title: Event Type
           type: string
           x-stream-index: "001.001"
-        user:
-          $ref: '#/components/schemas/UserResponse'
-          description: The user that left the call session
-          title: User
-          x-stream-index: "004"
-        user_session_id:
-          description: The user session ID of the user that left the call session
-          title: UserSessionID
-          type: string
-          x-stream-index: "005"
       required:
       - type
       - created_at
       - call_cid
       - session_id
-      - user
-      - user_session_id
+      - participant
       title: CallSessionParticipantLeftEvent
       type: object
       x-stream-event-call-type: true
@@ -1229,6 +1226,9 @@ components:
         backstage:
           $ref: '#/components/schemas/BackstageSettingsRequest'
           x-stream-index: "002"
+        broadcasting:
+          $ref: '#/components/schemas/BroadcastSettingsRequest'
+          x-stream-index: "009"
         geofencing:
           $ref: '#/components/schemas/GeofenceSettingsRequest'
           x-stream-index: "003"
@@ -1933,23 +1933,23 @@ components:
         data:
           $ref: '#/components/schemas/CallRequest'
           title: Data
-          x-stream-index: "004"
+          x-stream-index: "003"
         members_limit:
           format: int32
           maximum: 100
           type: integer
-          x-stream-index: "007"
+          x-stream-index: "006"
         notify:
           description: if provided it sends a notification event to the members for
             this call
           title: Notify
           type: boolean
-          x-stream-index: "006"
+          x-stream-index: "005"
         ring:
           description: if provided it sends a ring event to the members for this call
           title: Ring
           type: boolean
-          x-stream-index: "005"
+          x-stream-index: "004"
       type: object
     GetOrCreateCallResponse:
       nullable: true
@@ -2025,6 +2025,20 @@ components:
       - enabled
       - quality_tracks
       type: object
+    HLSSettingsRequest:
+      properties:
+        auto_on:
+          type: boolean
+          x-stream-index: "001"
+        enabled:
+          type: boolean
+          x-stream-index: "002"
+        quality_tracks:
+          items:
+            type: string
+          type: array
+          x-stream-index: "003"
+      type: object
     HealthCheckEvent:
       nullable: true
       properties:
@@ -2077,35 +2091,35 @@ components:
           description: if true the call will be created if it doesn't exist
           title: Create
           type: boolean
-          x-stream-index: "003"
+          x-stream-index: "002"
         data:
           $ref: '#/components/schemas/CallRequest'
-          x-stream-index: "004"
+          x-stream-index: "003"
         location:
           title: Location
           type: string
-          x-stream-index: "009"
+          x-stream-index: "008"
         members_limit:
           format: int32
           maximum: 100
           title: The amount of members that should be returned
           type: integer
-          x-stream-index: "007"
+          x-stream-index: "006"
         migrating_from:
           description: If the participant is migrating from another SFU, then this
             is the ID of the previous SFU
           title: MigratingFrom
           type: string
-          x-stream-index: "010"
+          x-stream-index: "009"
         notify:
           type: boolean
-          x-stream-index: "006"
+          x-stream-index: "005"
         ring:
           description: if true and the call is created, the notification will include
             ring=true
           title: Ring
           type: boolean
-          x-stream-index: "005"
+          x-stream-index: "004"
       required:
       - location
       type: object
@@ -2269,24 +2283,24 @@ components:
         audio:
           title: Audio
           type: boolean
-          x-stream-index: "006"
+          x-stream-index: "005"
         mute_all_users:
           type: boolean
-          x-stream-index: "004"
+          x-stream-index: "003"
         screenshare:
           title: Screenshare
           type: boolean
-          x-stream-index: "008"
+          x-stream-index: "007"
         user_ids:
           items:
             type: string
           title: UserIDs
           type: array
-          x-stream-index: "005"
+          x-stream-index: "004"
         video:
           title: Video
           type: boolean
-          x-stream-index: "007"
+          x-stream-index: "006"
       type: object
     MuteUsersResponse:
       nullable: true
@@ -2352,6 +2366,7 @@ components:
       - join-call
       - join-ended-call
       - mute-users
+      - pin-for-everyone
       - read-call
       - remove-call-member
       - screenshare
@@ -2461,6 +2476,30 @@ components:
       x-stream-event-call-type: true
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    PinRequest:
+      nullable: true
+      properties:
+        session_id:
+          type: string
+          x-stream-index: "003"
+        user_id:
+          type: string
+          x-stream-index: "002"
+      required:
+      - user_id
+      - session_id
+      type: object
+    PinResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      type: object
     QueryCallsRequest:
       nullable: true
       properties:
@@ -2518,33 +2557,33 @@ components:
         filter_conditions:
           additionalProperties: {}
           type: object
-          x-stream-index: "003"
+          x-stream-index: "002"
         id:
           maxLength: 64
           type: string
-          x-stream-index: "002"
+          x-stream-index: "001.002"
         limit:
           format: int32
           maximum: 25
           minimum: 0
           type: integer
-          x-stream-index: "005.001"
+          x-stream-index: "004.001"
         next:
           type: string
-          x-stream-index: "005.002"
+          x-stream-index: "004.002"
         prev:
           type: string
-          x-stream-index: "005.003"
+          x-stream-index: "004.003"
         sort:
           items:
             $ref: '#/components/schemas/SortParamRequest'
           maximum: 1
           type: array
-          x-stream-index: "004"
+          x-stream-index: "003"
         type:
           maxLength: 64
           type: string
-          x-stream-index: "001"
+          x-stream-index: "001.001"
       required:
       - type
       - id
@@ -2671,7 +2710,7 @@ components:
             type: string
           title: Permissions
           type: array
-          x-stream-index: "004"
+          x-stream-index: "003"
       required:
       - permissions
       type: object
@@ -2781,14 +2820,14 @@ components:
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "004.003"
+          x-stream-index: "003.003"
         emoji_code:
           type: string
-          x-stream-index: "004.002"
+          x-stream-index: "003.002"
         type:
           maxLength: 64
           type: string
-          x-stream-index: "004.001"
+          x-stream-index: "003.001"
       required:
       - type
       type: object
@@ -3052,6 +3091,30 @@ components:
       x-stream-event-call-type: true
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    UnpinRequest:
+      nullable: true
+      properties:
+        session_id:
+          type: string
+          x-stream-index: "003"
+        user_id:
+          type: string
+          x-stream-index: "002"
+      required:
+      - user_id
+      - session_id
+      type: object
+    UnpinResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      type: object
     UpdateCallMembersRequest:
       nullable: true
       properties:
@@ -3062,7 +3125,7 @@ components:
           maximum: 100
           title: Remove Members
           type: array
-          x-stream-index: "004"
+          x-stream-index: "003"
         update_members:
           description: List of members to update or insert
           items:
@@ -3070,7 +3133,7 @@ components:
           maximum: 100
           title: Update Members
           type: array
-          x-stream-index: "005"
+          x-stream-index: "004"
       type: object
     UpdateCallMembersResponse:
       nullable: true
@@ -3097,18 +3160,18 @@ components:
           description: Custom data for this object
           title: Custom data
           type: object
-          x-stream-index: "004"
+          x-stream-index: "003"
         settings_override:
           $ref: '#/components/schemas/CallSettingsRequest'
           description: the settings to change for this call
           title: Settings Override
-          x-stream-index: "005"
+          x-stream-index: "004"
         starts_at:
           description: the time the call is scheduled to start
           format: date-time
           title: Starts At
           type: string
-          x-stream-index: "006"
+          x-stream-index: "005"
       type: object
     UpdateCallResponse:
       description: Represents a call
@@ -3209,15 +3272,15 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "005"
+          x-stream-index: "004"
         revoke_permissions:
           items:
             type: string
           type: array
-          x-stream-index: "006"
+          x-stream-index: "005"
         user_id:
           type: string
-          x-stream-index: "004"
+          x-stream-index: "003"
       required:
       - user_id
       type: object
@@ -3545,7 +3608,7 @@ externalDocs:
   url: https://getstream.io/video/docs/
 info:
   title: Stream Video API
-  version: v85.0.2
+  version: v87.3.0
 openapi: 3.0.3
 paths:
   /call/{type}/{id}:
@@ -3560,20 +3623,24 @@ paths:
       - content:
           application/json:
             schema:
+              description: The type of call
               maxLength: 64
+              title: Type
               type: string
               writeOnly: true
-              x-stream-index: "001"
+              x-stream-index: "001.001"
         in: path
         name: type
         required: true
       - content:
           application/json:
             schema:
+              description: Call ID
               maxLength: 64
+              title: ID
               type: string
               writeOnly: true
-              x-stream-index: "002"
+              x-stream-index: "001.002"
         in: path
         name: id
         required: true
@@ -3666,7 +3733,7 @@ paths:
               title: Type
               type: string
               writeOnly: true
-              x-stream-index: "002"
+              x-stream-index: "002.001"
         in: path
         name: type
         required: true
@@ -3678,7 +3745,7 @@ paths:
               title: ID
               type: string
               writeOnly: true
-              x-stream-index: "003"
+              x-stream-index: "002.002"
         in: path
         name: id
         required: true
@@ -3748,12 +3815,12 @@ paths:
       - content:
           application/json:
             schema:
-              description: Call type
+              description: The type of call
               maxLength: 64
               title: Type
               type: string
               writeOnly: true
-              x-stream-index: "002"
+              x-stream-index: "002.001"
         in: path
         name: type
         required: true
@@ -3765,7 +3832,7 @@ paths:
               title: ID
               type: string
               writeOnly: true
-              x-stream-index: "003"
+              x-stream-index: "002.002"
         in: path
         name: id
         required: true
@@ -3774,7 +3841,7 @@ paths:
             schema:
               type: string
               writeOnly: true
-              x-stream-index: "008"
+              x-stream-index: "007"
         in: query
         name: connection_id
       requestBody:
@@ -3852,7 +3919,7 @@ paths:
               maxLength: 64
               type: string
               writeOnly: true
-              x-stream-index: "002"
+              x-stream-index: "001.001"
         in: path
         name: type
         required: true
@@ -3862,7 +3929,7 @@ paths:
               maxLength: 64
               type: string
               writeOnly: true
-              x-stream-index: "003"
+              x-stream-index: "001.002"
         in: path
         name: id
         required: true
@@ -3872,7 +3939,7 @@ paths:
               maxLength: 64
               type: string
               writeOnly: true
-              x-stream-index: "004"
+              x-stream-index: "003"
         in: path
         name: session
         required: true
@@ -3926,20 +3993,24 @@ paths:
       - content:
           application/json:
             schema:
+              description: The type of call
               maxLength: 64
+              title: Type
               type: string
               writeOnly: true
-              x-stream-index: "001"
+              x-stream-index: "001.001"
         in: path
         name: type
         required: true
       - content:
           application/json:
             schema:
+              description: Call ID
               maxLength: 64
+              title: ID
               type: string
               writeOnly: true
-              x-stream-index: "002"
+              x-stream-index: "001.002"
         in: path
         name: id
         required: true
@@ -4000,22 +4071,24 @@ paths:
       - content:
           application/json:
             schema:
+              description: The type of call
               maxLength: 64
               title: Type
               type: string
               writeOnly: true
-              x-stream-index: "001"
+              x-stream-index: "002.001"
         in: path
         name: type
         required: true
       - content:
           application/json:
             schema:
+              description: Call ID
               maxLength: 64
               title: ID
               type: string
               writeOnly: true
-              x-stream-index: "002"
+              x-stream-index: "002.002"
         in: path
         name: id
         required: true
@@ -4165,12 +4238,12 @@ paths:
       - content:
           application/json:
             schema:
-              description: Call type
+              description: The type of call
               maxLength: 64
               title: Type
               type: string
               writeOnly: true
-              x-stream-index: "002"
+              x-stream-index: "002.001"
         in: path
         name: type
         required: true
@@ -4182,7 +4255,7 @@ paths:
               title: ID
               type: string
               writeOnly: true
-              x-stream-index: "003"
+              x-stream-index: "002.002"
         in: path
         name: id
         required: true
@@ -4241,20 +4314,24 @@ paths:
       - content:
           application/json:
             schema:
+              description: The type of call
               maxLength: 64
+              title: Type
               type: string
               writeOnly: true
-              x-stream-index: "001"
+              x-stream-index: "001.001"
         in: path
         name: type
         required: true
       - content:
           application/json:
             schema:
+              description: Call ID
               maxLength: 64
+              title: ID
               type: string
               writeOnly: true
-              x-stream-index: "002"
+              x-stream-index: "001.002"
         in: path
         name: id
         required: true
@@ -4264,7 +4341,7 @@ paths:
               title: ConnectionID
               type: string
               writeOnly: true
-              x-stream-index: "008"
+              x-stream-index: "007"
         in: query
         name: connection_id
       requestBody:
@@ -4324,12 +4401,12 @@ paths:
       - content:
           application/json:
             schema:
-              description: Call type
+              description: The type of call
               maxLength: 64
               title: Type
               type: string
               writeOnly: true
-              x-stream-index: "002"
+              x-stream-index: "002.001"
         in: path
         name: type
         required: true
@@ -4341,7 +4418,7 @@ paths:
               title: ID
               type: string
               writeOnly: true
-              x-stream-index: "003"
+              x-stream-index: "002.002"
         in: path
         name: id
         required: true
@@ -4411,7 +4488,7 @@ paths:
               title: Type
               type: string
               writeOnly: true
-              x-stream-index: "002"
+              x-stream-index: "002.001"
         in: path
         name: type
         required: true
@@ -4423,7 +4500,7 @@ paths:
               title: ID
               type: string
               writeOnly: true
-              x-stream-index: "003"
+              x-stream-index: "002.002"
         in: path
         name: id
         required: true
@@ -4499,20 +4576,24 @@ paths:
       - content:
           application/json:
             schema:
+              description: The type of call
               maxLength: 64
+              title: Type
               type: string
               writeOnly: true
-              x-stream-index: "002"
+              x-stream-index: "002.001"
         in: path
         name: type
         required: true
       - content:
           application/json:
             schema:
+              description: Call ID
               maxLength: 64
+              title: ID
               type: string
               writeOnly: true
-              x-stream-index: "003"
+              x-stream-index: "002.002"
         in: path
         name: id
         required: true
@@ -4557,6 +4638,76 @@ paths:
       summary: Mute users
       x-stream-permissions:
         MuteUsers: To mute users on a call
+  /call/{type}/{id}/pin:
+    post:
+      description: |
+        Pins a track for all users in the call.
+
+        Required permissions:
+        - PinCallTrack
+      operationId: VideoPin
+      parameters:
+      - content:
+          application/json:
+            schema:
+              maxLength: 64
+              type: string
+              writeOnly: true
+              x-stream-index: "001.001"
+        in: path
+        name: type
+        required: true
+      - content:
+          application/json:
+            schema:
+              maxLength: 64
+              type: string
+              writeOnly: true
+              x-stream-index: "001.002"
+        in: path
+        name: id
+        required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PinRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PinResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+          headers:
+            X-RateLimit-Limit:
+              description: The number of allowed requests in the current period
+              schema:
+                type: integer
+            X-RateLimit-Remaining:
+              description: The number of remaining requests in the current period
+              schema:
+                type: integer
+            X-RateLimit-Reset:
+              description: Timestamp when number of requests will be reset
+              schema:
+                type: integer
+      summary: Pin
+      x-stream-permissions:
+        PinCallTrack: ""
   /call/{type}/{id}/reaction:
     post:
       description: |
@@ -4575,7 +4726,7 @@ paths:
               maxLength: 64
               type: string
               writeOnly: true
-              x-stream-index: "001"
+              x-stream-index: "001.001"
         in: path
         name: type
         required: true
@@ -4585,7 +4736,7 @@ paths:
               maxLength: 64
               type: string
               writeOnly: true
-              x-stream-index: "002"
+              x-stream-index: "001.002"
         in: path
         name: id
         required: true
@@ -4652,7 +4803,7 @@ paths:
               maxLength: 64
               type: string
               writeOnly: true
-              x-stream-index: "002"
+              x-stream-index: "001.001"
         in: path
         name: type
         required: true
@@ -4662,7 +4813,7 @@ paths:
               maxLength: 64
               type: string
               writeOnly: true
-              x-stream-index: "003"
+              x-stream-index: "001.002"
         in: path
         name: id
         required: true
@@ -4716,20 +4867,24 @@ paths:
       - content:
           application/json:
             schema:
+              description: The type of call
               maxLength: 64
+              title: Type
               type: string
               writeOnly: true
-              x-stream-index: "001"
+              x-stream-index: "001.001"
         in: path
         name: type
         required: true
       - content:
           application/json:
             schema:
+              description: Call ID
               maxLength: 64
+              title: ID
               type: string
               writeOnly: true
-              x-stream-index: "002"
+              x-stream-index: "001.002"
         in: path
         name: id
         required: true
@@ -4787,22 +4942,24 @@ paths:
       - content:
           application/json:
             schema:
+              description: The type of call
               maxLength: 64
               title: Type
               type: string
               writeOnly: true
-              x-stream-index: "002"
+              x-stream-index: "001.001"
         in: path
         name: type
         required: true
       - content:
           application/json:
             schema:
+              description: Call ID
               maxLength: 64
               title: ID
               type: string
               writeOnly: true
-              x-stream-index: "003"
+              x-stream-index: "001.002"
         in: path
         name: id
         required: true
@@ -4867,7 +5024,7 @@ paths:
               maxLength: 64
               type: string
               writeOnly: true
-              x-stream-index: "002"
+              x-stream-index: "001.001"
         in: path
         name: type
         required: true
@@ -4877,7 +5034,7 @@ paths:
               maxLength: 64
               type: string
               writeOnly: true
-              x-stream-index: "003"
+              x-stream-index: "001.002"
         in: path
         name: id
         required: true
@@ -4931,22 +5088,24 @@ paths:
       - content:
           application/json:
             schema:
+              description: The type of call
               maxLength: 64
               title: Type
               type: string
               writeOnly: true
-              x-stream-index: "002"
+              x-stream-index: "001.001"
         in: path
         name: type
         required: true
       - content:
           application/json:
             schema:
+              description: Call ID
               maxLength: 64
               title: ID
               type: string
               writeOnly: true
-              x-stream-index: "003"
+              x-stream-index: "001.002"
         in: path
         name: id
         required: true
@@ -5004,22 +5163,24 @@ paths:
       - content:
           application/json:
             schema:
+              description: The type of call
               maxLength: 64
               title: Type
               type: string
               writeOnly: true
-              x-stream-index: "002"
+              x-stream-index: "001.001"
         in: path
         name: type
         required: true
       - content:
           application/json:
             schema:
+              description: Call ID
               maxLength: 64
               title: ID
               type: string
               writeOnly: true
-              x-stream-index: "003"
+              x-stream-index: "001.002"
         in: path
         name: id
         required: true
@@ -5073,7 +5234,7 @@ paths:
               maxLength: 64
               type: string
               writeOnly: true
-              x-stream-index: "002"
+              x-stream-index: "001.001"
         in: path
         name: type
         required: true
@@ -5083,7 +5244,7 @@ paths:
               maxLength: 64
               type: string
               writeOnly: true
-              x-stream-index: "003"
+              x-stream-index: "001.002"
         in: path
         name: id
         required: true
@@ -5137,12 +5298,12 @@ paths:
       - content:
           application/json:
             schema:
-              description: Call type
+              description: The type of call
               maxLength: 64
               title: Type
               type: string
               writeOnly: true
-              x-stream-index: "002"
+              x-stream-index: "002.001"
         in: path
         name: type
         required: true
@@ -5154,7 +5315,7 @@ paths:
               title: ID
               type: string
               writeOnly: true
-              x-stream-index: "003"
+              x-stream-index: "002.002"
         in: path
         name: id
         required: true
@@ -5218,7 +5379,7 @@ paths:
               maxLength: 64
               type: string
               writeOnly: true
-              x-stream-index: "002"
+              x-stream-index: "001.001"
         in: path
         name: type
         required: true
@@ -5228,7 +5389,7 @@ paths:
               maxLength: 64
               type: string
               writeOnly: true
-              x-stream-index: "003"
+              x-stream-index: "001.002"
         in: path
         name: id
         required: true
@@ -5289,7 +5450,7 @@ paths:
               maxLength: 64
               type: string
               writeOnly: true
-              x-stream-index: "002"
+              x-stream-index: "001.001"
         in: path
         name: type
         required: true
@@ -5299,7 +5460,7 @@ paths:
               maxLength: 64
               type: string
               writeOnly: true
-              x-stream-index: "003"
+              x-stream-index: "001.002"
         in: path
         name: id
         required: true
@@ -5420,6 +5581,76 @@ paths:
             ref: '#/components/schemas/UnblockedUserEvent'
       x-stream-permissions:
         BlockUser: To block / unblock a user from a call
+  /call/{type}/{id}/unpin:
+    post:
+      description: |
+        Unpins a track for all users in the call.
+
+        Required permissions:
+        - PinCallTrack
+      operationId: VideoUnpin
+      parameters:
+      - content:
+          application/json:
+            schema:
+              maxLength: 64
+              type: string
+              writeOnly: true
+              x-stream-index: "001.001"
+        in: path
+        name: type
+        required: true
+      - content:
+          application/json:
+            schema:
+              maxLength: 64
+              type: string
+              writeOnly: true
+              x-stream-index: "001.002"
+        in: path
+        name: id
+        required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnpinRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnpinResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+          headers:
+            X-RateLimit-Limit:
+              description: The number of allowed requests in the current period
+              schema:
+                type: integer
+            X-RateLimit-Remaining:
+              description: The number of remaining requests in the current period
+              schema:
+                type: integer
+            X-RateLimit-Reset:
+              description: Timestamp when number of requests will be reset
+              schema:
+                type: integer
+      summary: Unpin
+      x-stream-permissions:
+        PinCallTrack: ""
   /call/{type}/{id}/user_permissions:
     post:
       description: |
@@ -5438,7 +5669,7 @@ paths:
               maxLength: 64
               type: string
               writeOnly: true
-              x-stream-index: "002"
+              x-stream-index: "002.001"
         in: path
         name: type
         required: true
@@ -5448,7 +5679,7 @@ paths:
               maxLength: 64
               type: string
               writeOnly: true
-              x-stream-index: "003"
+              x-stream-index: "002.002"
         in: path
         name: id
         required: true
