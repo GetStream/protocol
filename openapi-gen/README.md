@@ -23,7 +23,7 @@ Templates are compiled into binary and distributed as a single binary. But for d
 Each target (might be language or language with specific framework) has own template directory. Each directory should have `config.yaml` file with configuration for template engine. It should contain information about parameters that are specific to this target, custom behaviour usage (e.g. generate dedicated types for each operation or not), type replacement (for example use time.Time for strings with format `date`).
 <!-- We can use hardcoded values for such configuration because we have limited number of  languages to support. However I think keeping configuration and templates together is good option because templates may assume specific behaviour of engine. -->
 
-TODO: describe config structure and how it affects template engine.
+TODO: describe config structure and how it affects template engine, describe template context, so it will be absolutely clear what is available in templates.
 
 ## API split. (Just an idea, not sure if it is good. It can reduce boilerplate in templates and share logic between targets)
 
