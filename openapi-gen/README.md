@@ -23,6 +23,26 @@ Templates are compiled into binary and distributed as a single binary. But for d
 Each target (might be language or language with specific framework) has own template directory. Each directory should have `config.yaml` file with configuration for template engine. It should contain information about parameters that are specific to this target, custom behaviour usage (e.g. generate dedicated types for each operation or not), type replacement (for example use time.Time for strings with format `date`).
 <!-- We can use hardcoded values for such configuration because we have limited number of  languages to support. However I think keeping configuration and templates together is good option because templates may assume specific behaviour of engine. -->
 
-## API split. (Just an idea, not sure if it is good)
+TODO: describe config structure and how it affects template engine.
+
+## API split. (Just an idea, not sure if it is good. It can reduce boilerplate in templates and share logic between targets)
 
 We can generate several clients from one spec using one target, filtering the spec using extensions or tags. So we can have one template and call entire process for backend/frontend integration or split client into 2: one for channels api, one for messages api.
+
+Filter values shoudl be specified in config.yaml or/and in command line arguments. For example:
+
+in config.yaml:
+
+```yaml
+allowed_integration_type: [backend] # number of types are limited by engine
+```
+
+this line specifies that this target templates can be used for backend integration only
+
+in command line:
+
+```bash
+openapi-gen -i <input_spec> -o <output-dir> -t <template-dir> --integration-type backend
+```
+
+Running this command will generate only backend integration client. Passing `frontend` as integration type will result in error.
