@@ -6,8 +6,6 @@
 opeanapi-gen -i <input_spec> -o <output-dir> (-t <template-dir> or target)
 ```
 
-- intergation parameter hides/shows parts of the spec that are not relevant for client/server code generation to template engine. If we pass client we hide some paramaeters and operations. (do we have client only parameters, operations?)
-
 ## Writing Templates
 
 Template language is go templates. [Documentation](https://golang.org/pkg/text/template/)
