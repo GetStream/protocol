@@ -21,6 +21,8 @@ const (
 
 type TemplateLoader struct {
 	files fs.FS
+
+	envParams map[string]any
 }
 
 func NewTemplateLoader(targetLanguage string, useDisk bool) (*TemplateLoader, error) {
@@ -34,18 +36,41 @@ func NewTemplateLoader(targetLanguage string, useDisk bool) (*TemplateLoader, er
 		return nil, fmt.Errorf("opening subdirectory fs %w, useDisk %v", err, useDisk)
 	}
 
-	return &TemplateLoader{
+	tl := &TemplateLoader{
 		files: files,
-	}, nil
+	}
+
+	file, err := files.Open(`config.yaml`)
+	if err == nil {
+		defer file.Close()
+
+		cfg, err := parseTargetConfig(file)
+		if err != nil {
+			return nil, fmt.Errorf("parsing config %w", err)
+		}
+
+		tl.envParams, err = getParamsFromEnv(cfg.AdditionalParameters)
+		if err != nil {
+			return nil, fmt.Errorf("getting params from env %w", err)
+		}
+	}
+
+	return tl, nil
 }
 
 func (t *TemplateLoader) LoadTemplate(kind templateKind) (*template.Template, error) {
-	return template.ParseFS(t.files, string(kind)+".tmpl")
+	tmpl, err := template.ParseFS(t.files, string(kind)+".tmpl")
+	if err != nil {
+		return nil, fmt.Errorf("parsing template %w", err)
+	}
+
+	return tmpl, nil
 }
 
 type TypeContext struct {
-	Schema *openapi3.Schema
-	Name   string
+	Schema     *openapi3.Schema
+	Name       string
+	Additional map[string]any
 }
 
 // go run . -i ../openapi/video-openapi.yaml
@@ -95,8 +120,9 @@ func main() {
 			defer f.Close()
 
 			err = tmpl.Execute(f, TypeContext{
-				Name:   name,
-				Schema: schema.Value,
+				Name:       name,
+				Schema:     schema.Value,
+				Additional: templateLoader.envParams,
 			})
 
 			if err != nil {
