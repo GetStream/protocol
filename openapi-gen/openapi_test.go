@@ -29,8 +29,7 @@ func TestGenerate(t *testing.T) {
 				},
 			},
 		},
-		Name:       "Message",
-		Additional: loader.envParams,
+		Name: "Message",
 	}
 
 	out := os.Stdout

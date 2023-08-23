@@ -31,7 +31,7 @@ TODO: describe config structure and how it affects template engine, describe tem
 
 We can generate several clients from one spec using one target, filtering the spec using extensions or tags. So we can have one template and call entire process for backend/frontend integration or split client into 2: one for channels api, one for messages api.
 
-Filter values shoudl be specified in config.yaml or/and in command line arguments. For example:
+Filter values should be specified in config.yaml or/and in command line arguments. For example:
 
 in config.yaml:
 

@@ -21,8 +21,6 @@ const (
 
 type TemplateLoader struct {
 	files fs.FS
-
-	envParams map[string]any
 }
 
 func NewTemplateLoader(targetLanguage string, useDisk bool) (*TemplateLoader, error) {
@@ -43,16 +41,6 @@ func NewTemplateLoader(targetLanguage string, useDisk bool) (*TemplateLoader, er
 	file, err := files.Open(`config.yaml`)
 	if err == nil {
 		defer file.Close()
-
-		cfg, err := parseTargetConfig(file)
-		if err != nil {
-			return nil, fmt.Errorf("parsing config %w", err)
-		}
-
-		tl.envParams, err = getParamsFromEnv(cfg.AdditionalParameters)
-		if err != nil {
-			return nil, fmt.Errorf("getting params from env %w", err)
-		}
 	}
 
 	return tl, nil
@@ -77,10 +65,17 @@ type TypeContext struct {
 func main() {
 	inputFile := flag.String("i", "", "yaml file to use for generating code")
 	outputDir := flag.String("o", "", "output directory of generated code")
+	configFile := flag.String("c", "config.yaml", "config file to use for generating code")
 	flag.Parse()
 
 	if *inputFile == "" || *outputDir == "" {
 		fmt.Println("must provide input file and output directory")
+		os.Exit(1)
+	}
+
+	config, err := parseConfig(*configFile)
+	if err != nil {
+		fmt.Println("error parsing config", err)
 		os.Exit(1)
 	}
 
@@ -122,7 +117,7 @@ func main() {
 			err = tmpl.Execute(f, TypeContext{
 				Name:       name,
 				Schema:     schema.Value,
-				Additional: templateLoader.envParams,
+				Additional: config.AdditionalParameters,
 			})
 
 			if err != nil {
