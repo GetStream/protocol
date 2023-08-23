@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"strings"
 	"text/template"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -14,20 +15,21 @@ import (
 type templateKind string
 
 const (
-	TypeTemplate templateKind = "type"
+	TypeTemplate    templateKind = "type"
+	RequestTemplate templateKind = "request"
 )
 
 type TemplateLoader struct {
 	files fs.FS
 }
 
-func NewTemplateLoader(target string, useDisk bool) (*TemplateLoader, error) {
+func NewTemplateLoader(targetLanguage string, useDisk bool) (*TemplateLoader, error) {
 	var root fs.FS = templates
 	if useDisk {
 		root = os.DirFS(".")
 	}
 
-	files, err := fs.Sub(root, "templates/"+target)
+	files, err := fs.Sub(root, "templates/"+targetLanguage)
 	if err != nil {
 		return nil, fmt.Errorf("opening subdirectory fs %w, useDisk %v", err, useDisk)
 	}
@@ -58,15 +60,39 @@ func main() {
 
 	doc, err := openapi3.NewLoader().LoadFromFile(*inputFile)
 	if err != nil {
-		panic(err)
+		fmt.Println("error loading file", err)
+		os.Exit(1)
 	}
 
 	err = doc.Validate(context.Background())
 	if err != nil {
-		panic(err)
+		fmt.Println("error validating doc", err)
+		os.Exit(1)
+	}
+
+	templateLoader, err := NewTemplateLoader("go", true)
+	if err != nil {
+		fmt.Println("error loading template loader", err)
+		os.Exit(1)
 	}
 
 	for name, schema := range doc.Components.Schemas {
-		fmt.Println(name, schema.Value.Type, schema.Value.Format)
+		if strings.HasSuffix(name, "Request") {
+			tmpl, err := templateLoader.LoadTemplate(TypeTemplate)
+			if err != nil {
+				fmt.Println("error loading template", err)
+				os.Exit(1)
+			}
+
+			err = tmpl.Execute(os.Stdout, TypeContext{
+				Name:   name,
+				Schema: schema.Value,
+			})
+
+			if err != nil {
+				fmt.Println("error executing template", err)
+				os.Exit(1)
+			}
+		}
 	}
 }
