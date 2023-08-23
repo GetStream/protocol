@@ -1,6 +1,51 @@
 ---
 id: webhooks_overview
 sidebar_position: 1
-slug: /streaming/overview
+slug: /webhooks/overview
 title: Overview
 ---
+
+You can configure your Stream app to send events to your HTTP/webhook and/or to your AWS SQS queue. Webhooks are usually
+the simplest way to receive events from your app and to perform additional action based on what happens to your application.
+
+Both SQS and Webhook can be configured from the Stream Dashboard.
+
+## How to implement a webhook handler
+
+Your webhook handler needs to follow these rules:
+
+- accept HTTP POST requests with JSON payload
+- be reachable from the public internet. Tunneling services like Ngrok are supported
+- respond with response codes from 200 to 299 as fast as possible
+
+Your webhook handler can use the `type` field to handle events based correctly based on their type and payload.
+
+All webhook requests contain these headers:
+
+| Name              | Description                                                                                                          |
+|-------------------|----------------------------------------------------------------------------------------------------------------------|
+| X-WEBHOOK-ID      | Unique ID of the webhook call. This value is consistent between retries and could be used to deduplicate retry calls |
+| X-WEBHOOK-ATTEMPT | Number of webhook request attempt starting from 1                                                                    |
+| X-API-KEY         | Your application’s API key. Should be used to validate request signature                                             |
+| X-SIGNATURE       | HMAC signature of the request body. See Signature section                                                            |
+
+## Security and Performance
+
+We highly recommend following common security guidelines to make your webhook integration safe and fast:
+
+- Use HTTPS with a certificate from a trusted authority
+- Verify the "X-Signature" header
+- Support HTTP Keep-Alive
+- Be highly available
+- Offload the processing of the message if possible (read, store, and forget)
+
+## Error Handling
+
+In case of the request failure Stream Chat attempts to retry a request. The amount of maximum attempts depends on the kind of the error it receives:
+
+- Response code is 408, 429 or >=500: 3 attempts
+- Network error: 2 attempts
+- Request timeout: 3 attempts
+
+The timeout of one request is 6 seconds, and the request with all retries cannot exceed the duration of 15 seconds.
+
