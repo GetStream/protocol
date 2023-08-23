@@ -51,12 +51,15 @@ type TypeContext struct {
 // go run . -i ../openapi/video-openapi.yaml
 func main() {
 	inputFile := flag.String("i", "", "yaml file to use for generating code")
+	outputDir := flag.String("o", "", "output directory of generated code")
 	flag.Parse()
 
-	if *inputFile == "" {
-		fmt.Println("must provide input file")
+	if *inputFile == "" || *outputDir == "" {
+		fmt.Println("must provide input file and output directory")
 		os.Exit(1)
 	}
+
+	os.Mkdir(*outputDir, 0755)
 
 	doc, err := openapi3.NewLoader().LoadFromFile(*inputFile)
 	if err != nil {
@@ -84,7 +87,14 @@ func main() {
 				os.Exit(1)
 			}
 
-			err = tmpl.Execute(os.Stdout, TypeContext{
+			f, err := os.Create(*outputDir + "/" + name + ".go")
+			if err != nil {
+				fmt.Println("error creating file", err)
+				os.Exit(1)
+			}
+			defer f.Close()
+
+			err = tmpl.Execute(f, TypeContext{
 				Name:   name,
 				Schema: schema.Value,
 			})
