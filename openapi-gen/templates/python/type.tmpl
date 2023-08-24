@@ -1,0 +1,59 @@
+from dataclasses import dataclass, field
+{{- if (gt (len .Schema.OneOf) 0)}}
+from typing import Union
+from json import loads
+{{else}}
+from dataclasses_json import config, dataclass_json
+{{- end}}
+
+{{- range $i, $ref := .References}}
+from {{refToName $ref}} import {{refToName $ref | toCamel}}
+{{- end -}}
+
+{{- define "generateType" -}}
+{{- if (eq .Type "string")}}str{{end}}
+{{- if (eq .Type "integer")}}int{{end}}
+{{- if (eq .Type "number")}}float{{end}}
+{{- if (eq .Type "boolean")}}bool{{end}}
+{{- if (eq .Type "array")}}list[{{template "generateSchemaRef" .Items -}}]{{end}}
+{{- if (eq .Type "object")}}{{with .AdditionalProperties}}dict[str, {{template "generateSchemaRef" .Schema -}}]{{end}}{{end}}
+{{- if (eq .Type "null")}}None{{end}}
+{{- if (eq .Type "")}}object{{end}}
+{{- end -}}
+
+{{- define "generateSchemaRef" -}}
+{{- if (eq .Ref "") -}}{{- template "generateType" .Value -}}{{- else -}}{{refToName .Ref | toCamel}}{{- end -}}
+{{- end}}
+
+{{- with .Schema.Discriminator}}
+mapping = {
+    {{- range $key, $one := .Mapping}}
+    "{{$key}}": {{refToName $one | toCamel}},
+    {{- end}}
+}
+
+{{else}}
+@dataclass_json
+{{end -}}
+@dataclass
+class {{toCamel .Name}}:
+    {{- if (gt (len .Schema.Properties) 0)}} 
+    {{- range $key, $value := .Schema.Properties}}
+    {{toSnake $key}}: {{template "generateSchemaRef" $value}} = field(metadata=config(field_name="{{$key}}"))
+    {{- end}}
+    {{else if (gt (len .Schema.OneOf) 0)}}
+    event : Union[
+    {{- range $i, $one := .Schema.OneOf}}
+        {{- if (gt $i 0)}},{{end}}
+        {{template "generateSchemaRef" $one}}
+    {{- end}}
+    ]
+
+    @staticmethod
+    def from_json(j) -> '{{toCamel .Name}}':
+        dict_type = loads(j)["{{.Schema.Discriminator.PropertyName}}"]
+        return {{toCamel .Name}}(event=mapping[dict_type].from_json(j))
+    {{- else}}
+    ...
+    {{- end}}
+
