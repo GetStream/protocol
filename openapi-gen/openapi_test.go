@@ -8,7 +8,7 @@ import (
 )
 
 func TestGenerate(t *testing.T) {
-	loader, err := NewTemplateLoader("go", false)
+	loader, err := NewTemplateLoader("python", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -26,6 +26,19 @@ func TestGenerate(t *testing.T) {
 					Value: &openapi3.Schema{
 						Type: "string",
 					},
+				},
+				"arr": {
+					Value: &openapi3.Schema{
+						Type: "array",
+						Items: &openapi3.SchemaRef{
+							Value: &openapi3.Schema{
+								Type: "string",
+							},
+						},
+					},
+				},
+				"othertype": {
+					Ref: "#/components/schemas/OtherType",
 				},
 			},
 		},

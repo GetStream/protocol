@@ -10,6 +10,7 @@ import (
 	"text/template"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/iancoleman/strcase"
 )
 
 type templateKind string
@@ -47,7 +48,14 @@ func NewTemplateLoader(targetLanguage string, useDisk bool) (*TemplateLoader, er
 }
 
 func (t *TemplateLoader) LoadTemplate(kind templateKind) (*template.Template, error) {
-	tmpl, err := template.ParseFS(t.files, string(kind)+".tmpl")
+	tmpl := template.New(string(kind) + ".tmpl")
+	tmpl.Funcs(template.FuncMap{
+		"refToName": refToName,
+		"toSnake":   strcase.ToSnake,
+		"toCamel":   strcase.ToCamel,
+	})
+
+	tmpl, err := tmpl.ParseFS(t.files, string(kind)+".tmpl")
 	if err != nil {
 		return nil, fmt.Errorf("parsing template %w", err)
 	}
@@ -59,6 +67,7 @@ type TypeContext struct {
 	Schema     *openapi3.Schema
 	Name       string
 	Additional map[string]any
+	References []string
 }
 
 // go run . -i ../openapi/video-openapi.yaml
@@ -93,7 +102,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	templateLoader, err := NewTemplateLoader("go", true)
+	templateLoader, err := NewTemplateLoader("python", true)
 	if err != nil {
 		fmt.Println("error loading template loader", err)
 		os.Exit(1)
@@ -107,7 +116,7 @@ func main() {
 				os.Exit(1)
 			}
 
-			f, err := os.Create(*outputDir + "/" + name + ".go")
+			f, err := os.Create(*outputDir + "/" + name + ".py")
 			if err != nil {
 				fmt.Println("error creating file", err)
 				os.Exit(1)
@@ -118,6 +127,7 @@ func main() {
 				Name:       name,
 				Schema:     schema.Value,
 				Additional: config.AdditionalParameters,
+				References: getReferencesFromTypes(schema.Value),
 			})
 
 			if err != nil {
@@ -126,4 +136,34 @@ func main() {
 			}
 		}
 	}
+}
+
+func refToName(ref string) string {
+	return strings.TrimPrefix(ref, "#/components/schemas/")
+}
+
+func getReferencesFromTypes(schema *openapi3.Schema) []string {
+	if schema == nil {
+		return nil
+	}
+
+	if schema.Type == "array" {
+		if schema.Items.Ref != "" {
+			return []string{schema.Items.Ref}
+		}
+		if schema.Items.Value != nil {
+			return getReferencesFromTypes(schema.Items.Value)
+		}
+	}
+
+	var refs []string
+	for _, prop := range schema.Properties {
+		if prop.Ref != "" {
+			refs = append(refs, prop.Ref)
+		} else if prop.Value != nil {
+			refs = append(refs, getReferencesFromTypes(prop.Value)...)
+		}
+	}
+
+	return refs
 }
