@@ -108,32 +108,30 @@ func main() {
 		os.Exit(1)
 	}
 
+	tmpl, err := templateLoader.LoadTemplate(TypeTemplate)
+	if err != nil {
+		fmt.Println("error loading template", err)
+		os.Exit(1)
+	}
+
 	for name, schema := range doc.Components.Schemas {
-		if strings.HasSuffix(name, "Request") {
-			tmpl, err := templateLoader.LoadTemplate(TypeTemplate)
-			if err != nil {
-				fmt.Println("error loading template", err)
-				os.Exit(1)
-			}
+		f, err := os.Create(*outputDir + "/" + name + ".py")
+		if err != nil {
+			fmt.Println("error creating file", err)
+			os.Exit(1)
+		}
+		defer f.Close()
 
-			f, err := os.Create(*outputDir + "/" + name + ".py")
-			if err != nil {
-				fmt.Println("error creating file", err)
-				os.Exit(1)
-			}
-			defer f.Close()
+		err = tmpl.Execute(f, TypeContext{
+			Name:       name,
+			Schema:     schema.Value,
+			Additional: config.AdditionalParameters,
+			References: getReferencesFromTypes(schema.Value),
+		})
 
-			err = tmpl.Execute(f, TypeContext{
-				Name:       name,
-				Schema:     schema.Value,
-				Additional: config.AdditionalParameters,
-				References: getReferencesFromTypes(schema.Value),
-			})
-
-			if err != nil {
-				fmt.Println("error executing template", err)
-				os.Exit(1)
-			}
+		if err != nil {
+			fmt.Println("error executing template", err)
+			os.Exit(1)
 		}
 	}
 }
@@ -157,6 +155,16 @@ func getReferencesFromTypes(schema *openapi3.Schema) []string {
 	}
 
 	var refs []string
+	if schema.OneOf != nil {
+		for _, oneOf := range schema.OneOf {
+			if oneOf.Ref != "" {
+				refs = append(refs, oneOf.Ref)
+			} else {
+				refs = append(refs, getReferencesFromTypes(oneOf.Value)...)
+			}
+		}
+	}
+
 	for _, prop := range schema.Properties {
 		if prop.Ref != "" {
 			refs = append(refs, prop.Ref)
