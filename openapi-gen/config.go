@@ -17,6 +17,8 @@ func parseConfig(filePath string) (*Config, error) {
 		return nil, err
 	}
 
+	defer reader.Close()
+
 	yamlDecoder := yaml.NewDecoder(reader)
 	var config Config
 	err = yamlDecoder.Decode(&config)

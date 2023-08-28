@@ -39,11 +39,6 @@ func NewTemplateLoader(targetLanguage string, useDisk bool) (*TemplateLoader, er
 		files: files,
 	}
 
-	file, err := files.Open(`config.yaml`)
-	if err == nil {
-		defer file.Close()
-	}
-
 	return tl, nil
 }
 
@@ -70,11 +65,12 @@ type TypeContext struct {
 	References []string
 }
 
-// go run . -i ../openapi/video-openapi.yaml
+// go run . -i ../openapi/video-openapi.yaml -o ./go-generated -l go
 func main() {
 	inputFile := flag.String("i", "", "yaml file to use for generating code")
 	outputDir := flag.String("o", "", "output directory of generated code")
-	configFile := flag.String("c", "config.yaml", "config file to use for generating code")
+	targetLanguage := flag.String("l", "python", "target language to generate code for")
+	configFile := flag.String("c", `/config.yaml`, "config file to use for generating code")
 	flag.Parse()
 
 	if *inputFile == "" || *outputDir == "" {
@@ -82,7 +78,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	config, err := parseConfig(*configFile)
+	config, err := parseConfig("templates/" + *targetLanguage + "/" + *configFile)
 	if err != nil {
 		fmt.Println("error parsing config", err)
 		os.Exit(1)
@@ -102,7 +98,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	templateLoader, err := NewTemplateLoader("python", true)
+	templateLoader, err := NewTemplateLoader(*targetLanguage, true)
 	if err != nil {
 		fmt.Println("error loading template loader", err)
 		os.Exit(1)
@@ -115,7 +111,14 @@ func main() {
 	}
 
 	for name, schema := range doc.Components.Schemas {
-		f, err := os.Create(*outputDir + "/" + name + ".py")
+		ext := ""
+		if *targetLanguage == "python" {
+			ext = ".py"
+		}
+		if *targetLanguage == "go" {
+			ext = ".go"
+		}
+		f, err := os.Create(*outputDir + "/" + name + ext)
 		if err != nil {
 			fmt.Println("error creating file", err)
 			os.Exit(1)

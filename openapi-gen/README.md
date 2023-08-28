@@ -3,7 +3,7 @@
 ## Usage
 
 ``` bash
-opeanapi-gen -i <input_spec> -o <output-dir> (-t <template-dir> or target)
+go run . -i ../openapi/video-openapi.yaml -o ./go-generated -l go
 ```
 
 ## Writing Templates
