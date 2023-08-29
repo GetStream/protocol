@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"path"
 	"strings"
 	"text/template"
 
@@ -70,7 +71,7 @@ func main() {
 	inputFile := flag.String("i", "", "yaml file to use for generating code")
 	outputDir := flag.String("o", "", "output directory of generated code")
 	targetLanguage := flag.String("l", "python", "target language to generate code for")
-	configFile := flag.String("c", `/config.yaml`, "config file to use for generating code")
+	configFile := flag.String("c", `config.yaml`, "config file to use for generating code")
 	flag.Parse()
 
 	if *inputFile == "" || *outputDir == "" {
@@ -78,7 +79,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	config, err := parseConfig("templates/" + *targetLanguage + "/" + *configFile)
+	config, err := parseConfig(path.Join("templates", *targetLanguage, *configFile))
 	if err != nil {
 		fmt.Println("error parsing config", err)
 		os.Exit(1)
@@ -111,14 +112,8 @@ func main() {
 	}
 
 	for name, schema := range doc.Components.Schemas {
-		ext := ""
-		if *targetLanguage == "python" {
-			ext = ".py"
-		}
-		if *targetLanguage == "go" {
-			ext = ".go"
-		}
-		f, err := os.Create(*outputDir + "/" + name + ext)
+		ext := config.FileExtension
+		f, err := os.Create(*outputDir + "/" + config.getNameModifier()(name) + ext)
 		if err != nil {
 			fmt.Println("error creating file", err)
 			os.Exit(1)
