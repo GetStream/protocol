@@ -13,10 +13,7 @@ func TestGenerate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	tmpl, err := loader.LoadTemplate(TypeTemplate)
-	if err != nil {
-		t.Fatal(err)
-	}
+	tmpl := loader.LoadTemplate(TypeTemplate)
 
 	context := TypeContext{
 		Schema: &openapi3.Schema{
