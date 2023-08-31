@@ -22,7 +22,7 @@ const (
 )
 
 type TemplateLoader struct {
-	files fs.FS
+	templates *template.Template
 }
 
 func NewTemplateLoader(targetLanguage string, useDisk bool) (*TemplateLoader, error) {
@@ -36,27 +36,35 @@ func NewTemplateLoader(targetLanguage string, useDisk bool) (*TemplateLoader, er
 		return nil, fmt.Errorf("opening subdirectory fs %w, useDisk %v", err, useDisk)
 	}
 
+	tmpl := template.New("")
+	tmpl.Funcs(template.FuncMap{
+		"refToName": refToName,
+		"toSnake":   strcase.ToSnake,
+		"toCamel":   strcase.ToCamel,
+		"has": func(sl []string, str string) bool {
+			for _, s := range sl {
+				if s == str {
+					return true
+				}
+			}
+			return false
+		},
+	})
+
+	templates, err := tmpl.ParseFS(files, "*.tmpl")
+	if err != nil {
+		return nil, fmt.Errorf("parsing templates %w", err)
+	}
+
 	tl := &TemplateLoader{
-		files: files,
+		templates: templates,
 	}
 
 	return tl, nil
 }
 
-func (t *TemplateLoader) LoadTemplate(kind templateKind) (*template.Template, error) {
-	tmpl := template.New(string(kind) + ".tmpl")
-	tmpl.Funcs(template.FuncMap{
-		"refToName": refToName,
-		"toSnake":   strcase.ToSnake,
-		"toCamel":   strcase.ToCamel,
-	})
-
-	tmpl, err := tmpl.ParseFS(t.files, string(kind)+".tmpl")
-	if err != nil {
-		return nil, fmt.Errorf("parsing template %w", err)
-	}
-
-	return tmpl, nil
+func (t *TemplateLoader) LoadTemplate(kind templateKind) *template.Template {
+	return t.templates.Lookup(string(kind) + ".tmpl")
 }
 
 type TypeContext struct {
@@ -64,6 +72,15 @@ type TypeContext struct {
 	Name       string
 	Additional map[string]any
 	References []string
+}
+
+type RequestContext struct {
+	Name       string
+	Additional map[string]any
+	References []string
+
+	Parameters openapi3.Parameters
+	Body       *openapi3.RequestBodyRef
 }
 
 // go run . -i ../openapi/video-openapi.yaml -o ./go-generated -l go
@@ -105,11 +122,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	tmpl, err := templateLoader.LoadTemplate(TypeTemplate)
-	if err != nil {
-		fmt.Println("error loading template", err)
-		os.Exit(1)
-	}
+	tmpl := templateLoader.LoadTemplate(TypeTemplate)
 
 	for name, schema := range doc.Components.Schemas {
 		ext := config.FileExtension
@@ -130,6 +143,46 @@ func main() {
 		if err != nil {
 			fmt.Println("error executing template", err)
 			os.Exit(1)
+		}
+	}
+
+	for pathName, path := range doc.Paths {
+		for method, operation := range path.Operations() {
+			if len(operation.Parameters) == 0 && operation.RequestBody == nil {
+				continue
+			}
+
+			name := operation.OperationID
+
+			if name == "" {
+				// TODO: generate a name based on path and method
+				fmt.Println("operationID is required for operation", pathName, method)
+				os.Exit(1)
+			}
+
+			name = name + "Request"
+
+			tmpl := templateLoader.LoadTemplate(RequestTemplate)
+
+			ext := config.FileExtension
+			f, err := os.Create(*outputDir + "/" + config.getNameModifier()(name) + "_" + method + ext)
+			if err != nil {
+				fmt.Println("error creating file", err)
+				os.Exit(1)
+			}
+			defer f.Close()
+
+			err = tmpl.Execute(f, RequestContext{
+				Name:       name,
+				Additional: config.AdditionalParameters,
+				Parameters: operation.Parameters,
+				Body:       operation.RequestBody,
+			})
+
+			if err != nil {
+				fmt.Println("error executing template", err)
+				os.Exit(1)
+			}
 		}
 	}
 }

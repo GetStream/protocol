@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import Optional
 {{- if (gt (len .Schema.OneOf) 0)}}
 from typing import Union
 from json import loads
@@ -38,8 +39,9 @@ mapping = {
 @dataclass
 class {{toCamel .Name}}:
     {{- if (gt (len .Schema.Properties) 0)}} 
+    {{- $required := .Schema.Required}}
     {{- range $key, $value := .Schema.Properties}}
-    {{toSnake $key}}: {{template "generateSchemaRef" $value}} = field(metadata=config(field_name="{{$key}}"))
+    {{toSnake $key}}: {{if (has $required $key) -}} {{template "generateSchemaRef" $value}} = field(metadata=config(field_name="{{$key}}")) {{- else -}} Optional[{{template "generateSchemaRef" $value}}] = field(metadata=config(field_name="{{$key}}"), default=None) {{- end -}}
     {{- end}}
     {{else if (gt (len .Schema.OneOf) 0)}}
     event : Union[
