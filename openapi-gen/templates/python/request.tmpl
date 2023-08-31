@@ -1,0 +1,17 @@
+from dataclasses import dataclass
+
+{{- range $i, $ref := .References}}
+from {{refToName $ref | toSnake}} import {{refToName $ref | toCamel}}
+{{- end -}}
+
+{{define "generateParameter" -}}
+{{toSnake .Name}}: {{with .Schema -}}{{- template "generateSchemaRef" . -}}{{- end -}}
+{{- with .Content -}}{{- template "generateSchemaRef" (index . "application/json").Schema -}}{{- end -}}
+{{- end}}
+
+@dataclass
+class {{toCamel .Name}}:
+    {{- range $key, $value := .Parameters}}
+    {{template "generateParameter" $value.Value}}
+    {{- end}}
+    {{with .Body}}body: {{template "generateSchemaRef" (index .Value.Content "application/json").Schema}}{{end}}

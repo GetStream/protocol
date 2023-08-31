@@ -175,6 +175,7 @@ func main() {
 			err = tmpl.Execute(f, RequestContext{
 				Name:       name,
 				Additional: config.AdditionalParameters,
+				References: collectReferncesForRequest(operation.Parameters, operation.RequestBody),
 				Parameters: operation.Parameters,
 				Body:       operation.RequestBody,
 			})
@@ -185,6 +186,45 @@ func main() {
 			}
 		}
 	}
+}
+
+func collectReferncesForRequest(parameters openapi3.Parameters, body *openapi3.RequestBodyRef) []string {
+	var refs []string
+	for _, param := range parameters {
+		if param.Ref != "" {
+			refs = append(refs, param.Ref)
+			continue
+		}
+
+		if param.Value != nil {
+			if param.Value.Schema != nil && param.Value.Schema.Ref != "" {
+				refs = append(refs, param.Value.Schema.Ref)
+			}
+			if param.Value.Content != nil {
+				for _, content := range param.Value.Content {
+					if content.Schema != nil && content.Schema.Ref != "" {
+						refs = append(refs, content.Schema.Ref)
+					}
+				}
+			}
+		}
+	}
+
+	if body != nil && body.Ref != "" {
+		refs = append(refs, body.Ref)
+	}
+
+	if body != nil && body.Value != nil {
+		if body.Value.Content != nil {
+			for _, content := range body.Value.Content {
+				if content.Schema != nil && content.Schema.Ref != "" {
+					refs = append(refs, content.Schema.Ref)
+				}
+			}
+		}
+	}
+
+	return refs
 }
 
 func refToName(ref string) string {
