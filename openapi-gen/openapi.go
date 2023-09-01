@@ -141,7 +141,7 @@ func main() {
 		})
 
 		if err != nil {
-			fmt.Println("error executing template", err)
+			fmt.Println(err)
 			os.Exit(1)
 		}
 	}
@@ -181,7 +181,7 @@ func main() {
 			})
 
 			if err != nil {
-				fmt.Println("error executing template", err)
+				fmt.Println("error generating", name, err)
 				os.Exit(1)
 			}
 		}
