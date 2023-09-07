@@ -1,20 +1,30 @@
 package {{index .Additional "package"}}
 
 {{- define "generateObject"}} struct {
-    {{- range $key, $value := .Properties}}
-    {{$key}} {{template "generateType" $value.Value}} `json:"{{$key}}"`
-    {{- end}}
-}
+      {{- range $key, $value := .Properties}}
+      {{$key}} {{template "generateType" $value}} `json:"{{$key}}"`
+      {{- end}}
+  }
 {{- end}}
 
 {{- define "generateType"}}
-    {{- if (eq .Type "object")}}{{- template "generateObject" .}}{{- end}}
-    {{- if (eq .Type "string")}}string{{end}}
-    {{- if (eq .Type "integer")}}int{{end}}
-    {{- if (eq .Type "number")}}float64{{end}}
-    {{- if (eq .Type "boolean")}}bool{{end}}
-    {{- if (eq .Type "array")}}[]{{template "generateType" .Items.Value}}{{end}}
-    {{- if (eq .Type "null")}}interface{}{{end}}
+    {{- if (eq .Value.Type "string")}}
+    {{- if (eq .Value.Format "date-time")}} time.Time {{- else}} string {{- end}}
+    {{- else if (eq .Value.Type "integer")}} int 
+    {{- else if (eq .Value.Type "number")}} float64 
+    {{- else if (eq .Value.Type "boolean")}} bool 
+    {{- else if (eq .Value.Type "array")}} []{{template "generateType" .Value.Items}}
+    {{- else if (eq .Value.Type "object")}}
+        {{- if .Ref}}{{.Ref|refToName|toCamel}}
+        {{- else if .Value.AdditionalProperties}} map[string]interface{}
+        {{- else}} {{template "generateObject" .Value}}
+        {{- end}}
+     {{- else if (eq .Value.Type "null")}} interface{} 
+     {{- end}}
 {{- end}}
 
-type {{.Name}}{{template "generateType" .Schema}}
+{{- define "generateSchemaRef" -}}
+{{- if (eq .Ref "") -}}{{- template "generateType" .Value -}}{{- else -}}{{refToName .Ref | toCamel}}{{- end -}}
+{{- end}}
+
+type {{.Name|toCamel}}{{template "generateObject" .Schema}}
