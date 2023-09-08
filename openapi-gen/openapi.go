@@ -235,10 +235,13 @@ func main() {
 	}
 	defer f.Close()
 
-	err = templateLoader.LoadTemplate("client").Execute(f, doc)
-	if err != nil {
-		fmt.Println("error generating client", err)
-		os.Exit(1)
+	tp := templateLoader.LoadTemplate("client")
+	if tp != nil {
+		err = tp.Execute(f, doc)
+		if err != nil {
+			fmt.Println("error generating client", err)
+			os.Exit(1)
+		}
 	}
 }
 
