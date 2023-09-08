@@ -11,8 +11,10 @@ import (
 type Config struct {
 	AdditionalParameters map[string]any `yaml:"additionalParameters" json:"additionalParameters"`
 	// FileNameModifier is function name to be used for generating the file name.
-	FileNameModifier string `yaml:"fileNameModifier" json:"fileNameModifier"`
-	FileExtension    string `yaml:"fileExtension" json:"fileExtension"`
+	FileNameModifier     string   `yaml:"fileNameModifier" json:"fileNameModifier"`
+	FileExtension        string   `yaml:"fileExtension" json:"fileExtension"`
+	CopyAdditionalFiles  []string `yaml:"copyAdditionalFiles" json:"copyAdditionalFiles"`
+	GenerateRequestTypes bool     `yaml:"generateRequestTypes" json:"generateRequestTypes"`
 }
 
 func (c Config) getNameModifier() func(string) string {

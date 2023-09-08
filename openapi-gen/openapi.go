@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path"
@@ -48,6 +49,20 @@ func NewTemplateLoader(targetLanguage string, useDisk bool) (*TemplateLoader, er
 				}
 			}
 			return false
+		},
+		"successfulResponse": func(responses openapi3.Responses) *openapi3.SchemaRef {
+			for code, response := range responses {
+				if code == "200" || code == "201" {
+					return response.Value.Content["application/json"].Schema
+				}
+			}
+			return nil
+		},
+		"requestSchema": func(operation openapi3.Operation) *openapi3.SchemaRef {
+			if operation.RequestBody == nil {
+				return nil
+			}
+			return operation.RequestBody.Value.Content["application/json"].Schema
 		},
 	})
 
@@ -116,6 +131,29 @@ func main() {
 		os.Exit(1)
 	}
 
+	for _, fileName := range config.CopyAdditionalFiles {
+		dst, err := os.Create(*outputDir + "/" + fileName)
+		if err != nil {
+			fmt.Println("error opening additional file", err)
+			os.Exit(1)
+		}
+
+		src, err := os.Open("templates/" + *targetLanguage + "/" + fileName)
+		if err != nil {
+			fmt.Println("error opening additional file", err)
+			os.Exit(1)
+		}
+
+		_, err = io.Copy(dst, src)
+		if err != nil {
+			fmt.Println("error copying additional file", err)
+			os.Exit(1)
+		}
+
+		dst.Close()
+		src.Close()
+	}
+
 	templateLoader, err := NewTemplateLoader(*targetLanguage, true)
 	if err != nil {
 		fmt.Println("error loading template loader", err)
@@ -146,45 +184,61 @@ func main() {
 		}
 	}
 
-	for pathName, path := range doc.Paths {
-		for method, operation := range path.Operations() {
-			if len(operation.Parameters) == 0 && operation.RequestBody == nil {
-				continue
-			}
+	if config.GenerateRequestTypes {
+		for pathName, path := range doc.Paths {
+			for method, operation := range path.Operations() {
+				if len(operation.Parameters) == 0 && operation.RequestBody == nil {
+					continue
+				}
 
-			name := operation.OperationID
+				name := operation.OperationID
 
-			if name == "" {
-				// TODO: generate a name based on path and method
-				fmt.Println("operationID is required for operation", pathName, method)
-				os.Exit(1)
-			}
+				if name == "" {
+					// TODO: generate a name based on path and method
+					fmt.Println("operationID is required for operation", pathName, method)
+					os.Exit(1)
+				}
 
-			name = name + "Request"
+				name = name + "Request"
 
-			tmpl := templateLoader.LoadTemplate(RequestTemplate)
+				tmpl := templateLoader.LoadTemplate(RequestTemplate)
 
-			ext := config.FileExtension
-			f, err := os.Create(*outputDir + "/" + config.getNameModifier()(name) + "_" + method + ext)
-			if err != nil {
-				fmt.Println("error creating file", err)
-				os.Exit(1)
-			}
-			defer f.Close()
+				ext := config.FileExtension
+				f, err := os.Create(*outputDir + "/" + config.getNameModifier()(name) + "_" + strings.ToLower(method) + ext)
+				if err != nil {
+					fmt.Println("error creating file", err)
+					os.Exit(1)
+				}
+				//we shouldn't defer here because we want to close the file after each request generation
+				defer f.Close()
 
-			err = tmpl.Execute(f, RequestContext{
-				Name:       name,
-				Additional: config.AdditionalParameters,
-				References: collectReferncesForRequest(operation.Parameters, operation.RequestBody),
-				Parameters: operation.Parameters,
-				Body:       operation.RequestBody,
-			})
+				err = tmpl.Execute(f, RequestContext{
+					Name:       name,
+					Additional: config.AdditionalParameters,
+					References: collectReferncesForRequest(operation.Parameters, operation.RequestBody),
+					Parameters: operation.Parameters,
+					Body:       operation.RequestBody,
+				})
 
-			if err != nil {
-				fmt.Println("error generating", name, err)
-				os.Exit(1)
+				if err != nil {
+					fmt.Println("error generating", name, err)
+					os.Exit(1)
+				}
 			}
 		}
+	}
+
+	f, err := os.Create(path.Join(*outputDir, "client"+config.FileExtension))
+	if err != nil {
+		fmt.Println("error creating file", err)
+		os.Exit(1)
+	}
+	defer f.Close()
+
+	err = templateLoader.LoadTemplate("client").Execute(f, doc)
+	if err != nil {
+		fmt.Println("error generating client", err)
+		os.Exit(1)
 	}
 }
 
