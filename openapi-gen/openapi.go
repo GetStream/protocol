@@ -64,6 +64,7 @@ func NewTemplateLoader(targetLanguage string, useDisk bool) (*TemplateLoader, er
 			}
 			return operation.RequestBody.Value.Content["application/json"].Schema
 		},
+		"operationContext": operationContext,
 	})
 
 	templates, err := tmpl.ParseFS(files, "*.tmpl")
@@ -96,6 +97,20 @@ type RequestContext struct {
 
 	Parameters openapi3.Parameters
 	Body       *openapi3.RequestBodyRef
+}
+
+type OperationWithPathAndMethod struct {
+	Path   string
+	Method string
+	*openapi3.Operation
+}
+
+func operationContext(operation *openapi3.Operation, method, path string) *OperationWithPathAndMethod {
+	return &OperationWithPathAndMethod{
+		Path:      path,
+		Method:    method,
+		Operation: operation,
+	}
 }
 
 // go run . -i ../openapi/video-openapi.yaml -o ./go-generated -l go

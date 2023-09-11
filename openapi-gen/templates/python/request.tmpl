@@ -1,7 +1,7 @@
 {{- define "requestFunction" -}}
 def {{toSnake .OperationID}}(self{{range $index, $param := .Parameters -}}
 , {{$param.Value.Name}}: {{template "generateSchemaRef" .Value.Schema}}{{end -}}
-{{- with (requestSchema .) -}}, data: {{template "generateSchemaRef" .}}{{end -}}
+{{- with (requestSchema .Operation) -}}, data: {{template "generateSchemaRef" .}}{{end -}}
 ){{with (successfulResponse .Responses)}} -> StreamResponse[{{template "generateSchemaRef" .}}]{{end}}:
         """
         {{.Summary}}
@@ -10,5 +10,21 @@ def {{toSnake .OperationID}}(self{{range $index, $param := .Parameters -}}
         {{end}}
         {{- end}}
         """
-    ...
+        query_params = {}
+        path_params = {}
+
+        {{- range $index, $param := .Parameters -}}
+        {{- if eq $param.Value.In "query"}}
+        query_params["{{$param.Value.Name}}"] = {{toSnake $param.Value.Name}}
+        {{- else if eq $param.Value.In "path"}}
+        path_params["{{$param.Value.Name}}"] = {{toSnake $param.Value.Name}}
+        {{- end}}
+        {{- end}}
+
+        self.request("{{.Method}}", "{{.Path}}",
+                query_params=query_params,
+                path_params=path_params,{{- if (requestSchema .Operation)}}
+                body=data,{{end -}}
+        )
+
 {{ end -}}
