@@ -20,6 +20,6 @@ class BaseClient:
 
     def request(self, method: str, path: str, body=None, query_params:dict=None, path_params: dict = None, **kwargs) -> StreamResponse[T]:
        
-        return self.client.request(method, self.basePath + build_path(path, path_params), **kwargs)
+        return self.client.request(method, self.basePath + build_path(path, path_params), params=query_params, json=body, **kwargs)
     
     

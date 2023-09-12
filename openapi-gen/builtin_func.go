@@ -29,10 +29,15 @@ func PrepareBuiltinFunctions(config *Config) template.FuncMap {
 			}
 			return nil
 		},
-		"requestSchema": func(operation openapi3.Operation) *openapi3.SchemaRef {
+		"requestSchema": func(operation *openapi3.Operation) *openapi3.SchemaRef {
 			if operation.RequestBody == nil {
 				return nil
 			}
+
+			if operation.RequestBody.Value.Content["application/json"] == nil {
+				return nil
+			}
+
 			return operation.RequestBody.Value.Content["application/json"].Schema
 		},
 		"operationContext":   operationContext,

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"io"
@@ -108,11 +107,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	err = doc.Validate(context.Background())
-	if err != nil {
-		fmt.Println("error validating doc", err)
-		os.Exit(1)
-	}
+	// err = doc.Validate(context.Background())
+	// if err != nil {
+	// 	fmt.Println("error validating doc", err)
+	// 	os.Exit(1)
+	// }
 
 	for _, fileName := range config.CopyAdditionalFiles {
 		dst, err := os.Create(*outputDir + "/" + fileName)

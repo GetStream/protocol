@@ -23,7 +23,9 @@ from {{refToName $ref | toSnake}} import {{refToName $ref | toCamel}}
 {{- end -}}
 
 {{- define "generateSchemaRef" -}}
+{{- if .}}
 {{- if (eq .Ref "") -}}{{- template "generateType" .Value -}}{{- else -}}{{refToName .Ref | toCamel}}{{- end -}}
+{{- end -}}
 {{- end}}
 
 {{- with .Schema.Discriminator}}
@@ -41,7 +43,7 @@ class {{toCamel .Name}}:
     {{- if (gt (len .Schema.Properties) 0)}} 
     {{- $required := .Schema.Required}}
     {{- range $index, $value := sortedProperties .Schema}}
-    {{toSnake $value.Name}}: {{if $value.Required -}} {{template "generateSchemaRef" $value.SchemaRef}} = field(metadata=config(field_name="{{$value.Name}}")) {{- else -}} Optional[{{template "generateSchemaRef" $value.SchemaRef}}] = field(metadata=config(field_name="{{$value.Name}}"), default=None) {{- end -}}
+    {{toSnake $value.Name}}: {{if and $value.Required $value.SchemaRef -}} {{template "generateSchemaRef" $value.SchemaRef}} = field(metadata=config(field_name="{{$value.Name}}")) {{- else -}} Optional[{{template "generateSchemaRef" $value.SchemaRef}}] = field(metadata=config(field_name="{{$value.Name}}"), default=None) {{- end -}}
     {{- end}}
     {{else if (gt (len .Schema.OneOf) 0)}}
     event : Union[

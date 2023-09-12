@@ -1,9 +1,9 @@
 {{- define "requestFunction" -}}
 def {{toSnake .OperationID}}(self{{range $index, $param := (requiredParameters .Parameters) -}}
-, {{$param.Value.Name}}: {{template "generateSchemaRef" .Value.Schema}}{{end -}}
+, {{$param.Value.Name}}: {{if .Value.Content -}}{{template "generateSchemaRef" (index .Value.Content "application/json").Schema}}{{else}}{{template "generateSchemaRef" .Value.Schema}}{{- end -}}{{end -}}
 {{- with (requestSchema .Operation) -}}, data: {{template "generateSchemaRef" .}}{{end -}}
 {{range $index, $param := (optionalParameters .Parameters) -}}
-, {{$param.Value.Name}}: Optional[{{template "generateSchemaRef" .Value.Schema}}] = None{{end -}}
+, {{$param.Value.Name}}: Optional[{{if .Value.Content -}}{{template "generateSchemaRef" (index .Value.Content "application/json").Schema}}{{else}}{{template "generateSchemaRef" .Value.Schema}}{{- end -}}] = None{{end -}}
 ){{with (successfulResponse .Responses)}} -> StreamResponse[{{template "generateSchemaRef" .}}]{{end}}:
         """
         {{.Summary}}
