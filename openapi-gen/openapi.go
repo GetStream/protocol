@@ -68,6 +68,7 @@ func NewTemplateLoader(targetLanguage string, useDisk bool) (*TemplateLoader, er
 		"sortedProperties":   sortedProperties,
 		"requiredParameters": requiredParameters,
 		"optionalParameters": optionalParameters,
+		"clientReferences":   clientReferences,
 	})
 
 	templates, err := tmpl.ParseFS(files, "*.tmpl")
@@ -134,6 +135,22 @@ func optionalParameters(parameters openapi3.Parameters) openapi3.Parameters {
 		}
 	}
 	return optional
+}
+
+func clientReferences(paths openapi3.Paths) []string {
+	set := make(map[string]struct{})
+	for _, path := range paths {
+		for _, operation := range path.Operations() {
+			buildRequestReferencesSet(operation, set)
+		}
+	}
+
+	refs := make([]string, 0, len(set))
+	for ref := range set {
+		refs = append(refs, ref)
+	}
+
+	return refs
 }
 
 type SchemaRefWithName struct {
@@ -285,7 +302,7 @@ func main() {
 				err = tmpl.Execute(f, RequestContext{
 					Name:       name,
 					Additional: config.AdditionalParameters,
-					References: collectReferncesForRequest(operation.Parameters, operation.RequestBody),
+					References: collectReferncesForRequest(operation),
 					Parameters: operation.Parameters,
 					Body:       operation.RequestBody,
 				})
@@ -315,43 +332,66 @@ func main() {
 	}
 }
 
-func collectReferncesForRequest(parameters openapi3.Parameters, body *openapi3.RequestBodyRef) []string {
-	var refs []string
-	for _, param := range parameters {
+func collectReferncesForRequest(operation *openapi3.Operation) []string {
+	set := make(map[string]struct{})
+	buildRequestReferencesSet(operation, set)
+
+	refs := make([]string, 0, len(set))
+	for ref := range set {
+		refs = append(refs, ref)
+	}
+
+	return refs
+}
+
+func buildRequestReferencesSet(operation *openapi3.Operation, refs map[string]struct{}) {
+	for _, param := range operation.Parameters {
 		if param.Ref != "" {
-			refs = append(refs, param.Ref)
+			refs[param.Ref] = struct{}{}
 			continue
 		}
 
 		if param.Value != nil {
 			if param.Value.Schema != nil && param.Value.Schema.Ref != "" {
-				refs = append(refs, param.Value.Schema.Ref)
+				refs[param.Value.Schema.Ref] = struct{}{}
 			}
 			if param.Value.Content != nil {
 				for _, content := range param.Value.Content {
 					if content.Schema != nil && content.Schema.Ref != "" {
-						refs = append(refs, content.Schema.Ref)
+						refs[content.Schema.Ref] = struct{}{}
 					}
 				}
 			}
 		}
 	}
 
+	body := operation.RequestBody
 	if body != nil && body.Ref != "" {
-		refs = append(refs, body.Ref)
+		refs[body.Ref] = struct{}{}
 	}
 
 	if body != nil && body.Value != nil {
 		if body.Value.Content != nil {
 			for _, content := range body.Value.Content {
 				if content.Schema != nil && content.Schema.Ref != "" {
-					refs = append(refs, content.Schema.Ref)
+					refs[content.Schema.Ref] = struct{}{}
 				}
 			}
 		}
 	}
 
-	return refs
+	if operation.Responses != nil {
+		for _, response := range operation.Responses {
+			if response.Value.Content != nil {
+				for _, content := range response.Value.Content {
+					if content.Schema != nil && content.Schema.Ref != "" {
+						refs[content.Schema.Ref] = struct{}{}
+					}
+				}
+			}
+		}
+	}
+
 }
 
 func refToName(ref string) string {
