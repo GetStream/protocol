@@ -5,7 +5,7 @@ from urllib.parse import quote
 
 def build_path(path: str, path_params: dict) -> str:
     for k, v in path_params:
-        path_params[k] = quote(v)
+        path_params[k] = quote(v, safe='') # in case of special characters in the path. Known cases: chat message ids.
 
     return path.format(**path_params)
 
