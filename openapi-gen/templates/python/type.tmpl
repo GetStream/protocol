@@ -40,8 +40,8 @@ mapping = {
 class {{toCamel .Name}}:
     {{- if (gt (len .Schema.Properties) 0)}} 
     {{- $required := .Schema.Required}}
-    {{- range $key, $value := .Schema.Properties}}
-    {{toSnake $key}}: {{if (has $required $key) -}} {{template "generateSchemaRef" $value}} = field(metadata=config(field_name="{{$key}}")) {{- else -}} Optional[{{template "generateSchemaRef" $value}}] = field(metadata=config(field_name="{{$key}}"), default=None) {{- end -}}
+    {{- range $index, $value := sortedProperties .Schema}}
+    {{toSnake $value.Name}}: {{if $value.Required -}} {{template "generateSchemaRef" $value.SchemaRef}} = field(metadata=config(field_name="{{$value.Name}}")) {{- else -}} Optional[{{template "generateSchemaRef" $value.SchemaRef}}] = field(metadata=config(field_name="{{$value.Name}}"), default=None) {{- end -}}
     {{- end}}
     {{else if (gt (len .Schema.OneOf) 0)}}
     event : Union[

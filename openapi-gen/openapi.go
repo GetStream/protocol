@@ -64,7 +64,10 @@ func NewTemplateLoader(targetLanguage string, useDisk bool) (*TemplateLoader, er
 			}
 			return operation.RequestBody.Value.Content["application/json"].Schema
 		},
-		"operationContext": operationContext,
+		"operationContext":   operationContext,
+		"sortedProperties":   sortedProperties,
+		"requiredParameters": requiredParameters,
+		"optionalParameters": optionalParameters,
 	})
 
 	templates, err := tmpl.ParseFS(files, "*.tmpl")
@@ -111,6 +114,58 @@ func operationContext(operation *openapi3.Operation, method, path string) *Opera
 		Method:    method,
 		Operation: operation,
 	}
+}
+
+func requiredParameters(parameters openapi3.Parameters) openapi3.Parameters {
+	var required openapi3.Parameters
+	for _, param := range parameters {
+		if param.Value.Required {
+			required = append(required, param)
+		}
+	}
+	return required
+}
+
+func optionalParameters(parameters openapi3.Parameters) openapi3.Parameters {
+	var optional openapi3.Parameters
+	for _, param := range parameters {
+		if !param.Value.Required {
+			optional = append(optional, param)
+		}
+	}
+	return optional
+}
+
+type SchemaRefWithName struct {
+	Name     string
+	Required bool
+	*openapi3.SchemaRef
+}
+
+func sortedProperties(schema openapi3.Schema) []SchemaRefWithName {
+	var requiredNames = make(map[string]struct{})
+	var required, optional []SchemaRefWithName
+
+	for _, name := range schema.Required {
+		requiredNames[name] = struct{}{}
+	}
+
+	for name, prop := range schema.Properties {
+		if _, ok := requiredNames[name]; ok {
+			required = append(required, SchemaRefWithName{
+				Name:      name,
+				Required:  true,
+				SchemaRef: prop,
+			})
+		} else {
+			optional = append(optional, SchemaRefWithName{
+				Name:      name,
+				Required:  false,
+				SchemaRef: prop,
+			})
+		}
+	}
+	return append(required, optional...)
 }
 
 // go run . -i ../openapi/video-openapi.yaml -o ./go-generated -l go
