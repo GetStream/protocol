@@ -15,6 +15,11 @@ type Config struct {
 	FileExtension        string   `yaml:"fileExtension" json:"fileExtension"`
 	CopyAdditionalFiles  []string `yaml:"copyAdditionalFiles" json:"copyAdditionalFiles"`
 	GenerateRequestTypes bool     `yaml:"generateRequestTypes" json:"generateRequestTypes"`
+
+	// relative path to the directory where the generated models will be saved
+	ModelsSubpackage string `yaml:"modelsSubpackage" json:"modelsSubpackage"`
+	// files to be copied to the models directory
+	ModelsCopyFiles []string `yaml:"modelsCopyFiles" json:"modelsCopyFiles"`
 }
 
 func (c Config) getNameModifier() func(string) string {

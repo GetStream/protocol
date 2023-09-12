@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"text/template"
 
@@ -249,9 +250,47 @@ func main() {
 
 	tmpl := templateLoader.LoadTemplate(TypeTemplate)
 
+	var modelsDir string
+
+	if config.ModelsSubpackage != "" {
+		modelsDir = path.Join(*outputDir, config.ModelsSubpackage)
+
+		if _, err := os.Stat(modelsDir); os.IsNotExist(err) {
+			err = os.Mkdir(modelsDir, 0755)
+			if err != nil {
+				fmt.Println("error creating models subpackage", err)
+				os.Exit(1)
+			}
+		} else if err != nil {
+			fmt.Println("error checking models subpackage", err)
+			os.Exit(1)
+		}
+
+		for _, filePath := range config.ModelsCopyFiles {
+			filename := filepath.Base(filePath)
+			dst, err := os.Create(path.Join(modelsDir, filename))
+			if err != nil {
+				fmt.Println("error creating file", err)
+				os.Exit(1)
+			}
+			src, err := os.Open(path.Join("templates", *targetLanguage, filePath))
+			if err != nil {
+				fmt.Println("error opening file", err)
+				os.Exit(1)
+			}
+
+			_, err = io.Copy(dst, src)
+			if err != nil {
+				fmt.Println("error copying file", err)
+				os.Exit(1)
+			}
+		}
+
+	}
+
 	for name, schema := range doc.Components.Schemas {
 		ext := config.FileExtension
-		f, err := os.Create(*outputDir + "/" + config.getNameModifier()(name) + ext)
+		f, err := os.Create(path.Join(modelsDir, config.getNameModifier()(name)+ext))
 		if err != nil {
 			fmt.Println("error creating file", err)
 			os.Exit(1)
