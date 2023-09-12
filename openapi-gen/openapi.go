@@ -13,7 +13,6 @@ import (
 	"text/template"
 
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/iancoleman/strcase"
 )
 
 type templateKind string
@@ -27,7 +26,7 @@ type TemplateLoader struct {
 	templates *template.Template
 }
 
-func NewTemplateLoader(targetLanguage string, useDisk bool) (*TemplateLoader, error) {
+func NewTemplateLoader(targetLanguage string, useDisk bool, funcs template.FuncMap) (*TemplateLoader, error) {
 	var root fs.FS = templates
 	if useDisk {
 		root = os.DirFS(".")
@@ -39,38 +38,7 @@ func NewTemplateLoader(targetLanguage string, useDisk bool) (*TemplateLoader, er
 	}
 
 	tmpl := template.New("")
-	tmpl.Funcs(template.FuncMap{
-		"refToName": refToName,
-		"toSnake":   strcase.ToSnake,
-		"toCamel":   strcase.ToCamel,
-		"has": func(sl []string, str string) bool {
-			for _, s := range sl {
-				if s == str {
-					return true
-				}
-			}
-			return false
-		},
-		"successfulResponse": func(responses openapi3.Responses) *openapi3.SchemaRef {
-			for code, response := range responses {
-				if code == "200" || code == "201" {
-					return response.Value.Content["application/json"].Schema
-				}
-			}
-			return nil
-		},
-		"requestSchema": func(operation openapi3.Operation) *openapi3.SchemaRef {
-			if operation.RequestBody == nil {
-				return nil
-			}
-			return operation.RequestBody.Value.Content["application/json"].Schema
-		},
-		"operationContext":   operationContext,
-		"sortedProperties":   sortedProperties,
-		"requiredParameters": requiredParameters,
-		"optionalParameters": optionalParameters,
-		"clientReferences":   clientReferences,
-	})
+	tmpl.Funcs(funcs)
 
 	templates, err := tmpl.ParseFS(files, "*.tmpl")
 	if err != nil {
@@ -102,88 +70,6 @@ type RequestContext struct {
 
 	Parameters openapi3.Parameters
 	Body       *openapi3.RequestBodyRef
-}
-
-type OperationWithPathAndMethod struct {
-	Path   string
-	Method string
-	*openapi3.Operation
-}
-
-func operationContext(operation *openapi3.Operation, method, path string) *OperationWithPathAndMethod {
-	return &OperationWithPathAndMethod{
-		Path:      path,
-		Method:    method,
-		Operation: operation,
-	}
-}
-
-func requiredParameters(parameters openapi3.Parameters) openapi3.Parameters {
-	var required openapi3.Parameters
-	for _, param := range parameters {
-		if param.Value.Required {
-			required = append(required, param)
-		}
-	}
-	return required
-}
-
-func optionalParameters(parameters openapi3.Parameters) openapi3.Parameters {
-	var optional openapi3.Parameters
-	for _, param := range parameters {
-		if !param.Value.Required {
-			optional = append(optional, param)
-		}
-	}
-	return optional
-}
-
-func clientReferences(paths openapi3.Paths) []string {
-	set := make(map[string]struct{})
-	for _, path := range paths {
-		for _, operation := range path.Operations() {
-			buildRequestReferencesSet(operation, set)
-		}
-	}
-
-	refs := make([]string, 0, len(set))
-	for ref := range set {
-		refs = append(refs, ref)
-	}
-
-	return refs
-}
-
-type SchemaRefWithName struct {
-	Name     string
-	Required bool
-	*openapi3.SchemaRef
-}
-
-func sortedProperties(schema openapi3.Schema) []SchemaRefWithName {
-	var requiredNames = make(map[string]struct{})
-	var required, optional []SchemaRefWithName
-
-	for _, name := range schema.Required {
-		requiredNames[name] = struct{}{}
-	}
-
-	for name, prop := range schema.Properties {
-		if _, ok := requiredNames[name]; ok {
-			required = append(required, SchemaRefWithName{
-				Name:      name,
-				Required:  true,
-				SchemaRef: prop,
-			})
-		} else {
-			optional = append(optional, SchemaRefWithName{
-				Name:      name,
-				Required:  false,
-				SchemaRef: prop,
-			})
-		}
-	}
-	return append(required, optional...)
 }
 
 // go run . -i ../openapi/video-openapi.yaml -o ./go-generated -l go
@@ -242,7 +128,7 @@ func main() {
 		src.Close()
 	}
 
-	templateLoader, err := NewTemplateLoader(*targetLanguage, true)
+	templateLoader, err := NewTemplateLoader(*targetLanguage, true, PrepareBuiltinFunctions(config))
 	if err != nil {
 		fmt.Println("error loading template loader", err)
 		os.Exit(1)
@@ -435,10 +321,6 @@ func buildRequestReferencesSet(operation *openapi3.Operation, refs map[string]st
 		}
 	}
 
-}
-
-func refToName(ref string) string {
-	return strings.TrimPrefix(ref, "#/components/schemas/")
 }
 
 func getReferencesFromTypes(schema *openapi3.Schema) []string {
