@@ -8,15 +8,15 @@ import (
 )
 
 func TestGenerateGo(t *testing.T) {
-	loader, err := NewTemplateLoader("go", false)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	config := Config{
 		AdditionalParameters: map[string]interface{}{
 			"package": "stream",
 		},
+	}
+
+	loader, err := NewTemplateLoader("go", false, PrepareBuiltinFunctions(&config))
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	tmpl := loader.LoadTemplate(TypeTemplate)
@@ -156,4 +156,3 @@ components:
 	}
 
 }
-

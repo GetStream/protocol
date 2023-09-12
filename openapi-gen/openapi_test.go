@@ -8,7 +8,7 @@ import (
 )
 
 func TestGenerate(t *testing.T) {
-	loader, err := NewTemplateLoader("python", false)
+	loader, err := NewTemplateLoader("python", false, PrepareBuiltinFunctions(&Config{}))
 	if err != nil {
 		t.Fatal(err)
 	}
