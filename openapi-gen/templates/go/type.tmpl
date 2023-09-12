@@ -3,7 +3,7 @@ package {{index .Additional "package"}}
 {{- define "generateObject"}} struct {
   {{- $struct := . -}}
   {{- range $key, $value := $struct.Properties}}
-    {{$key}} {{if has $struct.Required $key}} {{template "generateType" $value}} `json:"{{$key}}"` {{- else}}*{{template "generateType" $value}} `json:"{{$key}},omitempty"`
+    {{toCamel $key}}{{if has $struct.Required $key}} {{template "generateType" $value}} `json:"{{$key}}"` {{- else}} *{{template "generateType" $value}} `json:"{{$key}},omitempty"`
   {{- end}}
 
 {{- end}}
@@ -12,23 +12,19 @@ package {{index .Additional "package"}}
 {{- define "generateType"}}
     {{- if (eq .Ref "") -}}
         {{- if (eq .Value.Type "string")}}
-          {{- if (eq .Value.Format "date-time")}} time.Time {{- else}} string {{- end}}
-        {{- else if (eq .Value.Type "integer")}} int
-        {{- else if (eq .Value.Type "number")}} float64 
-        {{- else if (eq .Value.Type "boolean")}} bool 
-        {{- else if (eq .Value.Type "array")}} []{{template "generateType" .Value.Items}}
+          {{- if (eq .Value.Format "date-time")}}time.Time{{- else}}string{{- end}}
+        {{- else if (eq .Value.Type "integer")}}int
+        {{- else if (eq .Value.Type "number")}}float64 
+        {{- else if (eq .Value.Type "boolean")}}bool 
+        {{- else if (eq .Value.Type "array")}}[]{{template "generateType" .Value.Items}}
         {{- else if (eq .Value.Type "object")}}
-           {{- if .Value.AdditionalProperties}} map[string]interface{}
-           {{- else}} {{template "generateObject" .Value}}
+           {{- if .Value.AdditionalProperties}}map[string]interface{}
+           {{- else}}{{template "generateObject" .Value}}
            {{- end }}
-        {{- else if (eq .Value.Type "null")}} interface{} 
+        {{- else if (eq .Value.Type "null")}}interface{} 
         {{- end}}
-    {{- else -}} {{refToName .Ref | toCamel}}
+    {{- else -}}{{refToName .Ref | toCamel}}
     {{- end}}
 {{- end}}
 
-{{- define "generateSchemaRef" -}}
-  {{- if (eq .Ref "") -}}{{- template "generateType" .Value -}}{{- else -}}{{refToName .Ref | toCamel}}{{- end -}}
-{{- end}} 
-
-type {{.Name|toCamel}}{{template "generateObject" .Schema}}
+type {{.Name|toCamel}}{{template "generateObject" .Schema}} 
