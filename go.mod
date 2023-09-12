@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/getkin/kin-openapi v0.118.0
+	github.com/iancoleman/strcase v0.3.0
 	github.com/twitchtv/twirp v8.1.2+incompatible
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v3 v3.0.1
@@ -13,7 +14,6 @@ require (
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/swag v0.19.5 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
-	github.com/iancoleman/strcase v0.3.0 // indirect
 	github.com/invopop/yaml v0.1.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect

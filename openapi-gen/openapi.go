@@ -91,7 +91,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	os.Mkdir(*outputDir, 0755)
+	if _, err := os.Stat(*outputDir); os.IsNotExist(err) {
+		err = os.Mkdir(*outputDir, 0755)
+		if err != nil {
+			fmt.Println("error creating output directory", err)
+			os.Exit(1)
+		}
+	} else if err != nil {
+		fmt.Println("error checking output directory", err)
+		os.Exit(1)
+	}
 
 	doc, err := openapi3.NewLoader().LoadFromFile(*inputFile)
 	if err != nil {
