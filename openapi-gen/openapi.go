@@ -381,7 +381,11 @@ func buildRequestReferencesSet(operation *openapi3.Operation, refs map[string]st
 	}
 
 	if operation.Responses != nil {
-		for _, response := range operation.Responses {
+		for status, response := range operation.Responses {
+			// handling only 2xx responses, errors are predefined, and should be decoded in 1 place
+			if status[0] != '2' {
+				continue
+			}
 			if response.Value.Content != nil {
 				for _, content := range response.Value.Content {
 					if content.Schema != nil && content.Schema.Ref != "" {
