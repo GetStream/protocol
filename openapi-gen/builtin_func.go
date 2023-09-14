@@ -13,6 +13,7 @@ func PrepareBuiltinFunctions(config *Config) template.FuncMap {
 		"refToName": refToName,
 		"toSnake":   strcase.ToSnake,
 		"toCamel":   strcase.ToCamel,
+		"lower":     strings.ToLower,
 		"has": func(sl []string, str string) bool {
 			for _, s := range sl {
 				if s == str {
