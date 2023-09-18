@@ -1,9 +1,20 @@
 {{- $required := .Schema.Required}}
 {{- $hasDateTime := false }}
+{{- $typingImports := list}}
 {{- $imports := newSet}}
 {{- range $index, $value := sortedProperties .Schema}}
     {{- if and (eq .Value.Type "string") (eq .Value.Format "date-time")}}
         {{- $hasDateTime = true }}
+    {{- end}}
+    {{- if eq .Value.Type "array"}}
+        {{- if not (contains $typingImports "List")}}
+            {{- $typingImports = append $typingImports "List"}}
+        {{- end}}
+    {{- end}}
+    {{- if and (eq .Value.Type "object") (.Value.AdditionalProperties) (.Value.AdditionalProperties.Schema)}}
+        {{- if not (contains $typingImports "Dict")}}
+            {{- $typingImports = append $typingImports "Dict"}}
+        {{- end}}
     {{- end}}
 {{- end}}
 
@@ -15,7 +26,12 @@ from enum import Enum
 {{- end}}
 
 {{- if .HasNonRequired}}
-from typing import Optional
+    {{- if not (contains $typingImports "Optional") -}}
+        {{- $typingImports = append $typingImports "Optional" -}}
+    {{- end}}
+{{- end}}
+{{- if gt (len $typingImports) 0}}
+from typing import {{join $typingImports ", "}}
 {{- end}}
 
 {{- if $hasDateTime}}
@@ -44,8 +60,8 @@ from {{with index additionalParameters "modelImportPrefix"}}{{.}}{{else}}models.
 {{- if (eq .Type "integer")}}int{{end}}
 {{- if (eq .Type "number")}}float{{end}}
 {{- if (eq .Type "boolean")}}bool{{end}}
-{{- if (eq .Type "array")}}list[{{template "generateSchemaRef" .Items -}}]{{end}}
-{{- if (eq .Type "object")}}{{with .AdditionalProperties}}dict[str, {{template "generateSchemaRef" .Schema -}}]{{end}}{{end}}
+{{- if (eq .Type "array")}}List[{{template "generateSchemaRef" .Items -}}]{{end}}
+{{- if (eq .Type "object")}}{{with .AdditionalProperties}}Dict[str, {{template "generateSchemaRef" .Schema -}}]{{end}}{{end}}
 {{- if (eq .Type "null")}}None{{end}}
 {{- if (eq .Type "")}}object{{end}}
 {{- end -}}
