@@ -56,10 +56,11 @@ func (t *TemplateLoader) LoadTemplate(kind templateKind) *template.Template {
 }
 
 type TypeContext struct {
-	Schema     *openapi3.Schema
-	Name       string
-	Additional map[string]any
-	References []string
+	Schema         *openapi3.Schema
+	Name           string
+	Additional     map[string]any
+	References     []string
+	HasNonRequired bool
 }
 
 type RequestContext struct {
@@ -69,6 +70,15 @@ type RequestContext struct {
 
 	Parameters openapi3.Parameters
 	Body       *openapi3.RequestBodyRef
+}
+
+func findInSlice(val string, slice []string) bool {
+	for _, item := range slice {
+		if item == val {
+			return true
+		}
+	}
+	return false
 }
 
 // go run . -i ../openapi/video-openapi.yaml -o ./go-generated -l go
@@ -198,11 +208,20 @@ func main() {
 		}
 		defer f.Close()
 
+		hasNonRequired := false
+		for propName := range schema.Value.Properties {
+			if !findInSlice(propName, schema.Value.Required) {
+				hasNonRequired = true
+				break
+			}
+		}
+
 		err = tmpl.Execute(f, TypeContext{
-			Name:       name,
-			Schema:     schema.Value,
-			Additional: config.AdditionalParameters,
-			References: getReferencesFromTypes(schema.Value),
+			Name:           name,
+			Schema:         schema.Value,
+			Additional:     config.AdditionalParameters,
+			References:     getReferencesFromTypes(schema.Value),
+			HasNonRequired: hasNonRequired,
 		})
 
 		if err != nil {
