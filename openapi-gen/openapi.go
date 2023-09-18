@@ -389,5 +389,12 @@ func getReferencesFromTypes(schema *openapi3.Schema) []string {
 		}
 	}
 
+	if schema.AdditionalProperties.Schema != nil {
+		if schema.AdditionalProperties.Schema.Ref != "" {
+			refs = append(refs, schema.AdditionalProperties.Schema.Ref)
+		} else if schema.AdditionalProperties.Schema.Value != nil {
+			refs = append(refs, getReferencesFromTypes(schema.AdditionalProperties.Schema.Value)...)
+		}
+	}
 	return refs
 }
