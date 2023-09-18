@@ -8,12 +8,32 @@ import (
 	"github.com/iancoleman/strcase"
 )
 
+type set map[string]struct{}
+
+func newSet() set {
+    return make(set)
+}
+
+func (s set) Add(value string) (bool) {
+    if _, ok := s[value]; ok {
+        return false 
+    }
+    s[value] = struct{}{}
+    return true
+}
+
+func (s set) Contains(value string) (bool) {
+    _, ok := s[value]
+    return ok
+}
+
 func PrepareBuiltinFunctions(config *Config) template.FuncMap {
 	return template.FuncMap{
 		"refToName": refToName,
 		"toSnake":   strcase.ToSnake,
 		"toCamel":   strcase.ToCamel,
 		"lower":     strings.ToLower,
+		"newSet":    newSet,
 		"has": func(sl []string, str string) bool {
 			for _, s := range sl {
 				if s == str {

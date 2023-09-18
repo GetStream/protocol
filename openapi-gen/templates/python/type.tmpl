@@ -1,6 +1,7 @@
 {{- $required := .Schema.Required}}
 {{- $hasNonRequired := false }}
 {{- $hasDateTime := false }}
+{{- $imports := newSet}}
 {{- range $index, $value := sortedProperties .Schema}}
     {{- if and (eq .Value.Type "string") (eq .Value.Format "date-time")}}
         {{- $hasDateTime = true }}
@@ -11,8 +12,12 @@
     {{- end}}
 {{- end}}
 from dataclasses import dataclass, field
-{{- if $hasNonRequired}}from typing import Optional{{- end}}
-{{- if $hasDateTime}}from datetime import datetime{{- end}}
+{{- if $hasNonRequired}}
+from typing import Optional
+{{- end}}
+{{- if $hasDateTime}}
+from datetime import datetime
+{{- end}}
 {{- if (gt (len .Schema.OneOf) 0)}}
 from typing import Union
 from json import loads
@@ -21,7 +26,11 @@ from dataclasses_json import config, dataclass_json
 {{- end}}
 
 {{- range $i, $ref := .References}}
-from {{with index additionalParameters "modelImportPrefix"}}{{.}}{{else}}models.{{end}}models.{{refToName $ref | toSnake}} import {{refToName $ref | toCamel}}
+    {{- $refName := refToName $ref | toCamel}}
+    {{- if not ($imports.Contains $refName)}}
+        {{- $_ := $imports.Add $refName}}
+from {{with index additionalParameters "modelImportPrefix"}}{{.}}{{else}}models.{{end}}{{refToName $ref | toSnake}} import {{refToName $ref | toCamel}}{{"\n"}}
+    {{- end -}}
 {{- end -}}
 
 {{- define "generateType" -}}
