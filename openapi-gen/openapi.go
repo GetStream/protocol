@@ -196,8 +196,8 @@ func main() {
 	}
 
 	for name, schema := range doc.Components.Schemas {
-		if len(schema.Value.Properties) == 0 && len(schema.Value.Enum) == 0 {
-			fmt.Println("skipping", name, "because it has no properties")
+		if len(schema.Value.Properties) == 0 && len(schema.Value.Enum) == 0 && schema.Value.OneOf == nil {
+			fmt.Println("skipping", name, "because it has no properties or OneOf definitions")
 			continue
 		}
 		ext := config.FileExtension
