@@ -6,10 +6,18 @@
         {{- $hasDateTime = true }}
     {{- end}}
 {{- end}}
+
+{{- if (not .Schema.Enum)}}
 from dataclasses import dataclass, field
+from dataclasses_json import config, dataclass_json
+{{else}}
+from enum import Enum
+{{- end}}
+
 {{- if .HasNonRequired}}
 from typing import Optional
 {{- end}}
+
 {{- if $hasDateTime}}
 from datetime import datetime
 {{- end}}
@@ -17,8 +25,9 @@ from datetime import datetime
 from typing import Union
 from json import loads
 {{else}}
-from dataclasses_json import config, dataclass_json
+
 {{- end}}
+
 
 {{- range $i, $ref := .References}}
     {{- $refName := refToName $ref | toCamel}}
@@ -55,10 +64,14 @@ mapping = {
 }
 
 {{else}}
+{{- if (not .Schema.Enum)}}
 @dataclass_json
+{{- end}}
 {{end -}}
+{{- if (not .Schema.Enum)}}
 @dataclass
-class {{toCamel .Name}}:
+{{- end}}
+class {{toCamel .Name}}{{- if .Schema.Enum}}(Enum){{end}}:
     {{- if (gt (len .Schema.Properties) 0)}} 
     {{- $required := .Schema.Required}}
     {{- range $index, $value := sortedProperties .Schema}}
@@ -77,6 +90,19 @@ class {{toCamel .Name}}:
         dict_type = loads(j)["{{.Schema.Discriminator.PropertyName}}"]
         return {{toCamel .Name}}(event=mapping[dict_type].from_json(j))
     {{- else}}
-    ...
+    
+{{- if .Schema.Enum}}
+    {{- range $index, $value := .Schema.Enum}}
+    {{toConstant $value}} = "{{$value}}"
+    {{- end}}
+    
+    @classmethod
+    def from_str(cls, value: str) -> "{{toCamel .Name}}":
+        try:
+            return cls(value)
+        except ValueError:
+            raise ValueError(f"'{value}' is not a valid {{toCamel .Name}}")
+{{- end}}
+
     {{- end}}
 

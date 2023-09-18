@@ -11,20 +11,24 @@ import (
 type set map[string]struct{}
 
 func newSet() set {
-    return make(set)
+	return make(set)
 }
 
-func (s set) Add(value string) (bool) {
-    if _, ok := s[value]; ok {
-        return false 
-    }
-    s[value] = struct{}{}
-    return true
+func (s set) Add(value string) bool {
+	if _, ok := s[value]; ok {
+		return false
+	}
+	s[value] = struct{}{}
+	return true
 }
 
-func (s set) Contains(value string) (bool) {
-    _, ok := s[value]
-    return ok
+func (s set) Contains(value string) bool {
+	_, ok := s[value]
+	return ok
+}
+
+func toConstant(s string) string {
+	return strings.ToUpper(strings.ReplaceAll(s, "-", "_"))
 }
 
 func PrepareBuiltinFunctions(config *Config) template.FuncMap {
@@ -42,6 +46,8 @@ func PrepareBuiltinFunctions(config *Config) template.FuncMap {
 			}
 			return false
 		},
+		"toUpper":        strings.ToUpper,
+		"toConstant": toConstant,
 		"successfulResponse": func(responses openapi3.Responses) *openapi3.SchemaRef {
 			for code, response := range responses {
 				if code == "200" || code == "201" {
