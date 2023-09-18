@@ -186,6 +186,10 @@ func main() {
 	}
 
 	for name, schema := range doc.Components.Schemas {
+		if len(schema.Value.Properties) == 0 {
+			fmt.Println("skipping", name, "because it has no properties")
+			continue
+		}
 		ext := config.FileExtension
 		f, err := os.Create(path.Join(modelsDir, config.getNameModifier()(name)+ext))
 		if err != nil {
@@ -250,7 +254,6 @@ func main() {
 			}
 		}
 	}
-
 	f, err := os.Create(path.Join(*outputDir, "client"+config.FileExtension))
 	if err != nil {
 		fmt.Println("error creating file", err)
