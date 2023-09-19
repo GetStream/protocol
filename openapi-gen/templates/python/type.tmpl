@@ -46,6 +46,7 @@ from typing import {{join $typingImports ", "}}
 
 {{- if $hasDateTime}}
 from datetime import datetime
+from dateutil.parser import parse
 from marshmallow import fields
 {{- end}}
 {{- if (gt (len .Schema.OneOf) 0)}}
@@ -105,13 +106,13 @@ class {{toCamel .Name}}{{- if .Schema.Enum}}(Enum){{end}}:
     {{toSnake $value.Name}}: {{if and (eq $value.SchemaRef.Value.Type "string") (eq $value.SchemaRef.Value.Format "date-time") -}} 
         {{if $value.Required -}} 
             {{template "generateSchemaRef" $value.SchemaRef}} = field(metadata=config(field_name="{{$value.Name}}",
-        encoder=datetime.isoformat,
-        decoder=datetime.fromisoformat,
+        encoder=lambda d: d.isoformat(),
+        decoder=parse,
         mm_field=fields.DateTime(format="iso")))
         {{- else -}} 
             Optional[{{template "generateSchemaRef" $value.SchemaRef}}] = field(metadata=config(field_name="{{$value.Name}}",
-        encoder=datetime.isoformat,
-        decoder=datetime.fromisoformat,
+        encoder=lambda d: d.isoformat(),
+        decoder=parse,
         mm_field=fields.DateTime(format="iso")), default=None)
         {{- end}}      
     {{- else -}}
