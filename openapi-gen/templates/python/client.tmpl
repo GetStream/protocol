@@ -1,11 +1,41 @@
 from base_client import BaseClient, StreamResponse
+from dataclasses import asdict
 from typing import Optional
+from datetime import datetime
 {{- range $i, $ref := (clientReferences .Paths)}}
-from models.{{refToName $ref | toSnake}} import {{refToName $ref | toCamel}}
+from {{with index additionalParameters "modelImportPrefix"}}{{.}}{{else}}models.{{end}}models.{{refToName $ref | toSnake}} import {{refToName $ref | toCamel}}
 {{- end}}
 
 {{/* TODO: make class name configurable */ -}}
 class {{with index additionalParameters "clientClassName"}}{{.}}{{else}}Client{{end}}(BaseClient):
+    def __init__(self, api_key: str, base_url, token, timeout, user_agent):
+        """
+        Initializes VideoClient with BaseClient instance
+        :param api_key: A string representing the client's API key
+        :param base_url: A string representing the base uniform resource locator
+        :param token: A string instance representing the client's token
+        :param timeout: A number representing the time limit for a request
+        :param user_agent: A string representing the user agent
+        """
+        super().__init__(
+          api_key=api_key,
+          base_url=base_url,
+          token=token,
+          timeout=timeout,
+          user_agent=user_agent,
+        )
+
+    def call(self, call_type: str, call_id: str):
+      """
+      Returns instance of Call class
+      param call_type: A string representing the call type
+      :param call_id: A string representing a unique call identifier
+      :return: Instance of Call class
+      """
+      return Call(self, call_type, call_id)   
+
     {{- range $path, $item := .Paths -}}{{- range $method, $operation := $item.Operations}}    
     {{template "requestFunction" (operationContext $operation $method $path)}}
-    {{- end -}}{{- end -}}
+    {{- end -}}
+    
+    {{- end -}}

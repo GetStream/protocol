@@ -56,10 +56,11 @@ func (t *TemplateLoader) LoadTemplate(kind templateKind) *template.Template {
 }
 
 type TypeContext struct {
-	Schema     *openapi3.Schema
-	Name       string
-	Additional map[string]any
-	References []string
+	Schema         *openapi3.Schema
+	Name           string
+	Additional     map[string]any
+	References     []string
+	HasNonRequired bool
 }
 
 type RequestContext struct {
@@ -69,6 +70,15 @@ type RequestContext struct {
 
 	Parameters openapi3.Parameters
 	Body       *openapi3.RequestBodyRef
+}
+
+func findInSlice(val string, slice []string) bool {
+	for _, item := range slice {
+		if item == val {
+			return true
+		}
+	}
+	return false
 }
 
 // go run . -i ../openapi/video-openapi.yaml -o ./go-generated -l go
@@ -107,6 +117,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	// we have invalid spec according to this validation
+	// for example, we use extensions with reference
 	// err = doc.Validate(context.Background())
 	// if err != nil {
 	// 	fmt.Println("error validating doc", err)
@@ -159,30 +171,35 @@ func main() {
 			fmt.Println("error checking models subpackage", err)
 			os.Exit(1)
 		}
+	} else {
+		modelsDir = *outputDir
+	}
 
-		for _, filePath := range config.ModelsCopyFiles {
-			filename := filepath.Base(filePath)
-			dst, err := os.Create(path.Join(modelsDir, filename))
-			if err != nil {
-				fmt.Println("error creating file", err)
-				os.Exit(1)
-			}
-			src, err := os.Open(path.Join("templates", *targetLanguage, filePath))
-			if err != nil {
-				fmt.Println("error opening file", err)
-				os.Exit(1)
-			}
-
-			_, err = io.Copy(dst, src)
-			if err != nil {
-				fmt.Println("error copying file", err)
-				os.Exit(1)
-			}
+	for _, filePath := range config.ModelsCopyFiles {
+		filename := filepath.Base(filePath)
+		dst, err := os.Create(path.Join(modelsDir, filename))
+		if err != nil {
+			fmt.Println("error creating file", err)
+			os.Exit(1)
+		}
+		src, err := os.Open(path.Join("templates", *targetLanguage, filePath))
+		if err != nil {
+			fmt.Println("error opening file", err)
+			os.Exit(1)
 		}
 
+		_, err = io.Copy(dst, src)
+		if err != nil {
+			fmt.Println("error copying file", err)
+			os.Exit(1)
+		}
 	}
 
 	for name, schema := range doc.Components.Schemas {
+		if len(schema.Value.Properties) == 0 && len(schema.Value.Enum) == 0 && schema.Value.OneOf == nil {
+			fmt.Println("skipping", name, "because it has no properties or OneOf definitions")
+			continue
+		}
 		ext := config.FileExtension
 		f, err := os.Create(path.Join(modelsDir, config.getNameModifier()(name)+ext))
 		if err != nil {
@@ -191,11 +208,20 @@ func main() {
 		}
 		defer f.Close()
 
+		hasNonRequired := false
+		for propName := range schema.Value.Properties {
+			if !findInSlice(propName, schema.Value.Required) {
+				hasNonRequired = true
+				break
+			}
+		}
+
 		err = tmpl.Execute(f, TypeContext{
-			Name:       name,
-			Schema:     schema.Value,
-			Additional: config.AdditionalParameters,
-			References: getReferencesFromTypes(schema.Value),
+			Name:           name,
+			Schema:         schema.Value,
+			Additional:     config.AdditionalParameters,
+			References:     getReferencesFromTypes(schema.Value),
+			HasNonRequired: hasNonRequired,
 		})
 
 		if err != nil {
@@ -247,7 +273,6 @@ func main() {
 			}
 		}
 	}
-
 	f, err := os.Create(path.Join(*outputDir, "client"+config.FileExtension))
 	if err != nil {
 		fmt.Println("error creating file", err)
@@ -364,5 +389,12 @@ func getReferencesFromTypes(schema *openapi3.Schema) []string {
 		}
 	}
 
+	if schema.AdditionalProperties.Schema != nil {
+		if schema.AdditionalProperties.Schema.Ref != "" {
+			refs = append(refs, schema.AdditionalProperties.Schema.Ref)
+		} else if schema.AdditionalProperties.Schema.Value != nil {
+			refs = append(refs, getReferencesFromTypes(schema.AdditionalProperties.Schema.Value)...)
+		}
+	}
 	return refs
 }

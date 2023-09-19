@@ -1,23 +1,79 @@
+{{- $required := .Schema.Required}}
+{{- $hasDateTime := false }}
+{{- $typingImports := list}}
+{{- $imports := newSet}}
+{{- range $index, $value := sortedProperties .Schema}}
+    {{- if and (eq .Value.Type "string") (eq .Value.Format "date-time")}}
+        {{- $hasDateTime = true }}
+    {{- end}}
+    {{- if eq .Value.Type "array"}}
+        {{- if not (contains $typingImports "List")}}
+            {{- $typingImports = append $typingImports "List"}}
+        {{- end}}
+    {{- end}}
+    {{- if and (eq .Value.Type "object") (.Value.AdditionalProperties)}}
+        {{- if and (.Value.AdditionalProperties.Schema) (eq .Value.AdditionalProperties.Schema.Value.Type "array")}}
+            {{- if not (contains $typingImports "List")}}
+                {{- $typingImports = append $typingImports "List"}}
+            {{- end}}
+        {{- end}}
+        {{- if and (.Value.AdditionalProperties.Schema) (not (contains $typingImports "Dict"))}}
+            {{- $typingImports = append $typingImports "Dict"}}
+        {{- end}}
+        {{- if and (.Value.AdditionalProperties.Schema) (.Value.AdditionalProperties.Schema.Ref) }}
+        {{- $_ := $imports.Add .Value.AdditionalProperties.Schema.Ref }}
+        {{- end}}
+    {{- end}}
+{{- end}}
+
+{{- if and (not .Schema.Enum) (not (gt (len .Schema.OneOf) 0))}}
 from dataclasses import dataclass, field
-from typing import Optional
+from dataclasses_json import config, dataclass_json
+{{else if .Schema.Enum}}
+from enum import Enum
+{{else if (gt (len .Schema.OneOf) 0)}}
+from dataclasses import dataclass
+{{- end}}
+
+{{- if .HasNonRequired}}
+    {{- if not (contains $typingImports "Optional") -}}
+        {{- $typingImports = append $typingImports "Optional" -}}
+    {{- end}}
+{{- end}}
+{{- if gt (len $typingImports) 0}}
+from typing import {{join $typingImports ", "}}
+{{- end}}
+
+{{- if $hasDateTime}}
+from datetime import datetime
+from dateutil.parser import parse
+from marshmallow import fields
+{{- end}}
 {{- if (gt (len .Schema.OneOf) 0)}}
 from typing import Union
 from json import loads
 {{else}}
-from dataclasses_json import config, dataclass_json
+
 {{- end}}
 
+
 {{- range $i, $ref := .References}}
-from {{refToName $ref | toSnake}} import {{refToName $ref | toCamel}}
+    {{- $refName := refToName $ref | toCamel}}
+    {{- if not ($imports.Contains $refName)}}
+        {{- $_ := $imports.Add $refName}}
+from {{with index additionalParameters "modelImportPrefix"}}{{.}}{{else}}models.{{end}}models.{{refToName $ref | toSnake}} import {{refToName $ref | toCamel}}
+    {{- end -}}
 {{- end -}}
 
 {{- define "generateType" -}}
-{{- if (eq .Type "string")}}str{{end}}
+{{- if (eq .Type "string")}}
+    {{- if (eq .Format "date-time") -}}datetime{{- else -}}str{{- end -}}
+{{- end -}}
 {{- if (eq .Type "integer")}}int{{end}}
 {{- if (eq .Type "number")}}float{{end}}
 {{- if (eq .Type "boolean")}}bool{{end}}
-{{- if (eq .Type "array")}}list[{{template "generateSchemaRef" .Items -}}]{{end}}
-{{- if (eq .Type "object")}}{{with .AdditionalProperties}}dict[str, {{template "generateSchemaRef" .Schema -}}]{{end}}{{end}}
+{{- if (eq .Type "array")}}List[{{template "generateSchemaRef" .Items -}}]{{end}}
+{{- if (eq .Type "object")}}{{with .AdditionalProperties}}Dict[str, {{template "generateSchemaRef" .Schema -}}]{{end}}{{end}}
 {{- if (eq .Type "null")}}None{{end}}
 {{- if (eq .Type "")}}object{{end}}
 {{- end -}}
@@ -36,15 +92,37 @@ mapping = {
 }
 
 {{else}}
+{{- if (not .Schema.Enum)}}
 @dataclass_json
+{{- end}}
 {{end -}}
+{{- if (not .Schema.Enum)}}
 @dataclass
-class {{toCamel .Name}}:
+{{- end}}
+class {{toCamel .Name}}{{- if .Schema.Enum}}(Enum){{end}}:
     {{- if (gt (len .Schema.Properties) 0)}} 
     {{- $required := .Schema.Required}}
-    {{- range $index, $value := sortedProperties .Schema}}
-    {{toSnake $value.Name}}: {{if and $value.Required $value.SchemaRef -}} {{template "generateSchemaRef" $value.SchemaRef}} = field(metadata=config(field_name="{{$value.Name}}")) {{- else -}} Optional[{{template "generateSchemaRef" $value.SchemaRef}}] = field(metadata=config(field_name="{{$value.Name}}"), default=None) {{- end -}}
-    {{- end}}
+   {{- range $index, $value := sortedProperties .Schema}}
+    {{toSnake $value.Name}}: {{if and (eq $value.SchemaRef.Value.Type "string") (eq $value.SchemaRef.Value.Format "date-time") -}} 
+        {{if $value.Required -}} 
+            {{template "generateSchemaRef" $value.SchemaRef}} = field(metadata=config(field_name="{{$value.Name}}",
+        encoder=lambda d: d.isoformat(),
+        decoder=parse,
+        mm_field=fields.DateTime(format="iso")))
+        {{- else -}} 
+            Optional[{{template "generateSchemaRef" $value.SchemaRef}}] = field(metadata=config(field_name="{{$value.Name}}",
+        encoder=lambda d: d.isoformat(),
+        decoder=parse,
+        mm_field=fields.DateTime(format="iso")), default=None)
+        {{- end}}      
+    {{- else -}}
+        {{if $value.Required -}}
+            {{template "generateSchemaRef" $value.SchemaRef}} = field(metadata=config(field_name="{{$value.Name}}"))
+        {{- else -}}
+            Optional[{{template "generateSchemaRef" $value.SchemaRef}}] = field(metadata=config(field_name="{{$value.Name}}"), default=None)
+        {{- end -}}
+    {{- end -}}
+{{- end}}
     {{else if (gt (len .Schema.OneOf) 0)}}
     event : Union[
     {{- range $i, $one := .Schema.OneOf}}
@@ -58,6 +136,19 @@ class {{toCamel .Name}}:
         dict_type = loads(j)["{{.Schema.Discriminator.PropertyName}}"]
         return {{toCamel .Name}}(event=mapping[dict_type].from_json(j))
     {{- else}}
-    ...
+    
+{{- if .Schema.Enum}}
+    {{- range $index, $value := .Schema.Enum}}
+    {{toConstant $value}} = "{{$value}}"
+    {{- end}}
+    
+    @classmethod
+    def from_str(cls, value: str) -> "{{toCamel .Name}}":
+        try:
+            return cls(value)
+        except ValueError:
+            raise ValueError(f"'{value}' is not a valid {{toCamel .Name}}")
+{{- end}}
+
     {{- end}}
 

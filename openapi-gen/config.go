@@ -11,7 +11,8 @@ import (
 type Config struct {
 	AdditionalParameters map[string]any `yaml:"additionalParameters" json:"additionalParameters"`
 	// FileNameModifier is function name to be used for generating the file name.
-	FileNameModifier     string   `yaml:"fileNameModifier" json:"fileNameModifier"`
+	FileNameModifier string `yaml:"fileNameModifier" json:"fileNameModifier"`
+	// prefix imports with this string
 	FileExtension        string   `yaml:"fileExtension" json:"fileExtension"`
 	CopyAdditionalFiles  []string `yaml:"copyAdditionalFiles" json:"copyAdditionalFiles"`
 	GenerateRequestTypes bool     `yaml:"generateRequestTypes" json:"generateRequestTypes"`
