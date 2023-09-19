@@ -46,6 +46,7 @@ from typing import {{join $typingImports ", "}}
 
 {{- if $hasDateTime}}
 from datetime import datetime
+from marshmallow import fields
 {{- end}}
 {{- if (gt (len .Schema.OneOf) 0)}}
 from typing import Union
@@ -100,9 +101,27 @@ mapping = {
 class {{toCamel .Name}}{{- if .Schema.Enum}}(Enum){{end}}:
     {{- if (gt (len .Schema.Properties) 0)}} 
     {{- $required := .Schema.Required}}
-    {{- range $index, $value := sortedProperties .Schema}}
-    {{toSnake $value.Name}}: {{if and $value.Required $value.SchemaRef -}} {{template "generateSchemaRef" $value.SchemaRef}} = field(metadata=config(field_name="{{$value.Name}}")) {{- else -}} Optional[{{template "generateSchemaRef" $value.SchemaRef}}] = field(metadata=config(field_name="{{$value.Name}}"), default=None) {{- end -}}
-    {{- end}}
+   {{- range $index, $value := sortedProperties .Schema}}
+    {{toSnake $value.Name}}: {{if and (eq $value.SchemaRef.Value.Type "string") (eq $value.SchemaRef.Value.Format "date-time") -}} 
+        {{if $value.Required -}} 
+            {{template "generateSchemaRef" $value.SchemaRef}} = field(metadata=config(field_name="{{$value.Name}}",
+        encoder=datetime.isoformat,
+        decoder=datetime.fromisoformat,
+        mm_field=fields.DateTime(format="iso")))
+        {{- else -}} 
+            Optional[{{template "generateSchemaRef" $value.SchemaRef}}] = field(metadata=config(field_name="{{$value.Name}}",
+        encoder=datetime.isoformat,
+        decoder=datetime.fromisoformat,
+        mm_field=fields.DateTime(format="iso")), default=None)
+        {{- end}}      
+    {{- else -}}
+        {{if $value.Required -}}
+            {{template "generateSchemaRef" $value.SchemaRef}} = field(metadata=config(field_name="{{$value.Name}}"))
+        {{- else -}}
+            Optional[{{template "generateSchemaRef" $value.SchemaRef}}] = field(metadata=config(field_name="{{$value.Name}}"), default=None)
+        {{- end -}}
+    {{- end -}}
+{{- end}}
     {{else if (gt (len .Schema.OneOf) 0)}}
     event : Union[
     {{- range $i, $one := .Schema.OneOf}}
