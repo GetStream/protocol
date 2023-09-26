@@ -19,6 +19,7 @@ type templateKind string
 const (
 	TypeTemplate    templateKind = "type"
 	RequestTemplate templateKind = "request"
+	ClientTemplate  templateKind = "client"
 )
 
 type TemplateLoader struct {
@@ -255,7 +256,8 @@ func main() {
 					fmt.Println("error creating file", err)
 					os.Exit(1)
 				}
-				//we shouldn't defer here because we want to close the file after each request generation
+
+				// we shouldn't defer here because we want to close the file after each request generation
 				defer f.Close()
 
 				err = tmpl.Execute(f, RequestContext{
@@ -280,7 +282,7 @@ func main() {
 	}
 	defer f.Close()
 
-	tp := templateLoader.LoadTemplate("client")
+	tp := templateLoader.LoadTemplate(ClientTemplate)
 	if tp != nil {
 		err = tp.Execute(f, doc)
 		if err != nil {
