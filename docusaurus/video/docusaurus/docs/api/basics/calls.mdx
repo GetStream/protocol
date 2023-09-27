@@ -35,8 +35,27 @@ call.create({
 <TabItem value="py" label="Python">
 
 ```py
-def hello_world():
-    print("Hello, world!")
+# create a call
+call.get_or_create_call(GetOrCreateCallRequest(
+    data=CallRequest(
+        created_by_id='john'
+    )
+))
+# create a call with more data
+call.get_or_create_call(GetOrCreateCallRequest(
+    data=CallRequest(
+        created_by_id='john',
+        members=[
+            MemberRequest(
+                user_id: 'john', 
+                role: 'admin'
+			), 
+            MemberRequest(
+                user_id: 'jack'
+			)
+        ]
+    ),
+))
 ```
 
 </TabItem>
@@ -108,8 +127,19 @@ call.update({ custom: { color: 'red' } });
 <TabItem value="py" label="Python">
 
 ```py
-def hello_world():
-    print("Hello, world!")
+# update call settings
+call.update_call(UpdateCallRequest(
+    settings_override=CallSettingsRequest(
+        audio=AudioSettingsRequest(
+            mic_default_on=True,
+        ),
+    ),
+))
+
+# update call with custom data
+call.update_call(UpdateCallRequest(
+    custom={'color': 'red'}
+))
 ```
 
 </TabItem>
@@ -201,8 +231,22 @@ call.updateCallMembers({
 <TabItem value="py" label="Python">
 
 ```py
-def hello_world():
-    print("Hello, world!")
+# update or add call members
+
+call.update_call(UpdateCallRequest(
+    members=[
+        MemberRequest(user_id: 'sara'), 
+        MemberRequest(user_id: 'jack', role: 'admin')
+    ]
+))
+
+# remove call members
+# Assuming the updated call members are 'sara' and 'jack'
+call.update_call(UpdateCallRequest(
+    members=[
+        MemberRequest(user_id: 'jack', role: 'admin')
+    ]
+))
 ```
 
 </TabItem>
@@ -295,6 +339,33 @@ client.queryCalls({
 ```
 
 </TabItem>
+
+<TabItem value="py" label="Python">
+
+```py
+# default sorting
+call.query_calls(data=QueryCallsRequest())
+
+# sorting and pagination
+response = call.query_calls(QueryCallsRequest(
+    sort= [SortParamRequest(field: 'starts_at', direction: -1)],
+    limit=2,
+))
+
+# loading next page
+call.query_calls(QueryCallsRequest(
+    sort= [SortParamRequest(field: 'starts_at', direction: -1)],
+    limit=2,
+    next=response.data().next
+))
+
+# filtering
+call.query_calls(QueryCallsRequest(
+    filter_conditions={'backstage': {'$eq': False}}
+))
+```
+
+</TabItem>
 </Tabs>
 
 ## Query call members
@@ -323,6 +394,33 @@ call.queryMembers({
 call.queryMembers({
   filter_conditions: { role: { $eq: 'admin' } },
 });
+```
+
+</TabItem>
+
+<TabItem value="py" label="Python">
+
+```py
+# default sorting
+call.query_members(QueryMembersRequest())
+
+# sorting and pagination
+response = call.query_members(QueryMembersRequest(
+    sort: [SortParamRequest(field: "user_id", direction: 1)],
+    limit: 2,
+))
+
+# loading next page
+call.query_members(QueryMembersRequest(
+    sort: [SortParamRequest(field: "user_id", direction: 1)],
+    limit: 2,
+    next: response.next,
+))
+
+# filtering
+call.query_members(QueryMembersRequest(
+    filter_conditions: {"role": {"$eq": "admin"}},
+))
 ```
 
 </TabItem>
