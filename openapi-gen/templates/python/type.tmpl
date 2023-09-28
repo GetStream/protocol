@@ -93,7 +93,7 @@ from {{with index additionalParameters "modelImportPrefix"}}{{.}}{{else}}models.
     mm_field=fields.DateTime(format="iso")))
     {{- else -}} 
         Optional[{{template "generateSchemaRef" .SchemaRef}}] = field(metadata=config(field_name="{{.Name}}",
-    encoder=lambda d: d.isoformat(),
+    encoder=lambda d: d.isoformat() if d is not None else None,
     decoder=parse,
     mm_field=fields.DateTime(format="iso")), default=None)
     {{- end}}      
@@ -126,10 +126,10 @@ class {{toCamel .Name}}{{- if .Schema.Enum}}(Enum){{end}}:
     {{- $properties := sortedProperties .Schema}}
     {{- $optionalProperties := filterNotRequired $properties}}
     {{- $requiredProperties := filterRequired $properties}}
-{{- range $index, $value := $optionalProperties }}
+{{- range $index, $value := $requiredProperties }}
     {{ template "printProperty" $value }}
 {{- end }}
-{{- range $index, $value := $requiredProperties }}
+{{- range $index, $value := $optionalProperties }}
     {{ template "printProperty" $value }}
 {{- end }}
 
@@ -158,6 +158,11 @@ class {{toCamel .Name}}{{- if .Schema.Enum}}(Enum){{end}}:
             return cls(value)
         except ValueError:
             raise ValueError(f"'{value}' is not a valid {{toCamel .Name}}")
+    
+    @classmethod
+    def to_str(cls, value: "{{toCamel .Name}}") -> str:
+        return value.value
+        
 {{- end}}
 
     {{- end}}
