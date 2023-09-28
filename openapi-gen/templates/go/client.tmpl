@@ -1,0 +1,122 @@
+package streamsdk
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"net/url"
+	"strings"
+)
+
+type Client struct {
+	BaseURL        string
+	WsBaseURL      string
+	APIKey         string
+	Token          string
+	StreamAuthType string
+	HttpClient     *http.Client
+	Params         map[string]string
+	Headers        map[string]string
+	ConnectionID   *string
+}
+
+func NewClient(baseURL, apiKey, token string) *Client {
+	params := map[string]string{
+		"api_key": apiKey,
+	}
+
+	headers := map[string]string{
+		"Content-Type":     "application/json",
+		"Authorization":    token,
+		"Stream-Auth-Type": "jwt",
+	}
+
+	index := strings.Index(baseURL, ":")
+
+	var wsURL string
+	if strings.Contains(baseURL, "https") {
+		wsURL = "wss" + baseURL[index:]
+	} else {
+		wsURL = "ws" + baseURL[index:]
+	}
+
+	return &Client{
+		BaseURL:        baseURL,
+		APIKey:         apiKey,
+		Token:          token,
+		StreamAuthType: "jwt",
+		HttpClient:     http.DefaultClient,
+		Params:         params,
+		Headers:        headers,
+		WsBaseURL:      wsURL,
+	}
+}
+
+func (c *Client) doRequest(method, path string, body interface{}, queryParams, headers map[string]string) (*http.Response, error) {
+	var bodyReader *bytes.Reader
+	if body != nil {
+		bodyJSON, err := json.Marshal(body)
+		if err != nil {
+			return nil, err
+		}
+		bodyReader = bytes.NewReader(bodyJSON)
+	}
+
+	baseURL := c.BaseURL + path
+	v := url.Values{}
+	for k, p := range queryParams {
+		v.Set(k, p)
+	}
+
+	urlFinal := baseURL + "?" + v.Encode()
+	req, err := http.NewRequest(method, urlFinal, bodyReader)
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range c.Headers {
+		req.Header.Set(k, v)
+	}
+
+	return c.HttpClient.Do(req)
+}
+
+func request[T any, U any](c *Client, path string, callType string, req *T) (*U, error) {
+	if callType != "default" && callType != "livestream" {
+		return nil, fmt.Errorf("invalid call type")
+	}
+
+	resp, err := c.doRequest(http.MethodPost, path, req, c.Params, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func(Body io.ReadCloser) {
+		err = Body.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}(resp.Body)
+
+	if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusCreated {
+		var data U
+		err = json.NewDecoder(resp.Body).Decode(&data)
+		if err != nil {
+			return nil, err
+		}
+		return &data, nil
+	} else {
+		var apiError APIError
+		err = json.NewDecoder(resp.Body).Decode(&apiError)
+		if err != nil {
+			return nil, err
+		}
+		return nil, fmt.Errorf("%v: %v", apiError.Code, apiError.Message)
+	}
+}
+
+{{- range $i, $endpoint := .Paths }}
+{{- end}}

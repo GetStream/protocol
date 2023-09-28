@@ -133,20 +133,21 @@ func main() {
 			os.Exit(1)
 		}
 
+		defer dst.Close()
+
 		src, err := os.Open("templates/" + *targetLanguage + "/" + fileName)
 		if err != nil {
 			fmt.Println("error opening additional file", err)
 			os.Exit(1)
 		}
 
+		defer src.Close()
+
 		_, err = io.Copy(dst, src)
 		if err != nil {
 			fmt.Println("error copying additional file", err)
 			os.Exit(1)
 		}
-
-		dst.Close()
-		src.Close()
 	}
 
 	templateLoader, err := NewTemplateLoader(*targetLanguage, true, PrepareBuiltinFunctions(config))
@@ -275,6 +276,7 @@ func main() {
 			}
 		}
 	}
+
 	f, err := os.Create(path.Join(*outputDir, "client"+config.FileExtension))
 	if err != nil {
 		fmt.Println("error creating file", err)
