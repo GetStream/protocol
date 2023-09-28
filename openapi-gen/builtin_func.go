@@ -31,6 +31,26 @@ func toConstant(s string) string {
 	return strings.ToUpper(strings.ReplaceAll(s, "-", "_"))
 }
 
+// filter returns a new slice holding only
+// the elements of s that satisfy f()
+func Filter(vs []SchemaRefWithName, f func(SchemaRefWithName) bool) []SchemaRefWithName {
+    vsf := make([]SchemaRefWithName, 0)
+    for _, v := range vs {
+        if f(v) {
+            vsf = append(vsf, v)
+        }
+    }
+    return vsf
+}
+
+func FilterRequired(vs []SchemaRefWithName) []SchemaRefWithName {
+	return Filter(vs, func(v SchemaRefWithName) bool { return v.Required })
+}
+
+func FilterNotRequired(vs []SchemaRefWithName) []SchemaRefWithName {
+	return Filter(vs, func(v SchemaRefWithName) bool { return !v.Required })
+}
+
 func PrepareBuiltinFunctions(config *Config) template.FuncMap {
 	return template.FuncMap{
 		"refToName": refToName,
@@ -52,7 +72,9 @@ func PrepareBuiltinFunctions(config *Config) template.FuncMap {
 			}
 			return false
 		},
-		"join": strings.Join,
+		"filterRequired": FilterRequired,
+		"filterNotRequired": FilterNotRequired,
+		"join":   strings.Join,
 		"has": func(sl []string, str string) bool {
 			for _, s := range sl {
 				if s == str {

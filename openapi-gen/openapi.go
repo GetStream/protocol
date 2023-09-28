@@ -276,8 +276,7 @@ func main() {
 			}
 		}
 	}
-
-	f, err := os.Create(path.Join(*outputDir, "client"+config.FileExtension))
+	f, err := os.Create(path.Join(*outputDir, config.ClientOutputDirectory+"client"+config.FileExtension))
 	if err != nil {
 		fmt.Println("error creating file", err)
 		os.Exit(1)

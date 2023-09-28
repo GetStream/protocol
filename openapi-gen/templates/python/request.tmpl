@@ -1,5 +1,6 @@
 {{- define "requestFunction" -}}
-def {{toSnake .OperationID}}(self{{range $index, $param := (requiredParameters .Parameters) -}}
+def {{toSnake .OperationID}}(self
+{{range $index, $param := (requiredParameters .Parameters) -}}
 , {{$param.Value.Name}}: {{if .Value.Content -}}{{template "generateSchemaRef" (index .Value.Content "application/json").Schema}}{{else}}{{template "generateSchemaRef" .Value.Schema}}{{- end -}}{{end -}}
 {{- with (requestSchema .Operation) -}}, data: {{template "generateSchemaRef" .}}{{end -}}
 {{range $index, $param := (optionalParameters .Parameters) -}}
@@ -30,4 +31,23 @@ def {{toSnake .OperationID}}(self{{range $index, $param := (requiredParameters .
                 json=data.to_dict(){{end -}}
         )
 
+{{ end -}}
+
+{{- define "operationFunction" -}}
+    {{ $op := .OperationID | toSnake }}
+    def {{ $op }}(self
+
+{{- with (requestSchema .Operation) -}}, data: {{template "generateSchemaRef" .}}{{end -}}
+{{range $index, $param := (optionalParameters .Parameters) -}}
+, {{$param.Value.Name}}: Optional[{{if .Value.Content -}}{{template "generateSchemaRef" (index .Value.Content "application/json").Schema}}{{else}}{{template "generateSchemaRef" .Value.Schema}}{{- end -}}] = None{{end -}}
+){{with (successfulResponse .Responses)}} -> StreamResponse[{{template "generateSchemaRef" .}}]{{end}}:
+        """
+        {{.Summary}}
+        {{- range $index, $param := .Parameters -}}
+        {{- if $param.Value.Description}}:param {{$param.Value.Name}}:{{$param.Value.Summary}}
+        {{end}}
+        {{- end}}
+        """
+        return self._client.{{ $op }}(self._type, self._id{{ if (requestSchema .Operation) }}, data{{end}}{{range $index, $param := (optionalParameters .Parameters) -}}
+, {{$param.Value.Name}}{{end}})
 {{ end -}}

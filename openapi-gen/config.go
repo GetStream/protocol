@@ -13,6 +13,8 @@ type Config struct {
 	// FileNameModifier is function name to be used for generating the file name.
 	FileNameModifier string `yaml:"fileNameModifier" json:"fileNameModifier"`
 	// prefix imports with this string
+	// directory where the generated client will be saved
+	ClientOutputDirectory string `yaml:"clientOutputDirectory" json:"clientOutputDirectory"`
 	FileExtension        string   `yaml:"fileExtension" json:"fileExtension"`
 	CopyAdditionalFiles  []string `yaml:"copyAdditionalFiles" json:"copyAdditionalFiles"`
 	GenerateRequestTypes bool     `yaml:"generateRequestTypes" json:"generateRequestTypes"`

@@ -1,7 +1,6 @@
-from base_client import BaseClient, StreamResponse
-from dataclasses import asdict
+from getstream.stream_response import StreamResponse
+from getstream.sync.base import BaseClient
 from typing import Optional
-from datetime import datetime
 {{- range $i, $ref := (clientReferences .Paths)}}
 from {{with index additionalParameters "modelImportPrefix"}}{{.}}{{else}}models.{{end}}models.{{refToName $ref | toSnake}} import {{refToName $ref | toCamel}}
 {{- end}}
@@ -25,17 +24,58 @@ class {{with index additionalParameters "clientClassName"}}{{.}}{{else}}Client{{
           user_agent=user_agent,
         )
 
-    def call(self, call_type: str, call_id: str):
+{{/* TODO: detect convenient class  */}}
+
+    def call(self, type: str, id: str):
       """
       Returns instance of Call class
-      param call_type: A string representing the call type
-      :param call_id: A string representing a unique call identifier
+      param type: A string representing the call type
+      :param id: A string representing a unique call identifier
       :return: Instance of Call class
       """
-      return Call(self, call_type, call_id)   
+      return Call(self, type, id)   
 
     {{- range $path, $item := .Paths -}}{{- range $method, $operation := $item.Operations}}    
     {{template "requestFunction" (operationContext $operation $method $path)}}
     {{- end -}}
     
     {{- end -}}
+
+{{/* TODO: detect convenient class  */}}
+
+class Call:
+    def __init__(self, client: VideoClient, type: str, id: str):
+        """
+        Initializes Call with BaseClient instance
+        :param client: An instance of BaseClient class
+        :param type: A string representing the call type
+        :param id: A string representing a unique call identifier
+        """
+        self._client = client
+        self._type = type
+        self._id = id
+
+    {{- range $path, $item := .Paths -}}{{- range $method, $operation := $item.Operations}}    
+        {{- template "operationFunction" (operationContext $operation $method $path)}}
+    {{- end -}}{{- end -}}
+
+{{define "operationFunction"}}
+    def {{.operation.operationId}}(
+        self, {{- range $param := .operation.parameters -}} 
+        {{- if eq $param.in "body" -}}
+      {{- range $propName, $prop := $param.schema.properties}}
+      {{ $propName}}:{{ $prop.type }}, 
+      {{- end -}}
+      {{- end -}}
+      {{- end -}}
+    ) -> StreamResponse[{{template "generateSchemaRef" .}}]:
+        """
+        :param {{range $param := .operation.parameters }}{{ if eq $param.in "body" }}{{ range $propName, $prop := $param.schema.properties }}{{ $propName }}:{{ end }}{{ end }}{{ end }}A dictionary with call details
+        :return: Response from {{.operation.operationId}} API
+        """
+        {{ if gt (len .operation.parameters) 0 -}}
+        return self._client.{{.operation.operationId}}(self._type, self._id, {{range $param := .operation.parameters}}{{if eq $param.in "body"}}{{ $param.name }}{{end}}{{end}})
+        {{ else -}}
+        return self._client.{{.operation.operationId}}(self._type, self._id)
+        {{ end -}}
+{{end}}

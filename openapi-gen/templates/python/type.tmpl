@@ -84,6 +84,28 @@ from {{with index additionalParameters "modelImportPrefix"}}{{.}}{{else}}models.
 {{- end -}}
 {{- end}}
 
+{{- define "printProperty" -}}
+{{toSnake .Name}}: {{if and (eq .SchemaRef.Value.Type "string") (eq .SchemaRef.Value.Format "date-time") -}} 
+    {{- if .Required -}} 
+        {{template "generateSchemaRef" .SchemaRef}} = field(metadata=config(field_name="{{.Name}}",
+    encoder=lambda d: d.isoformat(),
+    decoder=parse,
+    mm_field=fields.DateTime(format="iso")))
+    {{- else -}} 
+        Optional[{{template "generateSchemaRef" .SchemaRef}}] = field(metadata=config(field_name="{{.Name}}",
+    encoder=lambda d: d.isoformat(),
+    decoder=parse,
+    mm_field=fields.DateTime(format="iso")), default=None)
+    {{- end}}      
+{{- else -}}
+    {{- if .Required -}}
+        {{template "generateSchemaRef" .SchemaRef}} = field(metadata=config(field_name="{{.Name}}"))
+    {{- else -}}
+        Optional[{{template "generateSchemaRef" .SchemaRef}}] = field(metadata=config(field_name="{{.Name}}"), default=None)
+    {{- end -}}
+{{- end -}}
+{{- end -}}
+
 {{- with .Schema.Discriminator}}
 mapping = {
     {{- range $key, $one := .Mapping}}
@@ -101,28 +123,16 @@ mapping = {
 {{- end}}
 class {{toCamel .Name}}{{- if .Schema.Enum}}(Enum){{end}}:
     {{- if (gt (len .Schema.Properties) 0)}} 
-    {{- $required := .Schema.Required}}
-   {{- range $index, $value := sortedProperties .Schema}}
-    {{toSnake $value.Name}}: {{if and (eq $value.SchemaRef.Value.Type "string") (eq $value.SchemaRef.Value.Format "date-time") -}} 
-        {{if $value.Required -}} 
-            {{template "generateSchemaRef" $value.SchemaRef}} = field(metadata=config(field_name="{{$value.Name}}",
-        encoder=lambda d: d.isoformat(),
-        decoder=parse,
-        mm_field=fields.DateTime(format="iso")))
-        {{- else -}} 
-            Optional[{{template "generateSchemaRef" $value.SchemaRef}}] = field(metadata=config(field_name="{{$value.Name}}",
-        encoder=lambda d: d.isoformat(),
-        decoder=parse,
-        mm_field=fields.DateTime(format="iso")), default=None)
-        {{- end}}      
-    {{- else -}}
-        {{if $value.Required -}}
-            {{template "generateSchemaRef" $value.SchemaRef}} = field(metadata=config(field_name="{{$value.Name}}"))
-        {{- else -}}
-            Optional[{{template "generateSchemaRef" $value.SchemaRef}}] = field(metadata=config(field_name="{{$value.Name}}"), default=None)
-        {{- end -}}
-    {{- end -}}
-{{- end}}
+    {{- $properties := sortedProperties .Schema}}
+    {{- $optionalProperties := filterNotRequired $properties}}
+    {{- $requiredProperties := filterRequired $properties}}
+{{- range $index, $value := $optionalProperties }}
+    {{ template "printProperty" $value }}
+{{- end }}
+{{- range $index, $value := $requiredProperties }}
+    {{ template "printProperty" $value }}
+{{- end }}
+
     {{else if (gt (len .Schema.OneOf) 0)}}
     event : Union[
     {{- range $i, $one := .Schema.OneOf}}
