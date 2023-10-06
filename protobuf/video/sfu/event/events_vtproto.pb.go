@@ -4604,7 +4604,7 @@ func (m *HealthCheckRequest) UnmarshalVT(dAtA []byte) error {
 					}
 				}
 			} else {
-				v := &models.IOSDeviceState{}
+				v := &models.IOsDeviceState{}
 				if unmarshal, ok := interface{}(v).(interface {
 					UnmarshalVT([]byte) error
 				}); ok {

@@ -750,7 +750,7 @@ func (m *HealthCheckRequest) GetDeviceState() isHealthCheckRequest_DeviceState {
 	return nil
 }
 
-func (x *HealthCheckRequest) GetIosDeviceState() *models.IOSDeviceState {
+func (x *HealthCheckRequest) GetIosDeviceState() *models.IOsDeviceState {
 	if x, ok := x.GetDeviceState().(*HealthCheckRequest_IosDeviceState); ok {
 		return x.IosDeviceState
 	}
@@ -769,7 +769,7 @@ type isHealthCheckRequest_DeviceState interface {
 }
 
 type HealthCheckRequest_IosDeviceState struct {
-	IosDeviceState *models.IOSDeviceState `protobuf:"bytes,1,opt,name=ios_device_state,json=iosDeviceState,proto3,oneof"`
+	IosDeviceState *models.IOsDeviceState `protobuf:"bytes,1,opt,name=ios_device_state,json=iosDeviceState,proto3,oneof"`
 }
 
 type HealthCheckRequest_AndroidDeviceState struct {
@@ -2360,7 +2360,7 @@ var file_video_sfu_event_events_proto_rawDesc = []byte{
 	0x6f, 0x73, 0x5f, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x5f, 0x73, 0x74, 0x61, 0x74, 0x65, 0x18,
 	0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x27, 0x2e, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x2e, 0x76,
 	0x69, 0x64, 0x65, 0x6f, 0x2e, 0x73, 0x66, 0x75, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e,
-	0x49, 0x4f, 0x53, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x53, 0x74, 0x61, 0x74, 0x65, 0x48, 0x00,
+	0x49, 0x4f, 0x73, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x53, 0x74, 0x61, 0x74, 0x65, 0x48, 0x00,
 	0x52, 0x0e, 0x69, 0x6f, 0x73, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x53, 0x74, 0x61, 0x74, 0x65,
 	0x12, 0x5f, 0x0a, 0x14, 0x61, 0x6e, 0x64, 0x72, 0x6f, 0x69, 0x64, 0x5f, 0x64, 0x65, 0x76, 0x69,
 	0x63, 0x65, 0x5f, 0x73, 0x74, 0x61, 0x74, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x2b,
@@ -2649,7 +2649,7 @@ var file_video_sfu_event_events_proto_goTypes = []interface{}{
 	(*models.Pin)(nil),                          // 32: stream.video.sfu.models.Pin
 	(*models.Error)(nil),                        // 33: stream.video.sfu.models.Error
 	(models.PeerType)(0),                        // 34: stream.video.sfu.models.PeerType
-	(*models.IOSDeviceState)(nil),               // 35: stream.video.sfu.models.IOSDeviceState
+	(*models.IOsDeviceState)(nil),               // 35: stream.video.sfu.models.IOsDeviceState
 	(*models.AndroidDeviceState)(nil),           // 36: stream.video.sfu.models.AndroidDeviceState
 	(*models.ParticipantCount)(nil),             // 37: stream.video.sfu.models.ParticipantCount
 	(models.TrackType)(0),                       // 38: stream.video.sfu.models.TrackType
@@ -2689,7 +2689,7 @@ var file_video_sfu_event_events_proto_depIdxs = []int32{
 	34, // 21: stream.video.sfu.event.ICERestart.peer_type:type_name -> stream.video.sfu.models.PeerType
 	11, // 22: stream.video.sfu.event.SfuRequest.join_request:type_name -> stream.video.sfu.event.JoinRequest
 	7,  // 23: stream.video.sfu.event.SfuRequest.health_check_request:type_name -> stream.video.sfu.event.HealthCheckRequest
-	35, // 24: stream.video.sfu.event.HealthCheckRequest.ios_device_state:type_name -> stream.video.sfu.models.IOSDeviceState
+	35, // 24: stream.video.sfu.event.HealthCheckRequest.ios_device_state:type_name -> stream.video.sfu.models.IOsDeviceState
 	36, // 25: stream.video.sfu.event.HealthCheckRequest.android_device_state:type_name -> stream.video.sfu.models.AndroidDeviceState
 	37, // 26: stream.video.sfu.event.HealthCheckResponse.participant_count:type_name -> stream.video.sfu.models.ParticipantCount
 	38, // 27: stream.video.sfu.event.TrackPublished.type:type_name -> stream.video.sfu.models.TrackType

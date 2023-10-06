@@ -22,26 +22,26 @@ const (
 
 // Represents the thermal state of the device running iOS SDKs. The full list
 // of values is documented at https://developer.apple.com/documentation/foundation/processinfo/thermalstate
-type IOSThermalState int32
+type IOsThermalState int32
 
 const (
-	IOSThermalState_IOS_THERMAL_STATE_UNKNOWN  IOSThermalState = 0
-	IOSThermalState_IOS_THERMAL_STATE_NOMIMAL  IOSThermalState = 1
-	IOSThermalState_IOS_THERMAL_STATE_FAIR     IOSThermalState = 2
-	IOSThermalState_IOS_THERMAL_STATE_SERIOUS  IOSThermalState = 3
-	IOSThermalState_IOS_THERMAL_STATE_CRITICAL IOSThermalState = 4
+	IOsThermalState_IOS_THERMAL_STATE_UNKNOWN  IOsThermalState = 0
+	IOsThermalState_IOS_THERMAL_STATE_NOMIMAL  IOsThermalState = 1
+	IOsThermalState_IOS_THERMAL_STATE_FAIR     IOsThermalState = 2
+	IOsThermalState_IOS_THERMAL_STATE_SERIOUS  IOsThermalState = 3
+	IOsThermalState_IOS_THERMAL_STATE_CRITICAL IOsThermalState = 4
 )
 
-// Enum value maps for IOSThermalState.
+// Enum value maps for IOsThermalState.
 var (
-	IOSThermalState_name = map[int32]string{
+	IOsThermalState_name = map[int32]string{
 		0: "IOS_THERMAL_STATE_UNKNOWN",
 		1: "IOS_THERMAL_STATE_NOMIMAL",
 		2: "IOS_THERMAL_STATE_FAIR",
 		3: "IOS_THERMAL_STATE_SERIOUS",
 		4: "IOS_THERMAL_STATE_CRITICAL",
 	}
-	IOSThermalState_value = map[string]int32{
+	IOsThermalState_value = map[string]int32{
 		"IOS_THERMAL_STATE_UNKNOWN":  0,
 		"IOS_THERMAL_STATE_NOMIMAL":  1,
 		"IOS_THERMAL_STATE_FAIR":     2,
@@ -50,45 +50,45 @@ var (
 	}
 )
 
-func (x IOSThermalState) Enum() *IOSThermalState {
-	p := new(IOSThermalState)
+func (x IOsThermalState) Enum() *IOsThermalState {
+	p := new(IOsThermalState)
 	*p = x
 	return p
 }
 
-func (x IOSThermalState) String() string {
+func (x IOsThermalState) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (IOSThermalState) Descriptor() protoreflect.EnumDescriptor {
+func (IOsThermalState) Descriptor() protoreflect.EnumDescriptor {
 	return file_video_sfu_models_platform_ios_proto_enumTypes[0].Descriptor()
 }
 
-func (IOSThermalState) Type() protoreflect.EnumType {
+func (IOsThermalState) Type() protoreflect.EnumType {
 	return &file_video_sfu_models_platform_ios_proto_enumTypes[0]
 }
 
-func (x IOSThermalState) Number() protoreflect.EnumNumber {
+func (x IOsThermalState) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use IOSThermalState.Descriptor instead.
-func (IOSThermalState) EnumDescriptor() ([]byte, []int) {
+// Deprecated: Use IOsThermalState.Descriptor instead.
+func (IOsThermalState) EnumDescriptor() ([]byte, []int) {
 	return file_video_sfu_models_platform_ios_proto_rawDescGZIP(), []int{0}
 }
 
-type IOSDeviceState struct {
+type IOsDeviceState struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ThermalState IOSThermalState `protobuf:"varint,1,opt,name=thermal_state,json=thermalState,proto3,enum=stream.video.sfu.models.IOSThermalState" json:"thermal_state,omitempty"`
+	ThermalState IOsThermalState `protobuf:"varint,1,opt,name=thermal_state,json=thermalState,proto3,enum=stream.video.sfu.models.IOsThermalState" json:"thermal_state,omitempty"`
 	// https://developer.apple.com/documentation/foundation/processinfo/1617047-islowpowermodeenabled
 	IsLowPowerModeEnabled bool `protobuf:"varint,2,opt,name=is_low_power_mode_enabled,json=isLowPowerModeEnabled,proto3" json:"is_low_power_mode_enabled,omitempty"`
 }
 
-func (x *IOSDeviceState) Reset() {
-	*x = IOSDeviceState{}
+func (x *IOsDeviceState) Reset() {
+	*x = IOsDeviceState{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_video_sfu_models_platform_ios_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -96,13 +96,13 @@ func (x *IOSDeviceState) Reset() {
 	}
 }
 
-func (x *IOSDeviceState) String() string {
+func (x *IOsDeviceState) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*IOSDeviceState) ProtoMessage() {}
+func (*IOsDeviceState) ProtoMessage() {}
 
-func (x *IOSDeviceState) ProtoReflect() protoreflect.Message {
+func (x *IOsDeviceState) ProtoReflect() protoreflect.Message {
 	mi := &file_video_sfu_models_platform_ios_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -114,19 +114,19 @@ func (x *IOSDeviceState) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use IOSDeviceState.ProtoReflect.Descriptor instead.
-func (*IOSDeviceState) Descriptor() ([]byte, []int) {
+// Deprecated: Use IOsDeviceState.ProtoReflect.Descriptor instead.
+func (*IOsDeviceState) Descriptor() ([]byte, []int) {
 	return file_video_sfu_models_platform_ios_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *IOSDeviceState) GetThermalState() IOSThermalState {
+func (x *IOsDeviceState) GetThermalState() IOsThermalState {
 	if x != nil {
 		return x.ThermalState
 	}
-	return IOSThermalState_IOS_THERMAL_STATE_UNKNOWN
+	return IOsThermalState_IOS_THERMAL_STATE_UNKNOWN
 }
 
-func (x *IOSDeviceState) GetIsLowPowerModeEnabled() bool {
+func (x *IOsDeviceState) GetIsLowPowerModeEnabled() bool {
 	if x != nil {
 		return x.IsLowPowerModeEnabled
 	}
@@ -140,17 +140,17 @@ var file_video_sfu_models_platform_ios_proto_rawDesc = []byte{
 	0x6c, 0x73, 0x2f, 0x70, 0x6c, 0x61, 0x74, 0x66, 0x6f, 0x72, 0x6d, 0x5f, 0x69, 0x6f, 0x73, 0x2e,
 	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x17, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x2e, 0x76, 0x69,
 	0x64, 0x65, 0x6f, 0x2e, 0x73, 0x66, 0x75, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x22, 0x99,
-	0x01, 0x0a, 0x0e, 0x49, 0x4f, 0x53, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x53, 0x74, 0x61, 0x74,
+	0x01, 0x0a, 0x0e, 0x49, 0x4f, 0x73, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x53, 0x74, 0x61, 0x74,
 	0x65, 0x12, 0x4d, 0x0a, 0x0d, 0x74, 0x68, 0x65, 0x72, 0x6d, 0x61, 0x6c, 0x5f, 0x73, 0x74, 0x61,
 	0x74, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x28, 0x2e, 0x73, 0x74, 0x72, 0x65, 0x61,
 	0x6d, 0x2e, 0x76, 0x69, 0x64, 0x65, 0x6f, 0x2e, 0x73, 0x66, 0x75, 0x2e, 0x6d, 0x6f, 0x64, 0x65,
-	0x6c, 0x73, 0x2e, 0x49, 0x4f, 0x53, 0x54, 0x68, 0x65, 0x72, 0x6d, 0x61, 0x6c, 0x53, 0x74, 0x61,
+	0x6c, 0x73, 0x2e, 0x49, 0x4f, 0x73, 0x54, 0x68, 0x65, 0x72, 0x6d, 0x61, 0x6c, 0x53, 0x74, 0x61,
 	0x74, 0x65, 0x52, 0x0c, 0x74, 0x68, 0x65, 0x72, 0x6d, 0x61, 0x6c, 0x53, 0x74, 0x61, 0x74, 0x65,
 	0x12, 0x38, 0x0a, 0x19, 0x69, 0x73, 0x5f, 0x6c, 0x6f, 0x77, 0x5f, 0x70, 0x6f, 0x77, 0x65, 0x72,
 	0x5f, 0x6d, 0x6f, 0x64, 0x65, 0x5f, 0x65, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x64, 0x18, 0x02, 0x20,
 	0x01, 0x28, 0x08, 0x52, 0x15, 0x69, 0x73, 0x4c, 0x6f, 0x77, 0x50, 0x6f, 0x77, 0x65, 0x72, 0x4d,
 	0x6f, 0x64, 0x65, 0x45, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x64, 0x2a, 0xaa, 0x01, 0x0a, 0x0f, 0x49,
-	0x4f, 0x53, 0x54, 0x68, 0x65, 0x72, 0x6d, 0x61, 0x6c, 0x53, 0x74, 0x61, 0x74, 0x65, 0x12, 0x1d,
+	0x4f, 0x73, 0x54, 0x68, 0x65, 0x72, 0x6d, 0x61, 0x6c, 0x53, 0x74, 0x61, 0x74, 0x65, 0x12, 0x1d,
 	0x0a, 0x19, 0x49, 0x4f, 0x53, 0x5f, 0x54, 0x48, 0x45, 0x52, 0x4d, 0x41, 0x4c, 0x5f, 0x53, 0x54,
 	0x41, 0x54, 0x45, 0x5f, 0x55, 0x4e, 0x4b, 0x4e, 0x4f, 0x57, 0x4e, 0x10, 0x00, 0x12, 0x1d, 0x0a,
 	0x19, 0x49, 0x4f, 0x53, 0x5f, 0x54, 0x48, 0x45, 0x52, 0x4d, 0x41, 0x4c, 0x5f, 0x53, 0x54, 0x41,
@@ -185,11 +185,11 @@ func file_video_sfu_models_platform_ios_proto_rawDescGZIP() []byte {
 var file_video_sfu_models_platform_ios_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_video_sfu_models_platform_ios_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_video_sfu_models_platform_ios_proto_goTypes = []interface{}{
-	(IOSThermalState)(0),   // 0: stream.video.sfu.models.IOSThermalState
-	(*IOSDeviceState)(nil), // 1: stream.video.sfu.models.IOSDeviceState
+	(IOsThermalState)(0),   // 0: stream.video.sfu.models.IOsThermalState
+	(*IOsDeviceState)(nil), // 1: stream.video.sfu.models.IOsDeviceState
 }
 var file_video_sfu_models_platform_ios_proto_depIdxs = []int32{
-	0, // 0: stream.video.sfu.models.IOSDeviceState.thermal_state:type_name -> stream.video.sfu.models.IOSThermalState
+	0, // 0: stream.video.sfu.models.IOsDeviceState.thermal_state:type_name -> stream.video.sfu.models.IOsThermalState
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
@@ -204,7 +204,7 @@ func file_video_sfu_models_platform_ios_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_video_sfu_models_platform_ios_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*IOSDeviceState); i {
+			switch v := v.(*IOsDeviceState); i {
 			case 0:
 				return &v.state
 			case 1:
