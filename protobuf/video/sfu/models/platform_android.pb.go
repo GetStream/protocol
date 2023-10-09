@@ -21,9 +21,7 @@ const (
 )
 
 // Different thermal states of an Android device
-// Docs:
-// - https://developer.android.com/ndk/reference/group/thermal
-// - https://developer.android.com/reference/android/os/PowerManager#getCurrentThermalStatus()
+// Docs: https://source.android.com/docs/core/power/thermal-mitigation#codes
 type AndroidThermalStatus int32
 
 const (
