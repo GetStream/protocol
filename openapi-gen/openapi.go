@@ -56,6 +56,10 @@ func (t *TemplateLoader) LoadTemplate(kind templateKind) *template.Template {
 	return t.templates.Lookup(string(kind) + ".tmpl")
 }
 
+type ClientContext struct {
+	Doc *openapi3.T
+}
+
 type TypeContext struct {
 	Schema         *openapi3.Schema
 	Name           string
@@ -157,6 +161,7 @@ func main() {
 	}
 
 	tmpl := templateLoader.LoadTemplate(TypeTemplate)
+	fmt.Println("loaded template", tmpl.Name())
 
 	var modelsDir string
 
@@ -285,7 +290,9 @@ func main() {
 
 	tp := templateLoader.LoadTemplate(ClientTemplate)
 	if tp != nil {
-		err = tp.Execute(f, doc)
+		err = tp.Execute(f, ClientContext{
+			Doc: doc,
+		})
 		if err != nil {
 			fmt.Println("error generating client", err)
 			os.Exit(1)

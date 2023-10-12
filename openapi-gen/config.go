@@ -14,10 +14,12 @@ type Config struct {
 	FileNameModifier string `yaml:"fileNameModifier" json:"fileNameModifier"`
 	// prefix imports with this string
 	// directory where the generated client will be saved
-	ClientOutputDirectory string `yaml:"clientOutputDirectory" json:"clientOutputDirectory"`
-	FileExtension        string   `yaml:"fileExtension" json:"fileExtension"`
-	CopyAdditionalFiles  []string `yaml:"copyAdditionalFiles" json:"copyAdditionalFiles"`
-	GenerateRequestTypes bool     `yaml:"generateRequestTypes" json:"generateRequestTypes"`
+	ClientOutputDirectory string   `yaml:"clientOutputDirectory" json:"clientOutputDirectory"`
+	FileExtension         string   `yaml:"fileExtension" json:"fileExtension"`
+	CopyAdditionalFiles   []string `yaml:"copyAdditionalFiles" json:"copyAdditionalFiles"`
+	GenerateRequestTypes  bool     `yaml:"generateRequestTypes" json:"generateRequestTypes"`
+	//removes Request objects from signature and inline all args (eg. data: Request(f1, f2) -> f1, f2)
+	ExplodeRequestIntoArgs bool `yaml:"explodeRequest" json:"explodeRequest"`
 
 	// relative path to the directory where the generated models will be saved
 	ModelsSubpackage string `yaml:"modelsSubpackage" json:"modelsSubpackage"`
