@@ -1,14 +1,19 @@
 {{- define "requestFunction" -}}
-def {{toSnake .OperationID}}(self
-{{range $index, $param := (requiredParameters .Parameters) -}}
-, {{$param.Value.Name}}: {{if .Value.Content -}}{{template "generateSchemaRef" (index .Value.Content "application/json").Schema}}{{else}}{{template "generateSchemaRef" .Value.Schema}}{{- end -}}{{end -}}
-{{- with (requestSchema .Operation) -}}, data: {{template "generateSchemaRef" .}}{{end -}}
-{{range $index, $param := (optionalParameters .Parameters) -}}
-, {{$param.Value.Name}}: Optional[{{if .Value.Content -}}{{template "generateSchemaRef" (index .Value.Content "application/json").Schema}}{{else}}{{template "generateSchemaRef" .Value.Schema}}{{- end -}}] = None{{end -}}
-){{with (successfulResponse .Responses)}} -> StreamResponse[{{template "generateSchemaRef" .}}]{{end}}:
+
+def {{toSnake .Operation.OperationID}}(self,
+{{- range $index, $param := (requiredParameters .Operation.Parameters) -}}
+{{$param.Value.Name}}: {{if .Value.Content -}}{{template "generateSchemaRef" (index .Value.Content "application/json").Schema}}{{else}}{{template "generateSchemaRef" .Value.Schema}}{{- end -}},{{- end -}}
+
+{{- range $name, $property := .RequestProperties -}}
+        {{- $name -}}: {{ if $property.Optional }} Optional[{{ $property.PropType }}] {{else}}{{ $property.PropType }} {{- end -}},
+ 
+    {{- end -}}
+{{- range $index, $param := (optionalParameters .Operation.Parameters) -}}
+{{$param.Value.Name}}: Optional[{{if .Value.Content -}}{{template "generateSchemaRef" (index .Value.Content "application/json").Schema}}{{else}}{{template "generateSchemaRef" .Value.Schema}}{{- end -}}] = None,{{end -}}
+){{with (successfulResponse .Operation.Responses)}} -> StreamResponse[{{template "generateSchemaRef" .}}]{{end}}:
         """
-        {{.Summary}}
-        {{- range $index, $param := .Parameters -}}
+        {{.Operation.Summary}}
+        {{- range $index, $param := .Operation.Parameters -}}
         {{- if $param.Value.Description}}:param {{$param.Value.Name}}:{{$param.Value.Summary}}
         {{end}}
         {{- end}}
@@ -16,7 +21,7 @@ def {{toSnake .OperationID}}(self
         query_params = {}
         path_params = {}
 
-        {{- range $index, $param := .Parameters -}}
+        {{- range $index, $param := .Operation.Parameters -}}
         {{- if eq $param.Value.In "query"}}
         query_params["{{$param.Value.Name}}"] = {{toSnake $param.Value.Name}} 
         {{- else if eq $param.Value.In "path"}}
@@ -25,7 +30,7 @@ def {{toSnake .OperationID}}(self
         {{- end}}
 
         return self.{{.Method | lower}}("{{.Path}}",
-         {{with (successfulResponse .Responses)}} {{template "generateSchemaRef" .}},{{end}}
+         {{with (successfulResponse .Operation.Responses)}} {{template "generateSchemaRef" .}},{{end}}
                 query_params=query_params,
                 path_params=path_params{{- if (requestSchema .Operation)}},
                 json=data.to_dict(){{end -}}
@@ -34,20 +39,24 @@ def {{toSnake .OperationID}}(self
 {{ end -}}
 
 {{- define "operationFunction" -}}
-    {{ $op := .OperationID | toSnake }}
-    def {{ $op }}(self
+    {{ $op := .Operation.OperationID | toSnake }}
+    def {{ $op }}(self,
 
-{{- with (requestSchema .Operation) -}}, data: {{template "generateSchemaRef" .}}{{end -}}
-{{range $index, $param := (optionalParameters .Parameters) -}}
-, {{$param.Value.Name}}: Optional[{{if .Value.Content -}}{{template "generateSchemaRef" (index .Value.Content "application/json").Schema}}{{else}}{{template "generateSchemaRef" .Value.Schema}}{{- end -}}] = None{{end -}}
-){{with (successfulResponse .Responses)}} -> StreamResponse[{{template "generateSchemaRef" .}}]{{end}}:
+{{- range $name, $property := .RequestProperties -}}
+       {{ $name }}: {{ if $property.Optional }} Optional[{{ $property.PropType }}] {{else}}{{ $property.PropType }} {{end}},
+    {{ end }}
+{{range $index, $param := (optionalParameters .Operation.Parameters) -}}
+{{$param.Value.Name}}: Optional[{{if .Value.Content -}}{{template "generateSchemaRef" (index .Value.Content "application/json").Schema}}{{else}}{{template "generateSchemaRef" .Value.Schema}}{{- end -}}] = None,{{end -}}
+
+){{with (successfulResponse .Operation.Responses)}} -> StreamResponse[{{template "generateSchemaRef" .}}]{{end}}:
         """
-        {{.Summary}}
-        {{- range $index, $param := .Parameters -}}
+        {{.Operation.Summary}}
+        {{- range $index, $param := .Operation.Parameters -}}
         {{- if $param.Value.Description}}:param {{$param.Value.Name}}:{{$param.Value.Summary}}
         {{end}}
         {{- end}}
         """
-        return self._client.{{ $op }}(self._type, self._id{{ if (requestSchema .Operation) }}, data{{end}}{{range $index, $param := (optionalParameters .Parameters) -}}
-, {{$param.Value.Name}}{{end}})
+        return self._client.{{ $op }}(self._type, self._id{{ if (requestSchema .Operation) }}, {{end}}{{range $index, $param := (optionalParameters .Operation.Parameters) -}}
+{{$param.Value.Name}}{{end}})
 {{ end -}}
+

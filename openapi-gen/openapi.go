@@ -57,7 +57,9 @@ func (t *TemplateLoader) LoadTemplate(kind templateKind) *template.Template {
 }
 
 type ClientContext struct {
-	Doc *openapi3.T
+	Doc                    *openapi3.T
+	TypeContexts           map[string]TypeContext
+	ExplodeRequestIntoArgs bool
 }
 
 type TypeContext struct {
@@ -202,6 +204,7 @@ func main() {
 		}
 	}
 
+	typeContexts := make(map[string]TypeContext)
 	for name, schema := range doc.Components.Schemas {
 		if *targetLanguage == "python" && len(schema.Value.Properties) == 0 && len(schema.Value.Enum) == 0 && schema.Value.OneOf == nil {
 			fmt.Println("skipping", name, "because it has no properties or OneOf definitions")
@@ -222,21 +225,27 @@ func main() {
 				break
 			}
 		}
-
-		err = tmpl.Execute(f, TypeContext{
+		fmt.Println("generating", name)
+		typeContext := TypeContext{
 			Name:           name,
 			Schema:         schema.Value,
 			Additional:     config.AdditionalParameters,
 			References:     getReferencesFromTypes(schema.Value),
 			HasNonRequired: hasNonRequired,
-		})
+		}
+
+		if config.ExplodeRequestIntoArgs && strings.Contains(name, "Request") {
+			fmt.Printf("Adding request %s to typeContexts\n", name)
+			typeContexts[name] = typeContext
+		}
+		err = tmpl.Execute(f, typeContext)
 
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
 	}
-
+	//TODO: this all if statement is not used btw
 	if config.GenerateRequestTypes {
 		for pathName, path := range doc.Paths {
 			for method, operation := range path.Operations() {
@@ -269,7 +278,7 @@ func main() {
 				err = tmpl.Execute(f, RequestContext{
 					Name:       name,
 					Additional: config.AdditionalParameters,
-					References: collectReferncesForRequest(operation),
+					References: collectReferencesForRequest(operation),
 					Parameters: operation.Parameters,
 					Body:       operation.RequestBody,
 				})
@@ -291,7 +300,9 @@ func main() {
 	tp := templateLoader.LoadTemplate(ClientTemplate)
 	if tp != nil {
 		err = tp.Execute(f, ClientContext{
-			Doc: doc,
+			Doc:                    doc,
+			TypeContexts:           typeContexts,
+			ExplodeRequestIntoArgs: config.ExplodeRequestIntoArgs,
 		})
 		if err != nil {
 			fmt.Println("error generating client", err)
@@ -300,7 +311,7 @@ func main() {
 	}
 }
 
-func collectReferncesForRequest(operation *openapi3.Operation) []string {
+func collectReferencesForRequest(operation *openapi3.Operation) []string {
 	set := make(map[string]struct{})
 	buildRequestReferencesSet(operation, set)
 

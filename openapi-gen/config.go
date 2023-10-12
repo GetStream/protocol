@@ -19,7 +19,7 @@ type Config struct {
 	CopyAdditionalFiles   []string `yaml:"copyAdditionalFiles" json:"copyAdditionalFiles"`
 	GenerateRequestTypes  bool     `yaml:"generateRequestTypes" json:"generateRequestTypes"`
 	//removes Request objects from signature and inline all args (eg. data: Request(f1, f2) -> f1, f2)
-	ExplodeRequestIntoArgs bool `yaml:"explodeRequest" json:"explodeRequest"`
+	ExplodeRequestIntoArgs bool `yaml:"explodeRequestIntoArgs" json:"explodeRequestIntoArgs"`
 
 	// relative path to the directory where the generated models will be saved
 	ModelsSubpackage string `yaml:"modelsSubpackage" json:"modelsSubpackage"`

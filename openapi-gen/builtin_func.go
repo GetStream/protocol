@@ -1,11 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 	"text/template"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/iancoleman/strcase"
+	"golang.org/x/exp/slices"
 )
 
 type set map[string]struct{}
@@ -34,13 +36,13 @@ func toConstant(s string) string {
 // filter returns a new slice holding only
 // the elements of s that satisfy f()
 func Filter(vs []SchemaRefWithName, f func(SchemaRefWithName) bool) []SchemaRefWithName {
-    vsf := make([]SchemaRefWithName, 0)
-    for _, v := range vs {
-        if f(v) {
-            vsf = append(vsf, v)
-        }
-    }
-    return vsf
+	vsf := make([]SchemaRefWithName, 0)
+	for _, v := range vs {
+		if f(v) {
+			vsf = append(vsf, v)
+		}
+	}
+	return vsf
 }
 
 func FilterRequired(vs []SchemaRefWithName) []SchemaRefWithName {
@@ -72,9 +74,9 @@ func PrepareBuiltinFunctions(config *Config) template.FuncMap {
 			}
 			return false
 		},
-		"filterRequired": FilterRequired,
+		"filterRequired":    FilterRequired,
 		"filterNotRequired": FilterNotRequired,
-		"join":   strings.Join,
+		"join":              strings.Join,
 		"has": func(sl []string, str string) bool {
 			for _, s := range sl {
 				if s == str {
@@ -93,17 +95,7 @@ func PrepareBuiltinFunctions(config *Config) template.FuncMap {
 			}
 			return nil
 		},
-		"requestSchema": func(operation *openapi3.Operation) *openapi3.SchemaRef {
-			if operation.RequestBody == nil {
-				return nil
-			}
-
-			if operation.RequestBody.Value.Content["application/json"] == nil {
-				return nil
-			}
-
-			return operation.RequestBody.Value.Content["application/json"].Schema
-		},
+		"requestSchema":      requestSchema,
 		"operationContext":   operationContext,
 		"sortedProperties":   sortedProperties,
 		"requiredParameters": requiredParameters,
@@ -115,17 +107,115 @@ func PrepareBuiltinFunctions(config *Config) template.FuncMap {
 	}
 }
 
-type OperationWithPathAndMethod struct {
-	Path   string
-	Method string
-	*openapi3.Operation
+func requestSchema(operation *openapi3.Operation) *openapi3.SchemaRef {
+	if operation.RequestBody == nil {
+		return nil
+	}
+
+	if operation.RequestBody.Value.Content["application/json"] == nil {
+		return nil
+	}
+
+	return operation.RequestBody.Value.Content["application/json"].Schema
 }
 
-func operationContext(operation *openapi3.Operation, method, path string) *OperationWithPathAndMethod {
+type OperationWithPathAndMethod struct {
+	Path      string
+	Method    string
+	Operation *openapi3.Operation
+
+	RequestName string
+	RequestProperties map[string]PropertyContext
+}
+
+type PropertyContext struct {
+	Name     string
+	PropType string
+	Optional bool
+}
+
+func ConvertList(items *openapi3.SchemaRef) string {
+	return fmt.Sprintf("List[%s]", ConvertType(items))
+}
+
+func ConvertFormat(format string) string {
+	if format == "date-time" {
+		return "datetime"
+	}
+	return "str"
+}
+
+// TODO: maybe factory pattern for other languages
+func ConvertType(prop *openapi3.SchemaRef) string {
+	t := prop.Value.Type
+
+	if t == "" {
+		return "object"
+	}
+	if t == "string" {
+		return ConvertFormat(prop.Value.Format)
+	}
+	if t == "integer" {
+		return "int"
+	}
+	if t == "number" {
+		return "float"
+	}
+	if t == "boolean" {
+		return "bool"
+	}
+	if t == "array" {
+		return ConvertList(prop.Value.Items)
+	}
+	if t == "object" {
+		if prop.Value.AdditionalProperties.Schema != nil {
+			fmt.Println("additional properties: ", prop.Value.AdditionalProperties.Schema.Value.Type)
+
+			return fmt.Sprintf("Dict[str, %s]", ConvertType(prop.Value.AdditionalProperties.Schema))
+		}
+		return refToName(prop.Ref)
+	}
+	if t == "null" {
+		return "None"
+	}
+	return t
+
+}
+
+func operationContext(operation *openapi3.Operation, method, path string, typeContexts map[string]TypeContext) *OperationWithPathAndMethod {
+
+	fmt.Println("operation: ", operation.OperationID)
+	reqBody := operation.RequestBody
+	var reqName string
+	var typeContext TypeContext
+	requestProperties := make(map[string]PropertyContext)
+	if reqBody != nil {
+		reqName = refToName(reqBody.Value.Content["application/json"].Schema.Ref)
+		fmt.Println("request body: ", reqName)
+		typeContext = typeContexts[reqName]
+		fmt.Println("name: ", typeContext.Name)
+		properties := typeContext.Schema.Properties
+		required := typeContext.Schema.Required
+
+		for name, prop := range properties {
+			isRequired := slices.Contains(required, name)
+
+			requestProperties[name] = PropertyContext{
+				Name:     name,
+				PropType: ConvertType(prop),
+				Optional: !isRequired,
+			}
+		}
+	}
+
+	fmt.Println("request properties: ", requestProperties)
+
 	return &OperationWithPathAndMethod{
-		Path:      path,
-		Method:    method,
-		Operation: operation,
+		Path:              path,
+		Method:            method,
+		Operation:         operation,
+		RequestName:       reqName,
+		RequestProperties: requestProperties,
 	}
 }
 

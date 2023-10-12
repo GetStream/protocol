@@ -6,6 +6,8 @@ from typing import Optional
 from {{with index additionalParameters "modelImportPrefix"}}{{.}}{{else}}models.{{end}}models.{{refToName $ref | toSnake}} import {{refToName $ref | toCamel}}
 {{- end}}
 
+{{ $types:=.TypeContexts}}
+
 {{/* TODO: make class name configurable */ -}}
 class {{with index additionalParameters "clientClassName"}}{{.}}{{else}}Client{{end}}(BaseClient):
     def __init__(self, api_key: str, base_url, token, timeout, user_agent):
@@ -37,7 +39,7 @@ class {{with index additionalParameters "clientClassName"}}{{.}}{{else}}Client{{
       return Call(self, type, id)   
 
     {{- range $path, $item := .Doc.Paths -}}{{- range $method, $operation := $item.Operations}}    
-    {{template "requestFunction" (operationContext $operation $method $path)}}
+    {{template "requestFunction" (operationContext $operation $method $path $types )}}
     {{- end -}}
     
     {{- end -}}
@@ -57,7 +59,7 @@ class Call:
         self._id = id
 
     {{- range $path, $item := .Doc.Paths -}}{{- range $method, $operation := $item.Operations}}    
-        {{- template "operationFunction" (operationContext $operation $method $path)}}
+        {{- template "operationFunction" (operationContext $operation $method $path $types)}}
     {{- end -}}{{- end -}}
 
 {{define "operationFunction"}}
