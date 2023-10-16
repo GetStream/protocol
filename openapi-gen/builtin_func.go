@@ -124,45 +124,60 @@ type OperationWithPathAndMethod struct {
 	Method    string
 	Operation *openapi3.Operation
 
-	RequestName string
+	RequestName       string
 	RequestProperties map[string]PropertyContext
 }
 
 type PropertyContext struct {
 	Name     string
-	PropType string
+	PropType PropType
 	Optional bool
 }
 
-func ConvertList(items *openapi3.SchemaRef) string {
-	return fmt.Sprintf("List[%s]", ConvertType(items))
+type PropType struct {
+	Ref   string
+	IsRef bool
 }
 
-func ConvertFormat(format string) string {
+func NewPropType(ref string, isRef bool) PropType {
+	return PropType{Ref: ref, IsRef: isRef}
+}
+
+func ConvertList(items *openapi3.SchemaRef) PropType {
+	convertedType := ConvertType(items)
+	return NewPropType(fmt.Sprintf("List[%s]", convertedType.Ref), convertedType.IsRef)
+}
+
+func ConvertDict(items *openapi3.SchemaRef) PropType {
+	convertedType := ConvertType(items)
+	return NewPropType(fmt.Sprintf("Dict[str, %s]", convertedType.Ref), convertedType.IsRef)
+}
+
+func ConvertFormat(format string) PropType {
 	if format == "date-time" {
-		return "datetime"
+		return NewPropType("datetime", false)
 	}
-	return "str"
+	return NewPropType("str", false)
 }
 
 // TODO: maybe factory pattern for other languages
-func ConvertType(prop *openapi3.SchemaRef) string {
+func ConvertType(prop *openapi3.SchemaRef) PropType {
 	t := prop.Value.Type
 
 	if t == "" {
-		return "object"
+		return NewPropType("object", false)
 	}
 	if t == "string" {
 		return ConvertFormat(prop.Value.Format)
 	}
 	if t == "integer" {
-		return "int"
+		return NewPropType("int", false)
 	}
 	if t == "number" {
-		return "float"
+		return NewPropType("float", false)
 	}
 	if t == "boolean" {
-		return "bool"
+		return NewPropType("bool", false)
 	}
 	if t == "array" {
 		return ConvertList(prop.Value.Items)
@@ -171,14 +186,14 @@ func ConvertType(prop *openapi3.SchemaRef) string {
 		if prop.Value.AdditionalProperties.Schema != nil {
 			fmt.Println("additional properties: ", prop.Value.AdditionalProperties.Schema.Value.Type)
 
-			return fmt.Sprintf("Dict[str, %s]", ConvertType(prop.Value.AdditionalProperties.Schema))
+			return ConvertDict(prop.Value.AdditionalProperties.Schema)
 		}
-		return refToName(prop.Ref)
+		return NewPropType(refToName(prop.Ref), true)
 	}
 	if t == "null" {
-		return "None"
+		return NewPropType("None", false)
 	}
-	return t
+	return NewPropType(t, false)
 
 }
 

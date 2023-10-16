@@ -5,11 +5,12 @@ def {{toSnake .Operation.OperationID}}(self,
 {{$param.Value.Name}}: {{if .Value.Content -}}{{template "generateSchemaRef" (index .Value.Content "application/json").Schema}}{{else}}{{template "generateSchemaRef" .Value.Schema}}{{- end -}},{{- end -}}
 
 {{- range $name, $property := .RequestProperties -}}
-        {{- $name -}}: {{ if $property.Optional }} Optional[{{ $property.PropType }}] {{else}}{{ $property.PropType }} {{- end -}},
+        {{- $name -}}: {{ if $property.Optional }} Optional[{{ $property.PropType.Ref }}] {{else}}{{ $property.PropType.Ref }} {{- end -}},
  
     {{- end -}}
 {{- range $index, $param := (optionalParameters .Operation.Parameters) -}}
 {{$param.Value.Name}}: Optional[{{if .Value.Content -}}{{template "generateSchemaRef" (index .Value.Content "application/json").Schema}}{{else}}{{template "generateSchemaRef" .Value.Schema}}{{- end -}}] = None,{{end -}}
+**kwargs
 ){{with (successfulResponse .Operation.Responses)}} -> StreamResponse[{{template "generateSchemaRef" .}}]{{end}}:
         """
         {{.Operation.Summary}}
@@ -20,6 +21,8 @@ def {{toSnake .Operation.OperationID}}(self,
         """
         query_params = {}
         path_params = {}
+        {{- if gt (len .RequestProperties) 0 }}
+        json = {} {{- end}}
 
         {{- range $index, $param := .Operation.Parameters -}}
         {{- if eq $param.Value.In "query"}}
@@ -29,11 +32,24 @@ def {{toSnake .Operation.OperationID}}(self,
         {{- end}}
         {{- end}}
 
+        {{- range $name, $property := .RequestProperties -}}
+        {{- if $property.Optional}} 
+        if {{$name}} is not None:
+        
+        {{- if $property.PropType.IsRef}}
+            json["{{$name}}"] = {{$name}}.to_dict()
+        {{- else}}
+            json["{{$name}}"] = {{$name}}
+        {{- end}}
+        json["{{$name}}"] = {{$name}}
+        {{- end}}
+        {{- end }}
+
         return self.{{.Method | lower}}("{{.Path}}",
          {{with (successfulResponse .Operation.Responses)}} {{template "generateSchemaRef" .}},{{end}}
                 query_params=query_params,
                 path_params=path_params{{- if (requestSchema .Operation)}},
-                json=data.to_dict(){{end -}}
+                json=json.to_dict(){{end -}}
         )
 
 {{ end -}}
@@ -43,7 +59,7 @@ def {{toSnake .Operation.OperationID}}(self,
     def {{ $op }}(self,
 
 {{- range $name, $property := .RequestProperties -}}
-       {{ $name }}: {{ if $property.Optional }} Optional[{{ $property.PropType }}] {{else}}{{ $property.PropType }} {{end}},
+       {{ $name }}: {{ if $property.Optional }} Optional[{{ $property.PropType.Ref }}] {{else}}{{ $property.PropType.Ref }} {{end}},
     {{ end }}
 {{range $index, $param := (optionalParameters .Operation.Parameters) -}}
 {{$param.Value.Name}}: Optional[{{if .Value.Content -}}{{template "generateSchemaRef" (index .Value.Content "application/json").Schema}}{{else}}{{template "generateSchemaRef" .Value.Schema}}{{- end -}}] = None,{{end -}}
