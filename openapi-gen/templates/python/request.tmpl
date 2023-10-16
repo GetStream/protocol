@@ -44,12 +44,17 @@ def {{toSnake .Operation.OperationID}}(self,
         json["{{$name}}"] = {{$name}}
         {{- end}}
         {{- end }}
+        for key, value in kwargs.items():
+            {{ if .Method | eq "POST" | or .Method | eq "PUT" | or .Method | eq "PATCH" }} json[key] = value
+            {{ else }} query_params[key] = value
+            
+            {{- end }}
 
         return self.{{.Method | lower}}("{{.Path}}",
          {{with (successfulResponse .Operation.Responses)}} {{template "generateSchemaRef" .}},{{end}}
                 query_params=query_params,
                 path_params=path_params{{- if (requestSchema .Operation)}},
-                json=json.to_dict(){{end -}}
+                json=json{{end -}}
         )
 
 {{ end -}}
