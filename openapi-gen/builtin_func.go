@@ -128,6 +128,17 @@ type OperationWithPathAndMethod struct {
 	RequestProperties map[string]PropertyContext
 }
 
+func (o *OperationWithPathAndMethod) Imports() []string {
+
+	imports := make([]string, 0)
+	for _, prop := range o.RequestProperties {
+		if prop.PropType.IsRef {
+			imports = append(imports, prop.PropType.InnerType)
+		}
+	}
+	return imports
+}
+
 type PropertyContext struct {
 	Name     string
 	PropType PropType
@@ -135,29 +146,32 @@ type PropertyContext struct {
 }
 
 type PropType struct {
-	Ref   string
-	IsRef bool
+	Ref       string
+	IsRef     bool
+	InnerType string
 }
 
-func NewPropType(ref string, isRef bool) PropType {
-	return PropType{Ref: ref, IsRef: isRef}
+func NewPropType(ref string, isRef bool, innerType string) PropType {
+	return PropType{Ref: ref, IsRef: isRef, InnerType: innerType}
 }
 
 func ConvertList(items *openapi3.SchemaRef) PropType {
 	convertedType := ConvertType(items)
-	return NewPropType(fmt.Sprintf("List[%s]", convertedType.Ref), convertedType.IsRef)
+	ref := convertedType.Ref
+	return NewPropType(fmt.Sprintf("List[%s]", ref), convertedType.IsRef, ref)
 }
 
 func ConvertDict(items *openapi3.SchemaRef) PropType {
 	convertedType := ConvertType(items)
-	return NewPropType(fmt.Sprintf("Dict[str, %s]", convertedType.Ref), convertedType.IsRef)
+	ref := convertedType.Ref
+	return NewPropType(fmt.Sprintf("Dict[str, %s]", ref), convertedType.IsRef, ref)
 }
 
 func ConvertFormat(format string) PropType {
 	if format == "date-time" {
-		return NewPropType("datetime", false)
+		return NewPropType("datetime", false, "")
 	}
-	return NewPropType("str", false)
+	return NewPropType("str", false, "")
 }
 
 // TODO: maybe factory pattern for other languages
@@ -165,19 +179,19 @@ func ConvertType(prop *openapi3.SchemaRef) PropType {
 	t := prop.Value.Type
 
 	if t == "" {
-		return NewPropType("object", false)
+		return NewPropType("object", false, "")
 	}
 	if t == "string" {
 		return ConvertFormat(prop.Value.Format)
 	}
 	if t == "integer" {
-		return NewPropType("int", false)
+		return NewPropType("int", false, "")
 	}
 	if t == "number" {
-		return NewPropType("float", false)
+		return NewPropType("float", false, "")
 	}
 	if t == "boolean" {
-		return NewPropType("bool", false)
+		return NewPropType("bool", false, "")
 	}
 	if t == "array" {
 		return ConvertList(prop.Value.Items)
@@ -188,12 +202,12 @@ func ConvertType(prop *openapi3.SchemaRef) PropType {
 
 			return ConvertDict(prop.Value.AdditionalProperties.Schema)
 		}
-		return NewPropType(refToName(prop.Ref), true)
+		return NewPropType(refToName(prop.Ref), true, refToName(prop.Ref))
 	}
 	if t == "null" {
-		return NewPropType("None", false)
+		return NewPropType("None", false, "")
 	}
-	return NewPropType(t, false)
+	return NewPropType(t, false, "")
 
 }
 
