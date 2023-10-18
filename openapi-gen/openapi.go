@@ -124,13 +124,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	// we have invalid spec according to this validation
-	// for example, we use extensions with reference
-	// err = doc.Validate(context.Background())
-	// if err != nil {
-	// 	fmt.Println("error validating doc", err)
-	// 	os.Exit(1)
-	// }
+	if config.ClientSideOnly {
+		removeServerSide(doc)
+	}
 
 	for _, fileName := range config.CopyAdditionalFiles {
 		dst, err := os.Create(*outputDir + "/" + fileName)

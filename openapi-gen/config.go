@@ -25,6 +25,9 @@ type Config struct {
 	ModelsSubpackage string `yaml:"modelsSubpackage" json:"modelsSubpackage"`
 	// files to be copied to the models directory
 	ModelsCopyFiles []string `yaml:"modelsCopyFiles" json:"modelsCopyFiles"`
+
+	// ClientSideOnly specifies whether to remove server side operations, parameters, properties and models from the spec.
+	ClientSideOnly bool `yaml:"clientSide" json:"clientSide"`
 }
 
 func (c Config) getNameModifier() func(string) string {
