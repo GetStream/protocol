@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"text/template"
 
@@ -125,7 +126,7 @@ type OperationWithPathAndMethod struct {
 	Operation *openapi3.Operation
 
 	RequestName       string
-	RequestProperties map[string]PropertyContext
+	RequestProperties []PropertyContext
 }
 
 func (o *OperationWithPathAndMethod) Imports() []string {
@@ -144,6 +145,21 @@ type PropertyContext struct {
 	PropType PropType
 	Optional bool
 }
+
+// ByRequired implements sort.Interface for []PropertyContext based on
+// the Optional field.
+type ByRequired []PropertyContext
+
+func boolToInt(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
+}
+
+func (a ByRequired) Len() int           { return len(a) }
+func (a ByRequired) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByRequired) Less(i, j int) bool { return boolToInt(a[i].Optional) < boolToInt(a[j].Optional) }
 
 type PropType struct {
 	Ref       string
@@ -217,7 +233,7 @@ func operationContext(operation *openapi3.Operation, method, path string, typeCo
 	reqBody := operation.RequestBody
 	var reqName string
 	var typeContext TypeContext
-	requestProperties := make(map[string]PropertyContext)
+	requestPropertiesSlice := make([]PropertyContext, 0)
 	if reqBody != nil {
 		reqName = refToName(reqBody.Value.Content["application/json"].Schema.Ref)
 		fmt.Println("request body: ", reqName)
@@ -229,22 +245,26 @@ func operationContext(operation *openapi3.Operation, method, path string, typeCo
 		for name, prop := range properties {
 			isRequired := slices.Contains(required, name)
 
-			requestProperties[name] = PropertyContext{
+			requestPropertiesSlice = append(requestPropertiesSlice, PropertyContext{
+
 				Name:     name,
 				PropType: ConvertType(prop),
 				Optional: !isRequired,
-			}
+			},
+			)
 		}
 	}
+	//reorder requestProperties based on required, required parameters should be first in the list
+	sort.Sort(ByRequired(requestPropertiesSlice))
 
-	fmt.Println("request properties: ", requestProperties)
+	fmt.Println("request properties: ", requestPropertiesSlice)
 
 	return &OperationWithPathAndMethod{
 		Path:              path,
 		Method:            method,
 		Operation:         operation,
 		RequestName:       reqName,
-		RequestProperties: requestProperties,
+		RequestProperties: requestPropertiesSlice,
 	}
 }
 

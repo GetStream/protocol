@@ -4,8 +4,8 @@ def {{toSnake .Operation.OperationID}}(self,
 {{- range $index, $param := (requiredParameters .Operation.Parameters) -}}
 {{$param.Value.Name}}: {{if .Value.Content -}}{{template "generateSchemaRef" (index .Value.Content "application/json").Schema}}{{else}}{{template "generateSchemaRef" .Value.Schema}}{{- end -}},{{- end -}}
 
-{{- range $name, $property := .RequestProperties -}}
-        {{- $name -}}: {{ if $property.Optional }} Optional[{{ $property.PropType.Ref }}] = None {{else}}{{ $property.PropType.Ref }} {{- end -}},
+{{- range $i, $property := .RequestProperties -}}
+        {{- $property.Name -}}: {{ if $property.Optional }} Optional[{{ $property.PropType.Ref }}] = None {{else}}{{ $property.PropType.Ref }} {{- end -}},
  
     {{- end -}}
 {{- range $index, $param := (optionalParameters .Operation.Parameters) -}}
@@ -32,14 +32,14 @@ def {{toSnake .Operation.OperationID}}(self,
         {{- end}}
         {{- end}}
 
-        {{- range $name, $property := .RequestProperties -}}
+        {{- range $i, $property := .RequestProperties -}}
         {{- if $property.Optional}} 
-        if {{$name}} is not None:
+        if {{$property.Name}} is not None:
         
         {{- if $property.PropType.IsRef}}
-            json["{{$name}}"] = {{$name}}.to_dict()
+            json["{{$property.Name}}"] = {{$property.Name}}.to_dict()
         {{- else}}
-            json["{{$name}}"] = {{$name}}
+            json["{{$property.Name}}"] = {{$property.Name}}
         {{- end}}
         {{- end}}
         {{- end }}
@@ -62,8 +62,8 @@ def {{toSnake .Operation.OperationID}}(self,
     {{ $op := .Operation.OperationID | toSnake }}
     def {{ $op }}(self,
 
-{{- range $name, $property := .RequestProperties -}}
-       {{ $name }}: {{ if $property.Optional }} Optional[{{ $property.PropType.Ref }}] {{else}}{{ $property.PropType.Ref }} {{end}},
+{{- range $i, $property := .RequestProperties -}}
+       {{ $property.Name }}: {{ if $property.Optional }} Optional[{{ $property.PropType.Ref }}] {{else}}{{ $property.PropType.Ref }} {{end}},
     {{ end }}
 {{range $index, $param := (optionalParameters .Operation.Parameters) -}}
 {{$param.Value.Name}}: Optional[{{if .Value.Content -}}{{template "generateSchemaRef" (index .Value.Content "application/json").Schema}}{{else}}{{template "generateSchemaRef" .Value.Schema}}{{- end -}}] = None,{{end -}}
