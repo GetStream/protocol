@@ -64,3 +64,9 @@ Running this command will generate only backend integration client. Passing `fro
 | Request types         | Data Class       |       |        |            |struct |
 | Client type           |  class with method sending request, can be prewritten without generation       |       |        |            |  struct and generic method to send request, handle errors, parse response  |
 | Client methods        |   just a generated functions      |       |        |            |  methods using 1 method to send request  |
+
+
+## TODOs
+
+- with exploded args of request we have unused imports, it's fine for now it's a lint issue
+- SortParamRequest has a "field" param which is reserved keyword from data class
