@@ -67,12 +67,10 @@ def {{toSnake .Operation.OperationID}}(self,
     def {{ $op }}(self,
 
 {{- range $i, $property := .RequestProperties -}}
-       {{ $property.Name }}: {{ if $property.Optional }} Optional[{{ $property.PropType.Ref }}] {{else}}{{ $property.PropType.Ref }} {{end}},
+       {{ $property.Name }}: {{ if $property.Optional }} Optional[{{ $property.PropType.Ref }}] = None {{else}}{{ $property.PropType.Ref }} {{end}},
     {{ end }}
 {{range $index, $param := (optionalParameters .Operation.Parameters) -}}
-{{$param.Value.Name}}: Optional[{{if .Value.Content -}}{{template "generateSchemaRef" (index .Value.Content "application/json").Schema}}{{else}}{{template "generateSchemaRef" .Value.Schema}}{{- end -}}] = None,{{end -}}
-
-){{with (successfulResponse .Operation.Responses)}} -> StreamResponse[{{template "generateSchemaRef" .}}]{{end}}:
+{{$param.Value.Name}}: Optional[{{if .Value.Content -}}{{template "generateSchemaRef" (index .Value.Content "application/json").Schema}}{{else}}{{template "generateSchemaRef" .Value.Schema}}{{- end -}}] = None,{{end -}}**kwargs) {{with (successfulResponse .Operation.Responses)}} -> StreamResponse[{{template "generateSchemaRef" .}}]{{end}}:
         """
         {{.Operation.Summary}}
         {{- range $index, $param := .Operation.Parameters -}}
@@ -81,7 +79,10 @@ def {{toSnake .Operation.OperationID}}(self,
         {{- end}}
         """
         return self._client.{{ $op }}(self._type, self._id{{ if (requestSchema .Operation) }}, {{end}}{{range $index, $param := (optionalParameters .Operation.Parameters) -}}
-{{$param.Value.Name}}{{end}})
+{{$param.Value.Name}}{{end}}
+{{- range $i, $property := .RequestProperties -}}
+       {{ $property.Name }} = {{ $property.Name }},
+    {{ end }}**kwargs)
 {{ end -}}
 
 {{ define "requestImports" }}
