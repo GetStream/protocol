@@ -10,6 +10,13 @@ import TabItem from '@theme/TabItem';
 
 ## Creating calls
 
+You can create a call by providing the call type and an ID:
+
+- The [call type](call_types/builtin) controls which features are enabled, and sets up permissions.
+- Calls IDs can be reused, which means they can be joined multiple times, so it's possible to set up recurring calls.
+
+You can optionally restrict call access by providing a list of users.
+
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
 
@@ -35,41 +42,27 @@ call.create({
 <TabItem value="py" label="Python">
 
 ```py
-def hello_world():
-    print("Hello, world!")
-```
-
-</TabItem>
-<TabItem value="go" label="Golang">
-
-```go
-func main() {
-	apiKey := os.Getenv("API_KEY")
-	apiSecret := os.Getenv("API_SECRET")
-	userID := os.Getenv("USER_ID")
-	url := os.Getenv("URL")
-
-	if apiKey == "" || apiSecret == "" || userID == "" || url == "" {
-		panic("API_KEY, API_SECRET, USER_ID and URL env variables must be set")
-	}
-
-	tokenProvider := videosdk.UserToken(apiSecret, userID, 24*time.Hour)
-	sdk := videosdk.New(apiKey, tokenProvider)
-
-	token, err := tokenProvider(sdk.APIKey())
-	if err != nil {
-		panic(err)
-	}
-
-	client := videosdk.NewCoordinatorClientSDK(url, sdk.APIKey(), token)
-	id := fmt.Sprintf("call-%d", rand.Int())
-	response, err := client.GetOrCreateCall("default", id, &models.GetOrCreateCallRequest{})
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println("response", response)
-}
+# create a call
+call.get_or_create_call(
+    data=CallRequest(
+        created_by_id='john'
+    )
+)
+# create a call with more data
+call.get_or_create_call(
+    data=CallRequest(
+        created_by_id='john',
+        members=[
+            MemberRequest(
+                user_id: 'john',
+                role: 'admin'
+			),
+            MemberRequest(
+                user_id: 'jack'
+			)
+        ]
+    ),
+)
 ```
 
 </TabItem>
@@ -94,11 +87,18 @@ curl -X POST "https://video.stream-io-api.com/video/call/default/${CALL_ID}?api_
 
 ## Updating calls
 
+- Most of the call type settings can be overridden on a call level.
+- Custom data can also be stored for calls.
+
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
 
 ```js
-call.update({ settings_override: { audio: { mic_default_on: true, default_device: "speaker" } } });
+call.update({
+  settings_override: {
+    audio: { mic_default_on: true, default_device: 'speaker' },
+  },
+});
 
 // or to update custom data
 call.update({ custom: { color: 'red' } });
@@ -108,56 +108,19 @@ call.update({ custom: { color: 'red' } });
 <TabItem value="py" label="Python">
 
 ```py
-def hello_world():
-    print("Hello, world!")
-```
+# update call settings
+call.update_call(
+    settings_override=CallSettingsRequest(
+        audio=AudioSettingsRequest(
+            mic_default_on=True,
+        ),
+    ),
+)
 
-</TabItem>
-<TabItem value="go" label="Golang">
-
-```go
-func main() {
-	apiKey := os.Getenv("API_KEY")
-	apiSecret := os.Getenv("API_SECRET")
-	userID := os.Getenv("USER_ID")
-	url := os.Getenv("URL")
-
-	if apiKey == "" || apiSecret == "" || userID == "" || url == "" {
-		panic("API_KEY, API_SECRET, USER_ID and URL env variables must be set")
-	}
-
-	tokenProvider := videosdk.UserToken(apiSecret, userID, 24*time.Hour)
-	sdk := videosdk.New(apiKey, tokenProvider)
-
-	token, err := tokenProvider(sdk.APIKey())
-	if err != nil {
-		panic(err)
-	}
-
-	client := videosdk.NewCoordinatorClientSDK(url, sdk.APIKey(), token)
-
-	// get an already created call or create one
-	id := fmt.Sprintf("call-%d", rand.Int())
-	response, err := client.GetOrCreateCall("default", id, &models.GetOrCreateCallRequest{})
-	if err != nil {
-		panic(err)
-	}
-
-    updateResponse, err := client.UpdateCall("default", callID, &models.UpdateCallRequest{
-        Type:   "default",
-        ID:     callID,
-        Custom: nil,
-        SettingsOverride: &models.CallSettingsRequest{
-            Video: &models.VideoSettingsRequest{Enabled: PtrTo(true)},
-        },
-        StartsAt: nil,
-    })
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println("response", updateResponse)
-}
+# update call with custom data
+call.update_call(
+    custom={'color': 'red'}
+)
 ```
 
 </TabItem>
@@ -182,6 +145,8 @@ curl -X PUT "https://video.stream-io-api.com/video/call/default/${CALL_ID}?api_k
 
 ## Manage call members
 
+Call members can be added and removed as necessary. Their role's can also be changed.
+
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
 
@@ -201,51 +166,22 @@ call.updateCallMembers({
 <TabItem value="py" label="Python">
 
 ```py
-def hello_world():
-    print("Hello, world!")
-```
+# update or add call members
 
-</TabItem>
-<TabItem value="go" label="Golang">
+call.update_call(
+    members=[
+        MemberRequest(user_id: 'sara'),
+        MemberRequest(user_id: 'jack', role: 'admin')
+    ]
+)
 
-```go
-func main() {
-	apiKey := os.Getenv("API_KEY")
-	apiSecret := os.Getenv("API_SECRET")
-	userID := os.Getenv("USER_ID")
-	url := os.Getenv("URL")
-
-	if apiKey == "" || apiSecret == "" || userID == "" || url == "" {
-		panic("API_KEY, API_SECRET, USER_ID and URL env variables must be set")
-	}
-
-	tokenProvider := videosdk.UserToken(apiSecret, userID, 24*time.Hour)
-	sdk := videosdk.New(apiKey, tokenProvider)
-
-	token, err := tokenProvider(sdk.APIKey())
-	if err != nil {
-		panic(err)
-	}
-
-	client := videosdk.NewCoordinatorClientSDK(url, sdk.APIKey(), token)
-
-	// get an already created call or create one
-	id := fmt.Sprintf("call-%d", rand.Int())
-	response, err := client.GetOrCreateCall("default", id, &models.GetOrCreateCallRequest{})
-	if err != nil {
-		panic(err)
-	}
-
-	updateResponse, err := client.UpdateMembers("default", id, &models.UpdateCallMembersRequest{
-		Type: "default", ID: id,
-		UpdateMembers: []models.MemberRequest{{UserId: "federico_guerinoni@getstream_io"}},
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println("response", updateResponse)
-}
+# remove call members
+# Assuming the updated call members are 'sara' and 'jack'
+call.update_call(
+    members=[
+        MemberRequest(user_id: 'jack', role: 'admin')
+    ]
+)
 ```
 
 </TabItem>
@@ -267,6 +203,14 @@ curl -X PUT "https://video.stream-io-api.com/video/call/default/${CALL_ID}/membe
 </Tabs>
 
 ## Query calls
+
+For many video calling, live stream, or audio rooms apps, you'll want to show:
+
+- Upcoming calls
+- Calls that are currently live
+- Popular live streams / audio rooms with a link to the recording
+
+Below you can find a few examples of different quieries:
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
@@ -295,7 +239,36 @@ client.video.queryCalls({
 ```
 
 </TabItem>
+
+<TabItem value="py" label="Python">
+
+```py
+# default sorting
+call.query_calls(data=QueryCallsRequest())
+
+# sorting and pagination
+response = call.query_calls(
+    sort= [SortParamRequest(field: 'starts_at', direction: -1)],
+    limit=2,
+)
+
+# loading next page
+call.query_calls(
+    sort= [SortParamRequest(field: 'starts_at', direction: -1)],
+    limit=2,
+    next=response.data().next
+)
+
+# filtering
+call.query_calls(
+    filter_conditions={'backstage': {'$eq': False}}
+)
+```
+
+</TabItem>
 </Tabs>
+
+Filter expressions support multiple match criteria and it's also possible to combine filters. For more information visit the [filter operators](https://getstream.io/chat/docs/node/query_syntax_operators/?language=javascript) guide.
 
 ## Query call members
 
@@ -326,4 +299,33 @@ call.queryMembers({
 ```
 
 </TabItem>
+
+<TabItem value="py" label="Python">
+
+```py
+# default sorting
+call.query_members()
+
+# sorting and pagination
+response = call.query_members(
+    sort: [SortParamRequest(field: "user_id", direction: 1)],
+    limit: 2,
+)
+
+# loading next page
+call.query_members(
+    sort: [SortParamRequest(field: "user_id", direction: 1)],
+    limit: 2,
+    next: response.next,
+)
+
+# filtering
+call.query_members(
+    filter_conditions: {"role": {"$eq": "admin"}},
+)
+```
+
+</TabItem>
 </Tabs>
+
+Filter expressions support multiple match criteria and it's also possible to combine filters. For more information visit the [filter operators](https://getstream.io/chat/docs/node/query_syntax_operators/?language=javascript) guide.

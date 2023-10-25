@@ -7,8 +7,17 @@ title: Get started
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import RTMP from '../_common_/rtmp.mdx';
+
+For the average Stream integration, the development work focuses on code that executes in the client. However, some tasks must be executed from the server for safety (for example token generation).
+
+Stream provides server-side SDKs to help executing these tasks.
+
+You can reference our [development roadmap](https://github.com/GetStream/protocol/discussions/177) to know which languages and features are supported.
 
 ## Installation
+
+All official SDK are available on package managers, full source code is available on the GetStream Github organization.
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
@@ -23,20 +32,15 @@ yarn add @stream-io/node-sdk
 <TabItem value="py" label="Python">
 
 ```bash
-pip install ...
-```
-
-</TabItem>
-<TabItem value="go" label="Golang">
-
-```bash
-go get github.com/GetStream/video-go-sdk
+pip install getstream
 ```
 
 </TabItem>
 </Tabs>
 
 ## Creating client
+
+To create a server-side client you'll need your **API key** and **secret**, both of them can be found in your [Stream Dashboard](https://dashboard.getstream.io/).
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
@@ -51,28 +55,17 @@ client = new StreamClient(apiKey, secret);
 <TabItem value="py" label="Python">
 
 ```py
-TODO
-```
+from getstream import Stream
 
-</TabItem>
-<TabItem value="go" label="Golang">
-
-```go
-	tokenProvider := videosdk.UserToken(apiSecret, userID, 24*time.Hour)
-	sdk := videosdk.New(apiKey, tokenProvider)
-
-	token, err := tokenProvider(sdk.APIKey())
-	if err != nil {
-		panic(err)
-	}
-
-	client := videosdk.NewCoordinatorClientSDK(url, sdk.APIKey(), token)
+client = Stream(api_key="your_api_key", api_secret="your_api_secret")
 ```
 
 </TabItem>
 </Tabs>
 
 ## Creating user tokens
+
+Tokens need to be generated server-side. Typically you integrate this into the part of your codebase where you login or register users. The tokens provide a way to authenticate a user or give access to a specific set of video/audio calls.
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
@@ -95,39 +88,20 @@ client.createToken(userId, exp, iat, call_cids);
 <TabItem value="py" label="Python">
 
 ```py
-def hello_world():
-    print("Hello, world!")
-```
-
-</TabItem>
-<TabItem value="go" label="Golang">
-
-```go
-func main() {
-	apiKey := os.Getenv("API_KEY")
-	apiSecret := os.Getenv("API_SECRET")
-	userID := os.Getenv("USER_ID")
-
-	if apiKey == "" || apiSecret == "" || userID == "" {
-		panic("API_KEY, API_SECRET and USER_ID env variables must be set")
-	}
-
-	tokenProvider := videosdk.UserToken(apiSecret, userID, 24*time.Hour)
-	sdk := videosdk.New(apiKey, tokenProvider)
-
-	token, err := tokenProvider(sdk.APIKey())
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println("token ->", token)
-}
+token = client.create_token("admin-user")
 ```
 
 </TabItem>
 </Tabs>
 
 ## Creating a call
+
+You can create a call by providing the call type and an ID:
+
+- The [call type](call_types/builtin) controls which features are enabled, and sets up permissions.
+- Calls IDs can be reused, which means they can be joined multiple times, so it's possible to set up recurring calls.
+
+You can optionally restrict call access by providing a list of users.
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
@@ -152,41 +126,14 @@ call.create({
 <TabItem value="py" label="Python">
 
 ```py
-def hello_world():
-    print("Hello, world!")
-```
+from getstream.models.call_request import CallRequest
 
-</TabItem>
-<TabItem value="go" label="Golang">
-
-```go
-func main() {
-	apiKey := os.Getenv("API_KEY")
-	apiSecret := os.Getenv("API_SECRET")
-	userID := os.Getenv("USER_ID")
-	url := os.Getenv("URL")
-
-	if apiKey == "" || apiSecret == "" || userID == "" || url == "" {
-		panic("API_KEY, API_SECRET, USER_ID and URL env variables must be set")
-	}
-
-	tokenProvider := videosdk.UserToken(apiSecret, userID, 24*time.Hour)
-	sdk := videosdk.New(apiKey, tokenProvider)
-
-	token, err := tokenProvider(sdk.APIKey())
-	if err != nil {
-		panic(err)
-	}
-
-	client := videosdk.NewCoordinatorClientSDK(url, sdk.APIKey(), token)
-	id := fmt.Sprintf("call-%d", rand.Int())
-	response, err := client.GetOrCreateCall("default", id, &models.GetOrCreateCallRequest{})
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println("response", response)
-}
+call = client.video.call("default", "id")
+response = call.get_or_create_call(
+    data=CallRequest(
+        created_by_id="sacha",
+    ),
+)
 ```
 
 </TabItem>
@@ -224,51 +171,9 @@ call.updateCallMembers({
 <TabItem value="py" label="Python">
 
 ```py
-def hello_world():
-    print("Hello, world!")
-```
-
-</TabItem>
-<TabItem value="go" label="Golang">
-
-```go
-func main() {
-	apiKey := os.Getenv("API_KEY")
-	apiSecret := os.Getenv("API_SECRET")
-	userID := os.Getenv("USER_ID")
-	url := os.Getenv("URL")
-
-	if apiKey == "" || apiSecret == "" || userID == "" || url == "" {
-		panic("API_KEY, API_SECRET, USER_ID and URL env variables must be set")
-	}
-
-	tokenProvider := videosdk.UserToken(apiSecret, userID, 24*time.Hour)
-	sdk := videosdk.New(apiKey, tokenProvider)
-
-	token, err := tokenProvider(sdk.APIKey())
-	if err != nil {
-		panic(err)
-	}
-
-	client := videosdk.NewCoordinatorClientSDK(url, sdk.APIKey(), token)
-
-	// get an already created call or create one
-	id := fmt.Sprintf("call-%d", rand.Int())
-	response, err := client.GetOrCreateCall("default", id, &models.GetOrCreateCallRequest{})
-	if err != nil {
-		panic(err)
-	}
-
-	updateResponse, err := client.UpdateMembers("default", id, &models.UpdateCallMembersRequest{
-		Type: "default", ID: id,
-		UpdateMembers: []models.MemberRequest{{UserId: "federico_guerinoni@getstream_io"}},
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println("response", updateResponse)
-}
+call.update_call_members(update_members=[
+            MemberRequest(user_id: "sara"),
+            MemberRequest(user_id: "emily", role: "admin")])
 ```
 
 </TabItem>
@@ -291,11 +196,19 @@ curl -X PUT "https://video.stream-io-api.com/video/call/default/${CALL_ID}/membe
 
 ## Updating a call
 
+- Most of the call type settings can be overriden on a call level.
+
+- Custom data can also be stored for calls.
+
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
 
 ```js
-call.update({ settings_override: { audio: { mic_default_on: true, default_device: "speaker" } } });
+call.update({
+  settings_override: {
+    audio: { mic_default_on: true, default_device: 'speaker' },
+  },
+});
 
 // or to update custom data
 call.update({ custom: { color: 'red' } });
@@ -305,56 +218,17 @@ call.update({ custom: { color: 'red' } });
 <TabItem value="py" label="Python">
 
 ```py
-def hello_world():
-    print("Hello, world!")
-```
+call.update(
+settings_override=CallSettingsRequest(
+    audio=AudioSettingsRequest(
+        mic_default_on=True,
+        default_device="speaker",
+    ),
+)
+)
 
-</TabItem>
-<TabItem value="go" label="Golang">
-
-```go
-func main() {
-	apiKey := os.Getenv("API_KEY")
-	apiSecret := os.Getenv("API_SECRET")
-	userID := os.Getenv("USER_ID")
-	url := os.Getenv("URL")
-
-	if apiKey == "" || apiSecret == "" || userID == "" || url == "" {
-		panic("API_KEY, API_SECRET, USER_ID and URL env variables must be set")
-	}
-
-	tokenProvider := videosdk.UserToken(apiSecret, userID, 24*time.Hour)
-	sdk := videosdk.New(apiKey, tokenProvider)
-
-	token, err := tokenProvider(sdk.APIKey())
-	if err != nil {
-		panic(err)
-	}
-
-	client := videosdk.NewCoordinatorClientSDK(url, sdk.APIKey(), token)
-
-	// get an already created call or create one
-	id := fmt.Sprintf("call-%d", rand.Int())
-	response, err := client.GetOrCreateCall("default", id, &models.GetOrCreateCallRequest{})
-	if err != nil {
-		panic(err)
-	}
-
-    updateResponse, err := client.UpdateCall("default", callID, &models.UpdateCallRequest{
-        Type:   "default",
-        ID:     callID,
-        Custom: nil,
-        SettingsOverride: &models.CallSettingsRequest{
-            Video: &models.VideoSettingsRequest{Enabled: PtrTo(true)},
-        },
-        StartsAt: nil,
-    })
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println("response", updateResponse)
-}
+// or to update custom data
+call.update(custom: { 'color': 'red' });
 ```
 
 </TabItem>
@@ -379,6 +253,17 @@ curl -X PUT "https://video.stream-io-api.com/video/call/default/${CALL_ID}?api_k
 
 ## Start HLS broadcasting
 
+Broadcasting serves are a means of transmitting live or pre-recorded content to a wide audience.
+
+We can choose from two approaches to broadcasting the media:
+
+- [HLS](https://en.wikipedia.org/wiki/HTTP_Live_Streaming) - slight delay, better buffering
+- [WebRTC](https://webrtc.org/) - lower latency, less reliability
+
+It is up to the integrators to decide, what approach will be used in their apps for the audience to consume the streams.
+
+For more information see the [Streaming section](streaming/overview/).
+
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
 
@@ -393,52 +278,10 @@ call.stopHLSBroadcasting();
 <TabItem value="py" label="Python">
 
 ```py
-def hello_world():
-    print("Hello, world!")
-```
+call.start_broadcasting()
 
-</TabItem>
-<TabItem value="go" label="Golang">
-
-```go
-func main() {
-	apiKey := os.Getenv("API_KEY")
-	apiSecret := os.Getenv("API_SECRET")
-	userID := os.Getenv("USER_ID")
-	url := os.Getenv("URL")
-
-	if apiKey == "" || apiSecret == "" || userID == "" || url == "" {
-		panic("API_KEY, API_SECRET, USER_ID and URL env variables must be set")
-	}
-
-	tokenProvider := videosdk.UserToken(apiSecret, userID, 24*time.Hour)
-	sdk := videosdk.New(apiKey, tokenProvider)
-
-	token, err := tokenProvider(sdk.APIKey())
-	if err != nil {
-		panic(err)
-	}
-
-	client := videosdk.NewCoordinatorClientSDK(url, sdk.APIKey(), token)
-
-	// get an already created call or create one
-	id := fmt.Sprintf("call-%d", rand.Int())
-	callResponse, err := client.JoinCall(models.CallTypeDefault, callID, &models.JoinCallRequest{
-		Type: "default", ID: callID, Location: "AMS", Create: PtrTo(true),
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	updateResponse, err := client.StartBroadcasting("default", callID, &models.StartBroadcastingRequest{
-		Type: "default", ID: callID,
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println("response", updateResponse)
-}
+// to end broadcasting
+call.stop_broadcasting()
 ```
 
 </TabItem>
@@ -454,44 +297,15 @@ curl -X POST "https://video.stream-io-api.com/video/call/default/${CALL_ID}/star
 
 ## Set up a call for RTMP
 
-<Tabs groupId="examples">
-<TabItem value="js" label="JavaScript">
+Almost all livestream software and hardware supports RTMPS. Our API supports using a third-party software for streaming using RTMPS. For more information reference the [Streaming section](streaming/overview/).
 
-```js
-const resp = await call.getOrCreate({ data: { created_by_id: 'john' } });
-// user ID of an existing user
-const userId = 'jane';
-const token = client.createToken(userId);
-
-const address = resp.call.ingress.rtmp.address.replace(
-  '<your_token_here>',
-  token,
-);
-```
-
-</TabItem>
-<TabItem value="py" label="Python">
-
-```py
-def hello_world():
-    print("Hello, world!")
-```
-
-</TabItem>
-<TabItem value="go" label="Golang">
-
-```go
-callResponse, err := client.GetOrCreateCall(models.CallTypeDefault, callID, &models.GetOrCreateCallRequest{})
-if err != nil {
-	panic(err)
-}
-addressToUse := callResponse.Call.Ingress.Rtmp.Address
-```
-
-</TabItem>
-</Tabs>
+<RTMP />
 
 ## Start call recording
+
+Calls can be recorded for later use. Calls recording can be started/stopped via API calls or configured to start automatically when the first user joins the call.
+
+For more information see the [Recordings section](recording/calls/).
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
@@ -507,50 +321,10 @@ call.stopRecording();
 <TabItem value="py" label="Python">
 
 ```py
-def hello_world():
-    print("Hello, world!")
-```
+call.start_recording()
 
-</TabItem>
-<TabItem value="go" label="Golang">
-
-```go
-func main() {
-	apiKey := os.Getenv("API_KEY")
-	apiSecret := os.Getenv("API_SECRET")
-	userID := os.Getenv("USER_ID")
-	url := os.Getenv("URL")
-
-	if apiKey == "" || apiSecret == "" || userID == "" || url == "" {
-		panic("API_KEY, API_SECRET, USER_ID and URL env variables must be set")
-	}
-
-	tokenProvider := videosdk.UserToken(apiSecret, userID, 24*time.Hour)
-	sdk := videosdk.New(apiKey, tokenProvider)
-
-	token, err := tokenProvider(sdk.APIKey())
-	if err != nil {
-		panic(err)
-	}
-
-	client := videosdk.NewCoordinatorClientSDK(url, sdk.APIKey(), token)
-	startResponse, err := client.StartRecording(models.CallTypeDefault, callID, &models.StartRecordingRequest{
-		Type: "default", ID: callID,
-	})
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("response", startResponse)
-
-	stopResponse, err := client.StopRecording(models.CallTypeDefault, callID, &models.StopRecordingRequest{
-		Type: "default", ID: callID,
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println("response", stopResponse)
-}
+// to stop recording
+call.stop_recording()
 ```
 
 </TabItem>
@@ -577,15 +351,7 @@ call.listRecordings();
 <TabItem value="py" label="Python">
 
 ```py
-def hello_world():
-    print("Hello, world!")
-```
-
-</TabItem>
-<TabItem value="go" label="Golang">
-
-```go
-TODO
+recordings = call.list_recordings(session="your_session_id")
 ```
 
 </TabItem>

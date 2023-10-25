@@ -8,7 +8,101 @@ title: Recording calls
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
+Calls can be recorded for later use. Calls recording can be started/stopped via API calls or configured to start automatically when the first user joins the call.
+Call recording is done by Stream server-side and later stored on AWS S3, you can also configure your Stream application to have files stored on your own S3 bucket (in that case storage costs will not apply).
+
+By default, calls will be recorded as mp4 video files, you can configure recording to only capture the audio.
+
+Note: by default recordings contain all tracks mixed in a single file, you can follow the discussion [here](https://github.com/GetStream/protocol/discussions/247) if you are interested in different ways to record calls.
+
+## Start and stop call recording
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+// starts recording
+call.startRecording();
+
+// stops the recording for the call
+call.stopRecording();
+```
+
+</TabItem>
+<TabItem value="py" label="Python">
+
+```py
+// starts recording
+call.start_recording()
+
+// stops the recording for the call
+call.stop_recording()
+```
+
+</TabItem>
+<TabItem value="curl" label="cURL">
+
+```bash
+curl -X POST "https://video.stream-io-api.com/video/call/default/${CALL_ID}/start_recording?api_key=${API_KEY}" \
+-H "Authorization: ${JWT_TOKEN}"
+
+curl -X POST "https://video.stream-io-api.com/video/call/default/${CALL_ID}/stop_recording?api_key=${API_KEY}" \
+-H "Authorization: ${JWT_TOKEN}"
+```
+
+</TabItem>
+</Tabs>
+
+## List call recording
+
+This endpoint returns the list of recordings for a call. When using Stream S3 as storage (default) all links are signed and expire after 2-weeks.
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+call.listRecordings();
+```
+
+</TabItem>
+<TabItem value="py" label="Python">
+
+```py
+call.list_recordings();
+```
+
+</TabItem>
+<TabItem value="curl" label="cURL">
+
+```bash
+curl -X GET "https://video.stream-io-api.com/video/call/default/${CALL_ID}/recordings?api_key=${API_KEY}" \
+-H "Authorization: ${JWT_TOKEN}"
+```
+
+</TabItem>
+</Tabs>
+
+## Events
+
+These events are sent to users connected to the call and your webhook/SQS:
+
+- `call.recording_started` when the call recording has started
+- `call.recording_stopped` when the call recording has stopped
+- `call.recording_ready` when the recording is available for download
+- `call.recording_failed` when recording fails for any reason
+
+## User Permissions
+
+The following permissions are checked when users interact with the call recording API.
+
+- `StartRecording` required to start the recording
+- `StopRecording` required to stop the recording
+- `ListRecordings` required to retrieve the list of recordings
+- `DeleteRecording` required to delete an existing recording (including its files if stored using Stream S3 storage)
+
 ## Enabling / Disabling call recording
+
+Recording can be configured from the Dashboard (see call type screen) or directly via the API. It is also possible to change the recording settings for a call and override the default settings coming from the its call type.
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
@@ -53,15 +147,184 @@ call.update({
 ```
 
 </TabItem>
+<TabItem value="py" label="Python">
+
+```py
+# Disable on call level
+call.update_call(UpdateCallRequest(
+    settings_override=CallSettingsRequest(
+        recording=RecordSettingsRequest(
+            mode='disabled',
+        ),
+    ),
+))
+
+# Disable on call type level
+call_type_name = 'default'
+call.update_call_type(call_type_name, UpdateCallTypeRequest(
+    settings=CallSettingsRequest(
+        recording=RecordSettingsRequest(
+            mode='disabled',
+        ),
+    ),
+))
+
+# Automatically record calls
+call.update_call_type(UpdateCallTypeRequest(
+    settings=CallSettingsRequest(
+        recording=RecordSettingsRequest(
+            mode='auto',
+        ),
+    ),
+))
+
+# Enable
+call.update_call(UpdateCallRequest(
+    settings_override=CallSettingsRequest(
+        recording=RecordSettingsRequest(
+            mode='available',
+        ),
+    ),
+))
+
+
+# Other settings
+call.update_call(UpdateCallRequest(
+    settings_override=CallSettingsRequest(
+        recording=RecordSettingsRequest(
+            mode='available',
+            quality='1080p',
+        ),
+    ),
+))
+```
+
+</TabItem>
 </Tabs>
 
-## Start call recording
+## Audio only recording
+
+You can configure your calls to only record the audio tracks and exclude the video. You can do this from the dashboard (Call Types sections) or set it for individual calls.
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
 
 ```js
-call.startRecording();
+// Enable
+call.update({
+  settings_override: {
+    recording: {
+      mode: VideoRecordSettingsRequestModeEnum.AVAILABLE,
+      audio_only: true,
+    },
+  },
+});
+```
+
+</TabItem>
+<TabItem value="py" label="Python">
+
+```py
+# Enable recording
+call.update_call(UpdateCallRequest(
+    settings_override=CallSettingsRequest(
+        recording=RecordSettingsRequest(
+            mode='available',
+            audio_only=True
+        ),
+    ),
+))
+```
+
+</TabItem>
+</Tabs>
+
+## Recording layouts
+
+Recording can be customized in several ways:
+
+- You can pick one of the built-in layouts and pass some options to it
+- You can customize more in detail the style of the call by providing your own CSS file
+- You can use your own recording application
+
+There are three available layouts you can use for your calls: `"single_participant"`, `"grid"` and `"spotlight"`
+
+### Single Participant
+
+This layout shows only one participant video at the time, other video tracks are hidden.
+
+<img
+  src={require('../assets/layout_single-participant.png').default}
+  style={{ width: '50%' }}
+/>
+
+The visible video is selected based on this priority:
+
+- Participant is pinned
+- Participant is screen-sharing
+- Participant is the dominant speaker
+- Participant has a video track
+
+### Grid
+
+This layout shows a configurable number of tracks in a equally sized grid.
+
+<img
+  src={require('../assets/layout_grid.png').default}
+  style={{ width: '50%' }}
+/>
+
+### Spotlight
+
+This layout shows a video in a spotlight and the rest of the participants in a separate list or grid.
+
+<img
+  src={require('../assets/layout_spotlight.png').default}
+  style={{ width: '50%' }}
+/>
+
+## Layout options
+
+Each layout has a number of options that you can configure, here is an example:
+
+<img
+  src={require('../assets/layout_custom_options.png').default}
+  style={{ width: '50%' }}
+/>
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+const layoutOptions = {
+  'logo.image_url':
+    'https://theme.zdassets.com/theme_assets/9442057/efc3820e436f9150bc8cf34267fff4df052a1f9c.png',
+  'logo.horizontal_position': 'center',
+  'title.text': 'Building Stream Video Q&A',
+  'title.horizontal_position': 'center',
+  'title.color': 'black',
+  'participant_label.border_radius': '0px',
+  'participant.border_radius': '0px',
+  'layout.spotlight.participants_bar_position': 'top',
+  'layout.background_color': '#f2f2f2',
+  'participant.placeholder_background_color': '#1f1f1f',
+  'layout.single-participant.padding_inline': '20%',
+  'participant_label.background_color': 'transparent',
+};
+
+client.video.updateCallType(callTypeName, {
+  settings: {
+    recording: {
+      mode: VideoRecordSettingsRequestModeEnum.AVAILABLE,
+      audio_only: false,
+      quality: VideoRecordSettingsRequestQualityEnum._1080P,
+      layout: {
+        name: VideoLayoutSettingsNameEnum.SPOTLIGHT,
+        options: layoutOptions,
+      },
+    },
+  },
+});
 ```
 
 </TabItem>
@@ -73,65 +336,123 @@ def hello_world():
 ```
 
 </TabItem>
-<TabItem value="go" label="Golang">
-
-```go
-func main() {
-	apiKey := os.Getenv("API_KEY")
-	apiSecret := os.Getenv("API_SECRET")
-	userID := os.Getenv("USER_ID")
-	url := os.Getenv("URL")
-
-	if apiKey == "" || apiSecret == "" || userID == "" || url == "" {
-		panic("API_KEY, API_SECRET, USER_ID and URL env variables must be set")
-	}
-
-	tokenProvider := videosdk.UserToken(apiSecret, userID, 24*time.Hour)
-	sdk := videosdk.New(apiKey, tokenProvider)
-
-	token, err := tokenProvider(sdk.APIKey())
-	if err != nil {
-		panic(err)
-	}
-
-	client := videosdk.NewCoordinatorClientSDK(url, sdk.APIKey(), token)
-	startResponse, err := client.StartRecording(models.CallTypeDefault, callID, &models.StartRecordingRequest{
-		Type: "default", ID: callID,
-	})
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("response", startResponse)
-
-	stopResponse, err := client.StopRecording(models.CallTypeDefault, callID, &models.StopRecordingRequest{
-		Type: "default", ID: callID,
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println("response", stopResponse)
-}
-```
-
-</TabItem>
-<TabItem value="curl" label="cURL">
-
-```bash
-curl -X POST "https://video.stream-io-api.com/video/call/default/${CALL_ID}/start_recording?api_key=${API_KEY}" \
--H "Authorization: ${JWT_TOKEN}"
-```
-
-</TabItem>
 </Tabs>
 
-## Stop call recording
+Here you can find the complete list of options available to each layout.
+
+### Single Participant
+
+| Option                                   | Type    | Default     | Allowed Values        | Description                                                                                                                                                                                          |
+| ---------------------------------------- | ------- | ----------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| video.background_color                   | color   | `#000000`   |                       | The background color                                                                                                                                                                                 |
+| video.screenshare_scale_mode             | string  | `fit`       | `[fit fill]`          | How source video is displayed inside a box when aspect ratio does not match. 'fill' crops the video to fill the entire box, 'fit' ensures the video fits inside the box by padding necessary padding |
+| participant.label_horizontal_position    | string  | `left`      | `[center left right]` | horizontal position for the participant label                                                                                                                                                        |
+| participant.video_border_radius          | number  | `1.2`       |                       | The corner radius used for the participant video border                                                                                                                                              |
+| logo.horizontal_position                 | string  | `center`    | `[center left right]` | horizontal position of the logo                                                                                                                                                                      |
+| participant.label_display                | boolean | `true`      |                       | Show the participant label                                                                                                                                                                           |
+| participant.label_text_color             | color   | `#000000`   |                       | Text color of the participant label                                                                                                                                                                  |
+| participant.label_background_color       | color   | `#00000000` |                       | Background color of the participant label                                                                                                                                                            |
+| participant.label_border_radius          | number  | `1.2`       |                       | The corner radius used for the label border                                                                                                                                                          |
+| logo.vertical_position                   | string  | `top`       | `[top bottom center]` | vertical position of the logo                                                                                                                                                                        |
+| participant.label_display_border         | boolean | `true`      |                       | Render label border                                                                                                                                                                                  |
+| participant.label_vertical_position      | string  | `bottom`    | `[top bottom center]` | vertical position for the participant label                                                                                                                                                          |
+| participant.video_highlight_border_color | color   | `#7CFC00`   |                       | The color used for highlighted participants video border                                                                                                                                             |
+| participant.video_border_rounded         | boolean | `true`      |                       | Render the participant video border rounded                                                                                                                                                          |
+| participant.video_border_width           | boolean | `true`      |                       | The stroke width used to render a participant border                                                                                                                                                 |
+| participant.placeholder_background_color | color   | `#000000`   |                       | Sets the background color for video placeholder tile                                                                                                                                                 |
+| video.scale_mode                         | string  | `fill`      | `[fit fill]`          | How source video is displayed inside a box when aspect ratio does not match. 'fill' crops the video to fill the entire box, 'fit' ensures the video fits inside the box by padding necessary padding |
+| logo.image_url                           | string  |             |                       | add a logo image to the video layout                                                                                                                                                                 |
+| participant.label_border_color           | color   | `#CCCCCC`   |                       | Label border color                                                                                                                                                                                   |
+| participant.label_border_rounded         | boolean | `true`      |                       | Render the label border rounded                                                                                                                                                                      |
+| participant.video_border_color           | color   | `#CCCCCC`   |                       | The color used for the participant video border                                                                                                                                                      |
+
+### Spotlight
+
+| Option                                   | Type    | Default     | Allowed Values                        | Description                                                                                                                                                                                          |
+| ---------------------------------------- | ------- | ----------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| participant.video_border_width           | boolean | `true`      |                                       | The stroke width used to render a participant border                                                                                                                                                 |
+| grid.position                            | string  | `bottom`    | `[top bottom left right]`             | position of the grid in relation to the spotlight                                                                                                                                                    |
+| participant.label_display_border         | boolean | `true`      |                                       | Render label border                                                                                                                                                                                  |
+| participant.label_horizontal_position    | string  | `left`      | `[center left right]`                 | horizontal position for the participant label                                                                                                                                                        |
+| participant.video_border_color           | color   | `#CCCCCC`   |                                       | The color used for the participant video border                                                                                                                                                      |
+| grid.columns                             | number  | `5`         |                                       | how many column to use in grid mode                                                                                                                                                                  |
+| video.background_color                   | color   | `#000000`   |                                       | The background color                                                                                                                                                                                 |
+| logo.horizontal_position                 | string  | `center`    | `[center left right]`                 | horizontal position of the logo                                                                                                                                                                      |
+| participant.label_border_color           | color   | `#CCCCCC`   |                                       | Label border color                                                                                                                                                                                   |
+| participant.label_background_color       | color   | `#00000000` |                                       | Background color of the participant label                                                                                                                                                            |
+| grid.cell_padding                        | size    | `10`        |                                       | padding between cells                                                                                                                                                                                |
+| screenshare_layout                       | string  | `spotlight` | `[grid spotlight single-participant]` | The layout to use when entering screenshare mode                                                                                                                                                     |
+| grid.size_percentage                     | number  | `20`        |                                       | The percentage of the screen the grid should take up                                                                                                                                                 |
+| participant.label_border_radius          | number  | `1.2`       |                                       | The corner radius used for the label border                                                                                                                                                          |
+| participant.video_highlight_border_color | color   | `#7CFC00`   |                                       | The color used for highlighted participants video border                                                                                                                                             |
+| participant.placeholder_background_color | color   | `#000000`   |                                       | Sets the background color for video placeholder tile                                                                                                                                                 |
+| participant.video_border_radius          | number  | `1.2`       |                                       | The corner radius used for the participant video border                                                                                                                                              |
+| participant.label_display                | boolean | `true`      |                                       | Show the participant label                                                                                                                                                                           |
+| participant.label_border_rounded         | boolean | `true`      |                                       | Render the label border rounded                                                                                                                                                                      |
+| participant.video_border_rounded         | boolean | `true`      |                                       | Render the participant video border rounded                                                                                                                                                          |
+| grid.rows                                | number  | `1`         |                                       | how many rows to use in grid mode                                                                                                                                                                    |
+| grid.margin                              | size    | `10`        |                                       | the margin between grid and spotlight                                                                                                                                                                |
+| video.scale_mode                         | string  | `fill`      | `[fit fill]`                          | How source video is displayed inside a box when aspect ratio does not match. 'fill' crops the video to fill the entire box, 'fit' ensures the video fits inside the box by padding necessary padding |
+| logo.image_url                           | string  |             |                                       | add a logo image to the video layout                                                                                                                                                                 |
+| logo.vertical_position                   | string  | `top`       | `[top bottom center]`                 | vertical position of the logo                                                                                                                                                                        |
+| video.screenshare_scale_mode             | string  | `fit`       | `[fit fill]`                          | How source video is displayed inside a box when aspect ratio does not match. 'fill' crops the video to fill the entire box, 'fit' ensures the video fits inside the box by padding necessary padding |
+| participant.label_text_color             | color   | `#000000`   |                                       | Text color of the participant label                                                                                                                                                                  |
+| participant.label_vertical_position      | string  | `bottom`    | `[top bottom center]`                 | vertical position for the participant label                                                                                                                                                          |
+
+### Grid
+
+| Option                                   | Type    | Default     | Allowed Values                        | Description                                                                                                                                                                                          |
+| ---------------------------------------- | ------- | ----------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| logo.image_url                           | string  | ``          |                                       | add a logo image to the video layout                                                                                                                                                                 |
+| logo.vertical_position                   | string  | `top`       | `[top bottom center]`                 | vertical position of the logo                                                                                                                                                                        |
+| participant.label_horizontal_position    | string  | `left`      | `[center left right]`                 | horizontal position for the participant label                                                                                                                                                        |
+| participant.placeholder_background_color | color   | `#000000`   |                                       | Sets the background color for video placeholder tile                                                                                                                                                 |
+| video.scale_mode                         | string  | `fill`      | `[fit fill]`                          | How source video is displayed inside a box when aspect ratio does not match. 'fill' crops the video to fill the entire box, 'fit' ensures the video fits inside the box by padding necessary padding |
+| logo.horizontal_position                 | string  | `center`    | `[center left right]`                 | horizontal position of the logo                                                                                                                                                                      |
+| participant.video_border_rounded         | boolean | `true`      |                                       | Render the participant video border rounded                                                                                                                                                          |
+| participant.label_display_border         | boolean | `true`      |                                       | Render label border                                                                                                                                                                                  |
+| participant.label_border_color           | color   | `#CCCCCC`   |                                       | Label border color                                                                                                                                                                                   |
+| grid.cell_padding                        | size    | `10`        |                                       | padding between cells                                                                                                                                                                                |
+| video.screenshare_scale_mode             | string  | `fit`       | `[fit fill]`                          | How source video is displayed inside a box when aspect ratio does not match. 'fill' crops the video to fill the entire box, 'fit' ensures the video fits inside the box by padding necessary padding |
+| video.background_color                   | color   | `#000000`   |                                       | The background color                                                                                                                                                                                 |
+| participant.label_border_radius          | number  | `1.2`       |                                       | The corner radius used for the label border                                                                                                                                                          |
+| grid.size_percentage                     | number  | `90`        |                                       | The percentage of the screen the grid should take up                                                                                                                                                 |
+| grid.margin                              | size    | `10`        |                                       | the margin between grid and spotlight                                                                                                                                                                |
+| grid.columns                             | number  | `5`         |                                       | how many column to use in grid mode                                                                                                                                                                  |
+| participant.label_vertical_position      | string  | `bottom`    | `[top bottom center]`                 | vertical position for the participant label                                                                                                                                                          |
+| participant.label_display                | boolean | `true`      |                                       | Show the participant label                                                                                                                                                                           |
+| participant.video_border_color           | color   | `#CCCCCC`   |                                       | The color used for the participant video border                                                                                                                                                      |
+| participant.video_border_width           | boolean | `true`      |                                       | The stroke width used to render a participant border                                                                                                                                                 |
+| screenshare_layout                       | string  | `spotlight` | `[grid spotlight single-participant]` | The layout to use when entering screenshare mode                                                                                                                                                     |
+| participant.label_text_color             | color   | `#000000`   |                                       | Text color of the participant label                                                                                                                                                                  |
+| participant.label_background_color       | color   | `#00000000` |                                       | Background color of the participant label                                                                                                                                                            |
+| participant.label_border_rounded         | boolean | `true`      |                                       | Render the label border rounded                                                                                                                                                                      |
+| participant.video_border_radius          | number  | `1.2`       |                                       | The corner radius used for the participant video border                                                                                                                                              |
+| participant.video_highlight_border_color | color   | `#7CFC00`   |                                       | The color used for highlighted participants video border                                                                                                                                             |
+| grid.rows                                | number  | `4`         |                                       | how many rows to use in grid mode                                                                                                                                                                    |
+
+## Custom recording styling using external CSS
+
+You can customize how recorded calls look like by providing an external CSS file, the CSS file needs to be publicly available and ideally hosted on a CDN to ensure best performance.
+The best way to find the right CSS setup is by running the layout app directly, the application is [publicly available on Github here](https://github.com/GetStream/stream-video-js/tree/main/sample-apps/react/egress-composite) and contains instructions on how to be used.
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
 
 ```js
-call.stopRecording();
+client.video.updateCallType(callTypeName, {
+  settings: {
+    recording: {
+      mode: VideoRecordSettingsRequestModeEnum.AVAILABLE,
+      audio_only: false,
+      quality: VideoRecordSettingsRequestQualityEnum._1080P,
+      layout: {
+        name: VideoLayoutSettingsNameEnum.SPOTLIGHT,
+        external_css_url: 'https://path/to/custom.css',
+      },
+    },
+  },
+});
 ```
 
 </TabItem>
@@ -143,65 +464,31 @@ def hello_world():
 ```
 
 </TabItem>
-<TabItem value="go" label="Golang">
-
-```go
-func main() {
-	apiKey := os.Getenv("API_KEY")
-	apiSecret := os.Getenv("API_SECRET")
-	userID := os.Getenv("USER_ID")
-	url := os.Getenv("URL")
-
-	if apiKey == "" || apiSecret == "" || userID == "" || url == "" {
-		panic("API_KEY, API_SECRET, USER_ID and URL env variables must be set")
-	}
-
-	tokenProvider := videosdk.UserToken(apiSecret, userID, 24*time.Hour)
-	sdk := videosdk.New(apiKey, tokenProvider)
-
-	token, err := tokenProvider(sdk.APIKey())
-	if err != nil {
-		panic(err)
-	}
-
-	client := videosdk.NewCoordinatorClientSDK(url, sdk.APIKey(), token)
-	startResponse, err := client.StartRecording(models.CallTypeDefault, callID, &models.StartRecordingRequest{
-		Type: "default", ID: callID,
-	})
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("response", startResponse)
-
-	stopResponse, err := client.StopRecording(models.CallTypeDefault, callID, &models.StopRecordingRequest{
-		Type: "default", ID: callID,
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println("response", stopResponse)
-}
-```
-
-</TabItem>
-<TabItem value="curl" label="cURL">
-
-```bash
-curl -X POST "https://video.stream-io-api.com/video/call/default/${CALL_ID}/start_recording?api_key=${API_KEY}" \
--H "Authorization: ${JWT_TOKEN}"
-```
-
-</TabItem>
 </Tabs>
 
-## List call recording
+## Advanced - record calls using a custom web application
+
+If needed, you can use your own custom application to record a call. This is the most flexible and complex approach to record calls, make sure to reach out to our customer support before going with this approach.
+
+The layout app used to record calls is available on Github and is a good starting point, the repository also includes information on how to build your own.
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
 
 ```js
-call.listRecordings();
+client.video.updateCallType(callTypeName, {
+  settings: {
+    recording: {
+      mode: VideoRecordSettingsRequestModeEnum.AVAILABLE,
+      audio_only: false,
+      quality: VideoRecordSettingsRequestQualityEnum._1080P,
+      layout: {
+        name: VideoLayoutSettingsNameEnum.CUSTOM,
+        external_app_url: 'https://path/to/layout/app',
+      },
+    },
+  },
+});
 ```
 
 </TabItem>
@@ -213,23 +500,8 @@ def hello_world():
 ```
 
 </TabItem>
-<TabItem value="go" label="Golang">
-
-```go
-TODO
-```
-
-</TabItem>
-<TabItem value="curl" label="cURL">
-
-```bash
-curl -X GET "https://video.stream-io-api.com/video/call/default/${CALL_ID}/${SESSION_ID}/recordings?api_key=${API_KEY}" \
--H "Authorization: ${JWT_TOKEN}"
-```
-
-</TabItem>
 </Tabs>
 
-## Delete call recording
+## Client-side recording
 
-// TODO: Add API endpoint
+Unfortunately there is no direct support for client-side recording at the moment. Call recording at the moment is done by Stream server-side. If client-side recording is important for you please make sure to follow the conversation [here](https://github.com/GetStream/protocol/discussions/249).
