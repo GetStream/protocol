@@ -10,18 +10,24 @@ import TabItem from '@theme/TabItem';
 
 ## Creating users
 
+Stream Users require only an id to be created. Users can be created with role of user or admin. The role will be set to user if a value is not provided in the request. There are additional properties you can provide to further describe your users.
+
+The `name` and `image` fields are special fields that are supported by client-side SDKs.
+
+You can provide additional data for the user object using the `custom` field.
+
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
 
 ```js
 const newUser: UserObjectRequest = {
   id: 'userid',
-  role: "user",
+  role: 'user',
   custom: {
-    color: 'red'
+    color: 'red',
   },
   name: 'This is a test user',
-  image: 'link/to/profile/image'
+  image: 'link/to/profile/image',
 };
 await client.upsertUsers({
   users: {
@@ -35,18 +41,23 @@ await client.upsertUsers({
 
 ## Updating users
 
+There are two ways to update user objects:
+
+- Updating will replace the existing user object
+- Partial update will let you choose which fields you want to chage/unset
+
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
 
 ```js
 const user: UserObjectRequest = {
   id: 'userid',
-  role: "user",
+  role: 'user',
   custom: {
-    color: 'red'
+    color: 'red',
   },
   name: 'This is a test user',
-  image: 'link/to/profile/image'
+  image: 'link/to/profile/image',
 };
 client.upsertUsers({
   users: {
@@ -55,21 +66,70 @@ client.upsertUsers({
 });
 
 // or
-client.updateUsersPartial({users: [
-  {
-    id: user.id,
-	set: {
-	  color: 'blue'
-	},
-	unset: ['name'],
-  }
-]});
+client.updateUsersPartial({
+  users: [
+    {
+      id: user.id,
+      set: {
+        color: 'blue',
+      },
+      unset: ['name'],
+    },
+  ],
+});
 ```
 
 </TabItem>
 </Tabs>
 
+## Anonymous users
+
+Anonymous users are users that are not authenticated. It's common to use this for watching a livestream or similar where you aren't authenticated. Anonymous users can be connected using client-side SDKs.
+
+## Guest users
+
+Guest users are temporary user accounts. You can use it to temporarily give someone a name and image when joining a call. Guest users can aslso be created cliend-side.
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+const guest: UserObjectRequest = {
+  id: '<id>',
+  name: '<name>',
+  custom: {
+    color: 'red',
+  },
+};
+
+const guest = (await client.createGuest({ user: guest })).user;
+```
+
+</TabItem>
+</Tabs>
+
+## Deactivating and deleting users
+
+While it is usually safer for data retention to deactivate a user, some use cases require completely deleting a user and their data.
+
+Once a user has been deleted, it cannot be un-deleted and the user_id cannot be used again.
+
+```js
+client.deactivateUser({
+  user_id: '<id>',
+});
+
+client.deleteUser({ userId: '<id>' });
+```
+
 ## User tokens
+
+Stream uses JWT (JSON Web Tokens) to authenticate chat users, enabling them to login. Knowing whether a user is authorized to perform certain actions is managed separately via a role based permissions system. Tokens need to be generated server-side.
+
+You can optionally provide
+
+- expiration time
+- issued at date which is necessary if you manually wan to revoke tokens
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
@@ -130,6 +190,8 @@ func main() {
 
 ## Call tokens
 
+Call tokens contain a list of call IDs. If a user is authenticated with a call token, they can only access the specified calls.
+
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
 
@@ -142,7 +204,12 @@ const iat = Math.round(new Date().getTime() / 1000);
 
 const call_cids = ['default:call1', 'livestream:call2'];
 
-client.createToken(user_id=user_id, exp=exp, iat=iat, call_cids=call_cids);
+client.createToken(
+  (user_id = user_id),
+  (exp = exp),
+  (iat = iat),
+  (call_cids = call_cids),
+);
 ```
 
 </TabItem>
@@ -192,5 +259,16 @@ func main() {
 
 ## Token expiration and token providers
 
-TODO: explain that tokens should have an expiration
-TODO: mention that in a production environment you have an endpoint to send fresh tokens to users
+At a high level, the Token Provider is an endpoint on your server that can perform the following sequence of tasks:
+
+1. Receive information about a user from the front end.
+
+2. Validate that user information against your system.
+
+3. Provide a User-ID corresponding to that user to the server client's token creation method.
+
+4. Return that token to the front end.
+
+Tokens can only be safely generated from a server. This means you will need to implement a Token Provider prior to deploying your application to production. To conduct development before implementing a Token Provider, you will need to disable token authentication.
+
+Tokens also should have an expiration date to ensure adequate security. Once a token is expired, cliend-side SDKs can automatically call an endpoint to refresh the token, this endpoint should also be part of the Token Provider implementation.
