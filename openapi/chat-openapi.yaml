@@ -1529,12 +1529,6 @@ components:
     ChannelGetOrCreateRequest:
       nullable: true
       properties:
-        client_id:
-          type: string
-          x-stream-index: "001.002"
-        connection_id:
-          type: string
-          x-stream-index: "001.003"
         data:
           $ref: '#/components/schemas/ChannelRequest'
           x-stream-index: "004"
@@ -1550,21 +1544,11 @@ components:
         messages:
           $ref: '#/components/schemas/MessagePaginationParamsRequest'
           x-stream-index: "009"
-        presence:
-          description: Fetch user presence info
-          title: Presence
-          type: boolean
-          x-stream-index: "007"
         state:
           description: Refresh channel state
           title: State
           type: boolean
           x-stream-index: "006"
-        watch:
-          description: Start watching the channel
-          title: Watch
-          type: boolean
-          x-stream-index: "005"
         watchers:
           $ref: '#/components/schemas/PaginationParamsRequest'
           x-stream-index: "011"
@@ -2374,16 +2358,6 @@ components:
       - messages
       - pinned_messages
       - members
-      type: object
-    ChannelStopWatchingRequest:
-      nullable: true
-      properties:
-        client_id:
-          type: string
-          x-stream-index: "001.002"
-        connection_id:
-          type: string
-          x-stream-index: "001.003"
       type: object
     ChannelTruncatedEvent:
       nullable: true
@@ -8610,12 +8584,6 @@ components:
     QueryChannelsRequest:
       nullable: true
       properties:
-        client_id:
-          type: string
-          x-stream-index: "011.002"
-        connection_id:
-          type: string
-          x-stream-index: "011.003"
         filter_conditions:
           additionalProperties: {}
           type: object
@@ -8816,12 +8784,6 @@ components:
       type: object
     QueryUsersRequest:
       properties:
-        client_id:
-          type: string
-          x-stream-index: "006.002"
-        connection_id:
-          type: string
-          x-stream-index: "006.003"
         filter_conditions:
           additionalProperties: {}
           description: User filters
@@ -9758,87 +9720,6 @@ components:
           title: Field
           type: string
           x-stream-index: "001"
-      type: object
-    StopWatchingResponse:
-      nullable: true
-      properties:
-        duration:
-          description: Duration of the request in human-readable format
-          title: Duration
-          type: string
-          x-stream-index: "001.001"
-      required:
-      - duration
-      type: object
-    SyncRequest:
-      nullable: true
-      properties:
-        channel_cids:
-          description: List of channel CIDs to sync
-          items:
-            type: string
-          maximum: 255
-          minimum: 1
-          title: Channel CIDs
-          type: array
-          x-stream-index: "001"
-        client_id:
-          type: string
-          x-stream-index: "006.002"
-        connection_id:
-          type: string
-          x-stream-index: "006.003"
-        last_sync_at:
-          description: Date from which synchronization should happen
-          format: date-time
-          title: Last sync at
-          type: string
-          x-stream-index: "002"
-        user:
-          $ref: '#/components/schemas/UserObjectRequest'
-          x-stream-index: "005.002"
-        user_id:
-          type: string
-          x-stream-index: "005.001"
-        watch:
-          description: If set to true this will start watching requested and newly
-            added channels that user has access to. If error occurred with this option
-            enabled and it is not an input error - channels will still be watched.
-          title: Watch synced channels
-          type: boolean
-          x-stream-index: "004"
-        with_inaccessible_cids:
-          description: If set to true this will add 'inaccessible_cids' to response
-            type
-          title: With inaccessible CIDs
-          type: boolean
-          x-stream-index: "003"
-      required:
-      - last_sync_at
-      type: object
-    SyncResponse:
-      nullable: true
-      properties:
-        duration:
-          type: string
-          x-stream-index: "003.001"
-        events:
-          description: List of events
-          items:
-            $ref: '#/components/schemas/Event'
-          title: Events
-          type: array
-          x-stream-index: "001"
-        inaccessible_cids:
-          description: List of CIDs that user can't access
-          items:
-            type: string
-          title: Inaccessible CIDs
-          type: array
-          x-stream-index: "002"
-      required:
-      - events
-      - duration
       type: object
     TargetResolution:
       properties:
@@ -11713,7 +11594,6 @@ components:
       x-stream-is-event: true
       x-stream-ws-base-event-name: ChatEvent
     UserWatchingStopEvent:
-      nullable: true
       properties:
         channel_id:
           type: string
@@ -11877,7 +11757,7 @@ externalDocs:
   url: https://getstream.io/chat/docs/
 info:
   title: Stream Chat API
-  version: v89.13.0
+  version: v89.14.0
 openapi: 3.0.3
 paths:
   /app:
@@ -12289,17 +12169,6 @@ paths:
         Required permissions:
         - ReadChannel
       operationId: QueryChannels
-      parameters:
-      - in: query
-        name: client_id
-        schema:
-          type: string
-          x-stream-index: "011.002"
-      - in: query
-        name: connection_id
-        schema:
-          type: string
-          x-stream-index: "011.003"
       requestBody:
         content:
           application/json:
@@ -13322,16 +13191,6 @@ paths:
           type: string
           writeOnly: true
           x-stream-index: "003"
-      - in: query
-        name: client_id
-        schema:
-          type: string
-          x-stream-index: "001.002"
-      - in: query
-        name: connection_id
-        schema:
-          type: string
-          x-stream-index: "001.003"
       requestBody:
         content:
           application/json:
@@ -13550,87 +13409,6 @@ paths:
           description: When channel is shown
           schema:
             ref: '#/components/schemas/ChannelVisibleEvent'
-  /channels/{type}/{id}/stop-watching:
-    post:
-      description: |
-        Call this method to stop receiving channel events
-
-        Sends events:
-        - user.watching.stop
-      operationId: StopWatchingChannel
-      parameters:
-      - in: path
-        name: type
-        required: true
-        schema:
-          type: string
-          writeOnly: true
-          x-stream-index: "002.001"
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-          writeOnly: true
-          x-stream-index: "002.002"
-      - in: query
-        name: client_id
-        schema:
-          type: string
-          x-stream-index: "001.002"
-      - in: query
-        name: connection_id
-        schema:
-          type: string
-          x-stream-index: "001.003"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ChannelStopWatchingRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StopWatchingResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-          headers:
-            X-RateLimit-Limit:
-              description: The number of allowed requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Remaining:
-              description: The number of remaining requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Reset:
-              description: Timestamp when number of requests will be reset
-              schema:
-                type: integer
-      summary: Stop watching channel
-      tags:
-      - Channels
-      x-stream-events:
-        user.watching.stop: When successfully stopped watching
-      x-stream-events-v2:
-        user.watching.stop:
-          description: When successfully stopped watching
-          schema:
-            ref: '#/components/schemas/UserWatchingStopEvent'
   /channels/{type}/{id}/truncate:
     post:
       description: |
@@ -17307,86 +17085,6 @@ paths:
       x-stream-docs-page-id: search
       x-stream-permissions:
         ReadChannel: To read channels that were found by search
-  /sync:
-    post:
-      description: |
-        Returns all events happened since client disconnect in specified channels
-
-        Required permissions:
-        - ReadChannel
-      operationId: Sync
-      parameters:
-      - in: query
-        name: with_inaccessible_cids
-        schema:
-          description: If set to true this will add 'inaccessible_cids' to response
-            type
-          title: With inaccessible CIDs
-          type: boolean
-          x-stream-index: "003"
-      - in: query
-        name: watch
-        schema:
-          description: If set to true this will start watching requested and newly
-            added channels that user has access to. If error occurred with this option
-            enabled and it is not an input error - channels will still be watched.
-          title: Watch synced channels
-          type: boolean
-          x-stream-index: "004"
-      - in: query
-        name: client_id
-        schema:
-          type: string
-          x-stream-index: "006.002"
-      - in: query
-        name: connection_id
-        schema:
-          type: string
-          x-stream-index: "006.003"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SyncRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SyncResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-          headers:
-            X-RateLimit-Limit:
-              description: The number of allowed requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Remaining:
-              description: The number of remaining requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Reset:
-              description: Timestamp when number of requests will be reset
-              schema:
-                type: integer
-      summary: Sync
-      tags:
-      - Channels
-      - Events
-      x-stream-permissions:
-        ReadChannel: To access channels that were requested
   /tasks/{id}:
     get:
       description: |
