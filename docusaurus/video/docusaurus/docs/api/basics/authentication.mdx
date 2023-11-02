@@ -10,7 +10,7 @@ import TabItem from '@theme/TabItem';
 
 ## Creating users
 
-Stream Users require only an id to be created. Users can be created with role of user or admin. The role will be set to user if a value is not provided in the request. There are additional properties you can provide to further describe your users.
+Stream Users require only an ID to be created. Users can be created with the role of user or admin. The role will be set to user if a value is not provided in the request. There are additional properties you can provide to further describe your users.
 
 The `name` and `image` fields are special fields that are supported by client-side SDKs.
 
@@ -37,6 +37,18 @@ await client.upsertUsers({
 ```
 
 </TabItem>
+<TabItem value="py" label="Python">
+
+```py
+users = {}
+user = UserRequest(
+id='user_id', role="user", custom={"color": "red"}, name="This is a test user",image= "link/to/profile/image",
+)
+users[user.id] = user
+client.upsert_users(users=users)
+```
+
+</TabItem>
 </Tabs>
 
 ## Updating users
@@ -44,7 +56,7 @@ await client.upsertUsers({
 There are two ways to update user objects:
 
 - Updating will replace the existing user object
-- Partial update will let you choose which fields you want to chage/unset
+- Partial update will let you choose which fields you want to change/unset
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
@@ -80,6 +92,38 @@ client.updateUsersPartial({
 ```
 
 </TabItem>
+<TabItem value="py" label="Python">
+
+```py
+users = {}
+user = UserRequest(
+  id= 'userid',
+  role= 'user',
+  custom= {
+    "color": 'red',
+  },
+  name= 'This is a test user',
+  image= 'link/to/profile/image',
+)
+
+users[user.id] = user
+client.upsert_users(users=users)
+
+// or
+client.update_users_partial(
+  users= [
+    {
+      id: user.id,
+      set: {
+        color: 'blue',
+      },
+      unset: ['name'],
+    },
+  ],
+)
+```
+
+</TabItem>
 </Tabs>
 
 ## Anonymous users
@@ -88,7 +132,7 @@ Anonymous users are users that are not authenticated. It's common to use this fo
 
 ## Guest users
 
-Guest users are temporary user accounts. You can use it to temporarily give someone a name and image when joining a call. Guest users can aslso be created cliend-side.
+Guest users are temporary user accounts. You can use it to temporarily give someone a name and image when joining a call. Guest users can aslso be created client-side.
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
@@ -106,13 +150,31 @@ const guest = (await client.createGuest({ user: guest })).user;
 ```
 
 </TabItem>
+<TabItem value="py" label="Python">
+
+```py
+guest = UserRequest(
+  id = '<id>',
+  name= '<name>',
+  custom= {
+    "color": 'red',
+  },
+)
+
+guest = (client.video.create_guest(user=guest)).user
+```
+
+</TabItem>
 </Tabs>
 
 ## Deactivating and deleting users
 
 While it is usually safer for data retention to deactivate a user, some use cases require completely deleting a user and their data.
 
-Once a user has been deleted, it cannot be un-deleted and the user_id cannot be used again.
+Once a user has been deleted, it cannot be un-deleted, and the user_id cannot be used again.
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
 
 ```js
 client.deactivateUser({
@@ -122,14 +184,29 @@ client.deactivateUser({
 client.deleteUser({ userId: '<id>' });
 ```
 
+</TabItem>
+
+<TabItem value="py" label="Python">
+
+```py
+client.deactivate_user(
+  user_id= '<id>',
+)
+
+client.delete_user( user_id= '<id>' )
+```
+
+</TabItem>
+</Tabs>
+
 ## User tokens
 
-Stream uses JWT (JSON Web Tokens) to authenticate chat users, enabling them to login. Knowing whether a user is authorized to perform certain actions is managed separately via a role based permissions system. Tokens need to be generated server-side.
+Stream uses JWT (JSON Web Tokens) to authenticate chat users, enabling them to log in. Knowing whether a user is authorized to perform certain actions is managed separately via a role-based permissions system. Tokens need to be generated server-side.
 
 You can optionally provide
 
-- expiration time
-- issued at date which is necessary if you manually wan to revoke tokens
+- Expiration time. By default tokens don't have an expiration date.
+- Issued at date, which is necessary if you manually want to revoke tokens. By default, the issued at date is set to the current date.
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
@@ -179,12 +256,7 @@ const iat = Math.round(new Date().getTime() / 1000);
 
 const call_cids = ['default:call1', 'livestream:call2'];
 
-client.createToken(
-  (user_id = user_id),
-  (exp = exp),
-  (iat = iat),
-  (call_cids = call_cids),
-);
+client.createCallToken(userId, call_cids, exp, iat);
 ```
 
 </TabItem>
@@ -209,5 +281,5 @@ client.create_token(user_id=user_id, exp, iat, call_cids)
 
 ## Provisioning token in production
 
-Your authentication service is responsible for generating token for your users. It is highly recommended to always create tokens with an expiration.
-All SDK make it easy to automatically re-fetch tokens from your backend servers with token providers when they expire.
+Your authentication service is responsible for generating tokens for your users. It is highly recommended to always create tokens with an expiration.
+All SDKs make it easy to automatically re-fetch tokens from your backend servers with token providers when they expire.

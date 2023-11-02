@@ -8,16 +8,17 @@ title: Get started
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import RTMP from '../_common_/rtmp.mdx';
+import Broadcast from '../_common_/broadcast.mdx';
 
-For the average Stream integration, the development work focuses on code that executes in the client. However, some tasks must be executed from the server for safety (for example token generation).
+For the average Stream integration, the development work focuses on code that executes in the client. However, some tasks must be executed from the server for safety (for example, token generation).
 
-Stream provides server-side SDKs to help executing these tasks.
+Stream provides server-side SDKs to help execute these tasks.
 
 You can reference our [development roadmap](https://github.com/GetStream/protocol/discussions/177) to know which languages and features are supported.
 
 ## Installation
 
-All official SDK are available on package managers, full source code is available on the GetStream Github organization.
+All official SDKs are available on package managers, full source code is available on the GetStream Github organization.
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
@@ -40,7 +41,7 @@ pip install getstream
 
 ## Creating client
 
-To create a server-side client you'll need your **API key** and **secret**, both of them can be found in your [Stream Dashboard](https://dashboard.getstream.io/).
+To create a server-side client, you'll need your **API key** and **secret**. Both of them can be found in your [Stream Dashboard](https://dashboard.getstream.io/).
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
@@ -65,7 +66,7 @@ client = Stream(api_key="your_api_key", api_secret="your_api_secret")
 
 ## Creating user tokens
 
-Tokens need to be generated server-side. Typically you integrate this into the part of your codebase where you login or register users. The tokens provide a way to authenticate a user or give access to a specific set of video/audio calls.
+Tokens need to be generated server-side. Typically, you integrate this into the part of your codebase where you log in or register users. The tokens provide a way to authenticate a user or give access to a specific set of video/audio calls.
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
@@ -78,10 +79,6 @@ const exp = Math.round(new Date().getTime() / 1000) + 60 * 60;
 const iat = Math.round(new Date().getTime() / 1000);
 
 client.createToken(userId, exp, iat);
-
-// optionally provide call cids
-const call_cids = ['default:call1', 'livestream:call2'];
-client.createToken(userId, exp, iat, call_cids);
 ```
 
 </TabItem>
@@ -98,7 +95,7 @@ token = client.create_token("admin-user")
 
 You can create a call by providing the call type and an ID:
 
-- The [call type](call_types/builtin) controls which features are enabled, and sets up permissions.
+- The [call type](call_types/builtin) controls which features are enabled and sets up permissions.
 - Calls IDs can be reused, which means they can be joined multiple times, so it's possible to set up recurring calls.
 
 You can optionally restrict call access by providing a list of users.
@@ -129,7 +126,7 @@ call.create({
 from getstream.models.call_request import CallRequest
 
 call = client.video.call("default", "id")
-response = call.get_or_create_call(
+response = call.create(
     data=CallRequest(
         created_by_id="sacha",
     ),
@@ -171,7 +168,7 @@ call.updateCallMembers({
 <TabItem value="py" label="Python">
 
 ```py
-call.update_call_members(update_members=[
+call.update_members(update_members=[
             MemberRequest(user_id: "sara"),
             MemberRequest(user_id: "emily", role: "admin")])
 ```
@@ -196,7 +193,7 @@ curl -X PUT "https://video.stream-io-api.com/video/call/default/${CALL_ID}/membe
 
 ## Updating a call
 
-- Most of the call type settings can be overriden on a call level.
+- Most of the call type settings can be overridden on a call level.
 
 - Custom data can also be stored for calls.
 
@@ -251,7 +248,7 @@ curl -X PUT "https://video.stream-io-api.com/video/call/default/${CALL_ID}?api_k
 </TabItem>
 </Tabs>
 
-## Start HLS broadcasting
+## Streaming
 
 Broadcasting serves are a means of transmitting live or pre-recorded content to a wide audience.
 
@@ -264,48 +261,23 @@ It is up to the integrators to decide, what approach will be used in their apps 
 
 For more information see the [Streaming section](streaming/overview/).
 
-<Tabs groupId="examples">
-<TabItem value="js" label="JavaScript">
+The following example shows how to start and stop HLS broadcasting:
 
-```js
-call.startHLSBroadcasting();
+<Broadcast />
 
-// to end broadcasting
-call.stopHLSBroadcasting();
-```
+Almost all livestream software and hardware supports RTMPS. Our API supports using third-party software for streaming using RTMPS. For more information, reference the [Streaming section](streaming/overview/).
 
-</TabItem>
-<TabItem value="py" label="Python">
-
-```py
-call.start_broadcasting()
-
-// to end broadcasting
-call.stop_broadcasting()
-```
-
-</TabItem>
-<TabItem value="curl" label="cURL">
-
-```bash
-curl -X POST "https://video.stream-io-api.com/video/call/default/${CALL_ID}/start_broadcasting?api_key=${API_KEY}" \
--H "Authorization: ${JWT_TOKEN}"
-```
-
-</TabItem>
-</Tabs>
-
-## Set up a call for RTMP
-
-Almost all livestream software and hardware supports RTMPS. Our API supports using a third-party software for streaming using RTMPS. For more information reference the [Streaming section](streaming/overview/).
+The following example shows how to get the RTMP address that you need to provide for the third-party software:
 
 <RTMP />
 
-## Start call recording
+## Recording
 
 Calls can be recorded for later use. Calls recording can be started/stopped via API calls or configured to start automatically when the first user joins the call.
 
-For more information see the [Recordings section](recording/calls/).
+For more information, see the [Recordings section](recording/calls/).
+
+The following example shows how to start and stop recording:
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
@@ -338,7 +310,7 @@ curl -X POST "https://video.stream-io-api.com/video/call/default/${CALL_ID}/star
 </TabItem>
 </Tabs>
 
-## List recordings for a call
+The following example shows how to query existing recordings:
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
@@ -351,7 +323,7 @@ call.listRecordings();
 <TabItem value="py" label="Python">
 
 ```py
-recordings = call.list_recordings(session="your_session_id")
+recordings = call.list_recordings()
 ```
 
 </TabItem>
