@@ -56,6 +56,8 @@ To create a server-side client, you'll need your **API key** and **secret**. Bot
 <TabItem value="js" label="JavaScript">
 
 ```js
+import { StreamClient } from '@stream-io/node-sdk';
+
 const apiKey = '';
 const secret = '';
 client = new StreamClient(apiKey, secret);
@@ -73,7 +75,9 @@ client = Stream(api_key="your_api_key", api_secret="your_api_secret")
 </TabItem>
 </Tabs>
 
-## Creating user tokens
+## Creating users and user tokens
+
+To create a user you need to provide an ID, and their role. Optionally you can also specify their name and an image, these fields are recognized and rendered by the default SDK components. It's also possible to add any other custom data.
 
 Tokens need to be generated server-side. Typically, you integrate this into the part of your codebase where you log in or register users. The tokens provide a way to authenticate a user or give access to a specific set of video/audio calls.
 
@@ -82,18 +86,39 @@ Tokens need to be generated server-side. Typically, you integrate this into the 
 
 ```js
 const userId = 'john';
-// exp and iat are optional
+const newUser: UserObjectRequest = {
+  id: userId,
+  role: 'user',
+  custom: {
+    color: 'red',
+  },
+  name: 'John',
+  image: 'link/to/profile/image',
+};
+await client.upsertUsers({
+  users: {
+    [newUser.id]: newUser,
+  },
+});
+
+// exp is optional
 // the token will be valid for 1hour
 const exp = Math.round(new Date().getTime() / 1000) + 60 * 60;
-const iat = Math.round(new Date().getTime() / 1000);
 
-client.createToken(userId, exp, iat);
+client.createToken(userId, exp);
 ```
 
 </TabItem>
 <TabItem value="py" label="Python">
 
 ```py
+users = {}
+user = UserRequest(
+id='john', role="user", custom={"color": "red"}, name="John",image= "link/to/profile/image",
+)
+users[user.id] = user
+client.upsert_users(users=users)
+
 token = client.create_token("admin-user")
 ```
 
@@ -104,10 +129,12 @@ token = client.create_token("admin-user")
 
 You can create a call by providing the call type and an ID:
 
-- The [call type](call_types/builtin) controls which features are enabled and sets up permissions.
+- The [call type](call_types/builtin) controls which features are enabled and sets up permissions. Call type settings and permissions can be set from API, or using the [Stream Dashboard](https://dashboard.getstream.io/).
 - Calls IDs can be reused, which means they can be joined multiple times, so it's possible to set up recurring calls.
 
-You can optionally restrict call access by providing a list of users.
+You can optionally restrict call access by providing a list of existing users.
+
+It's also possible to store any custom data with the call object.
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
@@ -123,7 +150,11 @@ call.create({ data: { created_by_id: 'john' } });
 call.create({
   data: {
     created_by_id: 'john',
+    // Call members need to be existing users
     members: [{ user_id: 'john', role: 'admin' }, { user_id: 'jack' }],
+    custom: {
+      color: 'blue',
+    },
   },
 });
 ```
@@ -164,10 +195,15 @@ curl -X POST "https://video.stream-io-api.com/video/call/default/${CALL_ID}?api_
 
 ## Adding members to a call
 
+You can restrict call access by defining a list of members who are allowed to join the call. Call members need to be existing users. Every call member has a call-level role, [you can configure roles](call_types/permissions/) on the call type.
+
+Call members can receive [push notifications](../../call_types/settings/#push-notifications-settings).
+
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
 
 ```js
+// Call members need to be existing users
 call.updateCallMembers({
   update_members: [{ user_id: 'sara' }, { user_id: 'emily', role: 'admin' }],
 });
@@ -200,11 +236,34 @@ curl -X PUT "https://video.stream-io-api.com/video/call/default/${CALL_ID}/membe
 </TabItem>
 </Tabs>
 
+## Remove members
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+call.updateCallMembers({
+  remove_members: ['sara'],
+});
+```
+
+</TabItem>
+<TabItem value="py" label="Python">
+
+```py
+call.update_members(
+    members=[
+        MemberRequest(user_id: 'jack', role: 'admin')
+    ]
+)
+```
+
+</TabItem>
+</Tabs>
+
 ## Updating a call
 
-- Most of the call type settings can be overridden on a call level.
-
-- Custom data can also be stored for calls.
+Default call settings are inherited from the [call type](call_types/settings/). These settings can be overridden if necessary.
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
@@ -252,95 +311,6 @@ curl -X PUT "https://video.stream-io-api.com/video/call/default/${CALL_ID}?api_k
   }
 }'
 
-```
-
-</TabItem>
-</Tabs>
-
-## Streaming
-
-Broadcasting serves are a means of transmitting live or pre-recorded content to a wide audience.
-
-We can choose from two approaches to broadcasting the media:
-
-- [HLS](https://en.wikipedia.org/wiki/HTTP_Live_Streaming) - slight delay, better buffering
-- [WebRTC](https://webrtc.org/) - lower latency, less reliability
-
-It is up to the integrators to decide, what approach will be used in their apps for the audience to consume the streams.
-
-For more information see the [Streaming section](streaming/overview/).
-
-The following example shows how to start and stop HLS broadcasting:
-
-<Broadcast />
-
-Almost all livestream software and hardware supports RTMPS. Our API supports using third-party software for streaming using RTMPS. For more information, reference the [Streaming section](streaming/overview/).
-
-The following example shows how to get the RTMP address that you need to provide for the third-party software:
-
-<RTMP />
-
-## Recording
-
-Calls can be recorded for later use. Calls recording can be started/stopped via API calls or configured to start automatically when the first user joins the call.
-
-For more information, see the [Recordings section](recording/calls/).
-
-The following example shows how to start and stop recording:
-
-<Tabs groupId="examples">
-<TabItem value="js" label="JavaScript">
-
-```js
-call.startRecording();
-
-// to stop recording
-call.stopRecording();
-```
-
-</TabItem>
-<TabItem value="py" label="Python">
-
-```py
-call.start_recording()
-
-// to stop recording
-call.stop_recording()
-```
-
-</TabItem>
-<TabItem value="curl" label="cURL">
-
-```bash
-curl -X POST "https://video.stream-io-api.com/video/call/default/${CALL_ID}/start_recording?api_key=${API_KEY}" \
--H "Authorization: ${JWT_TOKEN}"
-```
-
-</TabItem>
-</Tabs>
-
-The following example shows how to query existing recordings:
-
-<Tabs groupId="examples">
-<TabItem value="js" label="JavaScript">
-
-```js
-call.listRecordings();
-```
-
-</TabItem>
-<TabItem value="py" label="Python">
-
-```py
-recordings = call.list_recordings()
-```
-
-</TabItem>
-<TabItem value="curl" label="cURL">
-
-```bash
-curl -X GET "https://video.stream-io-api.com/video/call/default/${CALL_ID}/${SESSION_ID}/recordings?api_key=${API_KEY}" \
--H "Authorization: ${JWT_TOKEN}"
 ```
 
 </TabItem>
