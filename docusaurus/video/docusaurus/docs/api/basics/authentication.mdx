@@ -128,50 +128,32 @@ client.update_users_partial(
 
 ## Anonymous users
 
-Anonymous users are users that are not authenticated. It's common to use this for watching a livestream or similar where you aren't authenticated. Anonymous users can be connected using client-side SDKs.
+Anonymous users are users that are not authenticated. It's common to use this for watching a livestream or similar where you aren't authenticated. Anonymous users can be connected using client-side SDKs. Anonymous users are not counted toward your MAU.
 
 ## Guest users
 
-Guest users are temporary user accounts. You can use it to temporarily give someone a name and image when joining a call. Guest users can aslso be created client-side.
-
-<Tabs groupId="examples">
-<TabItem value="js" label="JavaScript">
-
-```js
-const guest: UserObjectRequest = {
-  id: '<id>',
-  name: '<name>',
-  custom: {
-    color: 'red',
-  },
-};
-
-const guest = (await client.createGuest({ user: guest })).user;
-```
-
-</TabItem>
-<TabItem value="py" label="Python">
-
-```py
-guest = UserRequest(
-  id = '<id>',
-  name= '<name>',
-  custom= {
-    "color": 'red',
-  },
-)
-
-guest = (client.video.create_guest(user=guest)).user
-```
-
-</TabItem>
-</Tabs>
+Guest users are temporary user accounts. You can use it to temporarily give someone a name and image when joining a call. Guest users can also be created client-side. Guest users are counted towards your MAU usage.
 
 ## Deactivating and deleting users
 
 While it is usually safer for data retention to deactivate a user, some use cases require completely deleting a user and their data.
 
-Once a user has been deleted, it cannot be un-deleted, and the user_id cannot be used again.
+Deactivating a user means:
+
+- the user can't connect to Stream API
+- their data will be retained
+- a deactivated user can be reactivated
+
+Deleting a user means:
+
+- the user can't connect to Stream API
+- their data won't appear in user queries
+
+Delete has the following opitions:
+
+- Mark messages deleted: delete all the messages the user sent
+- Delete conversation channels: delete all 1:1 channels with the deleted user
+- Hard delete: by default the user and it's data is soft deleted, and the user can be restored. If this flag is set to `true`, all user data is removed, and the user can't be restored.
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
@@ -181,7 +163,15 @@ client.deactivateUser({
   user_id: '<id>',
 });
 
+//reactivate
+client.reactivateUsers({
+  user_ids: ['<id>'],
+});
+
 client.deleteUser({ userId: '<id>' });
+
+//restore
+client.restoreUsers({ user_ids: ['<id>'] });
 ```
 
 </TabItem>
@@ -216,8 +206,7 @@ const userId = 'john';
 // exp and iat are optional
 // the token will be valid for 1hour
 const exp = Math.round(new Date().getTime() / 1000) + 60 * 60;
-const iat = Math.round(new Date().getTime() / 1000);
-client.createToken(userId, exp, iat);
+client.createToken(userId, exp);
 ```
 
 </TabItem>
@@ -242,7 +231,7 @@ client.create_token(user_id = user_id, exp = exp, iat = iat)
 
 ## Call tokens
 
-Call tokens contain a list of call IDs. If a user is authenticated with a call token, they can only access the specified calls.
+Call tokens contain a list of call IDs. If a user is authenticated with a call token, they can only access the specified calls. They are helpful if you want to limit call access, but you want to avoid managing call members (an example: a pay-pre-view link for livestreams, with hundreds of thousands of expected viewers).
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
@@ -252,11 +241,10 @@ const userId = 'john';
 // exp and iat are optional
 // the token will be valid for 1hour
 const exp = Math.round(new Date().getTime() / 1000) + 60 * 60;
-const iat = Math.round(new Date().getTime() / 1000);
 
 const call_cids = ['default:call1', 'livestream:call2'];
 
-client.createCallToken(userId, call_cids, exp, iat);
+client.createCallToken(userId, call_cids, exp);
 ```
 
 </TabItem>
@@ -267,19 +255,13 @@ import time
 
 user_id = 'john'
 
-# exp and iat are optional, token will be valid for 1 hour
+# exp is optional, token will be valid for 1 hour
 exp = int(time.time()) + 60 * 60
-iat = int(time.time())
 
 call_cids = ['default:call1', 'livestream:call2']
 
-client.create_token(user_id=user_id, exp, iat, call_cids)
+client.create_token(user_id=user_id, exp, undefined, call_cids)
 ```
 
 </TabItem>
 </Tabs>
-
-## Provisioning token in production
-
-Your authentication service is responsible for generating tokens for your users. It is highly recommended to always create tokens with an expiration.
-All SDKs make it easy to automatically re-fetch tokens from your backend servers with token providers when they expire.
