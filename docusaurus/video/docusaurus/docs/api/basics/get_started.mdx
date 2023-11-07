@@ -9,6 +9,9 @@ import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import RTMP from '../_common_/rtmp.mdx';
 import Broadcast from '../_common_/broadcast.mdx';
+import CreateCall from '../_common_/create-call.mdx';
+import CallMembers from '../_common_/manage-call-members.mdx';
+import UpdateCall from '../_common_/update-call.mdx';
 
 Stream powers [Chat Messaging](https://getstream.io/chat/), [Video & Audio](https://getstream.io/video/), and [Activity Feeds](https://getstream.io/activity-feeds/) for billions of global end-users across thousands of different apps.
 
@@ -134,204 +137,12 @@ token = client.create_token("admin-user")
 
 ## Creating a call
 
-You can create a call by providing the call type and an ID:
+<CreateCall />
 
-- The [call type](call_types/builtin) controls which features are enabled and sets up permissions. Call type settings and permissions can be set from API, or using the [Stream Dashboard](https://dashboard.getstream.io/).
-- Calls IDs can be reused, which means they can be joined multiple times, so it's possible to set up recurring calls.
+## Call members
 
-You can optionally restrict call access by providing a list of existing users.
-
-It's also possible to store any custom data with the call object.
-
-<Tabs groupId="examples">
-<TabItem value="js" label="JavaScript">
-
-```js
-const callType = 'default';
-const callId = 'my-first-call';
-const call = client.video.call(callType, callId);
-
-call.create({ data: { created_by_id: 'john' } });
-
-// optionally provide additional data
-call.create({
-  data: {
-    created_by_id: 'john',
-    // Call members need to be existing users
-    members: [{ user_id: 'john', role: 'admin' }, { user_id: 'jack' }],
-    custom: {
-      color: 'blue',
-    },
-  },
-});
-```
-
-</TabItem>
-<TabItem value="py" label="Python">
-
-```py
-from getstream.models.call_request import CallRequest
-
-call = client.video.call("default", "id")
-response = call.create(
-    data=CallRequest(
-        created_by_id="sacha",
-    ),
-)
-
-//optionally provide additional data
-response = call.create(
-    data=CallRequest(
-        created_by_id="sacha",
-        // Call members need to be existing users
-        members=[
-            MemberRequest(user_id: "john", role: "admin"),
-            MemberRequest(user_id: "jack"),
-        ],
-        custom={"color": "blue"},
-    ),
-)
-```
-
-</TabItem>
-
-<TabItem value="curl" label="cURL">
-
-```bash
-curl -X POST "https://video.stream-io-api.com/video/call/default/${CALL_ID}?api_key=${API_KEY}" \
--H "Content-Type: application/json" \
--H "Authorization: ${JWT_TOKEN}" \
--d '{
-  "data": {
-    "created_by_id": "sacha@getstream.io",
-    "settings_override": { "audio": { "access_request_enabled": false } }
-  },
-  "members": [ { "role": "speaker", "user_id": "sacha@getstream.io" } ]
-}'
-```
-
-</TabItem>
-</Tabs>
-
-## Adding members to a call
-
-You can restrict call access by defining a list of members who are allowed to join the call. Call members need to be existing users. Every call member has a call-level role, [you can configure roles](call_types/permissions/) on the call type.
-
-Call members can receive [push notifications](../../call_types/settings/#push-notifications-settings).
-
-<Tabs groupId="examples">
-<TabItem value="js" label="JavaScript">
-
-```js
-// Call members need to be existing users
-call.updateCallMembers({
-  update_members: [{ user_id: 'sara' }, { user_id: 'emily', role: 'admin' }],
-});
-```
-
-</TabItem>
-<TabItem value="py" label="Python">
-
-```py
-call.update_members(update_members=[
-            MemberRequest(user_id: "sara"),
-            MemberRequest(user_id: "emily", role: "admin")])
-```
-
-</TabItem>
-<TabItem value="curl" label="cURL">
-
-```bash
-curl -X PUT "https://video.stream-io-api.com/video/call/default/${CALL_ID}/members?api_key=${API_KEY}" \
--H "Content-Type: application/json" \
--H "Authorization: ${JWT_TOKEN}" \
--d '{
-  "update_members": [
-    { "user_id": "sara" },
-    { "user_id": "emily", "role": "admin" }
-  ]
-}'
-```
-
-</TabItem>
-</Tabs>
-
-## Remove members
-
-<Tabs groupId="examples">
-<TabItem value="js" label="JavaScript">
-
-```js
-call.updateCallMembers({
-  remove_members: ['sara'],
-});
-```
-
-</TabItem>
-<TabItem value="py" label="Python">
-
-```py
-call.update_members(
-    remove_members=[
-        MemberRequest(user_id: 'jack', role: 'admin')
-    ]
-)
-```
-
-</TabItem>
-</Tabs>
+<CallMembers />
 
 ## Updating a call
 
-Default call settings are inherited from the [call type](call_types/settings/). These settings can be overridden if necessary.
-
-<Tabs groupId="examples">
-<TabItem value="js" label="JavaScript">
-
-```js
-call.update({
-  settings_override: {
-    audio: { mic_default_on: true, default_device: 'speaker' },
-  },
-});
-
-// or to update custom data
-call.update({ custom: { color: 'red' } });
-```
-
-</TabItem>
-<TabItem value="py" label="Python">
-
-```py
-call.update(
-settings_override=CallSettingsRequest(
-    audio=AudioSettingsRequest(
-        mic_default_on=True,
-        default_device="speaker",
-    ),
-)
-)
-
-// or to update custom data
-call.update(custom: { 'color': 'red' });
-```
-
-</TabItem>
-<TabItem value="curl" label="cURL">
-
-```bash
-curl -X PUT "https://video.stream-io-api.com/video/call/default/${CALL_ID}?api_key=${API_KEY}" \
--H "Content-Type: application/json" \
--H "Authorization: ${JWT_TOKEN}" \
--d '{
-  "settings_override": {
-    "audio": {
-      "mic_default_on": true
-    }
-  }
-}'
-
-```
-
-</TabItem>
-</Tabs>
+<UpdateCall />
