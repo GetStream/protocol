@@ -1,32 +1,49 @@
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
 
 ```js
-const resp = await call.getOrCreate({ data: { created_by_id: 'john' } });
-// user ID of an existing user
-const userId = 'jane';
-const token = client.createToken(userId);
+const resp = await call.get();
 
-const address = resp.call.ingress.rtmp.address.replace(
-  '<your_token_here>',
-  token,
-);
+// userId of existing user
+const userId = 'jane';
+await client.upsertUsers({
+  users: {
+    [userId]: {
+      id: userId,
+    },
+  },
+});
+const token = client.createToken(userId);
+const rtmpURL = resp.call.ingress.rtmp.address;
+const streamKey = token;
+
+console.log(rtmpURL, streamKey);
 ```
 
 </TabItem>
 <TabItem value="py" label="Python">
 
 ```py
-response = call.create(GetOrCreateCallRequest(
-            data=CallRequest(
-                created_by_id="sacha",
-            ),
-        ),)
+resp = call.get()
+# user ID of an existing user
+user_id = 'jane'
+client.upsert_users(
+    users={
+        user_id: {'id': user_id}
+    }
+)
+
+# the token will be valid for 1 hour
+exp = int(time.time()) + 60 * 60
+
+token = client.create_token(user_id,expiration=exp)
+
 rtmp_url = response.data().call.ingress.rtmp.address
+stream_key = token
+print(rtmp_url, stream_key)
 ```
 
 </TabItem>

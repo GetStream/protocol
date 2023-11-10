@@ -1,0 +1,81 @@
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+You can create a call by providing the call type and an ID:
+
+- The [call type](/api/call_types/builtin) controls which features are enabled and sets up permissions. Call type settings and permissions can be set from API, or using the [Stream Dashboard](https://dashboard.getstream.io/).
+- Calls IDs can be reused, which means they can be joined multiple times, so it's possible to set up recurring calls.
+
+You can optionally restrict call access by providing a list of existing users.
+
+It's also possible to store any custom data with the call object.
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+const callType = 'default';
+const callId = 'my-first-call';
+const call = client.video.call(callType, callId);
+
+call.create({ data: { created_by_id: 'john' } });
+
+// optionally provide additional data
+call.create({
+  data: {
+    created_by_id: 'john',
+    // Call members need to be existing users
+    members: [{ user_id: 'john', role: 'admin' }, { user_id: 'jack' }],
+    custom: {
+      color: 'blue',
+    },
+  },
+});
+```
+
+</TabItem>
+<TabItem value="py" label="Python">
+
+```py
+from getstream.models.call_request import CallRequest
+
+call = client.video.call("default", "id")
+response = call.create(
+    data=CallRequest(
+        created_by_id="sacha",
+    ),
+)
+
+# optionally provide additional data
+response = call.create(
+    data=CallRequest(
+        created_by_id="sacha",
+        # Call members need to be existing users
+        members=[
+            MemberRequest(user_id: "john", role: "admin"),
+            MemberRequest(user_id: "jack"),
+        ],
+        custom={"color": "blue"},
+    ),
+)
+```
+
+</TabItem>
+
+<TabItem value="curl" label="cURL">
+
+```bash
+curl -X POST "https://video.stream-io-api.com/video/call/default/${CALL_ID}?api_key=${API_KEY}" \
+-H "Content-Type: application/json" \
+-H "Authorization: ${JWT_TOKEN}" \
+-d '{
+  "data": {
+    "created_by_id": "sacha@getstream.io",
+    "settings_override": { "audio": { "access_request_enabled": false } }
+  },
+  "members": [ { "role": "speaker", "user_id": "sacha@getstream.io" } ]
+}'
+```
+
+</TabItem>
+</Tabs>
