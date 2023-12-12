@@ -1,10 +1,13 @@
 import React from 'react';
 import apiJson from '../video-openapi.json';
 
-const OpenApiModel = ({ modelName, recursive = true }) => {
+const OpenApiModels = ({ modelName, modelFilter, recursive = true }) => {
 
   const models = React.useMemo(() => {
-    const modelsResult = [{name: modelName, properties: []}];
+    if (!modelName && !modelFilter) {
+      return [];
+    }
+    const modelsResult = modelName ? [{name: modelName, properties: []}] : modelFilter(apiJson).map(key => ({name: key, properties: []}));
   
     for (let i = 0; i < modelsResult.length; i++) {
       const model = modelsResult[i];
@@ -24,8 +27,13 @@ const OpenApiModel = ({ modelName, recursive = true }) => {
           const ref = isArray ? property.items?.$ref : property.$ref;
           // Example $ref: #/components/schemas/EdgeResponse
           type = ref?.split('/')?.pop() || '';
-          typeHref = `#${type}`
-          if (recursive && apiJson.components.schemas[type] && !modelsResult.find(r => r.name === type)) {
+          // enums are not yet parsed
+          let isEnum = apiJson.components.schemas[type] && !apiJson.components.schemas[type].properties;
+          if (recursive && !isEnum) {
+            typeHref = `#${type}`;
+          }
+          // if properties are undefined, it's an enum, we don't yet parse enums
+          if (recursive && !isEnum && apiJson.components.schemas[type] && !modelsResult.find(r => r.name === type)) {
             modelsResult.push({name: type, properties: []});
           }
         } else {
@@ -66,7 +74,7 @@ const OpenApiModel = ({ modelName, recursive = true }) => {
     }
 
     return modelsResult;
-  }, [modelName]);
+  }, [modelName, modelFilter]);
 
   return (
     <div>
@@ -103,4 +111,4 @@ const OpenApiModel = ({ modelName, recursive = true }) => {
   );
 };
 
-export default OpenApiModel;
+export default OpenApiModels;
