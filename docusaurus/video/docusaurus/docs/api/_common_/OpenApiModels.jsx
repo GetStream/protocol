@@ -1,5 +1,5 @@
 import React from 'react';
-import apiJson from '../video-openapi.json';
+import { parseModel } from './open-api-model-parser';
 
 const OpenApiModels = ({ modelName, modelFilter, recursive = true }) => {
 
@@ -7,73 +7,7 @@ const OpenApiModels = ({ modelName, modelFilter, recursive = true }) => {
     if (!modelName && !modelFilter) {
       return [];
     }
-    const modelsResult = modelName ? [{name: modelName, properties: []}] : modelFilter(apiJson).map(key => ({name: key, properties: []}));
-  
-    for (let i = 0; i < modelsResult.length; i++) {
-      const model = modelsResult[i];
-  
-      const schemaJson = apiJson.components.schemas[model.name];
-      const propertiesJson = schemaJson.properties;
-
-      model.properties = Object.keys(propertiesJson).map(key => {
-        const property = propertiesJson[key];
-        
-        // Parse type info
-        let type;
-        let typeHref;
-        let displayType;
-        let isArray = property.type === 'array';
-        if (property.$ref || isArray && property.items?.$ref) {
-          const ref = isArray ? property.items?.$ref : property.$ref;
-          // Example $ref: #/components/schemas/EdgeResponse
-          type = ref?.split('/')?.pop() || '';
-          // enums are not yet parsed
-          let isEnum = apiJson.components.schemas[type] && !apiJson.components.schemas[type].properties;
-          if (recursive && !isEnum) {
-            typeHref = `#${type}`;
-          }
-          // if properties are undefined, it's an enum, we don't yet parse enums
-          if (recursive && !isEnum && apiJson.components.schemas[type] && !modelsResult.find(r => r.name === type)) {
-            modelsResult.push({name: type, properties: []});
-          }
-        } else {
-          type = (isArray ? property.items?.type : property.type) || ''
-        }
-        displayType = isArray ? `${type}[]` : type;
-        if (property.enum) {
-          displayType += ` (${property.enum.join(', ')})`
-        }
-
-        // Parse title + description
-        let description = property.title;
-        if (property.description) {
-          description += ` - ${property.description}`;
-        }
-
-        // Parse constraints
-        const constraints = [];
-        if (schemaJson.required?.includes(key)) {
-          constraints.push('Required');
-        } 
-        if (property.minimum !== undefined) {
-          constraints.push(`Minimum: ${property.minimum}`)
-        }
-        if (property.maximum !== undefined) {
-          constraints.push(`Maximum: ${property.maximum}`)
-        }
-
-        return {
-          name: key,
-          type,
-          displayType,
-          typeHref,
-          constraints,
-          description
-        }
-      });
-    }
-
-    return modelsResult;
+    return parseModel({modelName, modelFilter, recursive});
   }, [modelName, modelFilter]);
 
   return (
@@ -96,7 +30,7 @@ const OpenApiModels = ({ modelName, modelFilter, recursive = true }) => {
                       <code>{p.name}</code>
                     </td>
                     <td>
-                      {p.typeHref ? <a href={p.typeHref}><code>{p.displayType}</code></a> : <code>{p.displayType}</code>}
+                      {p.type.definitionLink ? <a href={p.type.definitionLink}><code>{p.type.formattedName}</code></a> : <code>{p.type.formattedName}</code>}
                     </td>
                     <td>{p.description || '-'}</td>
                     <td>{p.constraints.join(', ') || '-'}</td>
