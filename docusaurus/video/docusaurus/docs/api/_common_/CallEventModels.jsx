@@ -17,7 +17,7 @@ const events = filter(apiJson).map(key => {
 
 events.sort((e1, e2) => e1.type < e2.type ? -1 : (e1.type > e2.type ? 1 : 0));
 
-const EventApiModels = () => {
+const CallEventModels = () => {
     return <React.Fragment>
         <table>
             <thead>
@@ -33,4 +33,4 @@ const EventApiModels = () => {
     </React.Fragment>
 }
 
-export default EventApiModels;
+export default CallEventModels;
