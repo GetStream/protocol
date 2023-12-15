@@ -7,86 +7,62 @@ title: Calls
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import CreateCall from '../_common_/create-call.mdx';
+import CallMembers from '../_common_/manage-call-members.mdx';
+import UpdateCall from '../_common_/update-call.mdx';
+import FilterConditions from '../../../shared/_filter-operators.mdx';
+import CallFilters from '../../../shared/video/_call-filters.mdx';
+import CallMemberFilters from '../../../shared/video/_call-member-filters.mdx';
+import CallSort from '../../../shared/video/_call-sort-fields.mdx';
+import CallMemberSort from '../../../shared/video/_call-member-sort-fields.mdx';
 
 ## Creating calls
+
+<CreateCall />
+
+### `ring` flag
+
+To start the ringing flow, we need to set the `ring` flag to `true` and provide the list of members we want to call. It is important to note that the caller should also be included in the list of members.
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
 
 ```js
-const callType = 'default';
-const callId = 'my-first-call';
-const call = client.call(callType, callId);
-
-call.create({ data: { created_by_id: 'john' } });
-// or
-call.getOrCreate({ data: { created_by_id: 'john' } });
-
-// optionally provide additional data
-call.create({
+// or call.create
+// or call.get
+await client.call('default', 'test-outgoing-call').getOrCreate({
+  ring: true,
   data: {
-    created_by_id: 'john',
-    members: [{ user_id: 'john', role: 'admin' }, { user_id: 'jack' }],
+    created_by_id: 'myself',
+    members: [{ user_id: 'myself' }, { user_id: 'my friend' }],
   },
 });
 ```
 
 </TabItem>
-<TabItem value="py" label="Python">
+</Tabs>
 
-```py
-def hello_world():
-    print("Hello, world!")
-```
+This step will start the signaling flow and send the `call.ring` WebSocket event. It's also possible to send push notifications to call members on this event, for more information see the [Call Types page](../call_types/builtin/#push-notifications-settings).
 
-</TabItem>
-<TabItem value="go" label="Golang">
+Call members can decide to accept or reject the incoming call. The callee can decide to cancel the outgoing call (for more information see the [SDK documentations](https://getstream.io/video/docs/)).
 
-```go
-func main() {
-	apiKey := os.Getenv("API_KEY")
-	apiSecret := os.Getenv("API_SECRET")
-	userID := os.Getenv("USER_ID")
-	url := os.Getenv("URL")
+### `notify` flag
 
-	if apiKey == "" || apiSecret == "" || userID == "" || url == "" {
-		panic("API_KEY, API_SECRET, USER_ID and URL env variables must be set")
-	}
+Setting the `notify` flag to `true` will send the `call.notification` WebSocket event. It's also possible to send push notifications to call members on this event, for more information see the [Call Types page](../call_types/builtin/#push-notifications-settings).
 
-	tokenProvider := videosdk.UserToken(apiSecret, userID, 24*time.Hour)
-	sdk := videosdk.New(apiKey, tokenProvider)
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
 
-	token, err := tokenProvider(sdk.APIKey())
-	if err != nil {
-		panic(err)
-	}
-
-	client := videosdk.NewCoordinatorClientSDK(url, sdk.APIKey(), token)
-	id := fmt.Sprintf("call-%d", rand.Int())
-	response, err := client.GetOrCreateCall("default", id, &models.GetOrCreateCallRequest{})
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println("response", response)
-}
-```
-
-</TabItem>
-
-<TabItem value="curl" label="cURL">
-
-```bash
-curl -X POST "https://video.stream-io-api.com/video/call/default/${CALL_ID}?api_key=${API_KEY}" \
--H "Content-Type: application/json" \
--H "Authorization: ${JWT_TOKEN}" \
--d '{
-  "data": {
-    "created_by_id": "sacha@getstream.io",
-    "settings_override": { "audio": { "access_request_enabled": false } }
+```js
+// or call.create
+// or call.get
+await client.call('default', 'test-outgoing-call').getOrCreate({
+  notify: true,
+  data: {
+    created_by_id: 'myself',
+    members: [{ user_id: 'myself' }, { user_id: 'my friend' }],
   },
-  "members": [ { "role": "speaker", "user_id": "sacha@getstream.io" } ]
-}'
+});
 ```
 
 </TabItem>
@@ -94,208 +70,222 @@ curl -X POST "https://video.stream-io-api.com/video/call/default/${CALL_ID}?api_
 
 ## Updating calls
 
-<Tabs groupId="examples">
-<TabItem value="js" label="JavaScript">
-
-```js
-call.update({ settings_override: { audio: { mic_default_on: true } } });
-
-// or to update custom data
-call.update({ custom: { color: 'red' } });
-```
-
-</TabItem>
-<TabItem value="py" label="Python">
-
-```py
-def hello_world():
-    print("Hello, world!")
-```
-
-</TabItem>
-<TabItem value="go" label="Golang">
-
-```go
-func main() {
-	apiKey := os.Getenv("API_KEY")
-	apiSecret := os.Getenv("API_SECRET")
-	userID := os.Getenv("USER_ID")
-	url := os.Getenv("URL")
-
-	if apiKey == "" || apiSecret == "" || userID == "" || url == "" {
-		panic("API_KEY, API_SECRET, USER_ID and URL env variables must be set")
-	}
-
-	tokenProvider := videosdk.UserToken(apiSecret, userID, 24*time.Hour)
-	sdk := videosdk.New(apiKey, tokenProvider)
-
-	token, err := tokenProvider(sdk.APIKey())
-	if err != nil {
-		panic(err)
-	}
-
-	client := videosdk.NewCoordinatorClientSDK(url, sdk.APIKey(), token)
-
-	// get an already created call or create one
-	id := fmt.Sprintf("call-%d", rand.Int())
-	response, err := client.GetOrCreateCall("default", id, &models.GetOrCreateCallRequest{})
-	if err != nil {
-		panic(err)
-	}
-
-    updateResponse, err := client.UpdateCall("default", callID, &models.UpdateCallRequest{
-        Type:   "default",
-        ID:     callID,
-        Custom: nil,
-        SettingsOverride: &models.CallSettingsRequest{
-            Video: &models.VideoSettingsRequest{Enabled: PtrTo(true)},
-        },
-        StartsAt: nil,
-    })
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println("response", updateResponse)
-}
-```
-
-</TabItem>
-<TabItem value="curl" label="cURL">
-
-```bash
-curl -X PUT "https://video.stream-io-api.com/video/call/default/${CALL_ID}?api_key=${API_KEY}" \
--H "Content-Type: application/json" \
--H "Authorization: ${JWT_TOKEN}" \
--d '{
-  "settings_override": {
-    "audio": {
-      "mic_default_on": true
-    }
-  }
-}'
-
-```
-
-</TabItem>
-</Tabs>
+<UpdateCall />
 
 ## Manage call members
 
+<CallMembers />
+
+## Restrict call access
+
+You can restrict access to a call by updating the [Call Type](../call_types/permissions/) permissions and roles.
+A typical use case is to restrict access to a call to a specific set of users -> call members.
+
+By default, all users unless specified otherwise, have the `user` role.
+
+You can remove the `join-call` permission from the `user` role for the given call type scope. This will prevent regular users from joining a call of the given type.
+
+Next, let's ensure that the `call_member` role has the `join-call` permission for the given call type scope. This will allow users with the `call_member` role to join a call of this type.
+
+Once this is set, we can proceed with setting up a `call` instance and providing the `members`.
+
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
 
 ```js
-// update or add call members
-call.updateCallMembers({
-  update_members: [{ user_id: 'sara' }, { user_id: 'jack', role: 'admin' }],
-});
-
-// remove call members
-call.updateCallMembers({
-  remove_members: ['sara'],
-});
-```
-
-</TabItem>
-<TabItem value="py" label="Python">
-
-```py
-def hello_world():
-    print("Hello, world!")
-```
-
-</TabItem>
-<TabItem value="go" label="Golang">
-
-```go
-func main() {
-	apiKey := os.Getenv("API_KEY")
-	apiSecret := os.Getenv("API_SECRET")
-	userID := os.Getenv("USER_ID")
-	url := os.Getenv("URL")
-
-	if apiKey == "" || apiSecret == "" || userID == "" || url == "" {
-		panic("API_KEY, API_SECRET, USER_ID and URL env variables must be set")
-	}
-
-	tokenProvider := videosdk.UserToken(apiSecret, userID, 24*time.Hour)
-	sdk := videosdk.New(apiKey, tokenProvider)
-
-	token, err := tokenProvider(sdk.APIKey())
-	if err != nil {
-		panic(err)
-	}
-
-	client := videosdk.NewCoordinatorClientSDK(url, sdk.APIKey(), token)
-
-	// get an already created call or create one
-	id := fmt.Sprintf("call-%d", rand.Int())
-	response, err := client.GetOrCreateCall("default", id, &models.GetOrCreateCallRequest{})
-	if err != nil {
-		panic(err)
-	}
-
-	updateResponse, err := client.UpdateMembers("default", id, &models.UpdateCallMembersRequest{
-		Type: "default", ID: id,
-		UpdateMembers: []models.MemberRequest{{UserId: "federico_guerinoni@getstream_io"}},
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println("response", updateResponse)
+const callType = (await client.video.listCallTypes()).call_types[callTypeName];
+// Remove JOIN_CALL permission from user role
+const userGrants = callType.grants['user'].filter(
+  (c) => c !== VideoOwnCapability.JOIN_CALL,
+);
+// Make sure JOIN_CALL permission is set for call_member role
+const callMemberGrants = callType.grants['call_member'];
+if (!callMemberGrants.includes(VideoOwnCapability.JOIN_CALL)) {
+  callMemberGrants.push(VideoOwnCapability.JOIN_CALL);
 }
-```
 
-</TabItem>
-<TabItem value="curl" label="cURL">
-
-```bash
-curl -X PUT "https://video.stream-io-api.com/video/call/default/${CALL_ID}/members?api_key=${API_KEY}" \
--H "Content-Type: application/json" \
--H "Authorization: ${JWT_TOKEN}" \
--d '{
-  "update_members": [
-    { "user_id": "sara" },
-    { "user_id": "emily", "role": "admin" }
-  ]
-}'
+// Update the call type with the changes
+await client.video.updateCallType(callTypeName, {
+  grants: { user: userGrants, call_member: callMemberGrants },
+});
 ```
 
 </TabItem>
 </Tabs>
 
+## Sessions
+
+Call IDs can be reused, which means a call can be joined and left by participants multiple times. Every time the first participant joins the call, a new session is started. Every time the last participant left the call, the session is ended.
+
+- If a call session is started, the `call.session_started` WebSocket event will be dispatched. It's also possible to send push notifications to call members on this event, for more information see the [Call Types page](../call_types/builtin/#push-notifications-settings).
+
+- If a call session is ended, the `call.session_ended` WebSocket event will be dispatched.
+
+## Ending calls
+
+This action terminates the call for everyone. Ending a call requires the `end-call` permission.
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+await call.endCall();
+```
+
+</TabItem>
+</Tabs>
+
+Only users with the `join-ended-call` permission can join an ended call.
+
 ## Query calls
+
+For many video calling, live stream, or audio rooms apps, you'll want to show:
+
+- Upcoming calls
+- Calls that are currently live
+- Popular live streams / audio rooms with a link to the recording
+
+### Examples
+
+Below you can find a few examples of different queries:
+
+#### Sorting and pagination
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
 
 ```js
 // default sorting
-client.queryCalls();
+client.video.queryCalls();
 
 // sorting and pagination
 const queryCallsReq = {
   sort: [{ field: 'starts_at', direction: -1 }],
   limit: 2,
 };
-response = await client.queryCalls(queryCallsReq);
+response = await client.video.queryCalls(queryCallsReq);
 
 // loading next page
-client.queryCalls({
+client.video.queryCalls({
   ...queryCallsReq,
   next: response.next,
 });
+```
 
-// filtering
-client.queryCalls({
+</TabItem>
+
+<TabItem value="py" label="Python">
+
+```py
+# default sorting
+client.query_calls()
+
+# sorting and pagination
+response = client.query_calls(
+    sort= [SortParamRequest(field: 'starts_at', direction: -1)],
+    limit=2,
+)
+
+# loading next page
+client.query_calls(
+    sort= [SortParamRequest(field: 'starts_at', direction: -1)],
+    limit=2,
+    next=response.data().next
+)
+```
+
+</TabItem>
+</Tabs>
+
+#### Query live calls
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+client.video.queryCalls({
   filter_conditions: { backstage: { $eq: false } },
 });
 ```
 
 </TabItem>
+
+<TabItem value="py" label="Python">
+
+```py
+client.video.query_calls(
+    filter_conditions={'backstage': {'$eq': False}}
+)
+```
+
+</TabItem>
 </Tabs>
+
+#### Query upcoming calls
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+const mins30 = 1000 * 60 * 60 * 30;
+const inNext30mins = new Date(Date.now() + mins30);
+client.video.queryCalls({
+  filter_conditions: {
+    starts_at: { $gt: inNext30mins.toISOString() },
+  },
+});
+```
+
+</TabItem>
+
+<TabItem value="py" label="Python">
+
+```py
+from datetime import datetime, timedelta
+min30s = timedelta(minutes=30)
+in_next_30_mins = datetime.now() + min30s
+client.video.query_calls(
+    filter_conditions={'starts_at': {'$gt': in_next_30_mins.isoformat()}}
+)
+
+```
+
+</TabItem>
+</Tabs>
+
+#### Query ongoing calls
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+client.video.queryCalls({
+  filter_conditions: { ongoing: { $eq: true } },
+});
+```
+
+</TabItem>
+
+<TabItem value="py" label="Python">
+
+```py
+client.video.query_calls(
+    filter_conditions={'ongoing': {'$eq': True}}
+)
+```
+
+</TabItem>
+</Tabs>
+
+### Sort options
+
+<CallSort />
+
+### Filter options
+
+<CallFilters />
+
+<FilterConditions />
 
 ## Query call members
 
@@ -322,6 +312,86 @@ call.queryMembers({
 // filtering
 call.queryMembers({
   filter_conditions: { role: { $eq: 'admin' } },
+});
+```
+
+</TabItem>
+
+<TabItem value="py" label="Python">
+
+```py
+# default sorting
+call.query_members()
+
+# sorting and pagination
+response = call.query_members(
+    sort: [SortParamRequest(field: "user_id", direction: 1)],
+    limit: 2,
+)
+
+# loading next page
+call.query_members(
+    sort: [SortParamRequest(field: "user_id", direction: 1)],
+    limit: 2,
+    next: response.next,
+)
+
+# filtering
+call.query_members(
+    filter_conditions: {"role": {"$eq": "admin"}},
+)
+```
+
+</TabItem>
+</Tabs>
+
+### Sort options
+
+<CallMemberSort />
+
+### Filter options
+
+<CallMemberFilters />
+
+<FilterConditions />
+
+## Send custom event
+
+It's possible to send any custom event for a call:
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+// the custom event can be any kind of data
+await call.sendCustomEvent({
+  type: 'draw',
+  x: 10,
+  y: 30,
+});
+```
+
+</TabItem>
+</Tabs>
+
+Sending a custom event will dispatch the `custom` WebSocket event.
+
+## Pin and unpin video
+
+You can pin the video of a participant in a call session. The SDKs will make sure that the pinned participant is displayed in a prominent location in the call layout for all participants. You can also unpin a pinned participant if you no longer want to highlight them.
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+await call.pinVideo({
+  session_id: 'session-id',
+  user_id: 'user-id-to-unpin',
+});
+
+await call.unpinVideo({
+  session_id: 'session-id',
+  user_id: 'user-id-to-pin',
 });
 ```
 

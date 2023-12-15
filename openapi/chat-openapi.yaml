@@ -197,7 +197,7 @@ components:
           type: string
           x-stream-index: "001.002"
         type:
-          default: custom
+          default: any
           type: string
           x-stream-index: "001.001"
       required:
@@ -212,16 +212,21 @@ components:
       properties:
         agora_options:
           $ref: '#/components/schemas/Config'
-          x-stream-index: "001.035"
+          x-stream-index: "001.039"
+        allowed_flag_reasons:
+          items:
+            type: string
+          type: array
+          x-stream-index: "001.018"
         async_url_enrich_enabled:
           type: boolean
           x-stream-index: "001.016"
         auto_translation_enabled:
           type: boolean
-          x-stream-index: "001.018"
+          x-stream-index: "001.019"
         before_message_send_hook_url:
           type: string
-          x-stream-index: "001.019"
+          x-stream-index: "001.020"
         call_types:
           additionalProperties:
             $ref: '#/components/schemas/CallType'
@@ -229,11 +234,11 @@ components:
           x-stream-index: "001.006"
         campaign_enabled:
           type: boolean
-          x-stream-index: "001.029"
+          x-stream-index: "001.033"
         cdn_expiration_seconds:
           format: int32
           type: integer
-          x-stream-index: "001.033"
+          x-stream-index: "001.037"
         channel_configs:
           additionalProperties:
             $ref: '#/components/schemas/ChannelConfig'
@@ -245,7 +250,10 @@ components:
             key: channel_type
         custom_action_handler_url:
           type: string
-          x-stream-index: "001.020"
+          x-stream-index: "001.021"
+        datadog_info:
+          $ref: '#/components/schemas/DataDogInfo'
+          x-stream-index: "001.042"
         disable_auth_checks:
           type: boolean
           x-stream-index: "001.010"
@@ -254,20 +262,25 @@ components:
           x-stream-index: "001.011"
         enforce_unique_usernames:
           type: string
-          x-stream-index: "001.021"
+          x-stream-index: "001.022"
         file_upload_config:
           $ref: '#/components/schemas/FileUploadConfig'
-          x-stream-index: "001.025"
+          x-stream-index: "001.029"
+        geofences:
+          items:
+            $ref: '#/components/schemas/GeofenceResponse'
+          type: array
+          x-stream-index: "001.041"
         grants:
           additionalProperties:
             items:
               type: string
             type: array
           type: object
-          x-stream-index: "001.028"
+          x-stream-index: "001.032"
         hms_options:
           $ref: '#/components/schemas/Config'
-          x-stream-index: "001.036"
+          x-stream-index: "001.040"
         image_moderation_enabled:
           type: boolean
           x-stream-index: "001.015"
@@ -278,7 +291,7 @@ components:
           x-stream-index: "001.017"
         image_upload_config:
           $ref: '#/components/schemas/FileUploadConfig'
-          x-stream-index: "001.026"
+          x-stream-index: "001.030"
         multi_tenant_enabled:
           type: boolean
           x-stream-index: "001.014"
@@ -304,11 +317,11 @@ components:
         reminders_interval:
           format: int32
           type: integer
-          x-stream-index: "001.032"
+          x-stream-index: "001.036"
         revoke_tokens_issued_before:
           format: date-time
           type: string
-          x-stream-index: "001.027"
+          x-stream-index: "001.031"
         search_backend:
           description: Backend implementation used for search
           enum:
@@ -317,16 +330,25 @@ components:
           - disabled
           title: Search Backend
           type: string
-          x-stream-index: "001.030"
+          x-stream-index: "001.034"
+        sns_key:
+          type: string
+          x-stream-index: "001.027"
+        sns_secret:
+          type: string
+          x-stream-index: "001.028"
+        sns_topic_arn:
+          type: string
+          x-stream-index: "001.026"
         sqs_key:
           type: string
-          x-stream-index: "001.023"
+          x-stream-index: "001.024"
         sqs_secret:
           type: string
-          x-stream-index: "001.024"
+          x-stream-index: "001.025"
         sqs_url:
           type: string
-          x-stream-index: "001.022"
+          x-stream-index: "001.023"
         suspended:
           type: boolean
           x-stream-index: "001.008"
@@ -340,12 +362,12 @@ components:
           x-stream-index: "001.013"
         video_provider:
           type: string
-          x-stream-index: "001.034"
+          x-stream-index: "001.038"
         webhook_events:
           items:
             type: string
           type: array
-          x-stream-index: "001.031"
+          x-stream-index: "001.035"
         webhook_url:
           type: string
           x-stream-index: "001.004"
@@ -371,6 +393,9 @@ components:
       - sqs_url
       - sqs_key
       - sqs_secret
+      - sns_topic_arn
+      - sns_key
+      - sns_secret
       - file_upload_config
       - image_upload_config
       - grants
@@ -565,6 +590,12 @@ components:
         access_request_enabled:
           type: boolean
           x-stream-index: "001"
+        default_device:
+          enum:
+          - speaker
+          - earpiece
+          type: string
+          x-stream-index: "006"
         mic_default_on:
           type: boolean
           x-stream-index: "004"
@@ -583,6 +614,7 @@ components:
       - redundant_coding_enabled
       - mic_default_on
       - speaker_default_on
+      - default_device
       type: object
     AutomodDetails:
       properties:
@@ -713,6 +745,11 @@ components:
           title: Name
           type: string
           x-stream-index: "006"
+        type:
+          description: Block list type.
+          title: Type
+          type: string
+          x-stream-index: "007"
         updated_at:
           description: Date/time of the last update
           format: date-time
@@ -725,13 +762,41 @@ components:
             type: string
           title: Words
           type: array
-          x-stream-index: "007"
+          x-stream-index: "008"
       required:
       - name
+      - type
       - words
       title: Block list
       type: object
       x-stream-docs-page-id: block_lists
+    BlockListOptions:
+      properties:
+        behavior:
+          enum:
+          - flag
+          - block
+          type: string
+          x-stream-index: "002"
+        blocklist:
+          type: string
+          x-stream-index: "001"
+      required:
+      - blocklist
+      - behavior
+      type: object
+    BlockListOptionsRequest:
+      properties:
+        behavior:
+          enum:
+          - flag
+          - block
+          type: string
+          x-stream-index: "002"
+        blocklist:
+          type: string
+          x-stream-index: "001"
+      type: object
     BroadcastSettings:
       properties:
         enabled:
@@ -789,6 +854,9 @@ components:
         screensharing:
           $ref: '#/components/schemas/ScreensharingSettings'
           x-stream-index: "004"
+        thumbnails:
+          $ref: '#/components/schemas/ThumbnailsSettings'
+          x-stream-index: "010"
         transcription:
           $ref: '#/components/schemas/TranscriptionSettings'
           x-stream-index: "008"
@@ -835,211 +903,6 @@ components:
       - Name
       - CreatedAt
       - UpdatedAt
-      type: object
-    Campaign:
-      properties:
-        attachments:
-          items:
-            $ref: '#/components/schemas/Attachment'
-          maximum: 10
-          type: array
-          x-stream-index: "005.007"
-        channel_type:
-          maxLength: 64
-          type: string
-          x-stream-index: "005.008"
-        completed_at:
-          format: date-time
-          type: string
-          x-stream-index: "006.004"
-        created_at:
-          format: date-time
-          type: string
-          x-stream-index: "007"
-        defaults:
-          additionalProperties:
-            type: string
-          maximum: 100
-          type: object
-          x-stream-index: "005.006"
-        description:
-          maxLength: 1024
-          type: string
-          x-stream-index: "005.002"
-        details:
-          type: string
-          x-stream-index: "006.011"
-        errored_messages:
-          format: int32
-          type: integer
-          x-stream-index: "006.009"
-        failed_at:
-          format: date-time
-          type: string
-          x-stream-index: "006.005"
-        id:
-          type: string
-          x-stream-index: "003"
-        name:
-          maxLength: 256
-          type: string
-          x-stream-index: "005.001"
-        resumed_at:
-          format: date-time
-          type: string
-          x-stream-index: "006.007"
-        scheduled_at:
-          format: date-time
-          type: string
-          x-stream-index: "006.003"
-        scheduled_for:
-          format: date-time
-          type: string
-          x-stream-index: "006.002"
-        segment_id:
-          type: string
-          x-stream-index: "005.004"
-        sender_id:
-          type: string
-          x-stream-index: "005.005"
-        sent_messages:
-          format: int32
-          type: integer
-          x-stream-index: "006.008"
-        status:
-          type: string
-          x-stream-index: "006.001"
-        stopped_at:
-          format: date-time
-          type: string
-          x-stream-index: "006.006"
-        task_id:
-          type: string
-          x-stream-index: "006.010"
-        text:
-          type: string
-          x-stream-index: "005.003"
-        updated_at:
-          format: date-time
-          type: string
-          x-stream-index: "008"
-      required:
-      - id
-      - name
-      - description
-      - text
-      - segment_id
-      - sender_id
-      - defaults
-      - attachments
-      - channel_type
-      - created_at
-      - updated_at
-      type: object
-    CampaignDataRequest:
-      properties:
-        attachments:
-          items:
-            $ref: '#/components/schemas/AttachmentRequest'
-          maximum: 10
-          type: array
-          x-stream-index: "007"
-        channel_type:
-          maxLength: 64
-          type: string
-          x-stream-index: "008"
-        defaults:
-          additionalProperties:
-            type: string
-          maximum: 100
-          type: object
-          x-stream-index: "006"
-        description:
-          maxLength: 1024
-          type: string
-          x-stream-index: "002"
-        name:
-          maxLength: 256
-          type: string
-          x-stream-index: "001"
-        segment_id:
-          type: string
-          x-stream-index: "004"
-        sender_id:
-          type: string
-          x-stream-index: "005"
-        text:
-          type: string
-          x-stream-index: "003"
-      required:
-      - name
-      - text
-      - segment_id
-      - sender_id
-      type: object
-    CampaignSort:
-      properties:
-        direction:
-          enum:
-          - asc
-          - desc
-          type: string
-          x-stream-index: "001"
-        fields:
-          items:
-            $ref: '#/components/schemas/CampaignSortField'
-          maximum: 5
-          type: array
-          x-stream-index: "002"
-      required:
-      - fields
-      type: object
-    CampaignSortField:
-      properties:
-        field:
-          type: string
-          x-stream-index: "001"
-        value:
-          x-stream-index: "002"
-      required:
-      - field
-      - value
-      type: object
-    CampaignUpdateableFieldsRequest:
-      properties:
-        attachments:
-          items:
-            $ref: '#/components/schemas/AttachmentRequest'
-          maximum: 10
-          type: array
-          x-stream-index: "007"
-        channel_type:
-          maxLength: 64
-          type: string
-          x-stream-index: "008"
-        defaults:
-          additionalProperties:
-            type: string
-          maximum: 100
-          type: object
-          x-stream-index: "006"
-        description:
-          maxLength: 1024
-          type: string
-          x-stream-index: "002"
-        name:
-          maxLength: 256
-          type: string
-          x-stream-index: "001"
-        segment_id:
-          type: string
-          x-stream-index: "004"
-        sender_id:
-          type: string
-          x-stream-index: "005"
-        text:
-          type: string
-          x-stream-index: "003"
       type: object
     Channel:
       additionalProperties: true
@@ -1126,31 +989,41 @@ components:
       type: object
     ChannelConfig:
       properties:
+        allowed_flag_reasons:
+          items:
+            type: string
+          type: array
+          x-stream-index: "001.023"
         automod:
           enum:
           - disabled
           - simple
           - AI
           type: string
-          x-stream-index: "001.017"
+          x-stream-index: "001.018"
         automod_behavior:
           enum:
           - flag
           - block
           type: string
-          x-stream-index: "001.018"
+          x-stream-index: "001.019"
         automod_thresholds:
           $ref: '#/components/schemas/Thresholds'
-          x-stream-index: "001.021"
+          x-stream-index: "001.024"
         blocklist:
           type: string
-          x-stream-index: "001.019"
+          x-stream-index: "001.020"
         blocklist_behavior:
           enum:
           - flag
           - block
           type: string
-          x-stream-index: "001.020"
+          x-stream-index: "001.021"
+        blocklists:
+          items:
+            $ref: '#/components/schemas/BlockListOptions'
+          type: array
+          x-stream-index: "001.022"
         commands:
           description: List of commands that channel supports
           items:
@@ -1168,14 +1041,17 @@ components:
         custom_events:
           type: boolean
           x-stream-index: "001.012"
+        mark_messages_pending:
+          type: boolean
+          x-stream-index: "001.015"
         max_message_length:
           format: int32
           maximum: 20000
           type: integer
-          x-stream-index: "001.016"
+          x-stream-index: "001.017"
         message_retention:
           type: string
-          x-stream-index: "001.015"
+          x-stream-index: "001.016"
         mutes:
           type: boolean
           x-stream-index: "001.009"
@@ -1231,6 +1107,7 @@ components:
       - custom_events
       - push_notifications
       - reminders
+      - mark_messages_pending
       - message_retention
       - max_message_length
       - automod
@@ -1308,31 +1185,41 @@ components:
       type: object
     ChannelConfigWithInfo:
       properties:
+        allowed_flag_reasons:
+          items:
+            type: string
+          type: array
+          x-stream-index: 001.002.023
         automod:
           enum:
           - disabled
           - simple
           - AI
           type: string
-          x-stream-index: 001.002.017
+          x-stream-index: 001.002.018
         automod_behavior:
           enum:
           - flag
           - block
           type: string
-          x-stream-index: 001.002.018
+          x-stream-index: 001.002.019
         automod_thresholds:
           $ref: '#/components/schemas/Thresholds'
-          x-stream-index: 001.002.021
+          x-stream-index: 001.002.024
         blocklist:
           type: string
-          x-stream-index: 001.002.019
+          x-stream-index: 001.002.020
         blocklist_behavior:
           enum:
           - flag
           - block
           type: string
-          x-stream-index: 001.002.020
+          x-stream-index: 001.002.021
+        blocklists:
+          items:
+            $ref: '#/components/schemas/BlockListOptions'
+          type: array
+          x-stream-index: 001.002.022
         commands:
           items:
             $ref: '#/components/schemas/Command'
@@ -1360,14 +1247,17 @@ components:
             description: List of grants modifiers that apply to a role
             key: role
             title: Grants
+        mark_messages_pending:
+          type: boolean
+          x-stream-index: 001.002.015
         max_message_length:
           format: int32
           maximum: 20000
           type: integer
-          x-stream-index: 001.002.016
+          x-stream-index: 001.002.017
         message_retention:
           type: string
-          x-stream-index: 001.002.015
+          x-stream-index: 001.002.016
         mutes:
           type: boolean
           x-stream-index: 001.002.009
@@ -1425,6 +1315,7 @@ components:
       - custom_events
       - push_notifications
       - reminders
+      - mark_messages_pending
       - message_retention
       - max_message_length
       - automod
@@ -1433,31 +1324,41 @@ components:
       type: object
     ChannelConfigWithInfoRequest:
       properties:
+        allowed_flag_reasons:
+          items:
+            type: string
+          type: array
+          x-stream-index: 001.002.023
         automod:
           enum:
           - disabled
           - simple
           - AI
           type: string
-          x-stream-index: 001.002.017
+          x-stream-index: 001.002.018
         automod_behavior:
           enum:
           - flag
           - block
           type: string
-          x-stream-index: 001.002.018
+          x-stream-index: 001.002.019
         automod_thresholds:
           $ref: '#/components/schemas/ThresholdsRequest'
-          x-stream-index: 001.002.021
+          x-stream-index: 001.002.024
         blocklist:
           type: string
-          x-stream-index: 001.002.019
+          x-stream-index: 001.002.020
         blocklist_behavior:
           enum:
           - flag
           - block
           type: string
-          x-stream-index: 001.002.020
+          x-stream-index: 001.002.021
+        blocklists:
+          items:
+            $ref: '#/components/schemas/BlockListOptionsRequest'
+          type: array
+          x-stream-index: 001.002.022
         commands:
           items:
             $ref: '#/components/schemas/CommandRequest'
@@ -1485,14 +1386,17 @@ components:
             description: List of grants modifiers that apply to a role
             key: role
             title: Grants
+        mark_messages_pending:
+          type: boolean
+          x-stream-index: 001.002.015
         max_message_length:
           format: int32
           maximum: 20000
           type: integer
-          x-stream-index: 001.002.016
+          x-stream-index: 001.002.017
         message_retention:
           type: string
-          x-stream-index: 001.002.015
+          x-stream-index: 001.002.016
         mutes:
           type: boolean
           x-stream-index: 001.002.009
@@ -1654,12 +1558,6 @@ components:
     ChannelGetOrCreateRequest:
       nullable: true
       properties:
-        client_id:
-          type: string
-          x-stream-index: "001.002"
-        connection_id:
-          type: string
-          x-stream-index: "001.003"
         data:
           $ref: '#/components/schemas/ChannelRequest'
           x-stream-index: "004"
@@ -1675,21 +1573,11 @@ components:
         messages:
           $ref: '#/components/schemas/MessagePaginationParamsRequest'
           x-stream-index: "009"
-        presence:
-          description: Fetch user presence info
-          title: Presence
-          type: boolean
-          x-stream-index: "007"
         state:
           description: Refresh channel state
           title: State
           type: boolean
           x-stream-index: "006"
-        watch:
-          description: Start watching the channel
-          title: Watch
-          type: boolean
-          x-stream-index: "005"
         watchers:
           $ref: '#/components/schemas/PaginationParamsRequest'
           x-stream-index: "011"
@@ -1776,27 +1664,27 @@ components:
           format: date-time
           title: Ban expires
           type: string
-          x-stream-index: "015"
+          x-stream-index: "016"
         banned:
           description: Whether member is banned this channel or not
           title: Banned
           type: boolean
-          x-stream-index: "014"
+          x-stream-index: "015"
         channel_role:
           description: Role of the member in the channel
           title: Channel Role
           type: string
-          x-stream-index: "019"
+          x-stream-index: "020"
         created_at:
           description: Date/time of creation
           format: date-time
           title: Created at
           type: string
-          x-stream-index: "010"
+          x-stream-index: "011"
         deleted_at:
           format: date-time
           type: string
-          x-stream-index: "012"
+          x-stream-index: "013"
         invite_accepted_at:
           description: Date when invite was accepted
           format: date-time
@@ -1819,6 +1707,9 @@ components:
           title: Is moderator
           type: boolean
           x-stream-index: "006"
+        notifications_muted:
+          type: boolean
+          x-stream-index: "021"
         role:
           description: 'Permission level of the member in the channel (DEPRECATED:
             use channel_role instead)'
@@ -1829,18 +1720,21 @@ components:
           - owner
           title: Role
           type: string
-          x-stream-index: "018"
+          x-stream-index: "019"
         shadow_banned:
           description: Whether member is shadow banned in this channel or not
           title: Shadow banned
           type: boolean
-          x-stream-index: "017"
+          x-stream-index: "018"
+        status:
+          type: string
+          x-stream-index: "010"
         updated_at:
           description: Date/time of the last update
           format: date-time
           title: Updated at
           type: string
-          x-stream-index: "011"
+          x-stream-index: "012"
         user:
           $ref: '#/components/schemas/UserObject'
           x-stream-index: "005"
@@ -1854,6 +1748,7 @@ components:
       - banned
       - shadow_banned
       - channel_role
+      - notifications_muted
       title: Channel member
       type: object
     ChannelMemberRequest:
@@ -1864,27 +1759,27 @@ components:
           format: date-time
           title: Ban expires
           type: string
-          x-stream-index: "015"
+          x-stream-index: "016"
         banned:
           description: Whether member is banned this channel or not
           title: Banned
           type: boolean
-          x-stream-index: "014"
+          x-stream-index: "015"
         channel_role:
           description: Role of the member in the channel
           title: Channel Role
           type: string
-          x-stream-index: "019"
+          x-stream-index: "020"
         created_at:
           description: Date/time of creation
           format: date-time
           title: Created at
           type: string
-          x-stream-index: "010"
+          x-stream-index: "011"
         deleted_at:
           format: date-time
           type: string
-          x-stream-index: "012"
+          x-stream-index: "013"
         invite_accepted_at:
           description: Date when invite was accepted
           format: date-time
@@ -1907,6 +1802,9 @@ components:
           title: Is moderator
           type: boolean
           x-stream-index: "006"
+        notifications_muted:
+          type: boolean
+          x-stream-index: "021"
         role:
           description: 'Permission level of the member in the channel (DEPRECATED:
             use channel_role instead)'
@@ -1917,18 +1815,21 @@ components:
           - owner
           title: Role
           type: string
-          x-stream-index: "018"
+          x-stream-index: "019"
         shadow_banned:
           description: Whether member is shadow banned in this channel or not
           title: Shadow banned
           type: boolean
-          x-stream-index: "017"
+          x-stream-index: "018"
+        status:
+          type: string
+          x-stream-index: "010"
         updated_at:
           description: Date/time of the last update
           format: date-time
           title: Updated at
           type: string
-          x-stream-index: "011"
+          x-stream-index: "012"
         user:
           $ref: '#/components/schemas/UserObjectRequest'
           x-stream-index: "005"
@@ -2050,8 +1951,6 @@ components:
         config_overrides:
           $ref: '#/components/schemas/ChannelConfigRequest'
           x-stream-index: "026"
-        created_by:
-          $ref: '#/components/schemas/UserObjectRequest'
         disabled:
           type: boolean
           x-stream-index: "016"
@@ -2502,16 +2401,6 @@ components:
       - pinned_messages
       - members
       type: object
-    ChannelStopWatchingRequest:
-      nullable: true
-      properties:
-        client_id:
-          type: string
-          x-stream-index: "001.002"
-        connection_id:
-          type: string
-          x-stream-index: "001.003"
-      type: object
     ChannelTruncatedEvent:
       nullable: true
       properties:
@@ -2549,31 +2438,41 @@ components:
     ChannelTypeConfig:
       nullable: true
       properties:
+        allowed_flag_reasons:
+          items:
+            type: string
+          type: array
+          x-stream-index: 003.002.023
         automod:
           enum:
           - disabled
           - simple
           - AI
           type: string
-          x-stream-index: 003.002.017
+          x-stream-index: 003.002.018
         automod_behavior:
           enum:
           - flag
           - block
           type: string
-          x-stream-index: 003.002.018
+          x-stream-index: 003.002.019
         automod_thresholds:
           $ref: '#/components/schemas/Thresholds'
-          x-stream-index: 003.002.021
+          x-stream-index: 003.002.024
         blocklist:
           type: string
-          x-stream-index: 003.002.019
+          x-stream-index: 003.002.020
         blocklist_behavior:
           enum:
           - flag
           - block
           type: string
-          x-stream-index: 003.002.020
+          x-stream-index: 003.002.021
+        blocklists:
+          items:
+            $ref: '#/components/schemas/BlockListOptions'
+          type: array
+          x-stream-index: 003.002.022
         commands:
           description: List of commands that channel supports
           items:
@@ -2598,14 +2497,17 @@ components:
             type: array
           type: object
           x-stream-index: "002"
+        mark_messages_pending:
+          type: boolean
+          x-stream-index: 003.002.015
         max_message_length:
           format: int32
           maximum: 20000
           type: integer
-          x-stream-index: 003.002.016
+          x-stream-index: 003.002.017
         message_retention:
           type: string
-          x-stream-index: 003.002.015
+          x-stream-index: 003.002.016
         mutes:
           type: boolean
           x-stream-index: 003.002.009
@@ -2670,6 +2572,7 @@ components:
       - custom_events
       - push_notifications
       - reminders
+      - mark_messages_pending
       - message_retention
       - max_message_length
       - automod
@@ -2838,6 +2741,7 @@ components:
           channel.updated: '#/components/schemas/ChannelUpdatedEvent'
           channel.visible: '#/components/schemas/ChannelVisibleEvent'
           custom: '#/components/schemas/AnyEvent'
+          flag.updated: '#/components/schemas/FlagUpdatedEvent'
           health.check: '#/components/schemas/HealthCheckEvent'
           member.added: '#/components/schemas/MemberAddedEvent'
           member.removed: '#/components/schemas/MemberRemovedEvent'
@@ -2893,6 +2797,7 @@ components:
       - $ref: '#/components/schemas/ChannelUnmutedEvent'
       - $ref: '#/components/schemas/ChannelUpdatedEvent'
       - $ref: '#/components/schemas/ChannelVisibleEvent'
+      - $ref: '#/components/schemas/FlagUpdatedEvent'
       - $ref: '#/components/schemas/HealthCheckEvent'
       - $ref: '#/components/schemas/MemberAddedEvent'
       - $ref: '#/components/schemas/MemberRemovedEvent'
@@ -3028,6 +2933,54 @@ components:
           type: boolean
           x-stream-index: "003"
       required:
+      - duration
+      type: object
+    CheckSNSRequest:
+      nullable: true
+      properties:
+        sns_key:
+          description: AWS SNS access key
+          title: SNS key
+          type: string
+          x-stream-index: "002"
+        sns_secret:
+          description: AWS SNS key secret
+          title: SNS secret
+          type: string
+          x-stream-index: "003"
+        sns_topic_arn:
+          description: AWS SNS topic ARN
+          title: SNS Topic ARN
+          type: string
+          x-stream-index: "001"
+      type: object
+    CheckSNSResponse:
+      nullable: true
+      properties:
+        data:
+          additionalProperties: {}
+          description: Error data
+          title: Data
+          type: object
+          x-stream-index: "003"
+        duration:
+          type: string
+          x-stream-index: "004.001"
+        error:
+          description: Error text
+          title: Error
+          type: string
+          x-stream-index: "002"
+        status:
+          description: Validation result
+          enum:
+          - ok
+          - error
+          title: Status
+          type: string
+          x-stream-index: "001"
+      required:
+      - status
       - duration
       type: object
     CheckSQSRequest:
@@ -3223,6 +3176,11 @@ components:
           title: Name
           type: string
           x-stream-index: "001"
+        type:
+          description: Block list type.
+          title: Type
+          type: string
+          x-stream-index: "003"
         words:
           description: List of words to block
           items:
@@ -3291,29 +3249,6 @@ components:
       - token
       - duration
       type: object
-    CreateCampaignRequest:
-      nullable: true
-      properties:
-        campaign:
-          $ref: '#/components/schemas/CampaignDataRequest'
-          x-stream-index: "001"
-      required:
-      - campaign
-      type: object
-    CreateCampaignResponse:
-      nullable: true
-      properties:
-        campaign:
-          $ref: '#/components/schemas/Campaign'
-          x-stream-index: "001"
-        duration:
-          description: Duration of the request in human-readable format
-          title: Duration
-          type: string
-          x-stream-index: "002.001"
-      required:
-      - duration
-      type: object
     CreateChannelTypeRequest:
       nullable: true
       properties:
@@ -3325,7 +3260,7 @@ components:
           - AI
           title: Auto moderation
           type: string
-          x-stream-index: "015"
+          x-stream-index: "016"
         automod_behavior:
           description: Sets behavior of automatic moderation
           enum:
@@ -3333,12 +3268,12 @@ components:
           - block
           title: Auto moderation behavior
           type: string
-          x-stream-index: "016"
+          x-stream-index: "017"
         blocklist:
           description: Name of the blocklist to use
           title: Blocklist
           type: string
-          x-stream-index: "020"
+          x-stream-index: "021"
         blocklist_behavior:
           description: Sets behavior of blocklist
           enum:
@@ -3346,14 +3281,19 @@ components:
           - block
           title: Blocklist behavior
           type: string
-          x-stream-index: "021"
+          x-stream-index: "022"
+        blocklists:
+          additionalProperties:
+            $ref: '#/components/schemas/BlockListOptionsRequest'
+          type: object
+          x-stream-index: "023"
         commands:
           description: List of commands that channel supports
           items:
             type: string
           title: Commands
           type: array
-          x-stream-index: "017"
+          x-stream-index: "018"
         connect_events:
           description: Connect events support
           title: Connect events
@@ -3370,18 +3310,21 @@ components:
               type: string
             type: array
           type: object
-          x-stream-index: "019"
+          x-stream-index: "020"
+        mark_messages_pending:
+          description: Marks messages as pending by default
+          title: Mark messages pending
+          type: boolean
+          x-stream-index: "013"
         max_message_length:
           description: Number of maximum message characters
           format: int32
           title: Maximum message length
           type: integer
-          x-stream-index: "014"
+          x-stream-index: "015"
         message_retention:
-          description: Number of days to keep messages. 'infinite' disables retention
-          title: Message retention
           type: string
-          x-stream-index: "013"
+          x-stream-index: "014"
         mutes:
           description: Enables mutes
           title: Mutes
@@ -3398,7 +3341,7 @@ components:
             $ref: '#/components/schemas/PolicyRequest'
           title: Permissions
           type: array
-          x-stream-index: "018"
+          x-stream-index: "019"
         push_notifications:
           description: Enables push notifications
           title: Push notifications
@@ -3446,31 +3389,41 @@ components:
     CreateChannelTypeResponse:
       nullable: true
       properties:
+        allowed_flag_reasons:
+          items:
+            type: string
+          type: array
+          x-stream-index: 001.001.023
         automod:
           enum:
           - disabled
           - simple
           - AI
           type: string
-          x-stream-index: 001.001.017
+          x-stream-index: 001.001.018
         automod_behavior:
           enum:
           - flag
           - block
           type: string
-          x-stream-index: 001.001.018
+          x-stream-index: 001.001.019
         automod_thresholds:
           $ref: '#/components/schemas/Thresholds'
-          x-stream-index: 001.001.021
+          x-stream-index: 001.001.024
         blocklist:
           type: string
-          x-stream-index: 001.001.019
+          x-stream-index: 001.001.020
         blocklist_behavior:
           enum:
           - flag
           - block
           type: string
-          x-stream-index: 001.001.020
+          x-stream-index: 001.001.021
+        blocklists:
+          items:
+            $ref: '#/components/schemas/BlockListOptions'
+          type: array
+          x-stream-index: 001.001.022
         commands:
           items:
             type: string
@@ -3496,14 +3449,17 @@ components:
             type: array
           type: object
           x-stream-index: "003"
+        mark_messages_pending:
+          type: boolean
+          x-stream-index: 001.001.015
         max_message_length:
           format: int32
           maximum: 20000
           type: integer
-          x-stream-index: 001.001.016
+          x-stream-index: 001.001.017
         message_retention:
           type: string
-          x-stream-index: 001.001.015
+          x-stream-index: 001.001.016
         mutes:
           type: boolean
           x-stream-index: 001.001.009
@@ -3564,6 +3520,7 @@ components:
       - custom_events
       - push_notifications
       - reminders
+      - mark_messages_pending
       - message_retention
       - max_message_length
       - automod
@@ -3734,28 +3691,26 @@ components:
       - duration
       - role
       type: object
-    CreateSegmentRequest:
-      nullable: true
+    DataDogInfo:
       properties:
-        segment:
-          $ref: '#/components/schemas/SegmentDataRequest'
-          x-stream-index: "001"
-      required:
-      - segment
-      type: object
-    CreateSegmentResponse:
-      nullable: true
-      properties:
-        duration:
-          description: Duration of the request in human-readable format
-          title: Duration
+        api_key:
           type: string
-          x-stream-index: "002.001"
-        segment:
-          $ref: '#/components/schemas/Segment'
           x-stream-index: "001"
+        site:
+          type: string
+          x-stream-index: "002"
       required:
-      - duration
+      - api_key
+      - site
+      type: object
+    DataDogInfoRequest:
+      properties:
+        api_key:
+          type: string
+          x-stream-index: "001"
+        site:
+          type: string
+          x-stream-index: "002"
       type: object
     DeactivateUserRequest:
       nullable: true
@@ -3829,17 +3784,6 @@ components:
           x-stream-index: "001"
       required:
       - task_id
-      - duration
-      type: object
-    DeleteCampaignResponse:
-      nullable: true
-      properties:
-        duration:
-          description: Duration of the request in human-readable format
-          title: Duration
-          type: string
-          x-stream-index: "001.001"
-      required:
       - duration
       type: object
     DeleteChannelResponse:
@@ -3918,17 +3862,6 @@ components:
           x-stream-index: "001"
       required:
       - name
-      - duration
-      type: object
-    DeleteSegmentResponse:
-      nullable: true
-      properties:
-        duration:
-          description: Duration of the request in human-readable format
-          title: Duration
-          type: string
-          x-stream-index: "001.001"
-      required:
       - duration
       type: object
     DeleteUserResponse:
@@ -4702,8 +4635,15 @@ components:
         created_by_automod:
           type: boolean
           x-stream-index: "004"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "022"
         details:
           $ref: '#/components/schemas/FlagDetails'
+          x-stream-index: "021"
+        reason:
+          type: string
           x-stream-index: "020"
         rejected_at:
           description: Date of the rejection
@@ -4791,22 +4731,25 @@ components:
     FlagRequest:
       nullable: true
       properties:
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "004"
+        reason:
+          maxLength: 255
+          type: string
+          x-stream-index: "003"
         target_message_id:
           description: ID of the message when reporting a message
           title: Target Message ID
           type: string
           x-stream-index: "001"
-        target_user_id:
-          description: ID of the user when reporting a user
-          title: Target User ID
-          type: string
-          x-stream-index: "002"
         user:
           $ref: '#/components/schemas/UserObjectRequest'
-          x-stream-index: "003.002"
+          x-stream-index: "005.002"
         user_id:
           type: string
-          x-stream-index: "003.001"
+          x-stream-index: "005.001"
       type: object
     FlagResponse:
       nullable: true
@@ -4821,6 +4764,58 @@ components:
           x-stream-index: "001"
       required:
       - duration
+      type: object
+    FlagUpdatedEvent:
+      properties:
+        CreatedBy:
+          $ref: '#/components/schemas/UserObject'
+          x-stream-index: "004"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "003.002"
+        message:
+          $ref: '#/components/schemas/Message'
+          x-stream-index: "001.001"
+        thread_participants:
+          items:
+            $ref: '#/components/schemas/UserObject'
+          type: array
+          x-stream-index: "001.002"
+        type:
+          default: flag.updated
+          type: string
+          x-stream-index: "003.001"
+        user:
+          $ref: '#/components/schemas/UserObject'
+          x-stream-index: "002.001"
+      required:
+      - type
+      - created_at
+      title: FlagUpdatedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: ChatEvent
+    GeofenceResponse:
+      nullable: true
+      properties:
+        country_codes:
+          items:
+            type: string
+          type: array
+          x-stream-index: "004"
+        description:
+          type: string
+          x-stream-index: "003"
+        name:
+          type: string
+          x-stream-index: "001"
+        type:
+          type: string
+          x-stream-index: "002"
+      required:
+      - name
       type: object
     GeofenceSettings:
       properties:
@@ -5286,6 +5281,9 @@ components:
         enabled:
           type: boolean
           x-stream-index: "002"
+        layout:
+          $ref: '#/components/schemas/LayoutSettings'
+          x-stream-index: "004"
         quality_tracks:
           items:
             type: string
@@ -5718,6 +5716,32 @@ components:
           type: number
           x-stream-index: "001"
       type: object
+    LayoutSettings:
+      properties:
+        external_app_url:
+          type: string
+          x-stream-index: "003"
+        external_css_url:
+          type: string
+          x-stream-index: "004"
+        name:
+          enum:
+          - spotlight
+          - grid
+          - single-participant
+          - mobile
+          - custom
+          type: string
+          x-stream-index: "001"
+        options:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "002"
+      required:
+      - name
+      - external_app_url
+      - external_css_url
+      type: object
     LimitInfo:
       properties:
         limit:
@@ -6094,7 +6118,7 @@ components:
           title: Before Message Send Failed
           type: boolean
           x-stream-docs-page-id: before_message_send_webhook
-          x-stream-index: "042"
+          x-stream-index: "043"
         cid:
           description: Channel unique identifier in <type>:<id> format
           title: Channel CID
@@ -6118,6 +6142,10 @@ components:
           title: Deleted at
           type: string
           x-stream-index: "030"
+        deleted_reply_count:
+          format: int32
+          type: integer
+          x-stream-index: "021"
         html:
           description: Contains HTML markup of the message. Can only be set when using
             server-side API
@@ -6132,7 +6160,7 @@ components:
           title: Internationalization info
           type: object
           x-stream-docs-page-id: translation
-          x-stream-index: "040"
+          x-stream-index: "041"
         id:
           description: Message ID is unique string identifier of the message
           title: ID
@@ -6146,7 +6174,7 @@ components:
           description: Contains image moderation information
           title: Image moderation labels
           type: object
-          x-stream-index: "036"
+          x-stream-index: "037"
         latest_reactions:
           description: List of 10 latest reactions to this message
           items:
@@ -6160,7 +6188,7 @@ components:
             $ref: '#/components/schemas/UserObject'
           title: Mentioned Users
           type: array
-          x-stream-index: "039"
+          x-stream-index: "040"
         mml:
           description: Should be empty if `text` is provided. Can only be set when
             using server-side API
@@ -6187,26 +6215,26 @@ components:
           title: Pin expiration date
           type: string
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "047"
+          x-stream-index: "048"
         pinned:
           description: Whether message is pinned or not
           title: Pinned
           type: boolean
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "043"
+          x-stream-index: "044"
         pinned_at:
           description: Date when message got pinned
           format: date-time
           title: Pinned at
           type: string
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "044"
+          x-stream-index: "045"
         pinned_by:
           $ref: '#/components/schemas/UserObject'
           description: Contains user who pinned the message
           title: Pinned by
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "046"
+          x-stream-index: "047"
         quoted_message:
           $ref: '#/components/schemas/Message'
           description: Contains quoted message
@@ -6247,7 +6275,7 @@ components:
           title: Shadowed
           type: boolean
           x-stream-docs-page-id: moderation#shadow-ban
-          x-stream-index: "032"
+          x-stream-index: "033"
         show_in_channel:
           description: Whether thread reply should be shown in the channel as well
           title: Show in channel
@@ -6258,7 +6286,7 @@ components:
           description: Whether message is silent or not
           title: Silent
           type: boolean
-          x-stream-index: "041"
+          x-stream-index: "042"
         text:
           description: Text of the message. Should be empty if `mml` is provided
           title: Text
@@ -6296,10 +6324,6 @@ components:
           description: Sender of the message. Required when using server-side API
           title: User object
           x-stream-index: "010"
-        visible_reply_count:
-          format: int32
-          type: integer
-          x-stream-index: "021"
       required:
       - id
       - text
@@ -6311,7 +6335,7 @@ components:
       - reaction_counts
       - reaction_scores
       - reply_count
-      - visible_reply_count
+      - deleted_reply_count
       - cid
       - created_at
       - updated_at
@@ -6400,14 +6424,21 @@ components:
         approved_at:
           format: date-time
           type: string
-          x-stream-index: "010"
+          x-stream-index: "013"
         created_at:
           format: date-time
           type: string
-          x-stream-index: "006"
+          x-stream-index: "009"
         created_by_automod:
           type: boolean
           x-stream-index: "001"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "008"
+        details:
+          $ref: '#/components/schemas/FlagDetails'
+          x-stream-index: "006"
         message:
           $ref: '#/components/schemas/Message'
           x-stream-index: "005"
@@ -6417,21 +6448,24 @@ components:
         moderation_result:
           $ref: '#/components/schemas/MessageModerationResult'
           x-stream-index: "002"
+        reason:
+          type: string
+          x-stream-index: "007"
         rejected_at:
           format: date-time
           type: string
-          x-stream-index: "011"
+          x-stream-index: "014"
         reviewed_at:
           format: date-time
           type: string
-          x-stream-index: "008"
+          x-stream-index: "011"
         reviewed_by:
           $ref: '#/components/schemas/UserObject'
-          x-stream-index: "009"
+          x-stream-index: "012"
         updated_at:
           format: date-time
           type: string
-          x-stream-index: "007"
+          x-stream-index: "010"
         user:
           $ref: '#/components/schemas/UserObject'
           x-stream-index: "004"
@@ -6820,7 +6854,7 @@ components:
           title: Before Message Send Failed
           type: boolean
           x-stream-docs-page-id: before_message_send_webhook
-          x-stream-index: "042"
+          x-stream-index: "043"
         cid:
           description: Channel unique identifier in <type>:<id> format
           title: Channel CID
@@ -6844,6 +6878,10 @@ components:
           title: Deleted at
           type: string
           x-stream-index: "030"
+        deleted_reply_count:
+          format: int32
+          type: integer
+          x-stream-index: "021"
         html:
           description: Contains HTML markup of the message. Can only be set when using
             server-side API
@@ -6858,7 +6896,7 @@ components:
           title: Internationalization info
           type: object
           x-stream-docs-page-id: translation
-          x-stream-index: "040"
+          x-stream-index: "041"
         id:
           description: Message ID is unique string identifier of the message
           title: ID
@@ -6872,7 +6910,7 @@ components:
           description: Contains image moderation information
           title: Image moderation labels
           type: object
-          x-stream-index: "036"
+          x-stream-index: "037"
         latest_reactions:
           description: List of 10 latest reactions to this message
           items:
@@ -6886,7 +6924,7 @@ components:
             $ref: '#/components/schemas/UserObjectRequest'
           title: Mentioned Users
           type: array
-          x-stream-index: "039"
+          x-stream-index: "040"
         mml:
           description: Should be empty if `text` is provided. Can only be set when
             using server-side API
@@ -6913,26 +6951,26 @@ components:
           title: Pin expiration date
           type: string
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "047"
+          x-stream-index: "048"
         pinned:
           description: Whether message is pinned or not
           title: Pinned
           type: boolean
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "043"
+          x-stream-index: "044"
         pinned_at:
           description: Date when message got pinned
           format: date-time
           title: Pinned at
           type: string
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "044"
+          x-stream-index: "045"
         pinned_by:
           $ref: '#/components/schemas/UserObjectRequest'
           description: Contains user who pinned the message
           title: Pinned by
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "046"
+          x-stream-index: "047"
         quoted_message:
           $ref: '#/components/schemas/MessageRequest_1'
           description: Contains quoted message
@@ -6973,7 +7011,7 @@ components:
           title: Shadowed
           type: boolean
           x-stream-docs-page-id: moderation#shadow-ban
-          x-stream-index: "032"
+          x-stream-index: "033"
         show_in_channel:
           description: Whether thread reply should be shown in the channel as well
           title: Show in channel
@@ -6984,7 +7022,7 @@ components:
           description: Whether message is silent or not
           title: Silent
           type: boolean
-          x-stream-index: "041"
+          x-stream-index: "042"
         text:
           description: Text of the message. Should be empty if `mml` is provided
           title: Text
@@ -7022,10 +7060,6 @@ components:
           description: Sender of the message. Required when using server-side API
           title: User object
           x-stream-index: "010"
-        visible_reply_count:
-          format: int32
-          type: integer
-          x-stream-index: "021"
       required:
       - text
       - mml
@@ -7212,7 +7246,6 @@ components:
           type: string
           x-stream-index: "004.001"
       required:
-      - channel_cid
       - channel_cids
       type: object
     MuteChannelResponse:
@@ -7265,7 +7298,6 @@ components:
           type: string
           x-stream-index: "004.001"
       required:
-      - target_id
       - target_ids
       type: object
     MuteUserResponse:
@@ -7273,7 +7305,7 @@ components:
       properties:
         duration:
           type: string
-          x-stream-index: "004.001"
+          x-stream-index: "005.001"
         mute:
           $ref: '#/components/schemas/UserMute'
           description: Object with user mute (if one user was muted)
@@ -7286,6 +7318,11 @@ components:
           title: Mutes
           type: array
           x-stream-index: "002"
+        non_existing_users:
+          items:
+            type: string
+          type: array
+          x-stream-index: "004"
         own_user:
           $ref: '#/components/schemas/OwnUser'
           description: Authorized user object with fresh mutes information
@@ -8597,6 +8634,9 @@ components:
           format: date-time
           type: string
           x-stream-index: "003.007"
+        exclude_expired_bans:
+          type: boolean
+          x-stream-index: "006"
         filter_conditions:
           additionalProperties: {}
           type: object
@@ -8621,12 +8661,12 @@ components:
           $ref: '#/components/schemas/UserObject'
           description: '**Server-side only**. User object which server acts upon'
           title: User
-          x-stream-index: "006.002"
+          x-stream-index: "007.002"
         user_id:
           description: '**Server-side only**. User ID which server acts upon'
           title: User ID
           type: string
-          x-stream-index: "006.001"
+          x-stream-index: "007.001"
       required:
       - filter_conditions
       type: object
@@ -8647,68 +8687,9 @@ components:
       - bans
       - duration
       type: object
-    QueryCampaignsRequest:
-      properties:
-        filter_conditions:
-          additionalProperties: {}
-          type: object
-          x-stream-index: "001"
-        limit:
-          format: int32
-          maximum: 20
-          minimum: 1
-          type: integer
-          x-stream-index: "002.002"
-        sort:
-          $ref: '#/components/schemas/CampaignSort'
-          x-stream-index: "002.001"
-      required:
-      - filter_conditions
-      type: object
-    QueryCampaignsResponse:
-      nullable: true
-      properties:
-        campaigns:
-          items:
-            $ref: '#/components/schemas/Campaign'
-          type: array
-          x-stream-index: "001"
-        channels:
-          additionalProperties:
-            $ref: '#/components/schemas/Channel'
-          type: object
-          x-stream-index: "004"
-        duration:
-          description: Duration of the request in human-readable format
-          title: Duration
-          type: string
-          x-stream-index: "005.001"
-        segments:
-          additionalProperties:
-            $ref: '#/components/schemas/Segment'
-          type: object
-          x-stream-index: "002"
-        users:
-          additionalProperties:
-            $ref: '#/components/schemas/UserObject'
-          type: object
-          x-stream-index: "003"
-      required:
-      - campaigns
-      - segments
-      - users
-      - channels
-      - duration
-      type: object
     QueryChannelsRequest:
       nullable: true
       properties:
-        client_id:
-          type: string
-          x-stream-index: "011.002"
-        connection_id:
-          type: string
-          x-stream-index: "011.003"
         filter_conditions:
           additionalProperties: {}
           type: object
@@ -8768,8 +8749,6 @@ components:
           title: Watch
           type: boolean
           x-stream-index: "003"
-      required:
-      - sort
       title: Query Channels Request
       type: object
       x-stream-docs-page-id: query_channels
@@ -8799,7 +8778,6 @@ components:
           x-stream-index: "004"
         id:
           description: Channel ID to interact with
-          maxLength: 64
           title: Channel ID
           type: string
           x-stream-index: "002"
@@ -8873,22 +8851,31 @@ components:
           maximum: 300
           minimum: 0
           type: integer
-          x-stream-index: "002.003"
+          x-stream-index: "003.003"
         offset:
           format: int32
           maximum: 10000
           type: integer
-          x-stream-index: "002.004"
+          x-stream-index: "003.004"
+        show_deleted_messages:
+          type: boolean
+          x-stream-index: "002"
+        sort:
+          items:
+            $ref: '#/components/schemas/SortParam'
+          maximum: 5
+          type: array
+          x-stream-index: "003.005"
         user:
           $ref: '#/components/schemas/UserObject'
           description: '**Server-side only**. User object which server acts upon'
           title: User
-          x-stream-index: "003.002"
+          x-stream-index: "004.002"
         user_id:
           description: '**Server-side only**. User ID which server acts upon'
           title: User ID
           type: string
-          x-stream-index: "003.001"
+          x-stream-index: "004.001"
       type: object
     QueryMessageFlagsResponse:
       nullable: true
@@ -8907,108 +8894,8 @@ components:
       - flags
       - duration
       type: object
-    QueryRecipientsRequest:
-      properties:
-        filter_conditions:
-          additionalProperties: {}
-          type: object
-          x-stream-index: "001"
-        limit:
-          format: int32
-          maximum: 20
-          minimum: 1
-          type: integer
-          x-stream-index: "002.002"
-        sort:
-          $ref: '#/components/schemas/CampaignSort'
-          x-stream-index: "002.001"
-      required:
-      - filter_conditions
-      type: object
-    QueryRecipientsResponse:
-      nullable: true
-      properties:
-        campaigns:
-          additionalProperties:
-            $ref: '#/components/schemas/Campaign'
-          type: object
-          x-stream-index: "001"
-        channels:
-          additionalProperties:
-            $ref: '#/components/schemas/Channel'
-          type: object
-          x-stream-index: "004"
-        duration:
-          description: Duration of the request in human-readable format
-          title: Duration
-          type: string
-          x-stream-index: "006.001"
-        recipients:
-          items:
-            $ref: '#/components/schemas/Recipient'
-          type: array
-          x-stream-index: "005"
-        segments:
-          additionalProperties:
-            $ref: '#/components/schemas/Segment'
-          type: object
-          x-stream-index: "002"
-        users:
-          additionalProperties:
-            $ref: '#/components/schemas/UserObject'
-          type: object
-          x-stream-index: "003"
-      required:
-      - campaigns
-      - segments
-      - users
-      - channels
-      - recipients
-      - duration
-      type: object
-    QuerySegmentsRequest:
-      properties:
-        filter_conditions:
-          additionalProperties: {}
-          type: object
-          x-stream-index: "001"
-        limit:
-          format: int32
-          maximum: 20
-          minimum: 1
-          type: integer
-          x-stream-index: "002.002"
-        sort:
-          $ref: '#/components/schemas/CampaignSort'
-          x-stream-index: "002.001"
-      required:
-      - filter_conditions
-      type: object
-    QuerySegmentsResponse:
-      nullable: true
-      properties:
-        duration:
-          description: Duration of the request in human-readable format
-          title: Duration
-          type: string
-          x-stream-index: "002.001"
-        segments:
-          items:
-            $ref: '#/components/schemas/Segment'
-          type: array
-          x-stream-index: "001"
-      required:
-      - segments
-      - duration
-      type: object
     QueryUsersRequest:
       properties:
-        client_id:
-          type: string
-          x-stream-index: "006.002"
-        connection_id:
-          type: string
-          x-stream-index: "006.003"
         filter_conditions:
           additionalProperties: {}
           description: User filters
@@ -9060,7 +8947,6 @@ components:
           x-stream-index: "005.001"
       required:
       - filter_conditions
-      - sort
       type: object
     Reaction:
       additionalProperties: true
@@ -9425,65 +9311,18 @@ components:
       - last_read
       - unread_messages
       type: object
-    Recipient:
-      nullable: true
-      properties:
-        campaign_id:
-          type: string
-          x-stream-index: "004"
-        channel_cid:
-          type: string
-          x-stream-index: "005"
-        created_at:
-          format: date-time
-          type: string
-          x-stream-index: "010"
-        details:
-          type: string
-          x-stream-index: "009"
-        message_id:
-          type: string
-          x-stream-index: "007"
-        receiver_id:
-          type: string
-          x-stream-index: "006"
-        status:
-          type: string
-          x-stream-index: "008"
-        updated_at:
-          format: date-time
-          type: string
-          x-stream-index: "011"
-      required:
-      - campaign_id
-      - channel_cid
-      - receiver_id
-      - message_id
-      - status
-      - details
-      - created_at
-      - updated_at
-      type: object
     RecordSettings:
       properties:
         audio_only:
           type: boolean
           x-stream-index: "001"
+        layout:
+          $ref: '#/components/schemas/LayoutSettings'
+          x-stream-index: "004"
         mode:
-          enum:
-          - available
-          - disabled
-          - auto-on
           type: string
           x-stream-index: "002"
         quality:
-          enum:
-          - audio-only
-          - 360p
-          - 480p
-          - 720p
-          - 1080p
-          - 1440p
           type: string
           x-stream-index: "003"
       required:
@@ -9514,22 +9353,6 @@ components:
           x-stream-index: "001"
       required:
       - user_ids
-      type: object
-    ResumeCampaignRequest:
-      type: object
-    ResumeCampaignResponse:
-      nullable: true
-      properties:
-        campaign:
-          $ref: '#/components/schemas/Campaign'
-          x-stream-index: "001"
-        duration:
-          description: Duration of the request in human-readable format
-          title: Duration
-          type: string
-          x-stream-index: "002.001"
-      required:
-      - duration
       type: object
     RingSettings:
       properties:
@@ -9583,29 +9406,6 @@ components:
       - scopes
       - created_at
       - updated_at
-      type: object
-    ScheduleCampaignRequest:
-      nullable: true
-      properties:
-        scheduled_for:
-          format: int64
-          minimum: 0
-          type: integer
-          x-stream-index: "001"
-      type: object
-    ScheduleCampaignResponse:
-      nullable: true
-      properties:
-        campaign:
-          $ref: '#/components/schemas/Campaign'
-          x-stream-index: "001"
-        duration:
-          description: Duration of the request in human-readable format
-          title: Duration
-          type: string
-          x-stream-index: "002.001"
-      required:
-      - duration
       type: object
     ScreensharingSettings:
       properties:
@@ -9720,7 +9520,7 @@ components:
           x-stream-index: "001.011"
         before_message_send_failed:
           type: boolean
-          x-stream-index: "001.042"
+          x-stream-index: "001.043"
         channel:
           $ref: '#/components/schemas/ChannelResponse'
           description: Channel object
@@ -9740,6 +9540,10 @@ components:
           format: date-time
           type: string
           x-stream-index: "001.030"
+        deleted_reply_count:
+          format: int32
+          type: integer
+          x-stream-index: "001.021"
         html:
           type: string
           x-stream-index: "001.007"
@@ -9747,7 +9551,7 @@ components:
           additionalProperties:
             type: string
           type: object
-          x-stream-index: "001.040"
+          x-stream-index: "001.041"
         id:
           type: string
           x-stream-index: "001.002"
@@ -9757,7 +9561,7 @@ components:
               type: string
             type: array
           type: object
-          x-stream-index: "001.036"
+          x-stream-index: "001.037"
         latest_reactions:
           items:
             $ref: '#/components/schemas/Reaction'
@@ -9767,7 +9571,7 @@ components:
           items:
             $ref: '#/components/schemas/UserObject'
           type: array
-          x-stream-index: "001.039"
+          x-stream-index: "001.040"
         mml:
           type: string
           x-stream-index: "001.005"
@@ -9782,17 +9586,17 @@ components:
         pin_expires:
           format: date-time
           type: string
-          x-stream-index: "001.047"
+          x-stream-index: "001.048"
         pinned:
           type: boolean
-          x-stream-index: "001.043"
+          x-stream-index: "001.044"
         pinned_at:
           format: date-time
           type: string
-          x-stream-index: "001.044"
+          x-stream-index: "001.045"
         pinned_by:
           $ref: '#/components/schemas/UserObject'
-          x-stream-index: "001.046"
+          x-stream-index: "001.047"
         quoted_message:
           $ref: '#/components/schemas/Message'
           x-stream-index: "001.023"
@@ -9817,13 +9621,13 @@ components:
           x-stream-index: "001.020"
         shadowed:
           type: boolean
-          x-stream-index: "001.032"
+          x-stream-index: "001.033"
         show_in_channel:
           type: boolean
           x-stream-index: "001.019"
         silent:
           type: boolean
-          x-stream-index: "001.041"
+          x-stream-index: "001.042"
         text:
           type: string
           x-stream-index: "001.004"
@@ -9842,10 +9646,6 @@ components:
         user:
           $ref: '#/components/schemas/UserObject'
           x-stream-index: "001.010"
-        visible_reply_count:
-          format: int32
-          type: integer
-          x-stream-index: "001.021"
       required:
       - id
       - text
@@ -9857,7 +9657,7 @@ components:
       - reaction_counts
       - reaction_scores
       - reply_count
-      - visible_reply_count
+      - deleted_reply_count
       - cid
       - created_at
       - updated_at
@@ -9896,105 +9696,6 @@ components:
       - warning_description
       - warning_code
       type: object
-    Segment:
-      properties:
-        created_at:
-          format: date-time
-          type: string
-          x-stream-index: "005"
-        description:
-          maxLength: 256
-          type: string
-          x-stream-index: "010.002"
-        filter:
-          additionalProperties: {}
-          type: object
-          x-stream-index: 010.003.002
-        id:
-          type: string
-          x-stream-index: "003"
-        in_use:
-          type: boolean
-          x-stream-index: "009"
-        name:
-          maxLength: 128
-          type: string
-          x-stream-index: "010.001"
-        size:
-          format: int32
-          type: integer
-          x-stream-index: "008"
-        status:
-          type: string
-          x-stream-index: "007"
-        type:
-          enum:
-          - user
-          - channel
-          type: string
-          x-stream-index: 010.003.001
-        updated_at:
-          format: date-time
-          type: string
-          x-stream-index: "006"
-      required:
-      - id
-      - created_at
-      - updated_at
-      - status
-      - size
-      - in_use
-      - name
-      - description
-      - type
-      - filter
-      type: object
-    SegmentDataRequest:
-      properties:
-        description:
-          maxLength: 256
-          type: string
-          x-stream-index: "002"
-        filter:
-          additionalProperties: {}
-          type: object
-          x-stream-index: "003.002"
-        name:
-          maxLength: 128
-          type: string
-          x-stream-index: "001"
-        type:
-          enum:
-          - user
-          - channel
-          type: string
-          x-stream-index: "003.001"
-      required:
-      - name
-      - type
-      - filter
-      type: object
-    SegmentUpdateableFieldsRequest:
-      properties:
-        description:
-          maxLength: 256
-          type: string
-          x-stream-index: "002"
-        filter:
-          additionalProperties: {}
-          type: object
-          x-stream-index: "004"
-        name:
-          maxLength: 128
-          type: string
-          x-stream-index: "001"
-        type:
-          enum:
-          - user
-          - channel
-          type: string
-          x-stream-index: "003"
-      type: object
     SendEventRequest:
       nullable: true
       properties:
@@ -10012,21 +9713,24 @@ components:
           description: Enable moderation on server-side requests
           title: Force moderation
           type: boolean
-          x-stream-index: "005"
+          x-stream-index: "006"
         is_pending_message:
-          description: Make the message a pending message. This message will not be
-            viewable to others until it is committed.
-          title: Is pending message
           type: boolean
           x-stream-index: "004"
         keep_channel_hidden:
           description: Keeps the channel hidden for the sender
           title: Keep channel hidden
           type: boolean
-          x-stream-index: "006"
+          x-stream-index: "007"
         message:
           $ref: '#/components/schemas/MessageRequest'
           x-stream-index: "001.001"
+        pending:
+          description: Make the message a pending message. This message will not be
+            viewable to others until it is committed.
+          title: Pending
+          type: boolean
+          x-stream-index: "005"
         pending_message_metadata:
           additionalProperties:
             type: string
@@ -10103,10 +9807,14 @@ components:
       nullable: true
       properties:
         direction:
+          description: Direction of sorting, -1 for descending, 1 for ascending
           format: int32
+          title: Direction
           type: integer
           x-stream-index: "002"
         field:
+          description: Name of field to sort by
+          title: Field
           type: string
           x-stream-index: "001"
       type: object
@@ -10114,110 +9822,16 @@ components:
       nullable: true
       properties:
         direction:
+          description: Direction of sorting, -1 for descending, 1 for ascending
           format: int32
+          title: Direction
           type: integer
           x-stream-index: "002"
         field:
+          description: Name of field to sort by
+          title: Field
           type: string
           x-stream-index: "001"
-      type: object
-    StopCampaignRequest:
-      nullable: true
-      type: object
-    StopCampaignResponse:
-      nullable: true
-      properties:
-        campaign:
-          $ref: '#/components/schemas/Campaign'
-          x-stream-index: "001"
-        duration:
-          description: Duration of the request in human-readable format
-          title: Duration
-          type: string
-          x-stream-index: "002.001"
-      required:
-      - duration
-      type: object
-    StopWatchingResponse:
-      nullable: true
-      properties:
-        duration:
-          description: Duration of the request in human-readable format
-          title: Duration
-          type: string
-          x-stream-index: "001.001"
-      required:
-      - duration
-      type: object
-    SyncRequest:
-      nullable: true
-      properties:
-        channel_cids:
-          description: List of channel CIDs to sync
-          items:
-            type: string
-          maximum: 255
-          minimum: 1
-          title: Channel CIDs
-          type: array
-          x-stream-index: "001"
-        client_id:
-          type: string
-          x-stream-index: "006.002"
-        connection_id:
-          type: string
-          x-stream-index: "006.003"
-        last_sync_at:
-          description: Date from which synchronization should happen
-          format: date-time
-          title: Last sync at
-          type: string
-          x-stream-index: "002"
-        user:
-          $ref: '#/components/schemas/UserObjectRequest'
-          x-stream-index: "005.002"
-        user_id:
-          type: string
-          x-stream-index: "005.001"
-        watch:
-          description: If set to true this will start watching requested and newly
-            added channels that user has access to. If error occurred with this option
-            enabled and it is not an input error - channels will still be watched.
-          title: Watch synced channels
-          type: boolean
-          x-stream-index: "004"
-        with_inaccessible_cids:
-          description: If set to true this will add 'inaccessible_cids' to response
-            type
-          title: With inaccessible CIDs
-          type: boolean
-          x-stream-index: "003"
-      required:
-      - last_sync_at
-      type: object
-    SyncResponse:
-      nullable: true
-      properties:
-        duration:
-          type: string
-          x-stream-index: "003.001"
-        events:
-          description: List of events
-          items:
-            $ref: '#/components/schemas/Event'
-          title: Events
-          type: array
-          x-stream-index: "001"
-        inaccessible_cids:
-          description: List of CIDs that user can't access
-          items:
-            type: string
-          title: Inaccessible CIDs
-          type: array
-          x-stream-index: "002"
-      required:
-      - events
-      - duration
       type: object
     TargetResolution:
       properties:
@@ -10242,43 +9856,6 @@ components:
       - width
       - height
       - bitrate
-      type: object
-    TestCampaignRequest:
-      nullable: true
-      properties:
-        users:
-          items:
-            type: string
-          maximum: 10
-          minimum: 1
-          type: array
-          x-stream-index: "002"
-      required:
-      - users
-      type: object
-    TestCampaignResponse:
-      nullable: true
-      properties:
-        details:
-          type: string
-          x-stream-index: "002"
-        duration:
-          type: string
-          x-stream-index: "004.001"
-        results:
-          additionalProperties:
-            type: string
-          description: Result of the test per user
-          title: Results
-          type: object
-          x-stream-index: "003"
-        status:
-          type: string
-          x-stream-index: "001"
-      required:
-      - status
-      - duration
-      title: Test campaign response
       type: object
     Thresholds:
       description: Sets thresholds for AI moderation
@@ -10319,6 +9896,14 @@ components:
           title: Toxic
           x-stream-index: "003"
       title: Auto moderation thresholds
+      type: object
+    ThumbnailsSettings:
+      properties:
+        enabled:
+          type: boolean
+          x-stream-index: "001"
+      required:
+      - enabled
       type: object
     TranscriptionSettings:
       properties:
@@ -10399,7 +9984,7 @@ components:
           - vi
           title: Language
           type: string
-          x-stream-index: "001"
+          x-stream-index: "002"
       required:
       - language
       type: object
@@ -10554,7 +10139,12 @@ components:
           description: Duration of the request in human-readable format
           title: Duration
           type: string
-          x-stream-index: "001.001"
+          x-stream-index: "002.001"
+        non_existing_users:
+          items:
+            type: string
+          type: array
+          x-stream-index: "001"
       required:
       - duration
       type: object
@@ -10584,39 +10174,106 @@ components:
       - target_id
       - target_ids
       type: object
+    UnreadCountsChannel:
+      properties:
+        channel_id:
+          type: string
+          x-stream-index: "001"
+        last_read:
+          format: date-time
+          type: string
+          x-stream-index: "003"
+        unread_count:
+          format: int32
+          type: integer
+          x-stream-index: "002"
+      required:
+      - channel_id
+      - unread_count
+      - last_read
+      type: object
+    UnreadCountsChannelType:
+      properties:
+        channel_count:
+          format: int32
+          type: integer
+          x-stream-index: "002"
+        channel_type:
+          type: string
+          x-stream-index: "001"
+        unread_count:
+          format: int32
+          type: integer
+          x-stream-index: "003"
+      required:
+      - channel_type
+      - channel_count
+      - unread_count
+      type: object
+    UnreadCountsResponse:
+      nullable: true
+      properties:
+        channel_type:
+          items:
+            $ref: '#/components/schemas/UnreadCountsChannelType'
+          type: array
+          x-stream-index: "003"
+        channels:
+          items:
+            $ref: '#/components/schemas/UnreadCountsChannel'
+          type: array
+          x-stream-index: "002"
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "004.001"
+        total_unread_count:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+      required:
+      - total_unread_count
+      - channels
+      - channel_type
+      - duration
+      type: object
     UpdateAppRequest:
       nullable: true
       properties:
         agora_options:
           $ref: '#/components/schemas/ConfigRequest'
-          x-stream-index: "001.033"
+          x-stream-index: "001.038"
         apn_config:
           $ref: '#/components/schemas/APNConfigRequest'
           x-stream-index: "001.003"
         async_moderation_config:
           $ref: '#/components/schemas/AsyncModerationConfigurationRequest'
-          x-stream-index: "001.035"
+          x-stream-index: "001.040"
         async_url_enrich_enabled:
           type: boolean
-          x-stream-index: "001.016"
+          x-stream-index: "001.017"
         auto_translation_enabled:
           type: boolean
-          x-stream-index: "001.015"
+          x-stream-index: "001.016"
         before_message_send_hook_url:
           type: string
-          x-stream-index: "001.017"
+          x-stream-index: "001.018"
         cdn_expiration_seconds:
           format: int32
           maximum: 1209600
           minimum: 14400
           type: integer
-          x-stream-index: "001.031"
+          x-stream-index: "001.036"
         channel_hide_members_only:
           type: boolean
-          x-stream-index: "001.027"
+          x-stream-index: "001.031"
         custom_action_handler_url:
           type: string
-          x-stream-index: "001.018"
+          x-stream-index: "001.019"
+        datadog_info:
+          $ref: '#/components/schemas/DataDogInfoRequest'
+          x-stream-index: "001.041"
         disable_auth_checks:
           type: boolean
           x-stream-index: "001.001"
@@ -10629,10 +10286,10 @@ components:
           - app
           - team
           type: string
-          x-stream-index: "001.019"
+          x-stream-index: "001.020"
         file_upload_config:
           $ref: '#/components/schemas/FileUploadConfigRequest'
-          x-stream-index: "001.024"
+          x-stream-index: "001.028"
         firebase_config:
           $ref: '#/components/schemas/FirebaseConfigRequest'
           x-stream-index: "001.004"
@@ -10642,10 +10299,10 @@ components:
               type: string
             type: array
           type: object
-          x-stream-index: "001.028"
+          x-stream-index: "001.032"
         hms_options:
           $ref: '#/components/schemas/ConfigRequest'
-          x-stream-index: "001.034"
+          x-stream-index: "001.039"
         huawei_config:
           $ref: '#/components/schemas/HuaweiConfigRequest'
           x-stream-index: "001.005"
@@ -10664,10 +10321,10 @@ components:
           x-stream-index: "001.012"
         image_upload_config:
           $ref: '#/components/schemas/FileUploadConfigRequest'
-          x-stream-index: "001.023"
+          x-stream-index: "001.027"
         migrate_permissions_to_v2:
           type: boolean
-          x-stream-index: "001.029"
+          x-stream-index: "001.033"
         multi_tenant_enabled:
           type: boolean
           x-stream-index: "001.011"
@@ -10685,20 +10342,34 @@ components:
           maximum: 86400
           minimum: 60
           type: integer
-          x-stream-index: "001.030"
+          x-stream-index: "001.034"
+        reminders_max_members:
+          format: int32
+          minimum: 2
+          type: integer
+          x-stream-index: "001.035"
         revoke_tokens_issued_before:
           format: date-time
           type: string
+          x-stream-index: "001.029"
+        sns_key:
+          type: string
           x-stream-index: "001.025"
+        sns_secret:
+          type: string
+          x-stream-index: "001.026"
+        sns_topic_arn:
+          type: string
+          x-stream-index: "001.024"
         sqs_key:
           type: string
-          x-stream-index: "001.021"
+          x-stream-index: "001.022"
         sqs_secret:
           type: string
-          x-stream-index: "001.022"
+          x-stream-index: "001.023"
         sqs_url:
           type: string
-          x-stream-index: "001.020"
+          x-stream-index: "001.021"
         user_search_disallowed_roles:
           items:
             type: string
@@ -10709,12 +10380,12 @@ components:
           - agora
           - hms
           type: string
-          x-stream-index: "001.032"
+          x-stream-index: "001.037"
         webhook_events:
           items:
             type: string
           type: array
-          x-stream-index: "001.026"
+          x-stream-index: "001.030"
         webhook_url:
           type: string
           x-stream-index: "001.008"
@@ -10734,29 +10405,6 @@ components:
             type: string
           type: array
           x-stream-index: "002"
-      type: object
-    UpdateCampaignRequest:
-      nullable: true
-      properties:
-        campaign:
-          $ref: '#/components/schemas/CampaignUpdateableFieldsRequest'
-          x-stream-index: "001"
-      required:
-      - campaign
-      type: object
-    UpdateCampaignResponse:
-      nullable: true
-      properties:
-        campaign:
-          $ref: '#/components/schemas/Campaign'
-          x-stream-index: "001"
-        duration:
-          description: Duration of the request in human-readable format
-          title: Duration
-          type: string
-          x-stream-index: "002.001"
-      required:
-      - duration
       type: object
     UpdateChannelPartialRequest:
       nullable: true
@@ -10931,31 +10579,41 @@ components:
           type: string
           writeOnly: true
           x-stream-index: "001"
+        allowed_flag_reasons:
+          items:
+            type: string
+          type: array
+          x-stream-index: 007.001.023
         automod:
           enum:
           - disabled
           - simple
           - AI
           type: string
-          x-stream-index: 007.001.017
+          x-stream-index: 007.001.018
         automod_behavior:
           enum:
           - flag
           - block
           type: string
-          x-stream-index: 007.001.018
+          x-stream-index: 007.001.019
         automod_thresholds:
           $ref: '#/components/schemas/ThresholdsRequest'
-          x-stream-index: 007.001.021
+          x-stream-index: 007.001.024
         blocklist:
           type: string
-          x-stream-index: 007.001.019
+          x-stream-index: 007.001.020
         blocklist_behavior:
           enum:
           - flag
           - block
           type: string
-          x-stream-index: 007.001.020
+          x-stream-index: 007.001.021
+        blocklists:
+          items:
+            $ref: '#/components/schemas/BlockListOptionsRequest'
+          type: array
+          x-stream-index: 007.001.022
         commands:
           description: List of commands that channel supports
           items:
@@ -10976,14 +10634,17 @@ components:
             type: array
           type: object
           x-stream-index: "004"
+        mark_messages_pending:
+          type: boolean
+          x-stream-index: 007.001.015
         max_message_length:
           format: int32
           maximum: 20000
           type: integer
-          x-stream-index: 007.001.016
+          x-stream-index: 007.001.017
         message_retention:
           type: string
-          x-stream-index: 007.001.015
+          x-stream-index: 007.001.016
         mutes:
           type: boolean
           x-stream-index: 007.001.009
@@ -11028,31 +10689,41 @@ components:
     UpdateChannelTypeResponse:
       nullable: true
       properties:
+        allowed_flag_reasons:
+          items:
+            type: string
+          type: array
+          x-stream-index: 003.001.023
         automod:
           enum:
           - disabled
           - simple
           - AI
           type: string
-          x-stream-index: 003.001.017
+          x-stream-index: 003.001.018
         automod_behavior:
           enum:
           - flag
           - block
           type: string
-          x-stream-index: 003.001.018
+          x-stream-index: 003.001.019
         automod_thresholds:
           $ref: '#/components/schemas/Thresholds'
-          x-stream-index: 003.001.021
+          x-stream-index: 003.001.024
         blocklist:
           type: string
-          x-stream-index: 003.001.019
+          x-stream-index: 003.001.020
         blocklist_behavior:
           enum:
           - flag
           - block
           type: string
-          x-stream-index: 003.001.020
+          x-stream-index: 003.001.021
+        blocklists:
+          items:
+            $ref: '#/components/schemas/BlockListOptions'
+          type: array
+          x-stream-index: 003.001.022
         commands:
           items:
             type: string
@@ -11078,14 +10749,17 @@ components:
             type: array
           type: object
           x-stream-index: "002"
+        mark_messages_pending:
+          type: boolean
+          x-stream-index: 003.001.015
         max_message_length:
           format: int32
           maximum: 20000
           type: integer
-          x-stream-index: 003.001.016
+          x-stream-index: 003.001.017
         message_retention:
           type: string
-          x-stream-index: 003.001.015
+          x-stream-index: 003.001.016
         mutes:
           type: boolean
           x-stream-index: 003.001.009
@@ -11148,6 +10822,7 @@ components:
       - custom_events
       - push_notifications
       - reminders
+      - mark_messages_pending
       - message_retention
       - max_message_length
       - automod
@@ -11216,7 +10891,7 @@ components:
           description: Do not try to enrich the links within message
           title: Skip Enrich URL
           type: boolean
-          x-stream-index: "004"
+          x-stream-index: "005"
         unset:
           description: Array of field names to unset
           items:
@@ -11250,33 +10925,10 @@ components:
           description: Do not try to enrich the links within message
           title: Skip Enrich URL
           type: boolean
-          x-stream-index: "002"
+          x-stream-index: "003"
       required:
       - message
       title: Update Message Request
-      type: object
-    UpdateSegmentRequest:
-      nullable: true
-      properties:
-        segment:
-          $ref: '#/components/schemas/SegmentUpdateableFieldsRequest'
-          x-stream-index: "001"
-      required:
-      - segment
-      type: object
-    UpdateSegmentResponse:
-      nullable: true
-      properties:
-        duration:
-          description: Duration of the request in human-readable format
-          title: Duration
-          type: string
-          x-stream-index: "002.001"
-        segment:
-          $ref: '#/components/schemas/Segment'
-          x-stream-index: "001"
-      required:
-      - duration
       type: object
     UpdateUserPartialRequest:
       nullable: true
@@ -12077,7 +11729,6 @@ components:
       x-stream-is-event: true
       x-stream-ws-base-event-name: ChatEvent
     UserWatchingStopEvent:
-      nullable: true
       properties:
         channel_id:
           type: string
@@ -12241,7 +11892,7 @@ externalDocs:
   url: https://getstream.io/chat/docs/
 info:
   title: Stream Chat API
-  version: v84.1.1-3-g76840f817
+  version: v94.0.1
 openapi: 3.0.3
 paths:
   /app:
@@ -12430,17 +12081,15 @@ paths:
         Deletes previously created application blocklist
       operationId: DeleteBlockList
       parameters:
-      - content:
-          application/json:
-            schema:
-              description: Block list name
-              title: Name
-              type: string
-              writeOnly: true
-              x-stream-index: "001"
-        in: path
+      - in: path
         name: name
         required: true
+        schema:
+          description: Block list name
+          title: Name
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
       responses:
         "200":
           content:
@@ -12484,17 +12133,15 @@ paths:
         Returns block list by given name
       operationId: GetBlockList
       parameters:
-      - content:
-          application/json:
-            schema:
-              description: Block list name
-              title: Name
-              type: string
-              writeOnly: true
-              x-stream-index: "001"
-        in: path
+      - in: path
         name: name
         required: true
+        schema:
+          description: Block list name
+          title: Name
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
       responses:
         "200":
           content:
@@ -12538,15 +12185,13 @@ paths:
         Updates contents of the block list
       operationId: UpdateBlockList
       parameters:
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: "001"
-        in: path
+      - in: path
         name: name
         required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
       requestBody:
         content:
           application/json:
@@ -12591,58 +12236,6 @@ paths:
       - Moderation
       x-stream-docs-page-id: block_lists
       x-stream-server-side: true
-  /calls/:
-    post:
-      description: |
-        Retrieves the token to join a call
-
-        Required permissions:
-        - JoinCall
-        - ReadChannel
-      operationId: GetCallToken__1
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GetCallTokenRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetCallTokenResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-          headers:
-            X-RateLimit-Limit:
-              description: The number of allowed requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Remaining:
-              description: The number of remaining requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Reset:
-              description: Timestamp when number of requests will be reset
-              schema:
-                type: integer
-      summary: Get Call Token ()
-      x-stream-docs-page-id: video
-      x-stream-permissions:
-        JoinCall: To request the call token
-        ReadChannel: To read the channel
   /calls/{call_id}:
     post:
       description: |
@@ -12651,17 +12244,15 @@ paths:
         Required permissions:
         - JoinCall
         - ReadChannel
-      operationId: GetCallToken_call_id_0
+      operationId: GetCallToken
       parameters:
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: "001"
-        in: path
+      - in: path
         name: call_id
         required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
       requestBody:
         content:
           application/json:
@@ -12700,452 +12291,11 @@ paths:
               description: Timestamp when number of requests will be reset
               schema:
                 type: integer
-      summary: Get Call Token (call_id)
+      summary: Get Call Token
       x-stream-docs-page-id: video
       x-stream-permissions:
         JoinCall: To request the call token
         ReadChannel: To read the channel
-  /campaigns:
-    get:
-      description: |
-        Query campaigns
-      operationId: QueryCampaigns
-      parameters:
-      - content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/QueryCampaignsRequest'
-              x-stream-index: "001"
-        in: query
-        name: payload
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/QueryCampaignsResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-          headers:
-            X-RateLimit-Limit:
-              description: The number of allowed requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Remaining:
-              description: The number of remaining requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Reset:
-              description: Timestamp when number of requests will be reset
-              schema:
-                type: integer
-      summary: Query campaigns
-      tags:
-      - Campaigns
-      x-stream-docs-page-id: campaigns
-      x-stream-server-side: true
-    post:
-      description: |
-        Creates a new campaign
-      operationId: CreateCampaign
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateCampaignRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CreateCampaignResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-          headers:
-            X-RateLimit-Limit:
-              description: The number of allowed requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Remaining:
-              description: The number of remaining requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Reset:
-              description: Timestamp when number of requests will be reset
-              schema:
-                type: integer
-      summary: Create campaign
-      tags:
-      - Campaigns
-      x-stream-beta: true
-      x-stream-docs-page-id: campaigns
-      x-stream-server-side: true
-  /campaigns/{id}:
-    delete:
-      description: |
-        Delete a campaign
-      operationId: DeleteCampaign
-      parameters:
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: "002.001"
-        in: path
-        name: id
-        required: true
-      - content:
-          application/json:
-            schema:
-              type: boolean
-              writeOnly: true
-              x-stream-index: "001"
-        in: query
-        name: recipients
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DeleteCampaignResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-          headers:
-            X-RateLimit-Limit:
-              description: The number of allowed requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Remaining:
-              description: The number of remaining requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Reset:
-              description: Timestamp when number of requests will be reset
-              schema:
-                type: integer
-      summary: Delete campaign
-      tags:
-      - Campaigns
-      x-stream-beta: true
-      x-stream-docs-page-id: campaigns
-      x-stream-server-side: true
-    put:
-      description: |
-        Update an existing campaign
-      operationId: UpdateCampaign
-      parameters:
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: "002.001"
-        in: path
-        name: id
-        required: true
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateCampaignRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UpdateCampaignResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-          headers:
-            X-RateLimit-Limit:
-              description: The number of allowed requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Remaining:
-              description: The number of remaining requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Reset:
-              description: Timestamp when number of requests will be reset
-              schema:
-                type: integer
-      summary: Update campaign
-      tags:
-      - Campaigns
-      x-stream-beta: true
-      x-stream-docs-page-id: campaigns
-      x-stream-server-side: true
-  /campaigns/{id}/resume:
-    patch:
-      description: |
-        Resume a stopped campaign
-      operationId: ResumeCampaign
-      parameters:
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: "001.001"
-        in: path
-        name: id
-        required: true
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResumeCampaignResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-          headers:
-            X-RateLimit-Limit:
-              description: The number of allowed requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Remaining:
-              description: The number of remaining requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Reset:
-              description: Timestamp when number of requests will be reset
-              schema:
-                type: integer
-      summary: Resume campaign
-      tags:
-      - Campaigns
-      x-stream-beta: true
-      x-stream-docs-page-id: campaigns
-      x-stream-server-side: true
-  /campaigns/{id}/schedule:
-    patch:
-      description: |
-        Schedule a campaign
-      operationId: ScheduleCampaign
-      parameters:
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: "002.001"
-        in: path
-        name: id
-        required: true
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ScheduleCampaignRequest'
-        required: true
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ScheduleCampaignResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-          headers:
-            X-RateLimit-Limit:
-              description: The number of allowed requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Remaining:
-              description: The number of remaining requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Reset:
-              description: Timestamp when number of requests will be reset
-              schema:
-                type: integer
-      summary: Schedule campaign
-      tags:
-      - Campaigns
-      x-stream-beta: true
-      x-stream-docs-page-id: campaigns
-      x-stream-server-side: true
-  /campaigns/{id}/stop:
-    patch:
-      description: |
-        Stop a running campaign
-      operationId: StopCampaign
-      parameters:
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: "001.001"
-        in: path
-        name: id
-        required: true
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StopCampaignResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-          headers:
-            X-RateLimit-Limit:
-              description: The number of allowed requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Remaining:
-              description: The number of remaining requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Reset:
-              description: Timestamp when number of requests will be reset
-              schema:
-                type: integer
-      summary: Stop campaign
-      tags:
-      - Campaigns
-      x-stream-beta: true
-      x-stream-docs-page-id: campaigns
-      x-stream-server-side: true
-  /campaigns/{id}/test:
-    post:
-      description: |
-        Test a campaign
-      operationId: TestCampaign
-      parameters:
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: "001"
-        in: path
-        name: id
-        required: true
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TestCampaignRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TestCampaignResponse'
-          description: Test campaign response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-          headers:
-            X-RateLimit-Limit:
-              description: The number of allowed requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Remaining:
-              description: The number of remaining requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Reset:
-              description: Timestamp when number of requests will be reset
-              schema:
-                type: integer
-      summary: Test campaign
-      tags:
-      - Campaigns
-      x-stream-beta: true
-      x-stream-docs-page-id: campaigns
-      x-stream-server-side: true
   /channels:
     post:
       description: |
@@ -13154,21 +12304,6 @@ paths:
         Required permissions:
         - ReadChannel
       operationId: QueryChannels
-      parameters:
-      - content:
-          application/json:
-            schema:
-              type: string
-              x-stream-index: "011.002"
-        in: query
-        name: client_id
-      - content:
-          application/json:
-            schema:
-              type: string
-              x-stream-index: "011.003"
-        in: query
-        name: connection_id
       requestBody:
         content:
           application/json:
@@ -13226,35 +12361,29 @@ paths:
         - DeleteChannel
       operationId: DeleteChannel
       parameters:
-      - content:
-          application/json:
-            schema:
-              description: Channel type to interact with
-              title: Channel type
-              type: string
-              writeOnly: true
-              x-stream-index: "001.001"
-        in: path
+      - in: path
         name: type
         required: true
-      - content:
-          application/json:
-            schema:
-              description: Channel ID to interact with
-              title: Channel ID
-              type: string
-              writeOnly: true
-              x-stream-index: "001.002"
-        in: path
+        schema:
+          description: Channel type to interact with
+          title: Channel type
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
         name: id
         required: true
-      - content:
-          application/json:
-            schema:
-              type: boolean
-              x-stream-index: "002"
-        in: query
+        schema:
+          description: Channel ID to interact with
+          title: Channel ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
+      - in: query
         name: hard_delete
+        schema:
+          type: boolean
+          x-stream-index: "002"
       responses:
         "200":
           content:
@@ -13313,24 +12442,20 @@ paths:
         - UpdateChannelFrozen
       operationId: UpdateChannelPartial
       parameters:
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: "001.001"
-        in: path
+      - in: path
         name: type
         required: true
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: "001.002"
-        in: path
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
         name: id
         required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
       requestBody:
         content:
           application/json:
@@ -13404,24 +12529,20 @@ paths:
         - UpdateChannelMembers
       operationId: UpdateChannel
       parameters:
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: 013.002.001
-        in: path
+      - in: path
         name: type
         required: true
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: 013.002.002
-        in: path
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: 013.002.001
+      - in: path
         name: id
         required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: 013.002.002
       requestBody:
         content:
           application/json:
@@ -13509,24 +12630,20 @@ paths:
         - ReadChannel
       operationId: CreateCall
       parameters:
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: "001"
-        in: path
+      - in: path
         name: type
         required: true
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: "002"
-        in: path
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      - in: path
         name: id
         required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "002"
       requestBody:
         content:
           application/json:
@@ -13582,28 +12699,24 @@ paths:
         - SendCustomEvent
       operationId: SendEvent
       parameters:
-      - content:
-          application/json:
-            schema:
-              description: Channel type to interact with
-              title: Channel type
-              type: string
-              writeOnly: true
-              x-stream-index: "002.001"
-        in: path
+      - in: path
         name: type
         required: true
-      - content:
-          application/json:
-            schema:
-              description: Channel ID to interact with
-              title: Channel ID
-              type: string
-              writeOnly: true
-              x-stream-index: "002.002"
-        in: path
+        schema:
+          description: Channel type to interact with
+          title: Channel type
+          type: string
+          writeOnly: true
+          x-stream-index: "002.001"
+      - in: path
         name: id
         required: true
+        schema:
+          description: Channel ID to interact with
+          title: Channel ID
+          type: string
+          writeOnly: true
+          x-stream-index: "002.002"
       requestBody:
         content:
           application/json:
@@ -13664,16 +12777,32 @@ paths:
         - DeleteAttachment
       operationId: DeleteFile
       parameters:
-      - content:
-          application/json:
-            schema:
-              description: File URL to delete
-              title: URL
-              type: string
-              writeOnly: true
-              x-stream-index: "001"
-        in: query
+      - in: path
+        name: type
+        required: true
+        schema:
+          description: The type of file
+          title: Type
+          type: string
+          writeOnly: true
+          x-stream-index: "002.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: File ID
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "002.002"
+      - in: query
         name: url
+        schema:
+          description: File URL to delete
+          title: URL
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
       responses:
         "200":
           content:
@@ -13721,24 +12850,20 @@ paths:
         - UploadAttachment
       operationId: UploadFile
       parameters:
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: "001.001"
-        in: path
+      - in: path
         name: type
         required: true
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: "001.002"
-        in: path
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
         name: id
         required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
       requestBody:
         content:
           multipart/form-data:
@@ -13796,24 +12921,20 @@ paths:
         - ReadChannel
       operationId: HideChannel
       parameters:
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: "002.001"
-        in: path
+      - in: path
         name: type
         required: true
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: "002.002"
-        in: path
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "002.001"
+      - in: path
         name: id
         required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "002.002"
       requestBody:
         content:
           application/json:
@@ -13874,16 +12995,32 @@ paths:
         - DeleteAttachment
       operationId: DeleteImage
       parameters:
-      - content:
-          application/json:
-            schema:
-              description: File URL to delete
-              title: URL
-              type: string
-              writeOnly: true
-              x-stream-index: "001"
-        in: query
+      - in: path
+        name: type
+        required: true
+        schema:
+          description: The type of file
+          title: Type
+          type: string
+          writeOnly: true
+          x-stream-index: "002.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: File ID
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "002.002"
+      - in: query
         name: url
+        schema:
+          description: File URL to delete
+          title: URL
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
       responses:
         "200":
           content:
@@ -13931,24 +13068,20 @@ paths:
         - UploadAttachment
       operationId: UploadImage
       parameters:
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: 001.001.001
-        in: path
+      - in: path
         name: type
         required: true
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: 001.001.002
-        in: path
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: 001.001.001
+      - in: path
         name: id
         required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: 001.001.002
       requestBody:
         content:
           multipart/form-data:
@@ -14012,24 +13145,20 @@ paths:
         - UseFrozenChannel
       operationId: SendMessage
       parameters:
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: "007.001"
-        in: path
+      - in: path
         name: type
         required: true
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: "007.002"
-        in: path
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "008.001"
+      - in: path
         name: id
         required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "008.002"
       requestBody:
         content:
           application/json:
@@ -14103,37 +13232,31 @@ paths:
         - ReadChannel
       operationId: GetManyMessages
       parameters:
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: "002.001"
-        in: path
+      - in: path
         name: type
         required: true
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: "002.002"
-        in: path
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "002.001"
+      - in: path
         name: id
         required: true
-      - content:
-          application/json:
-            schema:
-              description: List of comma-separated IDs
-              items:
-                type: string
-              maximum: 50
-              minimum: 1
-              title: IDs
-              type: array
-              x-stream-index: "001"
-        in: query
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "002.002"
+      - in: query
         name: ids
+        schema:
+          description: List of comma-separated IDs
+          items:
+            type: string
+          maximum: 50
+          minimum: 1
+          title: IDs
+          type: array
+          x-stream-index: "001"
       responses:
         "200":
           content:
@@ -14182,46 +13305,27 @@ paths:
         - member.removed
         - member.updated
         - user.watching.start
-      operationId: GetOrCreateChannel_type_id_0
+      operationId: GetOrCreateChannel
       parameters:
-      - content:
-          application/json:
-            schema:
-              description: Channel type
-              maxLength: 64
-              title: Type
-              type: string
-              writeOnly: true
-              x-stream-index: "002"
-        in: path
+      - in: path
         name: type
         required: true
-      - content:
-          application/json:
-            schema:
-              description: Channel ID
-              maxLength: 64
-              title: ID
-              type: string
-              writeOnly: true
-              x-stream-index: "003"
-        in: path
+        schema:
+          description: Channel type
+          maxLength: 64
+          title: Type
+          type: string
+          writeOnly: true
+          x-stream-index: "002"
+      - in: path
         name: id
         required: true
-      - content:
-          application/json:
-            schema:
-              type: string
-              x-stream-index: "001.002"
-        in: query
-        name: client_id
-      - content:
-          application/json:
-            schema:
-              type: string
-              x-stream-index: "001.003"
-        in: query
-        name: connection_id
+        schema:
+          description: Channel ID (maximum length of 64 characters)
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "003"
       requestBody:
         content:
           application/json:
@@ -14260,7 +13364,7 @@ paths:
               description: Timestamp when number of requests will be reset
               schema:
                 type: integer
-      summary: Get or create channel (type, id)
+      summary: Get or create channel
       tags:
       - Channels
       x-stream-docs-page-id: watch_channel
@@ -14303,24 +13407,20 @@ paths:
         - ReadChannel
       operationId: MarkRead
       parameters:
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: "002.001"
-        in: path
+      - in: path
         name: type
         required: true
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: "002.002"
-        in: path
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "002.001"
+      - in: path
         name: id
         required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "002.002"
       requestBody:
         content:
           application/json:
@@ -14381,24 +13481,20 @@ paths:
         - channel.visible
       operationId: ShowChannel
       parameters:
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: "001.001"
-        in: path
+      - in: path
         name: type
         required: true
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: "001.002"
-        in: path
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
         name: id
         required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
       requestBody:
         content:
           application/json:
@@ -14448,95 +13544,6 @@ paths:
           description: When channel is shown
           schema:
             ref: '#/components/schemas/ChannelVisibleEvent'
-  /channels/{type}/{id}/stop-watching:
-    post:
-      description: |
-        Call this method to stop receiving channel events
-
-        Sends events:
-        - user.watching.stop
-      operationId: StopWatchingChannel
-      parameters:
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: "002.001"
-        in: path
-        name: type
-        required: true
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: "002.002"
-        in: path
-        name: id
-        required: true
-      - content:
-          application/json:
-            schema:
-              type: string
-              x-stream-index: "001.002"
-        in: query
-        name: client_id
-      - content:
-          application/json:
-            schema:
-              type: string
-              x-stream-index: "001.003"
-        in: query
-        name: connection_id
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ChannelStopWatchingRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StopWatchingResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-          headers:
-            X-RateLimit-Limit:
-              description: The number of allowed requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Remaining:
-              description: The number of remaining requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Reset:
-              description: Timestamp when number of requests will be reset
-              schema:
-                type: integer
-      summary: Stop watching channel
-      tags:
-      - Channels
-      x-stream-events:
-        user.watching.stop: When successfully stopped watching
-      x-stream-events-v2:
-        user.watching.stop:
-          description: When successfully stopped watching
-          schema:
-            ref: '#/components/schemas/UserWatchingStopEvent'
   /channels/{type}/{id}/truncate:
     post:
       description: |
@@ -14550,24 +13557,20 @@ paths:
         - TruncateChannel
       operationId: TruncateChannel
       parameters:
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: "001.001"
-        in: path
+      - in: path
         name: type
         required: true
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: "001.002"
-        in: path
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
         name: id
         required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
       requestBody:
         content:
           application/json:
@@ -14630,24 +13633,20 @@ paths:
         - ReadChannel
       operationId: MarkUnread
       parameters:
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: "002.001"
-        in: path
+      - in: path
         name: type
         required: true
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: "002.002"
-        in: path
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "002.001"
+      - in: path
         name: id
         required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "002.002"
       requestBody:
         content:
           application/json:
@@ -14692,114 +13691,6 @@ paths:
       - Messages
       x-stream-permissions:
         ReadChannel: To mark messages unread
-  /channels/{type}/query:
-    post:
-      description: |
-        This method creates a channel or returns an existing one with matching attributes
-
-        Sends events:
-        - channel.created
-        - member.added
-        - member.removed
-        - member.updated
-        - user.watching.start
-      operationId: GetOrCreateChannel_type_1
-      parameters:
-      - content:
-          application/json:
-            schema:
-              description: Channel type
-              maxLength: 64
-              title: Type
-              type: string
-              writeOnly: true
-              x-stream-index: "002"
-        in: path
-        name: type
-        required: true
-      - content:
-          application/json:
-            schema:
-              type: string
-              x-stream-index: "001.002"
-        in: query
-        name: client_id
-      - content:
-          application/json:
-            schema:
-              type: string
-              x-stream-index: "001.003"
-        in: query
-        name: connection_id
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ChannelGetOrCreateRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ChannelStateResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-          headers:
-            X-RateLimit-Limit:
-              description: The number of allowed requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Remaining:
-              description: The number of remaining requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Reset:
-              description: Timestamp when number of requests will be reset
-              schema:
-                type: integer
-      summary: Get or create channel (type)
-      tags:
-      - Channels
-      x-stream-docs-page-id: watch_channel
-      x-stream-events:
-        channel.created: If channel is created
-        member.added: If member is added
-        member.removed: If member is removed
-        member.updated: If member is updated
-        user.watching.start: 'If `watch: true`'
-      x-stream-events-v2:
-        channel.created:
-          description: If channel is created
-          schema:
-            ref: '#/components/schemas/ChannelCreatedEvent'
-        member.added:
-          description: If member is added
-          schema:
-            ref: '#/components/schemas/MemberAddedEvent'
-        member.removed:
-          description: If member is removed
-          schema:
-            ref: '#/components/schemas/MemberRemovedEvent'
-        member.updated:
-          description: If member is updated
-          schema:
-            ref: '#/components/schemas/MemberUpdatedEvent'
-        user.watching.start:
-          description: 'If `watch: true`'
-          schema:
-            ref: '#/components/schemas/UserWatchingStartEvent'
   /channels/delete:
     post:
       description: |
@@ -15022,17 +13913,15 @@ paths:
         Deletes channel type
       operationId: DeleteChannelType
       parameters:
-      - content:
-          application/json:
-            schema:
-              description: Channel type name
-              title: Name
-              type: string
-              writeOnly: true
-              x-stream-index: "001"
-        in: path
+      - in: path
         name: name
         required: true
+        schema:
+          description: Channel type name
+          title: Name
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
       responses:
         "200":
           content:
@@ -15076,17 +13965,15 @@ paths:
         Gets channel type
       operationId: GetChannelType
       parameters:
-      - content:
-          application/json:
-            schema:
-              description: Channel type name
-              title: Name
-              type: string
-              writeOnly: true
-              x-stream-index: "001"
-        in: path
+      - in: path
         name: name
         required: true
+        schema:
+          description: Channel type name
+          title: Name
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
       responses:
         "200":
           content:
@@ -15130,15 +14017,13 @@ paths:
         Updates channel type
       operationId: UpdateChannelType
       parameters:
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: "001"
-        in: path
+      - in: path
         name: name
         required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
       requestBody:
         content:
           application/json:
@@ -15231,6 +14116,55 @@ paths:
       - Settings
       - Testing
       x-stream-docs-page-id: push_test
+      x-stream-server-side: true
+  /check_sns:
+    post:
+      description: |
+        Validates Amazon SNS configuration
+      operationId: CheckSNS
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckSNSRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckSNSResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+          headers:
+            X-RateLimit-Limit:
+              description: The number of allowed requests in the current period
+              schema:
+                type: integer
+            X-RateLimit-Remaining:
+              description: The number of remaining requests in the current period
+              schema:
+                type: integer
+            X-RateLimit-Reset:
+              description: Timestamp when number of requests will be reset
+              schema:
+                type: integer
+      summary: Check SNS
+      tags:
+      - Settings
+      - Testing
+      x-stream-docs-page-id: sns
       x-stream-server-side: true
   /check_sqs:
     post:
@@ -15377,14 +14311,12 @@ paths:
         Deletes custom chat command
       operationId: DeleteCommand
       parameters:
-      - content:
-          application/json:
-            schema:
-              type: string
-              x-stream-index: "001"
-        in: path
+      - in: path
         name: name
         required: true
+        schema:
+          type: string
+          x-stream-index: "001"
       responses:
         "200":
           content:
@@ -15427,14 +14359,12 @@ paths:
         Returns custom command by its name
       operationId: GetCommand
       parameters:
-      - content:
-          application/json:
-            schema:
-              type: string
-              x-stream-index: "001"
-        in: path
+      - in: path
         name: name
         required: true
+        schema:
+          type: string
+          x-stream-index: "001"
       responses:
         "200":
           content:
@@ -15477,17 +14407,15 @@ paths:
         Updates custom chat command
       operationId: UpdateCommand
       parameters:
-      - content:
-          application/json:
-            schema:
-              description: Unique command name
-              title: Name
-              type: string
-              writeOnly: true
-              x-stream-index: "001"
-        in: path
+      - in: path
         name: name
         required: true
+        schema:
+          description: Unique command name
+          title: Name
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
       requestBody:
         content:
           application/json:
@@ -15591,26 +14519,22 @@ paths:
         Deletes one device
       operationId: DeleteDevice
       parameters:
-      - content:
-          application/json:
-            schema:
-              description: Device ID to delete
-              title: ID
-              type: string
-              writeOnly: true
-              x-stream-index: "001"
-        in: query
+      - in: query
         name: id
-      - content:
-          application/json:
-            schema:
-              description: '**Server-side only**. User ID which server acts upon'
-              title: User ID
-              type: string
-              writeOnly: true
-              x-stream-index: "002.001"
-        in: query
+        schema:
+          description: Device ID to delete
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      - in: query
         name: user_id
+        schema:
+          description: '**Server-side only**. User ID which server acts upon'
+          title: User ID
+          type: string
+          writeOnly: true
+          x-stream-index: "002.001"
       responses:
         "200":
           content:
@@ -15652,16 +14576,14 @@ paths:
         Returns all available devices
       operationId: ListDevices
       parameters:
-      - content:
-          application/json:
-            schema:
-              description: '**Server-side only**. User ID which server acts upon'
-              title: User ID
-              type: string
-              writeOnly: true
-              x-stream-index: "001.001"
-        in: query
+      - in: query
         name: user_id
+        schema:
+          description: '**Server-side only**. User ID which server acts upon'
+          title: User ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
       responses:
         "200":
           content:
@@ -15743,7 +14665,7 @@ paths:
     post:
       description: |
         Exports user profile, reactions and messages for list of given users
-      operationId: ExportUser
+      operationId: ExportUsers
       requestBody:
         content:
           application/json:
@@ -15842,17 +14764,15 @@ paths:
 
       operationId: GetExportChannelsStatus
       parameters:
-      - content:
-          application/json:
-            schema:
-              description: Task ID
-              title: ID
-              type: string
-              writeOnly: true
-              x-stream-index: "001"
-        in: path
+      - in: path
         name: id
         required: true
+        schema:
+          description: Task ID
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
       responses:
         "200":
           content:
@@ -16083,15 +15003,13 @@ paths:
         Gets an import
       operationId: GetImport
       parameters:
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: "001"
-        in: path
+      - in: path
         name: id
         required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
       responses:
         "200":
           content:
@@ -16146,15 +15064,13 @@ paths:
               x-stream-index: "001"
         in: query
         name: json
-      - content:
-          application/json:
-            schema:
-              maxLength: 36
-              type: string
-              writeOnly: true
-              x-stream-index: "002"
-        in: query
+      - in: query
         name: connection_id
+        schema:
+          maxLength: 36
+          type: string
+          writeOnly: true
+          x-stream-index: "002"
       responses:
         "400":
           content:
@@ -16258,27 +15174,29 @@ paths:
         - DeleteMessage
       operationId: DeleteMessage
       parameters:
-      - content:
-          application/json:
-            schema:
-              description: Message ID to delete
-              title: ID
-              type: string
-              writeOnly: true
-              x-stream-index: "001"
-        in: path
+      - in: path
         name: id
         required: true
-      - content:
-          application/json:
-            schema:
-              description: Delete all message reactions and replies as well
-              title: Hard
-              type: boolean
-              writeOnly: true
-              x-stream-index: "002"
-        in: query
+        schema:
+          description: Message ID to delete
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      - in: query
         name: hard
+        schema:
+          description: Delete all message reactions and replies as well
+          title: Hard
+          type: boolean
+          writeOnly: true
+          x-stream-index: "002"
+      - in: query
+        name: deleted_by
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "003"
       responses:
         "200":
           content:
@@ -16332,17 +15250,15 @@ paths:
         - ReadChannel
       operationId: GetMessage
       parameters:
-      - content:
-          application/json:
-            schema:
-              description: Message ID
-              title: ID
-              type: string
-              writeOnly: true
-              x-stream-index: "001"
-        in: path
+      - in: path
         name: id
         required: true
+        schema:
+          description: Message ID
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
       responses:
         "200":
           content:
@@ -16394,6 +15310,16 @@ paths:
         - SkipMessageModeration
         - UpdateMessage
       operationId: UpdateMessage
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Message ID
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "002.001"
       requestBody:
         content:
           application/json:
@@ -16462,6 +15388,16 @@ paths:
         - SkipMessageModeration
         - UpdateMessage
       operationId: UpdateMessagePartial
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Message ID
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "003.001"
       requestBody:
         content:
           application/json:
@@ -16528,17 +15464,15 @@ paths:
         - RunMessageAction
       operationId: RunMessageAction
       parameters:
-      - content:
-          application/json:
-            schema:
-              description: Message ID
-              title: ID
-              type: string
-              writeOnly: true
-              x-stream-index: "001"
-        in: path
+      - in: path
         name: id
         required: true
+        schema:
+          description: Message ID
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
       requestBody:
         content:
           application/json:
@@ -16599,15 +15533,13 @@ paths:
         - message.updated
       operationId: CommitMessage
       parameters:
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: "001"
-        in: path
+      - in: path
         name: id
         required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
       responses:
         "201":
           content:
@@ -16670,17 +15602,15 @@ paths:
         - UseFrozenChannel
       operationId: SendReaction
       parameters:
-      - content:
-          application/json:
-            schema:
-              description: Message ID to send reaction for
-              title: ID
-              type: string
-              writeOnly: true
-              x-stream-index: "001"
-        in: path
+      - in: path
         name: id
         required: true
+        schema:
+          description: Message ID to send reaction for
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
       requestBody:
         content:
           application/json:
@@ -16751,38 +15681,32 @@ paths:
         - DeleteReaction
       operationId: DeleteReaction
       parameters:
-      - content:
-          application/json:
-            schema:
-              description: Message ID to remove reaction from
-              title: ID
-              type: string
-              writeOnly: true
-              x-stream-index: "001"
-        in: path
+      - in: path
         name: id
         required: true
-      - content:
-          application/json:
-            schema:
-              description: Reaction type to remove
-              title: Type
-              type: string
-              writeOnly: true
-              x-stream-index: "002"
-        in: path
+        schema:
+          description: Message ID to remove reaction from
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      - in: path
         name: type
         required: true
-      - content:
-          application/json:
-            schema:
-              description: '**Server-side only**. User ID which server acts upon'
-              title: User ID
-              type: string
-              writeOnly: true
-              x-stream-index: "003"
-        in: query
+        schema:
+          description: Reaction type to remove
+          title: Type
+          type: string
+          writeOnly: true
+          x-stream-index: "002"
+      - in: query
         name: user_id
+        schema:
+          description: '**Server-side only**. User ID which server acts upon'
+          title: User ID
+          type: string
+          writeOnly: true
+          x-stream-index: "003"
       responses:
         "200":
           content:
@@ -16838,39 +15762,33 @@ paths:
         - ReadChannel
       operationId: GetReactions
       parameters:
-      - content:
-          application/json:
-            schema:
-              description: Message ID
-              title: ID
-              type: string
-              writeOnly: true
-              x-stream-index: "001"
-        in: path
+      - in: path
         name: id
         required: true
-      - content:
-          application/json:
-            schema:
-              description: Number of records to return
-              format: int32
-              title: Limit
-              type: integer
-              writeOnly: true
-              x-stream-index: "002"
-        in: query
+        schema:
+          description: Message ID
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      - in: query
         name: limit
-      - content:
-          application/json:
-            schema:
-              description: Number of records to offset
-              format: int32
-              title: Offset
-              type: integer
-              writeOnly: true
-              x-stream-index: "003"
-        in: query
+        schema:
+          description: Number of records to return
+          format: int32
+          title: Limit
+          type: integer
+          writeOnly: true
+          x-stream-index: "002"
+      - in: query
         name: offset
+        schema:
+          description: Number of records to offset
+          format: int32
+          title: Offset
+          type: integer
+          writeOnly: true
+          x-stream-index: "003"
       responses:
         "200":
           content:
@@ -16921,6 +15839,16 @@ paths:
         Required permissions:
         - ReadChannel
       operationId: TranslateMessage
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Message ID
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
       requestBody:
         content:
           application/json:
@@ -16981,92 +15909,70 @@ paths:
         - ReadChannel
       operationId: GetReplies
       parameters:
-      - content:
-          application/json:
-            schema:
-              description: ID of a message which replies to return
-              title: Parent ID
-              type: string
-              writeOnly: true
-              x-stream-index: "001"
-        in: path
+      - in: path
         name: parent_id
         required: true
-      - content:
-          application/json:
-            schema:
-              type: string
-              x-stream-index: 002.001.003
-        in: query
+        schema:
+          description: ID of a message which replies to return
+          title: Parent ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      - in: query
         name: id_gte
-      - content:
-          application/json:
-            schema:
-              type: string
-              x-stream-index: 002.001.004
-        in: query
+        schema:
+          type: string
+          x-stream-index: 002.001.003
+      - in: query
         name: id_gt
-      - content:
-          application/json:
-            schema:
-              type: string
-              x-stream-index: 002.001.005
-        in: query
+        schema:
+          type: string
+          x-stream-index: 002.001.004
+      - in: query
         name: id_lte
-      - content:
-          application/json:
-            schema:
-              type: string
-              x-stream-index: 002.001.006
-        in: query
+        schema:
+          type: string
+          x-stream-index: 002.001.005
+      - in: query
         name: id_lt
-      - content:
-          application/json:
-            schema:
-              format: date-time
-              type: string
-              x-stream-index: 002.001.007
-        in: query
+        schema:
+          type: string
+          x-stream-index: 002.001.006
+      - in: query
         name: created_at_after_or_equal
-      - content:
-          application/json:
-            schema:
-              format: date-time
-              type: string
-              x-stream-index: 002.001.008
-        in: query
+        schema:
+          format: date-time
+          type: string
+          x-stream-index: 002.001.007
+      - in: query
         name: created_at_after
-      - content:
-          application/json:
-            schema:
-              format: date-time
-              type: string
-              x-stream-index: 002.001.009
-        in: query
+        schema:
+          format: date-time
+          type: string
+          x-stream-index: 002.001.008
+      - in: query
         name: created_at_before_or_equal
-      - content:
-          application/json:
-            schema:
-              format: date-time
-              type: string
-              x-stream-index: 002.001.010
-        in: query
+        schema:
+          format: date-time
+          type: string
+          x-stream-index: 002.001.009
+      - in: query
         name: created_at_before
-      - content:
-          application/json:
-            schema:
-              type: string
-              x-stream-index: 002.001.011
-        in: query
+        schema:
+          format: date-time
+          type: string
+          x-stream-index: 002.001.010
+      - in: query
         name: id_around
-      - content:
-          application/json:
-            schema:
-              format: date-time
-              type: string
-              x-stream-index: 002.001.012
-        in: query
+        schema:
+          type: string
+          x-stream-index: 002.001.011
+      - in: query
         name: created_at_around
+        schema:
+          format: date-time
+          type: string
+          x-stream-index: 002.001.012
       responses:
         "200":
           content:
@@ -17118,27 +16024,26 @@ paths:
         - BanUser
       operationId: Unban
       parameters:
-      - content:
-          application/json:
-            schema:
-              type: string
-              x-stream-index: "001"
-        in: query
+      - in: query
         name: target_user_id
-      - content:
-          application/json:
-            schema:
-              type: string
-              x-stream-index: "002"
-        in: query
+        schema:
+          type: string
+          x-stream-index: "001"
+      - in: query
         name: type
-      - content:
-          application/json:
-            schema:
-              type: string
-              x-stream-index: "003"
-        in: query
+        schema:
+          type: string
+          x-stream-index: "002"
+      - in: query
         name: id
+        schema:
+          type: string
+          x-stream-index: "003"
+      - in: query
+        name: created_by
+        schema:
+          type: string
+          x-stream-index: "004"
       responses:
         "200":
           content:
@@ -17690,16 +16595,14 @@ paths:
         Get an OpenGraph attachment for a link
       operationId: GetOG
       parameters:
-      - content:
-          application/json:
-            schema:
-              description: URL to be scraped
-              title: URL
-              type: string
-              writeOnly: true
-              x-stream-index: "001"
-        in: query
+      - in: query
         name: url
+        schema:
+          description: URL to be scraped
+          title: URL
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
       responses:
         "200":
           content:
@@ -17783,17 +16686,15 @@ paths:
         Gets custom permission
       operationId: GetPermission
       parameters:
-      - content:
-          application/json:
-            schema:
-              description: Permission ID
-              title: ID
-              type: string
-              writeOnly: true
-              x-stream-index: "001"
-        in: path
+      - in: path
         name: id
         required: true
+        schema:
+          description: Permission ID
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
       responses:
         "200":
           content:
@@ -17926,31 +16827,27 @@ paths:
         Delete a push provider from v2 with multi bundle/package support. v1 isn't supported in this endpoint
       operationId: DeletePushProvider
       parameters:
-      - content:
-          application/json:
-            schema:
-              enum:
-              - apn
-              - firebase
-              - huawei
-              - xiaomi
-              type: string
-              writeOnly: true
-              x-stream-index: "001"
-        in: path
+      - in: path
         name: type
         required: true
-      - content:
-          application/json:
-            schema:
-              maxLength: 36
-              minLength: 1
-              type: string
-              writeOnly: true
-              x-stream-index: "002"
-        in: path
+        schema:
+          enum:
+          - apn
+          - firebase
+          - huawei
+          - xiaomi
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      - in: path
         name: name
         required: true
+        schema:
+          maxLength: 36
+          minLength: 1
+          type: string
+          writeOnly: true
+          x-stream-index: "002"
       responses:
         "200":
           content:
@@ -18050,57 +16947,47 @@ paths:
         Get rate limits usage and quotas
       operationId: GetRateLimits
       parameters:
-      - content:
-          application/json:
-            schema:
-              description: Whether to include server-side platform limits or not
-              title: Server-side
-              type: boolean
-              writeOnly: true
-              x-stream-index: "001"
-        in: query
+      - in: query
         name: server_side
-      - content:
-          application/json:
-            schema:
-              description: Whether to include Android platform limits or not
-              title: Android
-              type: boolean
-              writeOnly: true
-              x-stream-index: "002"
-        in: query
+        schema:
+          description: Whether to include server-side platform limits or not
+          title: Server-side
+          type: boolean
+          writeOnly: true
+          x-stream-index: "001"
+      - in: query
         name: android
-      - content:
-          application/json:
-            schema:
-              description: Whether to include iOS platform limits or not
-              title: iOS
-              type: boolean
-              writeOnly: true
-              x-stream-index: "003"
-        in: query
+        schema:
+          description: Whether to include Android platform limits or not
+          title: Android
+          type: boolean
+          writeOnly: true
+          x-stream-index: "002"
+      - in: query
         name: ios
-      - content:
-          application/json:
-            schema:
-              description: Whether to include web platform limits or not
-              title: Web
-              type: boolean
-              writeOnly: true
-              x-stream-index: "004"
-        in: query
+        schema:
+          description: Whether to include iOS platform limits or not
+          title: iOS
+          type: boolean
+          writeOnly: true
+          x-stream-index: "003"
+      - in: query
         name: web
-      - content:
-          application/json:
-            schema:
-              description: Specific endpoints to show limits for, as a comma-separated
-                list of values
-              title: Endpoints
-              type: string
-              writeOnly: true
-              x-stream-index: "005"
-        in: query
+        schema:
+          description: Whether to include web platform limits or not
+          title: Web
+          type: boolean
+          writeOnly: true
+          x-stream-index: "004"
+      - in: query
         name: endpoints
+        schema:
+          description: Specific endpoints to show limits for, as a comma-separated
+            list of values
+          title: Endpoints
+          type: string
+          writeOnly: true
+          x-stream-index: "005"
       responses:
         "200":
           content:
@@ -18137,56 +17024,6 @@ paths:
       tags:
       - Settings
       x-stream-docs-page-id: rate_limits
-      x-stream-server-side: true
-  /recipients:
-    get:
-      description: |
-        Query recipients
-      operationId: QueryRecipients
-      parameters:
-      - content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/QueryRecipientsRequest'
-              x-stream-index: "001"
-        in: query
-        name: payload
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/QueryRecipientsResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-          headers:
-            X-RateLimit-Limit:
-              description: The number of allowed requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Remaining:
-              description: The number of remaining requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Reset:
-              description: Timestamp when number of requests will be reset
-              schema:
-                type: integer
-      summary: Query recipients
-      tags:
-      - Campaigns
-      x-stream-docs-page-id: campaigns
       x-stream-server-side: true
   /roles:
     get:
@@ -18281,17 +17118,15 @@ paths:
         Deletes custom role
       operationId: DeleteRole
       parameters:
-      - content:
-          application/json:
-            schema:
-              description: Role name
-              title: Name
-              type: string
-              writeOnly: true
-              x-stream-index: "001"
-        in: path
+      - in: path
         name: name
         required: true
+        schema:
+          description: Role name
+          title: Name
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
       responses:
         "200":
           content:
@@ -18385,318 +17220,21 @@ paths:
       x-stream-docs-page-id: search
       x-stream-permissions:
         ReadChannel: To read channels that were found by search
-  /segments:
-    get:
-      description: |
-        Query segments
-      operationId: QuerySegments
-      parameters:
-      - content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/QuerySegmentsRequest'
-              x-stream-index: "001"
-        in: query
-        name: payload
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/QuerySegmentsResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-          headers:
-            X-RateLimit-Limit:
-              description: The number of allowed requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Remaining:
-              description: The number of remaining requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Reset:
-              description: Timestamp when number of requests will be reset
-              schema:
-                type: integer
-      summary: Query segments
-      tags:
-      - Campaigns
-      x-stream-docs-page-id: campaigns
-      x-stream-server-side: true
-    post:
-      description: |
-        Create a segment
-      operationId: CreateSegment
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateSegmentRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CreateSegmentResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-          headers:
-            X-RateLimit-Limit:
-              description: The number of allowed requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Remaining:
-              description: The number of remaining requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Reset:
-              description: Timestamp when number of requests will be reset
-              schema:
-                type: integer
-      summary: Create segment
-      tags:
-      - Campaigns
-      x-stream-docs-page-id: campaigns
-      x-stream-server-side: true
-  /segments/{id}:
-    delete:
-      description: |
-        Delete a segment
-      operationId: DeleteSegment
-      parameters:
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: "001.001"
-        in: path
-        name: id
-        required: true
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DeleteSegmentResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-          headers:
-            X-RateLimit-Limit:
-              description: The number of allowed requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Remaining:
-              description: The number of remaining requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Reset:
-              description: Timestamp when number of requests will be reset
-              schema:
-                type: integer
-      summary: Delete segment
-      tags:
-      - Campaigns
-      x-stream-docs-page-id: campaigns
-      x-stream-server-side: true
-    put:
-      description: |
-        Update an existing segment
-      operationId: UpdateSegment
-      parameters:
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: "002.001"
-        in: path
-        name: id
-        required: true
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateSegmentRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UpdateSegmentResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-          headers:
-            X-RateLimit-Limit:
-              description: The number of allowed requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Remaining:
-              description: The number of remaining requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Reset:
-              description: Timestamp when number of requests will be reset
-              schema:
-                type: integer
-      summary: Update segment
-      tags:
-      - Campaigns
-      x-stream-docs-page-id: campaigns
-      x-stream-server-side: true
-  /sync:
-    post:
-      description: |
-        Returns all events happened since client disconnect in specified channels
-
-        Required permissions:
-        - ReadChannel
-      operationId: Sync
-      parameters:
-      - content:
-          application/json:
-            schema:
-              description: If set to true this will add 'inaccessible_cids' to response
-                type
-              title: With inaccessible CIDs
-              type: boolean
-              x-stream-index: "003"
-        in: query
-        name: with_inaccessible_cids
-      - content:
-          application/json:
-            schema:
-              description: If set to true this will start watching requested and newly
-                added channels that user has access to. If error occurred with this
-                option enabled and it is not an input error - channels will still
-                be watched.
-              title: Watch synced channels
-              type: boolean
-              x-stream-index: "004"
-        in: query
-        name: watch
-      - content:
-          application/json:
-            schema:
-              type: string
-              x-stream-index: "006.002"
-        in: query
-        name: client_id
-      - content:
-          application/json:
-            schema:
-              type: string
-              x-stream-index: "006.003"
-        in: query
-        name: connection_id
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SyncRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SyncResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-          headers:
-            X-RateLimit-Limit:
-              description: The number of allowed requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Remaining:
-              description: The number of remaining requests in the current period
-              schema:
-                type: integer
-            X-RateLimit-Reset:
-              description: Timestamp when number of requests will be reset
-              schema:
-                type: integer
-      summary: Sync
-      tags:
-      - Channels
-      - Events
-      x-stream-permissions:
-        ReadChannel: To access channels that were requested
   /tasks/{id}:
     get:
       description: |
         Gets status of a task
       operationId: GetTask
       parameters:
-      - content:
-          application/json:
-            schema:
-              description: Task ID
-              title: ID
-              type: string
-              writeOnly: true
-              x-stream-index: "001"
-        in: path
+      - in: path
         name: id
         required: true
+        schema:
+          description: Task ID
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
       responses:
         "200":
           content:
@@ -18734,6 +17272,47 @@ paths:
       - Tasks
       x-stream-docs-page-id: tasks
       x-stream-server-side: true
+  /unread:
+    get:
+      description: |
+        UnreadCount counts
+      operationId: UnreadCounts
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnreadCountsResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+          headers:
+            X-RateLimit-Limit:
+              description: The number of allowed requests in the current period
+              schema:
+                type: integer
+            X-RateLimit-Remaining:
+              description: The number of remaining requests in the current period
+              schema:
+                type: integer
+            X-RateLimit-Reset:
+              description: Timestamp when number of requests will be reset
+              schema:
+                type: integer
+      summary: UnreadCount counts
+      tags:
+      - Channels
+      x-stream-docs-page-id: unread_counts
   /users:
     get:
       description: |
@@ -18917,43 +17496,35 @@ paths:
         - user.deleted
       operationId: DeleteUser
       parameters:
-      - content:
-          application/json:
-            schema:
-              description: ID of user to delete
-              title: User ID
-              type: string
-              x-stream-index: "001"
-        in: path
+      - in: path
         name: user_id
         required: true
-      - content:
-          application/json:
-            schema:
-              description: Delete user messages
-              title: Mark messages deleted
-              type: boolean
-              x-stream-index: "002"
-        in: query
+        schema:
+          description: ID of user to delete
+          title: User ID
+          type: string
+          x-stream-index: "001"
+      - in: query
         name: mark_messages_deleted
-      - content:
-          application/json:
-            schema:
-              description: Delete all user data (messages, reactions, etc.)
-              title: Hard delete
-              type: boolean
-              x-stream-index: "003"
-        in: query
+        schema:
+          description: Delete user messages
+          title: Mark messages deleted
+          type: boolean
+          x-stream-index: "002"
+      - in: query
         name: hard_delete
-      - content:
-          application/json:
-            schema:
-              description: Delete all one-to-one channels of the user
-              title: Delete conversations
-              type: boolean
-              x-stream-index: "004"
-        in: query
+        schema:
+          description: Delete all user data (messages, reactions, etc.)
+          title: Hard delete
+          type: boolean
+          x-stream-index: "003"
+      - in: query
         name: delete_conversation_channels
+        schema:
+          description: Delete all one-to-one channels of the user
+          title: Delete conversations
+          type: boolean
+          x-stream-index: "004"
       responses:
         "200":
           content:
@@ -19020,15 +17591,13 @@ paths:
         - user.deactivated
       operationId: DeactivateUser
       parameters:
-      - content:
-          application/json:
-            schema:
-              title: User ID
-              type: string
-              x-stream-index: "001"
-        in: path
+      - in: path
         name: user_id
         required: true
+        schema:
+          title: User ID
+          type: string
+          x-stream-index: "001"
       requestBody:
         content:
           application/json:
@@ -19090,15 +17659,13 @@ paths:
         - custom
       operationId: SendUserCustomEvent
       parameters:
-      - content:
-          application/json:
-            schema:
-              type: string
-              writeOnly: true
-              x-stream-index: "001"
-        in: path
+      - in: path
         name: user_id
         required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
       requestBody:
         content:
           application/json:
@@ -19155,14 +17722,12 @@ paths:
         Exports the user's profile, reactions and messages. Raises an error if a user has more than 10k messages or reactions
       operationId: ExportUser
       parameters:
-      - content:
-          application/json:
-            schema:
-              type: string
-              x-stream-index: "001"
-        in: path
+      - in: path
         name: user_id
         required: true
+        schema:
+          type: string
+          x-stream-index: "001"
       responses:
         "200":
           content:
@@ -19209,15 +17774,13 @@ paths:
         - user.reactivated
       operationId: ReactivateUser
       parameters:
-      - content:
-          application/json:
-            schema:
-              title: User ID
-              type: string
-              x-stream-index: "001"
-        in: path
+      - in: path
         name: user_id
         required: true
+        schema:
+          title: User ID
+          type: string
+          x-stream-index: "001"
       requestBody:
         content:
           application/json:

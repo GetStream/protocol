@@ -10,116 +10,277 @@ import TabItem from '@theme/TabItem';
 
 ## Creating users
 
-// TODO API endpoint
+Stream Users require only an ID to be created. Users can be created with the role of user or admin. The role will be set to user if a value is not provided in the request. There are additional properties you can provide to further describe your users.
+
+The `name` and `image` fields are special fields that are supported by client-side SDKs.
+
+You can provide additional data for the user object using the `custom` field.
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+const newUser: UserObjectRequest = {
+  id: 'userid',
+  role: 'user',
+  custom: {
+    color: 'red',
+  },
+  name: 'This is a test user',
+  image: 'link/to/profile/image',
+};
+await client.upsertUsers({
+  users: {
+    [newUser.id]: newUser,
+  },
+});
+```
+
+</TabItem>
+<TabItem value="py" label="Python">
+
+```py
+users = {}
+user = UserRequest(
+id='user_id', role="user", custom={"color": "red"}, name="This is a test user",image= "link/to/profile/image",
+)
+users[user.id] = user
+client.upsert_users(users=users)
+```
+
+</TabItem>
+</Tabs>
 
 ## Updating users
 
-// TODO API endpoint
+There are two ways to update user objects:
+
+- Updating will replace the existing user object
+- Partial update will let you choose which fields you want to change/unset
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+const user: UserObjectRequest = {
+  id: 'userid',
+  role: 'user',
+  custom: {
+    color: 'red',
+  },
+  name: 'This is a test user',
+  image: 'link/to/profile/image',
+};
+client.upsertUsers({
+  users: {
+    [user.id]: user,
+  },
+});
+
+// or
+client.updateUsersPartial({
+  users: [
+    {
+      id: user.id,
+      set: {
+        color: 'blue',
+      },
+      unset: ['name'],
+    },
+  ],
+});
+```
+
+</TabItem>
+<TabItem value="py" label="Python">
+
+```py
+users = {}
+user = UserRequest(
+  id= 'userid',
+  role= 'user',
+  custom= {
+    "color": 'red',
+  },
+  name= 'This is a test user',
+  image= 'link/to/profile/image',
+)
+
+users[user.id] = user
+client.upsert_users(users=users)
+
+# or
+client.update_users_partial(
+  users= [
+    {
+      id: user.id,
+      set: {
+        color: 'blue',
+      },
+      unset: ['name'],
+    },
+  ],
+)
+```
+
+</TabItem>
+</Tabs>
+
+## Anonymous users
+
+Anonymous users are users that are not authenticated. It's common to use this for watching a livestream or similar where you aren't authenticated. Anonymous users can be connected using client-side SDKs. Anonymous users are not counted toward your MAU.
+
+## Guest users
+
+Guest users are temporary user accounts. You can use it to temporarily give someone a name and image when joining a call. Guest users can be created client-side. Guest users are counted towards your MAU usage.
+
+## Deactivating and deleting users
+
+While it is usually safer for data retention to deactivate a user, some use cases require completely deleting a user and their data.
+
+Deactivating a user means:
+
+- the user can't connect to Stream API
+- their data will be retained
+- a deactivated user can be reactivated
+
+Deleting a user means:
+
+- the user can't connect to Stream API
+- their data won't appear in user queries
+
+Delete has the following opitions:
+
+| Name                   | Type                       | Description                                                                                                                                                                                                                                                                                                   | Optional |
+| ---------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `user`                 | Enum (soft, pruning, hard) | - Soft: marks user as deleted and retains all user data. <br /> - Pruning: marks user as deleted and nullifies user information. <br /> - Hard: deletes user completely - this requires hard option for messages and conversation as well.                                                                    | Yes      |
+| `conversations`        | Enum (soft, hard)          | - Soft: marks all conversation channels as deleted (same effect as Delete Channels with 'hard' option disabled). <br /> - Hard: deletes channel and all its data completely including messages (same effect as Delete Channels with 'hard' option enabled).                                                   | Yes      |
+| `messages`             | Enum (soft, pruning, hard) | - Soft: marks all user messages as deleted without removing any related message data. <br /> - Pruning: marks all user messages as deleted, nullifies message information and removes some message data such as reactions and flags. <br /> - Hard: deletes messages completely with all related information. | Yes      |
+| `new_channel_owner_id` | string                     | Channels owned by hard-deleted users will be transferred to this userID. If you doesn't provide a value, the channel owner will have a system generated ID like `delete-user-8219f6578a7395g`                                                                                                                 | Yes      |
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+client.deactivateUser({
+  user_id: '<id>',
+});
+
+//reactivate
+client.reactivateUsers({
+  user_ids: ['<id>'],
+});
+
+client.deleteUsers({ user_ids: ['<id>'] });
+
+//restore
+client.restoreUsers({ user_ids: ['<id>'] });
+```
+
+</TabItem>
+
+<TabItem value="py" label="Python">
+
+```py
+client.deactivate_user(
+  user_id= '<id>',
+)
+
+# reactivate
+client.reactivate_users(
+  user_ids= ['<id>'],
+)
+
+client.delete_users( user_ids= ['<id>'] )
+
+# restore
+client.restore_users( user_ids= ['<id>'] )
+```
+
+</TabItem>
+</Tabs>
 
 ## User tokens
 
+Stream uses JWT (JSON Web Tokens) to authenticate chat users, enabling them to log in. Knowing whether a user is authorized to perform certain actions is managed separately via a role-based permissions system. Tokens need to be generated server-side.
+
+You can optionally provide an expiration time. By default, tokens are valid for 1 hour.
+
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
 
 ```js
 const userId = 'john';
-// exp and iat are optional
-// the token will be valid for 1hour
+// exp is optional (by default the token is valid for an hour)
 const exp = Math.round(new Date().getTime() / 1000) + 60 * 60;
-const iat = Math.round(new Date().getTime() / 1000);
-client.createToken(userId, exp, iat);
+client.createToken(userId, exp);
 ```
 
 </TabItem>
 <TabItem value="py" label="Python">
 
 ```py
-def hello_world():
-    print("Hello, world!")
-```
+# in this example we use Django
+# but you can use any framework you like
+import time
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 
-</TabItem>
-<TabItem value="go" label="Golang">
+# The user token endpoint is protected with the login_required decorator.
+@login_required
+def create_user_token(request):
+    # The 'user_id' is retrieved from the request's user instance.
+    user_id = request.user.id
 
-```go
-func main() {
-	apiKey := os.Getenv("API_KEY")
-	apiSecret := os.Getenv("API_SECRET")
-	userID := os.Getenv("USER_ID")
+    # the token will be valid for 1 hour
+    exp = int(time.time()) + 60 * 60
+    # Here client is Stream client and it's called with the 'user_id' and the expiration time.
+    token = client.create_token(user_id, expiration = exp)
 
-	if apiKey == "" || apiSecret == "" || userID == "" {
-		panic("API_KEY, API_SECRET and USER_ID env variables must be set")
-	}
+    # The token is then returned in the response.
+    return JsonResponse({'token': token})
 
-	tokenProvider := videosdk.UserToken(apiSecret, userID, 24*time.Hour)
-	sdk := videosdk.New(apiKey, tokenProvider)
-
-	token, err := tokenProvider(sdk.APIKey())
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println("token ->", token)
-}
 ```
 
 </TabItem>
 </Tabs>
+
+You need to provide the generated tokens to the client SDKs. Stream SDKs accept a token provider, that can be called to retrieve and renew tokens. You need to implement the token provider in your own application, this is usually an HTTP endpoint.
+
+Example [token provider for the Node SDK using Express](https://codesandbox.io/p/sandbox/stream-node-token-provider-example-f9cl27).
 
 ## Call tokens
 
+Call tokens contain a list of call IDs. If a user is authenticated with a call token, they can only access the specified calls. They are helpful if you want to limit call access, but you want to avoid managing call members (an example: a pay-pre-view link for livestreams, with hundreds of thousands of expected viewers).
+
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
 
 ```js
 const userId = 'john';
-// exp and iat are optional
-// the token will be valid for 1hour
+// exp is optional (by default the token is valid for an hour)
 const exp = Math.round(new Date().getTime() / 1000) + 60 * 60;
-const iat = Math.round(new Date().getTime() / 1000);
 
 const call_cids = ['default:call1', 'livestream:call2'];
 
-client.createToken(userId, exp, iat, call_cids);
+client.createCallToken(userId, call_cids, exp);
 ```
 
 </TabItem>
 <TabItem value="py" label="Python">
 
 ```py
-def hello_world():
-    print("Hello, world!")
-```
+import time
 
-</TabItem>
-<TabItem value="go" label="Golang">
+user_id = 'john'
 
-```go
-func main() {
-	apiKey := os.Getenv("API_KEY")
-	apiSecret := os.Getenv("API_SECRET")
-	userID := os.Getenv("USER_ID")
+# exp and iat are optional, token will be valid for 1 hour
+exp = int(time.time()) + 60 * 60
 
-	if apiKey == "" || apiSecret == "" || userID == "" {
-		panic("API_KEY, API_SECRET and USER_ID env variables must be set")
-	}
+call_cids = ['default:call1', 'livestream:call2']
 
-	tokenProvider := videosdk.UserToken(apiSecret, userID, 24*time.Hour)
-	sdk := videosdk.New(apiKey, tokenProvider)
-
-	token, err := tokenProvider(sdk.APIKey())
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println("token ->", token)
-}
+client.create_cal_token(user_id=user_id, expiration=exp,call_cids= call_cids)
 ```
 
 </TabItem>
 </Tabs>
-
-## Token expiration and token providers
-
-TODO: explain that tokens should have an expiration
-TODO: mention that in a production environment you have an endpoint to send fresh tokens to users

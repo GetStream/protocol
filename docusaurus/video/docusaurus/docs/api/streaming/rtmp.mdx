@@ -2,51 +2,70 @@
 id: rtmp
 sidebar_position: 3
 slug: /streaming/rtmp
-title: RTMP
+title: RTMP input
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-## RTMP support overview
+## RTMP input support overview
+
+Almost all livestream software and hardware supports RTMP. Our API supports using third-party software for streaming using RTMP.
+
+_Please not that this page is about publishing video/audio using RTMP, **NOT** watching livestreams using RTMP._
 
 ## RTMP publishing
+
+This is how you can acquire the necessary information for publishing RTMP using a third-party software.
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
 
 ```js
 const resp = await call.getOrCreate({ data: { created_by_id: 'john' } });
-// user ID of an existing user
+// userId of existing user
 const userId = 'jane';
+await client.upsertUsers({
+  users: {
+    [userId]: {
+      id: userId,
+    },
+  },
+});
 const token = client.createToken(userId);
+const rtmpURL = resp.call.ingress.rtmp.address;
+const streamKey = token;
 
-const address = resp.call.ingress.rtmp.address.replace(
-  '<your_token_here>',
-  token,
-);
+console.log(rtmpURL, streamKey);
 ```
 
 </TabItem>
 <TabItem value="py" label="Python">
 
 ```py
-def hello_world():
-    print("Hello, world!")
-```
+# create or get the call
+response = call.create(
+    data=CallRequest(
+        created_by_id='john'
+    )
+)
 
-</TabItem>
-<TabItem value="go" label="Golang">
+# user ID of an existing user
+userId = 'jane'
 
-```go
-callResponse, err := client.GetOrCreateCall(models.CallTypeDefault, callID, &models.GetOrCreateCallRequest{})
-if err != nil {
-	panic(err)
-}
-addressToUse := callResponse.Call.Ingress.Rtmp.Address
+# the token will be valid for 1 hour
+exp = int(time.time()) + 60 * 60
+
+token = client.create_token(userId, expiration = exp)
+
+rtmp_url = response.data().call.ingress.rtmp.address
+stream_key = token
+print(rtmp_url, stream_key)
 ```
 
 </TabItem>
 </Tabs>
 
-## RTMP relay
+The user(s) streaming from the third-party software will show up as regular users in the call.
+
+You can see an example in the [Quickstart](../../streaming/overview/#test-sending-video-via-rtmp-using-obs).

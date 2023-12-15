@@ -4,3 +4,81 @@ sidebar_position: 2
 slug: /streaming/hls
 title: HLS
 ---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import Broadcast from '../_common_/broadcast.mdx';
+import GoLive from '../_common_/go_live.mdx';
+
+[HLS streaming](https://en.wikipedia.org/wiki/HTTP_Live_Streaming) provides better buffering than WebRTC, at the cost having a slight delay in your livestreams.
+
+## Start and stop HLS broadcast
+
+There are two ways to start/stop HLS broadcast:
+
+<Broadcast />
+
+Or, if you're using backstage mode, you can do that when going live:
+
+<GoLive />
+
+Once the live ended, the HLS broadcast will be stopped as well.
+
+## User permissions
+
+To perform these operations, users need the following capabilities:
+
+- `start-broadcast-call`
+- `stop-broadcast-call`
+
+## Broadcast state
+
+You can check if the call is being broadcasted like this:
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+const resp = await call.getOrCreate();
+const isBroadcasting = resp.call.egress.broadcasting;
+```
+
+</TabItem>
+<TabItem value="py" label="Python">
+
+```py
+resp = call.get()
+isBroadcasting = resp.data().call.egress.broadcasting
+```
+</TabItem>
+</Tabs>
+
+## Events
+
+These events are sent to users connected to the call and your webhook/SQS:
+
+- `call.broadcasting_started`
+- `call.broadcasting_stopped`
+- `call.broadcasting_failed`
+
+## Consuming HLS broadcast
+
+Users don't need to join the call to consume the HLS broadcast, but they need to have the URL of the broadcast:
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+const resp = await call.getOrCreate();
+const URL = resp.call.egress.hls?.playlist_url;
+```
+
+</TabItem>
+<TabItem value="py" label="Python">
+
+```py
+resp = call.get()
+URL = resp.data().call.egress.hls.playlist_url
+```
+</TabItem>
+</Tabs>
