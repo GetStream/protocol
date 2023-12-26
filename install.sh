@@ -80,7 +80,7 @@ if command -v yarn &> /dev/null
 then
   echo "Installing typescript protoc plugin"
   mkdir $PROTOC_DIR/.typescript-protobuf
-  (cd $PROTOC_DIR/.typescript-protobuf && yarn add @protobuf-ts/plugin@2.9.0 prettier@2.8.8 --no-lockfile --disable-pnp)
+  (cd $PROTOC_DIR/.typescript-protobuf && yarn add @protobuf-ts/plugin@2.9.3 prettier@2.8.8 --no-lockfile --disable-pnp)
   ln -s $PROTOC_DIR/.typescript-protobuf/node_modules/.bin/protoc-gen-ts $PROTOC_DIR/bin/protoc-gen-ts
   ln -s $PROTOC_DIR/.typescript-protobuf/node_modules/.bin/prettier $PROTOC_DIR/bin/prettier
 else
