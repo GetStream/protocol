@@ -68,9 +68,10 @@ To generate code for your language, do this:
    - `language`: language to generate code for can be `ts`, `dart` or `swift`
    - `output_dir` is a directory where you want to put generated code in
 
-
 ## Generate sdk with docker
+
 For TS
+
 ```bash
 docker run -v $(pwd):/local ghcr.io/getstream/protobuf-generate ts /local/packages/client/src/gen
 
@@ -79,6 +80,7 @@ docker run --platform=linux/amd64 -v $(pwd):/local ghcr.io/getstream/protobuf-ge
 ```
 
 For Dart
+
 ```bash
 docker run -v $(pwd):/local ghcr.io/getstream/protobuf-generate dart /local/dart-sdk
 
@@ -97,3 +99,9 @@ docker run -v $(pwd):/local ghcr.io/getstream/protobuf-generate dart /local/dart
 # or
 docker run --platform=linux/amd64 -v $(pwd):/local ghcr.io/getstream/protobuf-generate dart /local/dart-sdk --branch=my-branch
 ```
+
+## Video API and server-side SDK documentation
+
+This repository hosts the [API and server-side SDK documentation](https://getstream.io/video/docs/api/) for video.
+
+For more info please see [the nested readme file](./docusaurus/video/docusaurus/README.md)
