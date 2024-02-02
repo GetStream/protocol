@@ -139,6 +139,15 @@ components:
       - title
       - body
       type: object
+    APNSRequest:
+      properties:
+        body:
+          type: string
+          x-stream-index: "002"
+        title:
+          type: string
+          x-stream-index: "001"
+      type: object
     Action:
       nullable: true
       properties:
@@ -180,14 +189,6 @@ components:
         value:
           type: string
           x-stream-index: "005"
-      type: object
-    AgoraCall:
-      properties:
-        channel:
-          type: string
-          x-stream-index: "001"
-      required:
-      - channel
       type: object
     App:
       properties:
@@ -595,6 +596,32 @@ components:
       - speaker_default_on
       - default_device
       type: object
+    AudioSettingsRequest:
+      properties:
+        access_request_enabled:
+          type: boolean
+          x-stream-index: "001"
+        default_device:
+          enum:
+          - speaker
+          - earpiece
+          type: string
+          x-stream-index: "006"
+        mic_default_on:
+          type: boolean
+          x-stream-index: "004"
+        opus_dtx_enabled:
+          type: boolean
+          x-stream-index: "002"
+        redundant_coding_enabled:
+          type: boolean
+          x-stream-index: "003"
+        speaker_default_on:
+          type: boolean
+          x-stream-index: "005"
+      required:
+      - default_device
+      type: object
     AutomodDetails:
       properties:
         action:
@@ -622,6 +649,12 @@ components:
           x-stream-index: "001"
       required:
       - enabled
+      type: object
+    BackstageSettingsRequest:
+      properties:
+        enabled:
+          type: boolean
+          x-stream-index: "001"
       type: object
     BanRequest:
       nullable: true
@@ -777,6 +810,28 @@ components:
           type: string
           x-stream-index: "001"
       type: object
+    BlockUserRequest:
+      nullable: true
+      properties:
+        user_id:
+          description: the user to block
+          title: UserID
+          type: string
+          x-stream-index: "003"
+      required:
+      - user_id
+      type: object
+    BlockUserResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      type: object
     BroadcastSettings:
       properties:
         enabled:
@@ -789,27 +844,269 @@ components:
       - enabled
       - hls
       type: object
-    Call:
+    BroadcastSettingsRequest:
       properties:
-        agora:
-          $ref: '#/components/schemas/AgoraCall'
-          x-stream-index: "005"
-        hms:
-          $ref: '#/components/schemas/HMSCall'
-          x-stream-index: "004"
-        id:
-          type: string
-          x-stream-index: "002"
-        provider:
-          type: string
+        enabled:
+          type: boolean
           x-stream-index: "001"
-        type:
+        hls:
+          $ref: '#/components/schemas/HLSSettingsRequest'
+          x-stream-index: "002"
+      type: object
+    BroadcastSettingsResponse:
+      properties:
+        enabled:
+          type: boolean
+          x-stream-index: "001"
+        hls:
+          $ref: '#/components/schemas/HLSSettingsResponse'
+          x-stream-index: "002"
+      required:
+      - enabled
+      - hls
+      type: object
+    CallIngressResponse:
+      properties:
+        rtmp:
+          $ref: '#/components/schemas/RTMPIngress'
+          x-stream-index: "001"
+      required:
+      - rtmp
+      title: Call inputs
+      type: object
+    CallParticipantResponse:
+      properties:
+        joined_at:
+          format: date-time
+          type: string
+          x-stream-index: "004"
+        role:
           type: string
           x-stream-index: "003"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          x-stream-index: "001"
+        user_session_id:
+          type: string
+          x-stream-index: "002"
       required:
-      - provider
-      - id
+      - user
+      - user_session_id
+      - role
+      - joined_at
+      type: object
+    CallRecording:
+      description: CallRecording represents a recording of a call.
+      properties:
+        end_time:
+          format: date-time
+          title: The end time of the recording.
+          type: string
+          x-stream-index: "004"
+        filename:
+          title: The filename of the recording.
+          type: string
+          x-stream-index: "001"
+        start_time:
+          format: date-time
+          title: The start time of the recording.
+          type: string
+          x-stream-index: "003"
+        url:
+          title: The URL of the recording.
+          type: string
+          x-stream-index: "002"
+      required:
+      - filename
+      - url
+      - start_time
+      - end_time
+      type: object
+    CallRequest:
+      properties:
+        created_by:
+          $ref: '#/components/schemas/UserRequest'
+          title: The user that create this call
+          x-stream-index: "002"
+        created_by_id:
+          title: The id of the user that create this call
+          type: string
+          x-stream-index: "003"
+        custom:
+          type: object
+          x-stream-index: "004"
+        members:
+          items:
+            $ref: '#/components/schemas/MemberRequest'
+          maximum: 100
+          type: array
+          x-stream-index: "005"
+        settings_override:
+          $ref: '#/components/schemas/CallSettingsRequest'
+          x-stream-index: "006"
+        starts_at:
+          format: date-time
+          type: string
+          x-stream-index: "007"
+        team:
+          type: string
+          x-stream-index: "001"
+      type: object
+    CallResponse:
+      description: Represents a call
+      properties:
+        backstage:
+          type: boolean
+          x-stream-index: "015"
+        blocked_user_ids:
+          items:
+            type: string
+          type: array
+          x-stream-index: "017"
+        cid:
+          description: The unique identifier for a call (<type>:<id>)
+          title: CID
+          type: string
+          x-stream-index: "004"
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: "009"
+        created_by:
+          $ref: '#/components/schemas/UserResponse'
+          description: The user that created the call
+          title: Created By
+          x-stream-index: "007"
+        current_session_id:
+          type: string
+          x-stream-index: "005"
+        custom:
+          description: Custom data for this object
+          title: Custom data
+          type: object
+          x-stream-index: "008"
+        egress:
+          $ref: '#/components/schemas/EgressResponse'
+          x-stream-index: "020"
+        ended_at:
+          description: Date/time when the call ended
+          format: date-time
+          title: Ended At
+          type: string
+          x-stream-index: "013"
+        id:
+          description: Call ID
+          title: ID
+          type: string
+          x-stream-index: "003"
+        ingress:
+          $ref: '#/components/schemas/CallIngressResponse'
+          x-stream-index: "018"
+        recording:
+          type: boolean
+          x-stream-index: "011"
+        session:
+          $ref: '#/components/schemas/CallSessionResponse'
+          x-stream-index: "019"
+        settings:
+          $ref: '#/components/schemas/CallSettingsResponse'
+          x-stream-index: "016"
+        starts_at:
+          description: Date/time when the call will start
+          format: date-time
+          title: Starts At
+          type: string
+          x-stream-index: "014"
+        team:
+          type: string
+          x-stream-index: "006"
+        thumbnails:
+          $ref: '#/components/schemas/ThumbnailResponse'
+          x-stream-index: "021"
+        transcribing:
+          type: boolean
+          x-stream-index: "012"
+        type:
+          description: The type of call
+          title: Type
+          type: string
+          x-stream-index: "002"
+        updated_at:
+          description: Date/time of the last update
+          format: date-time
+          title: Updated at
+          type: string
+          x-stream-index: "010"
+      required:
       - type
+      - id
+      - cid
+      - current_session_id
+      - created_by
+      - custom
+      - created_at
+      - updated_at
+      - recording
+      - transcribing
+      - backstage
+      - settings
+      - blocked_user_ids
+      - ingress
+      - egress
+      title: Call
+      type: object
+    CallSessionResponse:
+      properties:
+        accepted_by:
+          additionalProperties:
+            format: date-time
+            type: string
+          type: object
+          x-stream-index: "007"
+        ended_at:
+          format: date-time
+          type: string
+          x-stream-index: "003"
+        id:
+          type: string
+          x-stream-index: "001"
+        live_ended_at:
+          format: date-time
+          type: string
+          x-stream-index: "009"
+        live_started_at:
+          format: date-time
+          type: string
+          x-stream-index: "008"
+        participants:
+          items:
+            $ref: '#/components/schemas/CallParticipantResponse'
+          type: array
+          x-stream-index: "004"
+        participants_count_by_role:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "005"
+        rejected_by:
+          additionalProperties:
+            format: date-time
+            type: string
+          type: object
+          x-stream-index: "006"
+        started_at:
+          format: date-time
+          type: string
+          x-stream-index: "002"
+      required:
+      - id
+      - participants
+      - participants_count_by_role
+      - rejected_by
+      - accepted_by
       type: object
     CallSettings:
       properties:
@@ -843,6 +1140,110 @@ components:
         video:
           $ref: '#/components/schemas/VideoSettings'
           x-stream-index: "003"
+      type: object
+    CallSettingsRequest:
+      properties:
+        audio:
+          $ref: '#/components/schemas/AudioSettingsRequest'
+          x-stream-index: "001"
+        backstage:
+          $ref: '#/components/schemas/BackstageSettingsRequest'
+          x-stream-index: "002"
+        broadcasting:
+          $ref: '#/components/schemas/BroadcastSettingsRequest'
+          x-stream-index: "009"
+        geofencing:
+          $ref: '#/components/schemas/GeofenceSettingsRequest'
+          x-stream-index: "003"
+        recording:
+          $ref: '#/components/schemas/RecordSettingsRequest'
+          x-stream-index: "005"
+        ring:
+          $ref: '#/components/schemas/RingSettingsRequest'
+          x-stream-index: "006"
+        screensharing:
+          $ref: '#/components/schemas/ScreensharingSettingsRequest'
+          x-stream-index: "007"
+        thumbnails:
+          $ref: '#/components/schemas/ThumbnailsSettingsRequest'
+          x-stream-index: "010"
+        transcription:
+          $ref: '#/components/schemas/TranscriptionSettingsRequest'
+          x-stream-index: "008"
+        video:
+          $ref: '#/components/schemas/VideoSettingsRequest'
+          x-stream-index: "004"
+      type: object
+    CallSettingsResponse:
+      properties:
+        audio:
+          $ref: '#/components/schemas/AudioSettings'
+          x-stream-index: "001"
+        backstage:
+          $ref: '#/components/schemas/BackstageSettings'
+          x-stream-index: "002"
+        broadcasting:
+          $ref: '#/components/schemas/BroadcastSettingsResponse'
+          x-stream-index: "003"
+        geofencing:
+          $ref: '#/components/schemas/GeofenceSettings'
+          x-stream-index: "004"
+        recording:
+          $ref: '#/components/schemas/RecordSettingsResponse'
+          x-stream-index: "005"
+        ring:
+          $ref: '#/components/schemas/RingSettings'
+          x-stream-index: "006"
+        screensharing:
+          $ref: '#/components/schemas/ScreensharingSettings'
+          x-stream-index: "007"
+        thumbnails:
+          $ref: '#/components/schemas/ThumbnailsSettings'
+          x-stream-index: "010"
+        transcription:
+          $ref: '#/components/schemas/TranscriptionSettings'
+          x-stream-index: "008"
+        video:
+          $ref: '#/components/schemas/VideoSettings'
+          x-stream-index: "009"
+      required:
+      - audio
+      - backstage
+      - broadcasting
+      - geofencing
+      - recording
+      - ring
+      - screensharing
+      - transcription
+      - video
+      - thumbnails
+      type: object
+    CallStateResponseFields:
+      properties:
+        call:
+          $ref: '#/components/schemas/CallResponse'
+          x-stream-index: "001"
+        members:
+          description: List of call members
+          items:
+            $ref: '#/components/schemas/MemberResponse'
+          title: Members
+          type: array
+          x-stream-index: "002"
+        membership:
+          $ref: '#/components/schemas/MemberResponse'
+          description: Current user membership object
+          title: Membership
+          x-stream-index: "003"
+        own_capabilities:
+          items:
+            $ref: '#/components/schemas/OwnCapability'
+          type: array
+          x-stream-index: "004"
+      required:
+      - call
+      - members
+      - own_capabilities
       type: object
     CallType:
       nullable: true
@@ -883,6 +1284,40 @@ components:
       - Name
       - CreatedAt
       - UpdatedAt
+      type: object
+    CallTypeResponse:
+      properties:
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "005"
+        grants:
+          additionalProperties:
+            items:
+              type: string
+            type: array
+          type: object
+          x-stream-index: "002"
+        name:
+          type: string
+          x-stream-index: "001"
+        notification_settings:
+          $ref: '#/components/schemas/NotificationSettings'
+          x-stream-index: "004"
+        settings:
+          $ref: '#/components/schemas/CallSettingsResponse'
+          x-stream-index: "003"
+        updated_at:
+          format: date-time
+          type: string
+          x-stream-index: "006"
+      required:
+      - name
+      - grants
+      - settings
+      - notification_settings
+      - created_at
+      - updated_at
       type: object
     Channel:
       properties:
@@ -972,6 +1407,7 @@ components:
       - auto_translation_language
       type: object
     ChannelConfig:
+      nullable: true
       properties:
         allowed_flag_reasons:
           items:
@@ -2410,58 +2846,65 @@ components:
       title: Block list
       type: object
       x-stream-docs-page-id: block_lists
-    CreateCallRequest:
+    CreateCallTypeRequest:
       nullable: true
       properties:
-        id:
-          type: string
-          x-stream-index: "004"
-        options:
+        grants:
+          additionalProperties:
+            items:
+              type: string
+            type: array
           type: object
-          x-stream-index: "005"
-        type:
-          enum:
-          - audio
-          - video
+          x-stream-index: "002.001"
+        name:
           type: string
-          x-stream-index: "003"
-        user:
-          $ref: '#/components/schemas/UserObjectRequest'
-          description: '**Server-side only**. User object which server acts upon'
-          title: User
-          x-stream-index: "006.002"
-        user_id:
-          description: '**Server-side only**. User ID which server acts upon'
-          title: User ID
-          type: string
-          x-stream-index: "006.001"
+          x-stream-index: "001"
+        notification_settings:
+          $ref: '#/components/schemas/NotificationSettingsRequest'
+          x-stream-index: "002.002"
+        settings:
+          $ref: '#/components/schemas/CallSettingsRequest'
+          x-stream-index: "002.003"
       required:
-      - type
-      - id
+      - name
       type: object
-    CreateCallResponse:
+    CreateCallTypeResponse:
       nullable: true
       properties:
-        agora_app_id:
+        created_at:
+          format: date-time
           type: string
-          x-stream-index: "002.003"
-        agora_uid:
-          format: int32
-          type: integer
-          x-stream-index: "002.002"
-        call:
-          $ref: '#/components/schemas/Call'
-          x-stream-index: "001"
+          x-stream-index: "001.005"
         duration:
-          description: Duration of the request in human-readable format
-          title: Duration
-          type: string
-          x-stream-index: "003.001"
-        token:
           type: string
           x-stream-index: "002.001"
+        grants:
+          additionalProperties:
+            items:
+              type: string
+            type: array
+          type: object
+          x-stream-index: "001.002"
+        name:
+          type: string
+          x-stream-index: "001.001"
+        notification_settings:
+          $ref: '#/components/schemas/NotificationSettings'
+          x-stream-index: "001.004"
+        settings:
+          $ref: '#/components/schemas/CallSettingsResponse'
+          x-stream-index: "001.003"
+        updated_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.006"
       required:
-      - token
+      - name
+      - grants
+      - settings
+      - notification_settings
+      - created_at
+      - updated_at
       - duration
       type: object
     CreateChannelTypeRequest:
@@ -3162,48 +3605,42 @@ components:
       - duration
       type: object
     Device:
-      nullable: true
       properties:
         created_at:
+          description: Date/time of creation
           format: date-time
-          type: string
-          x-stream-index: "002.002"
-        disabled:
-          type: boolean
-          x-stream-index: "002.003"
-        disabled_reason:
-          type: string
-          x-stream-index: "002.004"
-        id:
-          description: Device ID
-          title: ID
-          type: string
-          x-stream-index: 002.001.004
-        push_provider:
-          enum:
-          - firebase
-          - apn
-          - huawei
-          - xiaomi
-          title: Push provider
-          type: string
-          x-stream-index: 002.001.001
-        push_provider_name:
-          description: Name of the push provider configuration
-          title: Push provider name
-          type: string
-          x-stream-index: 002.001.003
-        user_id:
+          title: Created at
           type: string
           x-stream-index: "004"
-        voip:
+        disabled:
+          description: Whether device is disabled or not
+          title: Disabled
           type: boolean
-          x-stream-index: 002.001.005
+          x-stream-index: "005"
+        disabled_reason:
+          description: Reason explaining why device had been disabled
+          title: Reason
+          type: string
+          x-stream-index: "006"
+        id:
+          type: string
+          x-stream-index: "003"
+        push_provider:
+          type: string
+          x-stream-index: "001"
+        push_provider_name:
+          type: string
+          x-stream-index: "002"
+        voip:
+          description: When true the token is for Apple VoIP push notifications
+          title: Voip
+          type: boolean
+          x-stream-index: "007"
       required:
       - push_provider
       - id
       - created_at
-      - user_id
+      title: Device
       type: object
     DeviceErrorInfo:
       properties:
@@ -3249,6 +3686,108 @@ components:
       - push_provider
       - id
       type: object
+    EdgeResponse:
+      properties:
+        continent_code:
+          type: string
+          x-stream-index: "007.003"
+        country_iso_code:
+          type: string
+          x-stream-index: "007.002"
+        green:
+          format: int32
+          type: integer
+          x-stream-index: "003"
+        id:
+          type: string
+          x-stream-index: "001"
+        latency_test_url:
+          type: string
+          x-stream-index: "002"
+        latitude:
+          format: float
+          type: number
+          x-stream-index: "006.001"
+        longitude:
+          format: float
+          type: number
+          x-stream-index: "006.002"
+        red:
+          format: int32
+          type: integer
+          x-stream-index: "005"
+        subdivision_iso_code:
+          type: string
+          x-stream-index: "007.001"
+        yellow:
+          format: int32
+          type: integer
+          x-stream-index: "004"
+      required:
+      - id
+      - latency_test_url
+      - green
+      - yellow
+      - red
+      - latitude
+      - longitude
+      - subdivision_iso_code
+      - country_iso_code
+      - continent_code
+      type: object
+    EgressHLSResponse:
+      properties:
+        playlist_url:
+          type: string
+          x-stream-index: "001"
+      required:
+      - playlist_url
+      type: object
+    EgressRTMPResponse:
+      properties:
+        name:
+          type: string
+          x-stream-index: "001"
+        stream_key:
+          type: string
+          x-stream-index: "003"
+        url:
+          type: string
+          x-stream-index: "002"
+      required:
+      - name
+      - url
+      - stream_key
+      type: object
+    EgressResponse:
+      properties:
+        broadcasting:
+          type: boolean
+          x-stream-index: "001"
+        hls:
+          $ref: '#/components/schemas/EgressHLSResponse'
+          x-stream-index: "002"
+        rtmps:
+          items:
+            $ref: '#/components/schemas/EgressRTMPResponse'
+          type: array
+          x-stream-index: "003"
+      required:
+      - broadcasting
+      - rtmps
+      type: object
+    EndCallRequest:
+      nullable: true
+      type: object
+    EndCallResponse:
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      type: object
     ErrorResult:
       properties:
         stacktrace:
@@ -3275,6 +3814,15 @@ components:
       required:
       - enabled
       - apns
+      type: object
+    EventNotificationSettingsRequest:
+      properties:
+        apns:
+          $ref: '#/components/schemas/APNSRequest'
+          x-stream-index: "002"
+        enabled:
+          type: boolean
+          x-stream-index: "001"
       type: object
     EventRequest:
       properties:
@@ -3787,6 +4335,14 @@ components:
       required:
       - names
       type: object
+    GeofenceSettingsRequest:
+      properties:
+        names:
+          items:
+            type: string
+          type: array
+          x-stream-index: "001"
+      type: object
     GetApplicationResponse:
       nullable: true
       properties:
@@ -3816,40 +4372,71 @@ components:
       required:
       - duration
       type: object
-    GetCallTokenRequest:
+    GetCallResponse:
       nullable: true
       properties:
-        user:
-          $ref: '#/components/schemas/UserObjectRequest'
-          description: '**Server-side only**. User object which server acts upon'
-          title: User
-          x-stream-index: "002.002"
-        user_id:
-          description: '**Server-side only**. User ID which server acts upon'
-          title: User ID
-          type: string
-          x-stream-index: "002.001"
-      type: object
-    GetCallTokenResponse:
-      nullable: true
-      properties:
-        agora_app_id:
-          type: string
-          x-stream-index: "001.003"
-        agora_uid:
-          format: int32
-          type: integer
-          x-stream-index: "001.002"
+        call:
+          $ref: '#/components/schemas/CallResponse'
+          x-stream-index: "001.001"
         duration:
-          description: Duration of the request in human-readable format
-          title: Duration
           type: string
           x-stream-index: "002.001"
-        token:
+        members:
+          items:
+            $ref: '#/components/schemas/MemberResponse'
+          type: array
+          x-stream-index: "001.002"
+        membership:
+          $ref: '#/components/schemas/MemberResponse'
+          x-stream-index: "001.003"
+        own_capabilities:
+          items:
+            $ref: '#/components/schemas/OwnCapability'
+          type: array
+          x-stream-index: "001.004"
+      required:
+      - call
+      - members
+      - own_capabilities
+      - duration
+      type: object
+    GetCallTypeResponse:
+      nullable: true
+      properties:
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.005"
+        duration:
+          type: string
+          x-stream-index: "002.001"
+        grants:
+          additionalProperties:
+            items:
+              type: string
+            type: array
+          type: object
+          x-stream-index: "001.002"
+        name:
           type: string
           x-stream-index: "001.001"
+        notification_settings:
+          $ref: '#/components/schemas/NotificationSettings'
+          x-stream-index: "001.004"
+        settings:
+          $ref: '#/components/schemas/CallSettingsResponse'
+          x-stream-index: "001.003"
+        updated_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.006"
       required:
-      - token
+      - name
+      - grants
+      - settings
+      - notification_settings
+      - created_at
+      - updated_at
       - duration
       type: object
     GetCommandResponse:
@@ -3900,6 +4487,23 @@ components:
           x-stream-index: "001"
       required:
       - permission
+      - duration
+      type: object
+    GetEdgesResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        edges:
+          items:
+            $ref: '#/components/schemas/EdgeResponse'
+          type: array
+          x-stream-index: "001"
+      required:
+      - edges
       - duration
       type: object
     GetExportChannelsStatusResponse:
@@ -4075,6 +4679,62 @@ components:
       title: Get OG Attachment
       type: object
       x-stream-docs-page-id: og
+    GetOrCreateCallRequest:
+      nullable: true
+      properties:
+        data:
+          $ref: '#/components/schemas/CallRequest'
+          title: ReadOnlyData
+          x-stream-index: "003"
+        members_limit:
+          format: int32
+          maximum: 100
+          type: integer
+          x-stream-index: "006"
+        notify:
+          description: if provided it sends a notification event to the members for
+            this call
+          title: Notify
+          type: boolean
+          x-stream-index: "005"
+        ring:
+          description: if provided it sends a ring event to the members for this call
+          title: Ring
+          type: boolean
+          x-stream-index: "004"
+      type: object
+    GetOrCreateCallResponse:
+      nullable: true
+      properties:
+        call:
+          $ref: '#/components/schemas/CallResponse'
+          x-stream-index: "001.001"
+        created:
+          type: boolean
+          x-stream-index: "002"
+        duration:
+          type: string
+          x-stream-index: "003.001"
+        members:
+          items:
+            $ref: '#/components/schemas/MemberResponse'
+          type: array
+          x-stream-index: "001.002"
+        membership:
+          $ref: '#/components/schemas/MemberResponse'
+          x-stream-index: "001.003"
+        own_capabilities:
+          items:
+            $ref: '#/components/schemas/OwnCapability'
+          type: array
+          x-stream-index: "001.004"
+      required:
+      - call
+      - members
+      - own_capabilities
+      - created
+      - duration
+      type: object
     GetRateLimitsResponse:
       nullable: true
       properties:
@@ -4221,6 +4881,34 @@ components:
       required:
       - duration
       type: object
+    GoLiveRequest:
+      nullable: true
+      properties:
+        start_hls:
+          type: boolean
+          x-stream-index: "003"
+        start_recording:
+          type: boolean
+          x-stream-index: "004"
+        start_transcription:
+          type: boolean
+          x-stream-index: "005"
+      type: object
+    GoLiveResponse:
+      nullable: true
+      properties:
+        call:
+          $ref: '#/components/schemas/CallResponse'
+          x-stream-index: "001"
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+      required:
+      - call
+      - duration
+      type: object
     GuestRequest:
       nullable: true
       properties:
@@ -4271,17 +4959,48 @@ components:
       - enabled
       - quality_tracks
       type: object
-    HMSCall:
+    HLSSettingsRequest:
       properties:
-        room_id:
-          type: string
+        auto_on:
+          type: boolean
           x-stream-index: "001"
-        room_name:
-          type: string
+        enabled:
+          type: boolean
           x-stream-index: "002"
+        layout:
+          $ref: '#/components/schemas/LayoutSettingsRequest'
+          title: LayoutSettings
+          x-stream-index: "004"
+        quality_tracks:
+          items:
+            type: string
+          maximum: 3
+          minimum: 1
+          type: array
+          x-stream-index: "003"
+      type: object
+    HLSSettingsResponse:
+      properties:
+        auto_on:
+          type: boolean
+          x-stream-index: "001"
+        enabled:
+          type: boolean
+          x-stream-index: "002"
+        layout:
+          $ref: '#/components/schemas/LayoutSettings'
+          title: Layout
+          x-stream-index: "004"
+        quality_tracks:
+          items:
+            type: string
+          type: array
+          x-stream-index: "003"
       required:
-      - room_id
-      - room_name
+      - auto_on
+      - enabled
+      - quality_tracks
+      - layout
       type: object
     HideChannelRequest:
       nullable: true
@@ -4691,6 +5410,29 @@ components:
       - external_app_url
       - external_css_url
       type: object
+    LayoutSettingsRequest:
+      properties:
+        external_app_url:
+          type: string
+          x-stream-index: "003"
+        external_css_url:
+          type: string
+          x-stream-index: "004"
+        name:
+          enum:
+          - spotlight
+          - grid
+          - single-participant
+          - mobile
+          - custom
+          type: string
+          x-stream-index: "001"
+        options:
+          type: object
+          x-stream-index: "002"
+      required:
+      - name
+      type: object
     LimitInfo:
       properties:
         limit:
@@ -4733,6 +5475,21 @@ components:
           x-stream-index: "002.001"
       required:
       - blocklists
+      - duration
+      type: object
+    ListCallTypeResponse:
+      nullable: true
+      properties:
+        call_types:
+          additionalProperties:
+            $ref: '#/components/schemas/CallTypeResponse'
+          type: object
+          x-stream-index: "001"
+        duration:
+          type: string
+          x-stream-index: "002.001"
+      required:
+      - call_types
       - duration
       type: object
     ListChannelTypesResponse:
@@ -4841,6 +5598,21 @@ components:
       - push_providers
       - duration
       type: object
+    ListRecordingsResponse:
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "001.001"
+        recordings:
+          items:
+            $ref: '#/components/schemas/CallRecording'
+          type: array
+          x-stream-index: "002"
+      required:
+      - duration
+      - recordings
+      type: object
     ListRolesResponse:
       nullable: true
       properties:
@@ -4925,6 +5697,67 @@ components:
       - message_id
       - thread_id
       type: object
+    MemberRequest:
+      properties:
+        custom:
+          description: Custom data for this object
+          title: Custom data
+          type: object
+          x-stream-index: "003"
+        role:
+          title: Role
+          type: string
+          x-stream-index: "002"
+        user_id:
+          minLength: 1
+          title: User ID
+          type: string
+          x-stream-index: "001"
+      required:
+      - user_id
+      type: object
+    MemberResponse:
+      properties:
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: "005"
+        custom:
+          description: Custom member response data
+          title: Custom
+          type: object
+          x-stream-index: "004"
+        deleted_at:
+          description: Date/time of deletion
+          format: date-time
+          title: Deleted at
+          type: string
+          x-stream-index: "007"
+        role:
+          title: Role
+          type: string
+          x-stream-index: "003"
+        updated_at:
+          description: Date/time of the last update
+          format: date-time
+          title: Updated at
+          type: string
+          x-stream-index: "006"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          x-stream-index: "001"
+        user_id:
+          type: string
+          x-stream-index: "002"
+      required:
+      - user
+      - user_id
+      - custom
+      - created_at
+      - updated_at
+      type: object
     MembersResponse:
       nullable: true
       properties:
@@ -4944,6 +5777,7 @@ components:
       type: object
     Message:
       description: Represents any chat message
+      nullable: true
       properties:
         Custom:
           type: object
@@ -5638,6 +6472,46 @@ components:
       required:
       - duration
       type: object
+    MuteUsersRequest:
+      nullable: true
+      properties:
+        audio:
+          title: Audio
+          type: boolean
+          x-stream-index: "005"
+        mute_all_users:
+          type: boolean
+          x-stream-index: "003"
+        screenshare:
+          title: Screenshare
+          type: boolean
+          x-stream-index: "007"
+        screenshare_audio:
+          title: ScreenshareAudio
+          type: boolean
+          x-stream-index: "008"
+        user_ids:
+          items:
+            type: string
+          title: UserIDs
+          type: array
+          x-stream-index: "004"
+        video:
+          title: Video
+          type: boolean
+          x-stream-index: "006"
+      type: object
+    MuteUsersResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      type: object
     NotificationSettings:
       properties:
         call_live_started:
@@ -5662,6 +6536,47 @@ components:
       - call_notification
       - call_ring
       type: object
+    NotificationSettingsRequest:
+      properties:
+        call_live_started:
+          $ref: '#/components/schemas/EventNotificationSettingsRequest'
+          x-stream-index: "002"
+        call_notification:
+          $ref: '#/components/schemas/EventNotificationSettingsRequest'
+          x-stream-index: "004"
+        call_ring:
+          $ref: '#/components/schemas/EventNotificationSettingsRequest'
+          x-stream-index: "005"
+        enabled:
+          type: boolean
+          x-stream-index: "001"
+        session_started:
+          $ref: '#/components/schemas/EventNotificationSettingsRequest'
+          x-stream-index: "003"
+      type: object
+    NullBoolRequest:
+      properties:
+        HasValue:
+          type: boolean
+          writeOnly: true
+          x-stream-index: "002"
+        Value:
+          type: boolean
+          writeOnly: true
+          x-stream-index: "001"
+      type: object
+    NullTimeRequest:
+      properties:
+        HasValue:
+          type: boolean
+          writeOnly: true
+          x-stream-index: "002"
+        Value:
+          format: date-time
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      type: object
     OnlyUserIDRequest:
       properties:
         id:
@@ -5670,6 +6585,35 @@ components:
       required:
       - id
       type: object
+    OwnCapability:
+      description: All possibility of string to use
+      enum:
+      - block-users
+      - create-call
+      - create-reaction
+      - end-call
+      - join-backstage
+      - join-call
+      - join-ended-call
+      - mute-users
+      - pin-for-everyone
+      - read-call
+      - remove-call-member
+      - screenshare
+      - send-audio
+      - send-video
+      - start-broadcast-call
+      - start-record-call
+      - start-transcription-call
+      - stop-broadcast-call
+      - stop-record-call
+      - stop-transcription-call
+      - update-call
+      - update-call-member
+      - update-call-permissions
+      - update-call-settings
+      title: OwnCapability
+      type: string
     OwnUser:
       properties:
         Custom:
@@ -5896,6 +6840,30 @@ components:
       - level
       - tags
       type: object
+    PinRequest:
+      nullable: true
+      properties:
+        session_id:
+          type: string
+          x-stream-index: "003"
+        user_id:
+          type: string
+          x-stream-index: "002"
+      required:
+      - user_id
+      - session_id
+      type: object
+    PinResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      type: object
     Policy:
       properties:
         action:
@@ -6093,11 +7061,10 @@ components:
     PushNotificationSettingsRequest:
       properties:
         disabled:
-          type: boolean
+          $ref: '#/components/schemas/NullBoolRequest'
           x-stream-index: "001"
         disabled_until:
-          format: date-time
-          type: string
+          $ref: '#/components/schemas/NullTimeRequest'
           x-stream-index: "002"
       type: object
     PushProvider:
@@ -6449,6 +7416,56 @@ components:
       - bans
       - duration
       type: object
+    QueryCallsRequest:
+      nullable: true
+      properties:
+        filter_conditions:
+          type: object
+          x-stream-index: "003"
+        limit:
+          format: int32
+          maximum: 25
+          minimum: 0
+          type: integer
+          x-stream-index: "006.001"
+        next:
+          type: string
+          x-stream-index: "006.002"
+        prev:
+          type: string
+          x-stream-index: "006.003"
+        sort:
+          items:
+            $ref: '#/components/schemas/SortParamRequest'
+          maximum: 2
+          type: array
+          x-stream-index: "004"
+        watch:
+          type: boolean
+          x-stream-index: "001"
+      type: object
+    QueryCallsResponse:
+      nullable: true
+      properties:
+        calls:
+          items:
+            $ref: '#/components/schemas/CallStateResponseFields'
+          title: Calls
+          type: array
+          x-stream-index: "001"
+        duration:
+          type: string
+          x-stream-index: "003.001"
+        next:
+          type: string
+          x-stream-index: "002.001"
+        prev:
+          type: string
+          x-stream-index: "002.002"
+      required:
+      - calls
+      - duration
+      type: object
     QueryChannelsRequest:
       nullable: true
       properties:
@@ -6599,6 +7616,65 @@ components:
       required:
       - type
       - filter_conditions
+      type: object
+    QueryMembersRequest_1:
+      nullable: true
+      properties:
+        filter_conditions:
+          type: object
+          x-stream-index: "002"
+        id:
+          maxLength: 64
+          type: string
+          x-stream-index: "001.002"
+        limit:
+          format: int32
+          maximum: 25
+          minimum: 0
+          type: integer
+          x-stream-index: "004.001"
+        next:
+          type: string
+          x-stream-index: "004.002"
+        prev:
+          type: string
+          x-stream-index: "004.003"
+        sort:
+          items:
+            $ref: '#/components/schemas/SortParamRequest'
+          maximum: 1
+          type: array
+          x-stream-index: "003"
+        type:
+          maxLength: 64
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - id
+      type: object
+    QueryMembersResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "003.001"
+        members:
+          items:
+            $ref: '#/components/schemas/MemberResponse'
+          type: array
+          x-stream-index: "001"
+        next:
+          type: string
+          x-stream-index: "002.001"
+        prev:
+          type: string
+          x-stream-index: "002.002"
+      required:
+      - members
+      - duration
       type: object
     QueryMessageFlagsRequest:
       properties:
@@ -6766,6 +7842,16 @@ components:
           x-stream-index: "005.001"
       required:
       - filter_conditions
+      type: object
+    RTMPIngress:
+      description: RTMP input settings
+      properties:
+        address:
+          type: string
+          x-stream-index: "001"
+      required:
+      - address
+      title: RTMP Ingress
       type: object
     Reaction:
       description: Represents user reaction to a message
@@ -7014,6 +8100,55 @@ components:
       - mode
       - quality
       type: object
+    RecordSettingsRequest:
+      properties:
+        audio_only:
+          type: boolean
+          x-stream-index: "001"
+        layout:
+          $ref: '#/components/schemas/LayoutSettingsRequest'
+          title: LayoutSettings
+          x-stream-index: "004"
+        mode:
+          enum:
+          - available
+          - disabled
+          - auto-on
+          type: string
+          x-stream-index: "002"
+        quality:
+          enum:
+          - 360p
+          - 480p
+          - 720p
+          - 1080p
+          - 1440p
+          type: string
+          x-stream-index: "003"
+      required:
+      - mode
+      type: object
+    RecordSettingsResponse:
+      properties:
+        audio_only:
+          type: boolean
+          x-stream-index: "001"
+        layout:
+          $ref: '#/components/schemas/LayoutSettings'
+          title: Layout
+          x-stream-index: "004"
+        mode:
+          type: string
+          x-stream-index: "002"
+        quality:
+          type: string
+          x-stream-index: "003"
+      required:
+      - audio_only
+      - mode
+      - quality
+      - layout
+      type: object
     Response:
       nullable: true
       properties:
@@ -7051,6 +8186,21 @@ components:
       required:
       - incoming_call_timeout_ms
       - auto_cancel_timeout_ms
+      type: object
+    RingSettingsRequest:
+      properties:
+        auto_cancel_timeout_ms:
+          format: int32
+          maximum: 30000
+          minimum: 5000
+          type: integer
+          x-stream-index: "002"
+        incoming_call_timeout_ms:
+          format: int32
+          maximum: 30000
+          minimum: 5000
+          type: integer
+          x-stream-index: "001"
       type: object
     Role:
       properties:
@@ -7102,6 +8252,15 @@ components:
       required:
       - enabled
       - access_request_enabled
+      type: object
+    ScreensharingSettingsRequest:
+      properties:
+        access_request_enabled:
+          type: boolean
+          x-stream-index: "002"
+        enabled:
+          type: boolean
+          x-stream-index: "001"
       type: object
     SearchRequest:
       properties:
@@ -7391,6 +8550,15 @@ components:
       required:
       - event
       type: object
+    SendEventResponse:
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      type: object
     SendMessageRequest:
       nullable: true
       properties:
@@ -7523,6 +8691,108 @@ components:
           type: string
           x-stream-index: "001"
       type: object
+    StartHLSBroadcastingRequest:
+      nullable: true
+      type: object
+    StartHLSBroadcastingResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+        playlist_url:
+          type: string
+          x-stream-index: "002"
+      required:
+      - duration
+      - playlist_url
+      type: object
+    StartRecordingRequest:
+      nullable: true
+      type: object
+    StartRecordingResponse:
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      type: object
+    StartTranscriptionRequest:
+      nullable: true
+      type: object
+    StartTranscriptionResponse:
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      type: object
+    StopHLSBroadcastingRequest:
+      nullable: true
+      type: object
+    StopHLSBroadcastingResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      type: object
+    StopLiveRequest:
+      nullable: true
+      type: object
+    StopLiveResponse:
+      nullable: true
+      properties:
+        call:
+          $ref: '#/components/schemas/CallResponse'
+          x-stream-index: "001"
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+      required:
+      - call
+      - duration
+      type: object
+    StopRecordingRequest:
+      nullable: true
+      type: object
+    StopRecordingResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      type: object
+    StopTranscriptionRequest:
+      nullable: true
+      type: object
+    StopTranscriptionResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      type: object
     TargetResolution:
       properties:
         bitrate:
@@ -7546,6 +8816,26 @@ components:
       - width
       - height
       - bitrate
+      type: object
+    TargetResolutionRequest:
+      properties:
+        bitrate:
+          format: int32
+          maximum: 6000000
+          type: integer
+          x-stream-index: "003"
+        height:
+          format: int32
+          maximum: 2560
+          minimum: 240
+          type: integer
+          x-stream-index: "002"
+        width:
+          format: int32
+          maximum: 2560
+          minimum: 240
+          type: integer
+          x-stream-index: "001"
       type: object
     Thread:
       description: Represents a conversation thread linked to a specific message in
@@ -7827,6 +9117,14 @@ components:
           x-stream-index: "003"
       title: Auto moderation thresholds
       type: object
+    ThumbnailResponse:
+      properties:
+        image_url:
+          type: string
+          x-stream-index: "001"
+      required:
+      - image_url
+      type: object
     ThumbnailsSettings:
       properties:
         enabled:
@@ -7834,6 +9132,12 @@ components:
           x-stream-index: "001"
       required:
       - enabled
+      type: object
+    ThumbnailsSettingsRequest:
+      properties:
+        enabled:
+          type: boolean
+          x-stream-index: "001"
       type: object
     TranscriptionSettings:
       properties:
@@ -7850,6 +9154,19 @@ components:
       required:
       - mode
       - closed_caption_mode
+      type: object
+    TranscriptionSettingsRequest:
+      properties:
+        closed_caption_mode:
+          type: string
+          x-stream-index: "002"
+        mode:
+          enum:
+          - available
+          - disabled
+          - auto-on
+          type: string
+          x-stream-index: "001"
       type: object
     TranslateMessageRequest:
       nullable: true
@@ -7965,6 +9282,28 @@ components:
       required:
       - duration
       type: object
+    UnblockUserRequest:
+      nullable: true
+      properties:
+        user_id:
+          description: the user to unblock
+          title: UserID
+          type: string
+          x-stream-index: "003"
+      required:
+      - user_id
+      type: object
+    UnblockUserResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      type: object
     UnmuteChannelRequest:
       nullable: true
       properties:
@@ -8031,6 +9370,30 @@ components:
       required:
       - target_id
       - target_ids
+      type: object
+    UnpinRequest:
+      nullable: true
+      properties:
+        session_id:
+          type: string
+          x-stream-index: "003"
+        user_id:
+          type: string
+          x-stream-index: "002"
+      required:
+      - user_id
+      - session_id
+      type: object
+    UnpinResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
       type: object
     UnreadCountsChannel:
       properties:
@@ -8296,6 +9659,149 @@ components:
             type: string
           type: array
           x-stream-index: "002"
+      type: object
+    UpdateCallMembersRequest:
+      nullable: true
+      properties:
+        remove_members:
+          description: List of userID to remove
+          items:
+            type: string
+          maximum: 100
+          title: Remove Members
+          type: array
+          x-stream-index: "003"
+        update_members:
+          description: List of members to update or insert
+          items:
+            $ref: '#/components/schemas/MemberRequest'
+          maximum: 100
+          title: Update Members
+          type: array
+          x-stream-index: "004"
+      type: object
+    UpdateCallMembersResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+        members:
+          items:
+            $ref: '#/components/schemas/MemberResponse'
+          type: array
+          x-stream-index: "002"
+      required:
+      - duration
+      - members
+      type: object
+    UpdateCallRequest:
+      nullable: true
+      properties:
+        custom:
+          description: Custom data for this object
+          title: Custom data
+          type: object
+          x-stream-index: "003"
+        settings_override:
+          $ref: '#/components/schemas/CallSettingsRequest'
+          description: the settings to change for this call
+          title: Settings Override
+          x-stream-index: "004"
+        starts_at:
+          description: the time the call is scheduled to start
+          format: date-time
+          title: Starts At
+          type: string
+          x-stream-index: "005"
+      type: object
+    UpdateCallResponse:
+      description: Represents a call
+      nullable: true
+      properties:
+        call:
+          $ref: '#/components/schemas/CallResponse'
+          x-stream-index: "001.001"
+        duration:
+          type: string
+          x-stream-index: "002.001"
+        members:
+          items:
+            $ref: '#/components/schemas/MemberResponse'
+          type: array
+          x-stream-index: "001.002"
+        membership:
+          $ref: '#/components/schemas/MemberResponse'
+          x-stream-index: "001.003"
+        own_capabilities:
+          items:
+            $ref: '#/components/schemas/OwnCapability'
+          type: array
+          x-stream-index: "001.004"
+      required:
+      - call
+      - members
+      - own_capabilities
+      - duration
+      title: Call
+      type: object
+    UpdateCallTypeRequest:
+      nullable: true
+      properties:
+        grants:
+          additionalProperties:
+            items:
+              type: string
+            type: array
+          type: object
+          x-stream-index: "002.001"
+        notification_settings:
+          $ref: '#/components/schemas/NotificationSettingsRequest'
+          x-stream-index: "002.002"
+        settings:
+          $ref: '#/components/schemas/CallSettingsRequest'
+          x-stream-index: "002.003"
+      type: object
+    UpdateCallTypeResponse:
+      nullable: true
+      properties:
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.005"
+        duration:
+          type: string
+          x-stream-index: "002.001"
+        grants:
+          additionalProperties:
+            items:
+              type: string
+            type: array
+          type: object
+          x-stream-index: "001.002"
+        name:
+          type: string
+          x-stream-index: "001.001"
+        notification_settings:
+          $ref: '#/components/schemas/NotificationSettings'
+          x-stream-index: "001.004"
+        settings:
+          $ref: '#/components/schemas/CallSettingsResponse'
+          x-stream-index: "001.003"
+        updated_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.006"
+      required:
+      - name
+      - grants
+      - settings
+      - notification_settings
+      - created_at
+      - updated_at
+      - duration
       type: object
     UpdateChannelPartialRequest:
       nullable: true
@@ -8908,6 +10414,36 @@ components:
       - set
       - unset
       type: object
+    UpdateUserPermissionsRequest:
+      nullable: true
+      properties:
+        grant_permissions:
+          items:
+            type: string
+          type: array
+          x-stream-index: "002"
+        revoke_permissions:
+          items:
+            type: string
+          type: array
+          x-stream-index: "003"
+        user_id:
+          type: string
+          x-stream-index: "001"
+      required:
+      - user_id
+      type: object
+    UpdateUserPermissionsResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      type: object
     UpdateUsersRequest:
       nullable: true
       properties:
@@ -9110,30 +10646,16 @@ components:
           x-stream-index: "008"
       required:
       - id
-      - role
-      - Custom
-      - banned
-      - online
       title: User object
       type: object
     UserObjectRequest:
       description: Represents chat user
+      nullable: true
       properties:
         Custom:
           type: object
           writeOnly: true
           x-stream-index: "005"
-        ban_expires:
-          description: Expiration date of the ban
-          format: date-time
-          title: Ban expires
-          type: string
-          x-stream-index: "015"
-        banned:
-          description: Whether a user is banned or not
-          title: Banned
-          type: boolean
-          x-stream-index: "014"
         id:
           description: Unique user identifier
           title: ID
@@ -9141,21 +10663,15 @@ components:
           x-stream-index: "003"
         invisible:
           type: boolean
-          x-stream-index: "021"
+          x-stream-index: "016"
         language:
           description: Preferred language of a user
           title: Language
           type: string
-          x-stream-index: "031"
+          x-stream-index: "021"
         push_notifications:
           $ref: '#/components/schemas/PushNotificationSettingsRequest'
-          x-stream-index: "023"
-        revoke_tokens_issued_before:
-          description: Revocation date for tokens
-          format: date-time
-          title: Revoke tokens issued before
-          type: string
-          x-stream-index: "038"
+          x-stream-index: "022"
         role:
           description: Determines the set of user permissions
           title: Role
@@ -9167,7 +10683,7 @@ components:
             type: string
           title: Teams
           type: array
-          x-stream-index: "032"
+          x-stream-index: "019"
       required:
       - id
       title: User object
@@ -9333,6 +10849,28 @@ components:
       - camera_default_on
       - camera_facing
       type: object
+    VideoSettingsRequest:
+      properties:
+        access_request_enabled:
+          type: boolean
+          x-stream-index: "002"
+        camera_default_on:
+          type: boolean
+          x-stream-index: "004"
+        camera_facing:
+          enum:
+          - front
+          - back
+          - external
+          type: string
+          x-stream-index: "005"
+        enabled:
+          type: boolean
+          x-stream-index: "001"
+        target_resolution:
+          $ref: '#/components/schemas/TargetResolutionRequest'
+          x-stream-index: "003"
+      type: object
     WSEvent:
       description: Represents an BaseEvent that happened in Stream Chat
       properties:
@@ -9486,7 +11024,7 @@ info:
   version: v96.7.0-threads-3
 openapi: 3.0.3
 paths:
-  /app:
+  /api/v2/app:
     get:
       description: |
         This Method returns the application settings
@@ -9545,7 +11083,7 @@ paths:
       summary: Update App Settings
       tags:
       - Settings
-  /blocklists:
+  /api/v2/chat/blocklists:
     get:
       description: |
         Returns all available block lists
@@ -9607,7 +11145,7 @@ paths:
       tags:
       - Settings
       - Moderation
-  /blocklists/{name}:
+  /api/v2/chat/blocklists/{name}:
     delete:
       description: |
         Deletes previously created application blocklist
@@ -9723,85 +11261,7 @@ paths:
       tags:
       - Settings
       - Moderation
-  /calls:
-    post:
-      description: |
-        Retrieves the token to join a call
-
-        Required permissions:
-        - JoinCall
-        - ReadChannel
-      operationId: GetCallToken
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GetCallTokenRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetCallTokenResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Get Call Token
-  /calls/{call_id}:
-    post:
-      description: |
-        Retrieves the token to join a call
-
-        Required permissions:
-        - JoinCall
-        - ReadChannel
-      operationId: GetCallToken
-      parameters:
-      - in: path
-        name: call_id
-        required: true
-        schema:
-          type: string
-          writeOnly: true
-          x-stream-index: "001"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GetCallTokenRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetCallTokenResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Get Call Token
-  /channels:
+  /api/v2/chat/channels:
     post:
       description: |
         Query channels with filter query
@@ -9838,7 +11298,7 @@ paths:
       summary: Query channels
       tags:
       - Channels
-  /channels/{type}/{id}:
+  /api/v2/chat/channels/{type}/{id}:
     delete:
       description: |
         Deletes channel
@@ -10013,57 +11473,7 @@ paths:
       summary: Update channel
       tags:
       - Channels
-  /channels/{type}/{id}/call:
-    post:
-      description: |
-        Creates a call
-
-        Required permissions:
-        - CreateCall
-        - ReadChannel
-      operationId: CreateCall
-      parameters:
-      - in: path
-        name: type
-        required: true
-        schema:
-          type: string
-          writeOnly: true
-          x-stream-index: "001"
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-          writeOnly: true
-          x-stream-index: "002"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateCallRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CreateCallResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Create a call
-  /channels/{type}/{id}/event:
+  /api/v2/chat/channels/{type}/{id}/event:
     post:
       description: |
         Sends event to the channel
@@ -10118,7 +11528,7 @@ paths:
       summary: Send event
       tags:
       - Events
-  /channels/{type}/{id}/file:
+  /api/v2/chat/channels/{type}/{id}/file:
     delete:
       description: |
         Deletes previously uploaded file
@@ -10227,7 +11637,7 @@ paths:
       tags:
       - Messages
       - Files
-  /channels/{type}/{id}/hide:
+  /api/v2/chat/channels/{type}/{id}/hide:
     post:
       description: |
         Marks channel as hidden for current user
@@ -10281,7 +11691,7 @@ paths:
       summary: Hide channel
       tags:
       - Channels
-  /channels/{type}/{id}/image:
+  /api/v2/chat/channels/{type}/{id}/image:
     delete:
       description: |
         Deletes previously uploaded image
@@ -10390,7 +11800,7 @@ paths:
       tags:
       - Messages
       - Files
-  /channels/{type}/{id}/message:
+  /api/v2/chat/channels/{type}/{id}/message:
     post:
       description: |
         Sends new message to the specified channel
@@ -10454,7 +11864,7 @@ paths:
       summary: Send new message
       tags:
       - Messages
-  /channels/{type}/{id}/messages:
+  /api/v2/chat/channels/{type}/{id}/messages:
     get:
       description: |
         Returns list messages found by IDs
@@ -10510,7 +11920,7 @@ paths:
       summary: Get many messages
       tags:
       - Messages
-  /channels/{type}/{id}/query:
+  /api/v2/chat/channels/{type}/{id}/query:
     post:
       description: |
         This Method creates a channel or returns an existing one with matching attributes
@@ -10570,7 +11980,7 @@ paths:
       summary: Get or create channel
       tags:
       - Channels
-  /channels/{type}/{id}/read:
+  /api/v2/chat/channels/{type}/{id}/read:
     post:
       description: |
         Marks channel as read up to the specific message
@@ -10625,7 +12035,7 @@ paths:
       tags:
       - Channels
       - Messages
-  /channels/{type}/{id}/show:
+  /api/v2/chat/channels/{type}/{id}/show:
     post:
       description: |
         Shows previously hidden channel
@@ -10676,7 +12086,7 @@ paths:
       summary: Show channel
       tags:
       - Channels
-  /channels/{type}/{id}/truncate:
+  /api/v2/chat/channels/{type}/{id}/truncate:
     post:
       description: |
         Truncates channel
@@ -10731,7 +12141,7 @@ paths:
       summary: Truncate channel
       tags:
       - Channels
-  /channels/{type}/{id}/unread:
+  /api/v2/chat/channels/{type}/{id}/unread:
     post:
       description: |
         Marks channel as unread from a specific message
@@ -10783,7 +12193,7 @@ paths:
       tags:
       - Channels
       - Messages
-  /channels/{type}/query:
+  /api/v2/chat/channels/{type}/query:
     post:
       description: |
         This Method creates a channel or returns an existing one with matching attributes
@@ -10834,7 +12244,7 @@ paths:
       summary: Get or create channel
       tags:
       - Channels
-  /channels/delete:
+  /api/v2/chat/channels/delete:
     post:
       description: |
         Allows to delete several channels at once asynchronously
@@ -10874,7 +12284,7 @@ paths:
       tags:
       - Channels
       - GDPR
-  /channels/read:
+  /api/v2/chat/channels/read:
     post:
       description: |
         Marks channels as read up to the specific message. If no channels is given, mark all channel as read
@@ -10914,7 +12324,7 @@ paths:
       tags:
       - Channels
       - Messages
-  /channeltypes:
+  /api/v2/chat/channeltypes:
     get:
       description: |
         Lists all available channel types
@@ -10975,7 +12385,7 @@ paths:
       tags:
       - Settings
       - Channel types
-  /channeltypes/{name}:
+  /api/v2/chat/channeltypes/{name}:
     delete:
       description: |
         Deletes channel type
@@ -11091,109 +12501,7 @@ paths:
       tags:
       - Settings
       - Channel types
-  /check_push:
-    post:
-      description: |
-        Sends a test message via push, this is a test endpoint to verify your push settings
-      operationId: CheckPush
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CheckPushRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CheckPushResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Check push
-      tags:
-      - Settings
-      - Testing
-  /check_sns:
-    post:
-      description: |
-        Validates Amazon SNS configuration
-      operationId: CheckSNS
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CheckSNSRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CheckSNSResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Check SNS
-      tags:
-      - Settings
-      - Testing
-  /check_sqs:
-    post:
-      description: |
-        Validates Amazon SQS credentials
-      operationId: CheckSQS
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CheckSQSRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CheckSQSResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Check SQS
-      tags:
-      - Settings
-      - Testing
-  /commands:
+  /api/v2/chat/commands:
     get:
       description: |
         Returns all custom commands
@@ -11253,7 +12561,7 @@ paths:
       summary: Create command
       tags:
       - Custom commands
-  /commands/{name}:
+  /api/v2/chat/commands/{name}:
     delete:
       description: |
         Deletes custom chat command
@@ -11363,178 +12671,7 @@ paths:
       summary: Update command
       tags:
       - Custom commands
-  /connect:
-    get:
-      description: |
-        Establishes WebSocket connection for user
-
-        Sends events:
-        - user.updated
-      operationId: Connect
-      parameters:
-      - content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ConnectRequest'
-              x-stream-index: "001"
-        in: query
-        name: json
-      responses:
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Connect (WebSocket)
-      tags:
-      - Users
-  /devices:
-    delete:
-      description: |
-        Deletes one device
-      operationId: DeleteDevice
-      parameters:
-      - in: query
-        name: id
-        schema:
-          description: Device ID to delete
-          title: ID
-          type: string
-          writeOnly: true
-          x-stream-index: "001"
-      - in: query
-        name: user_id
-        schema:
-          description: '**Server-side only**. User ID which server acts upon'
-          title: User ID
-          type: string
-          writeOnly: true
-          x-stream-index: "002.001"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Response'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Delete device
-      tags:
-      - Devices
-    get:
-      description: |
-        Returns all available devices
-      operationId: ListDevices
-      parameters:
-      - in: query
-        name: user_id
-        schema:
-          description: '**Server-side only**. User ID which server acts upon'
-          title: User ID
-          type: string
-          writeOnly: true
-          x-stream-index: "001.001"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ListDevicesResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: List devices
-      tags:
-      - Devices
-    post:
-      description: |
-        Adds a new device to a user, if the same device already exists the call will have no effect
-      operationId: CreateDevice
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateDeviceRequest'
-        required: true
-      responses:
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Create device
-      tags:
-      - Devices
-      - Push
-  /export/users:
-    post:
-      description: |
-        Exports user profile, reactions and messages for list of given users
-      operationId: ExportUsers
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ExportUsersRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ExportUsersResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Export users
-      tags:
-      - Users
-  /export_channels:
+  /api/v2/chat/export_channels:
     post:
       description: |
         Exports channel data to JSON file
@@ -11567,7 +12704,7 @@ paths:
       summary: Export channels
       tags:
       - Channels
-  /export_channels/{id}:
+  /api/v2/chat/export_channels/{id}:
     get:
       description: |2+
 
@@ -11604,206 +12741,7 @@ paths:
       summary: Export channels status
       tags:
       - Channels
-  /guest:
-    post:
-      description: |
-        Creates guest user
-      operationId: CreateGuest
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GuestRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GuestResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Create guest
-      tags:
-      - Users
-  /import_urls:
-    post:
-      description: |
-        Creates a new import URL
-      operationId: CreateImportURL
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateImportURLRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CreateImportURLResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Create import URL
-      tags:
-      - Imports
-  /imports:
-    get:
-      description: |
-        Gets an import
-      operationId: ListImports
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ListImportsResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Get import
-      tags:
-      - Imports
-    post:
-      description: |
-        Creates a new import
-      operationId: CreateImport
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateImportRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CreateImportResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Create import
-      tags:
-      - Imports
-  /imports/{id}:
-    get:
-      description: |
-        Gets an import
-      operationId: GetImport
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-          writeOnly: true
-          x-stream-index: "001"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetImportResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Get import
-      tags:
-      - Imports
-  /longpoll:
-    get:
-      description: |
-        WebSocket fallback transport endpoint
-
-        Sends events:
-        - user.updated
-      operationId: LongPoll
-      parameters:
-      - content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ConnectRequest'
-              x-stream-index: "001"
-        in: query
-        name: json
-      - in: query
-        name: connection_id
-        schema:
-          maxLength: 36
-          type: string
-          writeOnly: true
-          x-stream-index: "002"
-      responses:
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Long Poll (Transport)
-      tags:
-      - Users
-  /members:
+  /api/v2/chat/members:
     get:
       description: |
         Find and filter channel members
@@ -11841,7 +12779,7 @@ paths:
       summary: Query members
       tags:
       - Channels
-  /messages/{id}:
+  /api/v2/chat/messages/{id}:
     delete:
       description: |
         Deletes message
@@ -12035,7 +12973,7 @@ paths:
       summary: Partially message update
       tags:
       - Messages
-  /messages/{id}/action:
+  /api/v2/chat/messages/{id}/action:
     post:
       description: |
         Executes message command action with given parameters
@@ -12084,7 +13022,7 @@ paths:
       summary: Run message command action
       tags:
       - Messages
-  /messages/{id}/commit:
+  /api/v2/chat/messages/{id}/commit:
     post:
       description: |
         Commits a pending message, which will make it visible in the channel
@@ -12121,7 +13059,7 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Commit message
-  /messages/{id}/reaction:
+  /api/v2/chat/messages/{id}/reaction:
     post:
       description: |
         Sends reaction to specified message
@@ -12173,7 +13111,7 @@ paths:
       tags:
       - Messages
       - Reactions
-  /messages/{id}/reaction/{type}:
+  /api/v2/chat/messages/{id}/reaction/{type}:
     delete:
       description: |
         Removes user reaction from the message
@@ -12234,7 +13172,7 @@ paths:
       tags:
       - Messages
       - Reactions
-  /messages/{id}/reactions:
+  /api/v2/chat/messages/{id}/reactions:
     get:
       description: |
         Returns list of reactions of specific message
@@ -12293,7 +13231,7 @@ paths:
       tags:
       - Messages
       - Reactions
-  /messages/{id}/translate:
+  /api/v2/chat/messages/{id}/translate:
     post:
       description: |
         Translates message to a given language using automated translation software
@@ -12342,7 +13280,7 @@ paths:
       summary: Translate message
       tags:
       - Messages
-  /messages/{parent_id}/replies:
+  /api/v2/chat/messages/{parent_id}/replies:
     get:
       description: |
         Returns replies (thread) of the message
@@ -12437,7 +13375,7 @@ paths:
       summary: Get replies
       tags:
       - Messages
-  /moderation/ban:
+  /api/v2/chat/moderation/ban:
     delete:
       description: |
         Removes previously applied ban
@@ -12533,7 +13471,7 @@ paths:
       tags:
       - Users
       - Moderation
-  /moderation/flag:
+  /api/v2/chat/moderation/flag:
     post:
       description: |
         Reports message or user for review by moderators
@@ -12576,7 +13514,7 @@ paths:
       - Moderation
       - Messages
       - Users
-  /moderation/flags/message:
+  /api/v2/chat/moderation/flags/message:
     get:
       description: |
         Find and filter message flags
@@ -12615,7 +13553,7 @@ paths:
       tags:
       - Messages
       - Moderation
-  /moderation/mute:
+  /api/v2/chat/moderation/mute:
     post:
       description: |
         Mutes one or several users
@@ -12655,7 +13593,7 @@ paths:
       tags:
       - Users
       - Moderation
-  /moderation/mute/channel:
+  /api/v2/chat/moderation/mute/channel:
     post:
       description: |
         Mutes channel for user
@@ -12694,7 +13632,7 @@ paths:
       summary: Mute channel
       tags:
       - Channels
-  /moderation/unmute:
+  /api/v2/chat/moderation/unmute:
     post:
       description: |
         Unmutes previously muted user
@@ -12734,7 +13672,7 @@ paths:
       tags:
       - Users
       - Moderation
-  /moderation/unmute/channel:
+  /api/v2/chat/moderation/unmute/channel:
     post:
       description: |
         Unmutes channel for user
@@ -12773,217 +13711,7 @@ paths:
       summary: Unmute channel
       tags:
       - Channels
-  /og:
-    get:
-      description: |
-        Get an OpenGraph attachment for a link
-      operationId: GetOG
-      parameters:
-      - in: query
-        name: url
-        schema:
-          description: URL to be scraped
-          title: URL
-          type: string
-          writeOnly: true
-          x-stream-index: "001"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetOGResponse'
-          description: Get OG Attachment
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Get OG
-      tags:
-      - Messages
-  /permissions:
-    get:
-      description: |
-        Lists all available permissions
-      operationId: ListPermissions
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ListPermissionsResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: List permissions
-      tags:
-      - Permissions V2
-  /permissions/{id}:
-    get:
-      description: |
-        Gets custom permission
-      operationId: GetPermission
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          description: Permission ID
-          title: ID
-          type: string
-          writeOnly: true
-          x-stream-index: "001"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetCustomPermissionResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Get permission
-      tags:
-      - Permissions V2
-  /push_providers:
-    get:
-      description: |
-        List details of all push providers.
-      operationId: ListPushProviders
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ListPushProvidersResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: List push providers
-      tags:
-      - Push
-      - Settings
-    post:
-      description: |
-        Upsert a push provider for v2 with multi bundle/package support
-      operationId: UpsertPushProvider
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpsertPushProviderRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UpsertPushProviderResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Upsert a push provider
-      tags:
-      - Server-side
-  /push_providers/{type}/{name}:
-    delete:
-      description: |
-        Delete a push provider from v2 with multi bundle/package support. v1 isn't supported in this endpoint
-      operationId: DeletePushProvider
-      parameters:
-      - in: path
-        name: type
-        required: true
-        schema:
-          enum:
-          - apn
-          - firebase
-          - huawei
-          - xiaomi
-          type: string
-          writeOnly: true
-          x-stream-index: "001"
-      - in: path
-        name: name
-        required: true
-        schema:
-          maxLength: 36
-          minLength: 1
-          type: string
-          writeOnly: true
-          x-stream-index: "002"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Response'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Delete a push provider
-      tags:
-      - Push
-      - Settings
-  /query_banned_users:
+  /api/v2/chat/query_banned_users:
     get:
       description: |
         Find and filter channel scoped or global user bans
@@ -13022,172 +13750,7 @@ paths:
       tags:
       - Users
       - Moderation
-  /rate_limits:
-    get:
-      description: |
-        Get rate limits usage and quotas
-      operationId: GetRateLimits
-      parameters:
-      - in: query
-        name: server_side
-        schema:
-          description: Whether to include server-side platform limits or not
-          title: Server-side
-          type: boolean
-          writeOnly: true
-          x-stream-index: "001"
-      - in: query
-        name: android
-        schema:
-          description: Whether to include Android platform limits or not
-          title: Android
-          type: boolean
-          writeOnly: true
-          x-stream-index: "002"
-      - in: query
-        name: ios
-        schema:
-          description: Whether to include iOS platform limits or not
-          title: iOS
-          type: boolean
-          writeOnly: true
-          x-stream-index: "003"
-      - in: query
-        name: web
-        schema:
-          description: Whether to include web platform limits or not
-          title: Web
-          type: boolean
-          writeOnly: true
-          x-stream-index: "004"
-      - in: query
-        name: endpoints
-        schema:
-          description: Specific endpoints to show limits for, as a comma-separated
-            list of values
-          title: Endpoints
-          type: string
-          writeOnly: true
-          x-stream-index: "005"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetRateLimitsResponse'
-          description: Get Rate Limits Response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Get rate limits
-      tags:
-      - Settings
-  /roles:
-    get:
-      description: |
-        Lists all available roles
-      operationId: ListRoles
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ListRolesResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: List roles
-      tags:
-      - Permissions V2
-    post:
-      description: |
-        Creates custom role
-      operationId: CreateRole
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateRoleRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CreateRoleResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Create role
-      tags:
-      - Permissions V2
-  /roles/{name}:
-    delete:
-      description: |
-        Deletes custom role
-      operationId: DeleteRole
-      parameters:
-      - in: path
-        name: name
-        required: true
-        schema:
-          description: Role name
-          title: Name
-          type: string
-          writeOnly: true
-          x-stream-index: "001"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Response'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Delete role
-      tags:
-      - Permissions V2
-  /search:
+  /api/v2/chat/search:
     get:
       description: |
         Search messages across channels
@@ -13228,44 +13791,7 @@ paths:
       tags:
       - Channels
       - Messages
-  /tasks/{id}:
-    get:
-      description: |
-        Gets status of a task
-      operationId: GetTask
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          description: Task ID
-          title: ID
-          type: string
-          writeOnly: true
-          x-stream-index: "001"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetTaskResponse'
-          description: Get Task Response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Get status of a task
-      tags:
-      - Tasks
-  /threads:
+  /api/v2/chat/threads:
     post:
       description: |
         Returns the list of threads for specific user
@@ -13301,7 +13827,7 @@ paths:
       summary: Query Threads
       tags:
       - Threads
-  /threads/{message_id}:
+  /api/v2/chat/threads/{message_id}:
     get:
       description: |
         Return a specific thread
@@ -13416,7 +13942,7 @@ paths:
       tags:
       - Threads
       - Channels
-  /unread:
+  /api/v2/chat/unread:
     get:
       description: |
         UnreadCount counts
@@ -13443,7 +13969,935 @@ paths:
       summary: UnreadCount counts
       tags:
       - Channels
-  /users:
+  /api/v2/chat/users/{user_id}/event:
+    post:
+      description: |
+        Sends a custom event to a user
+
+        Sends events:
+        - custom
+      operationId: SendUserCustomEvent
+      parameters:
+      - in: path
+        name: user_id
+        required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendUserCustomEventRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Send user event
+      tags:
+      - Events
+  /api/v2/check_push:
+    post:
+      description: |
+        Sends a test message via push, this is a test endpoint to verify your push settings
+      operationId: CheckPush
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckPushRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckPushResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Check push
+      tags:
+      - Settings
+      - Testing
+  /api/v2/check_sns:
+    post:
+      description: |
+        Validates Amazon SNS configuration
+      operationId: CheckSNS
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckSNSRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckSNSResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Check SNS
+      tags:
+      - Settings
+      - Testing
+  /api/v2/check_sqs:
+    post:
+      description: |
+        Validates Amazon SQS credentials
+      operationId: CheckSQS
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckSQSRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckSQSResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Check SQS
+      tags:
+      - Settings
+      - Testing
+  /api/v2/connect:
+    get:
+      description: |
+        Establishes WebSocket connection for user
+
+        Sends events:
+        - user.updated
+      operationId: Connect
+      parameters:
+      - content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConnectRequest'
+              x-stream-index: "001"
+        in: query
+        name: json
+      responses:
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Connect (WebSocket)
+      tags:
+      - Users
+  /api/v2/devices:
+    delete:
+      description: |
+        Deletes one device
+      operationId: DeleteDevice
+      parameters:
+      - in: query
+        name: id
+        schema:
+          description: Device ID to delete
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      - in: query
+        name: user_id
+        schema:
+          description: '**Server-side only**. User ID which server acts upon'
+          title: User ID
+          type: string
+          writeOnly: true
+          x-stream-index: "002.001"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Delete device
+      tags:
+      - Devices
+    get:
+      description: |
+        Returns all available devices
+      operationId: ListDevices
+      parameters:
+      - in: query
+        name: user_id
+        schema:
+          description: '**Server-side only**. User ID which server acts upon'
+          title: User ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListDevicesResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: List devices
+      tags:
+      - Devices
+    post:
+      description: |
+        Adds a new device to a user, if the same device already exists the call will have no effect
+      operationId: CreateDevice
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDeviceRequest'
+        required: true
+      responses:
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Create device
+      tags:
+      - Devices
+      - Push
+  /api/v2/export/users:
+    post:
+      description: |
+        Exports user profile, reactions and messages for list of given users
+      operationId: ExportUsers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportUsersRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportUsersResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Export users
+      tags:
+      - Users
+  /api/v2/guest:
+    post:
+      description: |
+        Creates guest user
+      operationId: CreateGuest
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GuestRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuestResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Create guest
+      tags:
+      - Users
+  /api/v2/import_urls:
+    post:
+      description: |
+        Creates a new import URL
+      operationId: CreateImportURL
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateImportURLRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateImportURLResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Create import URL
+      tags:
+      - Imports
+  /api/v2/imports:
+    get:
+      description: |
+        Gets an import
+      operationId: ListImports
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListImportsResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get import
+      tags:
+      - Imports
+    post:
+      description: |
+        Creates a new import
+      operationId: CreateImport
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateImportRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateImportResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Create import
+      tags:
+      - Imports
+  /api/v2/imports/{id}:
+    get:
+      description: |
+        Gets an import
+      operationId: GetImport
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetImportResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get import
+      tags:
+      - Imports
+  /api/v2/longpoll:
+    get:
+      description: |
+        WebSocket fallback transport endpoint
+
+        Sends events:
+        - user.updated
+      operationId: LongPoll
+      parameters:
+      - content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConnectRequest'
+              x-stream-index: "001"
+        in: query
+        name: json
+      - in: query
+        name: connection_id
+        schema:
+          maxLength: 36
+          type: string
+          writeOnly: true
+          x-stream-index: "002"
+      responses:
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Long Poll (Transport)
+      tags:
+      - Users
+  /api/v2/og:
+    get:
+      description: |
+        Get an OpenGraph attachment for a link
+      operationId: GetOG
+      parameters:
+      - in: query
+        name: url
+        schema:
+          description: URL to be scraped
+          title: URL
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetOGResponse'
+          description: Get OG Attachment
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get OG
+      tags:
+      - Messages
+  /api/v2/permissions:
+    get:
+      description: |
+        Lists all available permissions
+      operationId: ListPermissions
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListPermissionsResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: List permissions
+      tags:
+      - Permissions V2
+  /api/v2/permissions/{id}:
+    get:
+      description: |
+        Gets custom permission
+      operationId: GetPermission
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Permission ID
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCustomPermissionResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get permission
+      tags:
+      - Permissions V2
+  /api/v2/push_providers:
+    get:
+      description: |
+        List details of all push providers.
+      operationId: ListPushProviders
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListPushProvidersResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: List push providers
+      tags:
+      - Push
+      - Settings
+    post:
+      description: |
+        Upsert a push provider for v2 with multi bundle/package support
+      operationId: UpsertPushProvider
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertPushProviderRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpsertPushProviderResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Upsert a push provider
+      tags:
+      - Server-side
+  /api/v2/push_providers/{type}/{name}:
+    delete:
+      description: |
+        Delete a push provider from v2 with multi bundle/package support. v1 isn't supported in this endpoint
+      operationId: DeletePushProvider
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          enum:
+          - apn
+          - firebase
+          - huawei
+          - xiaomi
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      - in: path
+        name: name
+        required: true
+        schema:
+          maxLength: 36
+          minLength: 1
+          type: string
+          writeOnly: true
+          x-stream-index: "002"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Delete a push provider
+      tags:
+      - Push
+      - Settings
+  /api/v2/rate_limits:
+    get:
+      description: |
+        Get rate limits usage and quotas
+      operationId: GetRateLimits
+      parameters:
+      - in: query
+        name: server_side
+        schema:
+          description: Whether to include server-side platform limits or not
+          title: Server-side
+          type: boolean
+          writeOnly: true
+          x-stream-index: "001"
+      - in: query
+        name: android
+        schema:
+          description: Whether to include Android platform limits or not
+          title: Android
+          type: boolean
+          writeOnly: true
+          x-stream-index: "002"
+      - in: query
+        name: ios
+        schema:
+          description: Whether to include iOS platform limits or not
+          title: iOS
+          type: boolean
+          writeOnly: true
+          x-stream-index: "003"
+      - in: query
+        name: web
+        schema:
+          description: Whether to include web platform limits or not
+          title: Web
+          type: boolean
+          writeOnly: true
+          x-stream-index: "004"
+      - in: query
+        name: endpoints
+        schema:
+          description: Specific endpoints to show limits for, as a comma-separated
+            list of values
+          title: Endpoints
+          type: string
+          writeOnly: true
+          x-stream-index: "005"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetRateLimitsResponse'
+          description: Get Rate Limits Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get rate limits
+      tags:
+      - Settings
+  /api/v2/roles:
+    get:
+      description: |
+        Lists all available roles
+      operationId: ListRoles
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListRolesResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: List roles
+      tags:
+      - Permissions V2
+    post:
+      description: |
+        Creates custom role
+      operationId: CreateRole
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRoleRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateRoleResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Create role
+      tags:
+      - Permissions V2
+  /api/v2/roles/{name}:
+    delete:
+      description: |
+        Deletes custom role
+      operationId: DeleteRole
+      parameters:
+      - in: path
+        name: name
+        required: true
+        schema:
+          description: Role name
+          title: Name
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Delete role
+      tags:
+      - Permissions V2
+  /api/v2/tasks/{id}:
+    get:
+      description: |
+        Gets status of a task
+      operationId: GetTask
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Task ID
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetTaskResponse'
+          description: Get Task Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get status of a task
+      tags:
+      - Tasks
+  /api/v2/users:
     get:
       description: |
         Find and filter users
@@ -13552,7 +15006,7 @@ paths:
       summary: Upsert users
       tags:
       - Users
-  /users/{user_id}/deactivate:
+  /api/v2/users/{user_id}/deactivate:
     post:
       description: |
         Deactivates user with possibility to activate it back
@@ -13598,51 +15052,7 @@ paths:
       - Users
       - GDPR
       - Moderation
-  /users/{user_id}/event:
-    post:
-      description: |
-        Sends a custom event to a user
-
-        Sends events:
-        - custom
-      operationId: SendUserCustomEvent
-      parameters:
-      - in: path
-        name: user_id
-        required: true
-        schema:
-          type: string
-          writeOnly: true
-          x-stream-index: "001"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SendUserCustomEventRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Response'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Send user event
-      tags:
-      - Events
-  /users/{user_id}/export:
+  /api/v2/users/{user_id}/export:
     get:
       description: |
         Exports the user's profile, reactions and messages. Raises an error if a user has more than 10k messages or reactions
@@ -13676,7 +15086,7 @@ paths:
       summary: Export user
       tags:
       - Users
-  /users/{user_id}/reactivate:
+  /api/v2/users/{user_id}/reactivate:
     post:
       description: |
         Activates user who's been deactivated previously
@@ -13722,7 +15132,7 @@ paths:
       - Users
       - GDPR
       - Moderation
-  /users/deactivate:
+  /api/v2/users/deactivate:
     post:
       description: |
         Deactivate users in batches
@@ -13760,7 +15170,7 @@ paths:
       - Users
       - GDPR
       - Moderation
-  /users/delete:
+  /api/v2/users/delete:
     post:
       description: |
         Deletes users and optionally all their belongings asynchronously.
@@ -13799,7 +15209,7 @@ paths:
       - Users
       - GDPR
       - Moderation
-  /users/reactivate:
+  /api/v2/users/reactivate:
     post:
       description: |
         Reactivate users in batches
@@ -13837,7 +15247,7 @@ paths:
       - Users
       - GDPR
       - Moderation
-  /users/restore:
+  /api/v2/users/restore:
     post:
       description: |
         Restore soft deleted users
@@ -13870,6 +15280,1412 @@ paths:
       summary: Restore users
       tags:
       - Users
+  /api/v2/video/call/{type}/{id}:
+    get:
+      description: |2
+
+
+        Required permissions:
+        - ReadCall
+      operationId: GetCall
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          description: The type of call
+          maxLength: 64
+          title: Type
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Call ID
+          maxLength: 64
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
+      - in: query
+        name: connection_id
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "003"
+      - in: query
+        name: members_limit
+        schema:
+          format: int32
+          maximum: 100
+          minimum: 0
+          type: integer
+          writeOnly: true
+          x-stream-index: "004"
+      - in: query
+        name: ring
+        schema:
+          type: boolean
+          writeOnly: true
+          x-stream-index: "005"
+      - in: query
+        name: notify
+        schema:
+          type: boolean
+          writeOnly: true
+          x-stream-index: "006"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCallResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get Call
+    patch:
+      description: |2
+
+
+        Sends events:
+        - call.updated
+
+        Required permissions:
+        - UpdateCall
+      operationId: UpdateCall
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          description: The type of call
+          maxLength: 64
+          title: Type
+          type: string
+          writeOnly: true
+          x-stream-index: "002.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Call ID
+          maxLength: 64
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "002.002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCallRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateCallResponse'
+          description: Call
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Update Call
+    post:
+      description: |
+        Gets or creates a new call
+
+        Sends events:
+        - call.created
+        - call.notification
+        - call.ring
+
+        Required permissions:
+        - CreateCall
+        - ReadCall
+        - UpdateCallSettings
+      operationId: GetOrCreateCall
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          description: The type of call
+          maxLength: 64
+          title: Type
+          type: string
+          writeOnly: true
+          x-stream-index: "002.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Call ID
+          maxLength: 64
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "002.002"
+      - in: query
+        name: connection_id
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "007"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetOrCreateCallRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetOrCreateCallResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get or create a call
+  /api/v2/video/call/{type}/{id}/block:
+    post:
+      description: |
+        Block a user, preventing them from joining the call until they are unblocked.
+
+        Sends events:
+        - call.blocked_user
+
+        Required permissions:
+        - BlockUser
+      operationId: BlockUser
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          description: The type of call
+          maxLength: 64
+          title: Type
+          type: string
+          writeOnly: true
+          x-stream-index: "002.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Call ID
+          maxLength: 64
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "002.002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BlockUserRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlockUserResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Block user on a call
+  /api/v2/video/call/{type}/{id}/event:
+    post:
+      description: |
+        Sends custom event to the call
+
+        Sends events:
+        - custom
+
+        Required permissions:
+        - SendEvent
+      operationId: SendEvent
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          maxLength: 64
+          title: Type
+          type: string
+          writeOnly: true
+          x-stream-index: "002"
+      - in: path
+        name: id
+        required: true
+        schema:
+          maxLength: 64
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "003"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendEventRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendEventResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Send custom event
+  /api/v2/video/call/{type}/{id}/go_live:
+    post:
+      description: |2
+
+
+        Sends events:
+        - call.live_started
+
+        Required permissions:
+        - UpdateCall
+      operationId: GoLive
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          description: The type of call
+          maxLength: 64
+          title: Type
+          type: string
+          writeOnly: true
+          x-stream-index: "002.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Call ID
+          maxLength: 64
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "002.002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GoLiveRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoLiveResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Set call as live
+  /api/v2/video/call/{type}/{id}/mark_ended:
+    post:
+      description: |2
+
+
+        Sends events:
+        - call.ended
+
+        Required permissions:
+        - EndCall
+      operationId: EndCall
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          description: The type of call
+          maxLength: 64
+          title: Type
+          type: string
+          writeOnly: true
+          x-stream-index: "002.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Call ID
+          maxLength: 64
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "002.002"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EndCallResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: End call
+  /api/v2/video/call/{type}/{id}/members:
+    post:
+      description: |2
+
+
+        Sends events:
+        - call.member_added
+        - call.member_removed
+        - call.member_updated
+
+        Required permissions:
+        - RemoveCallMember
+        - UpdateCallMember
+        - UpdateCallMemberRole
+      operationId: UpdateCallMembers
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          description: The type of call
+          maxLength: 64
+          title: Type
+          type: string
+          writeOnly: true
+          x-stream-index: "002.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Call ID
+          maxLength: 64
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "002.002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCallMembersRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateCallMembersResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Update Call Member
+  /api/v2/video/call/{type}/{id}/mute_users:
+    post:
+      description: |
+        Mutes users in a call
+
+        Required permissions:
+        - MuteUsers
+      operationId: MuteUsers
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          description: The type of call
+          maxLength: 64
+          title: Type
+          type: string
+          writeOnly: true
+          x-stream-index: "002.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Call ID
+          maxLength: 64
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "002.002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MuteUsersRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MuteUsersResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Mute users
+  /api/v2/video/call/{type}/{id}/pin:
+    post:
+      description: |
+        Pins a track for all users in the call.
+
+        Required permissions:
+        - PinCallTrack
+      operationId: VideoPin
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PinRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PinResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Pin
+  /api/v2/video/call/{type}/{id}/recordings:
+    get:
+      description: |
+        Lists recordings
+
+        Required permissions:
+        - ListRecordings
+      operationId: ListRecordings
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListRecordingsResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: List recordings
+  /api/v2/video/call/{type}/{id}/start_broadcasting:
+    post:
+      description: |
+        Starts HLS broadcasting
+
+        Required permissions:
+        - StartBroadcasting
+      operationId: StartHLSBroadcasting
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          description: The type of call
+          maxLength: 64
+          title: Type
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Call ID
+          maxLength: 64
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartHLSBroadcastingResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Start HLS broadcasting
+  /api/v2/video/call/{type}/{id}/start_recording:
+    post:
+      description: |
+        Starts recording
+
+        Sends events:
+        - call.recording_started
+
+        Required permissions:
+        - StopRecording
+      operationId: StartRecording
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          description: The type of call
+          maxLength: 64
+          title: Type
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Call ID
+          maxLength: 64
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartRecordingResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Start recording
+  /api/v2/video/call/{type}/{id}/start_transcription:
+    post:
+      description: |
+        Starts transcription
+
+        Required permissions:
+        - StartTranscription
+      operationId: StartTranscription
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          description: The type of call
+          maxLength: 64
+          title: Type
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Call ID
+          maxLength: 64
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartTranscriptionResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Start transcription
+  /api/v2/video/call/{type}/{id}/stop_broadcasting:
+    post:
+      description: |
+        Stops HLS broadcasting
+
+        Required permissions:
+        - StopBroadcasting
+      operationId: StopHLSBroadcasting
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StopHLSBroadcastingResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Stop HLS broadcasting
+  /api/v2/video/call/{type}/{id}/stop_live:
+    post:
+      description: |2
+
+
+        Sends events:
+        - call.updated
+
+        Required permissions:
+        - UpdateCall
+      operationId: StopLive
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          description: The type of call
+          maxLength: 64
+          title: Type
+          type: string
+          writeOnly: true
+          x-stream-index: "002.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Call ID
+          maxLength: 64
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "002.002"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StopLiveResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Set call as not live
+  /api/v2/video/call/{type}/{id}/stop_recording:
+    post:
+      description: |
+        Stops recording
+
+        Sends events:
+        - call.recording_stopped
+
+        Required permissions:
+        - StopRecording
+      operationId: StopRecording
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StopRecordingResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Stop recording
+  /api/v2/video/call/{type}/{id}/stop_transcription:
+    post:
+      description: |
+        Stops transcription
+
+        Required permissions:
+        - StopTranscription
+      operationId: StopTranscription
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StopTranscriptionResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Stop transcription
+  /api/v2/video/call/{type}/{id}/unblock:
+    post:
+      description: |
+        Removes the block for a user on a call. The user will be able to join the call again.
+
+        Sends events:
+        - call.unblocked_user
+
+        Required permissions:
+        - BlockUser
+      operationId: UnblockUser
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          maxLength: 64
+          title: Type
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          maxLength: 64
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnblockUserRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnblockUserResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Unblocks user on a call
+  /api/v2/video/call/{type}/{id}/unpin:
+    post:
+      description: |
+        Unpins a track for all users in the call.
+
+        Required permissions:
+        - PinCallTrack
+      operationId: VideoUnpin
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnpinRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnpinResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Unpin
+  /api/v2/video/call/{type}/{id}/user_permissions:
+    post:
+      description: |
+        Updates user permissions
+
+        Sends events:
+        - call.permissions_updated
+
+        Required permissions:
+        - UpdateCallPermissions
+      operationId: UpdateUserPermissions
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "005.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "005.002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserPermissionsRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateUserPermissionsResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Update user permissions
+  /api/v2/video/call/members:
+    post:
+      description: |
+        Query call members with filter query
+
+        Required permissions:
+        - ReadCall
+      operationId: QueryMembers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryMembersRequest_1'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryMembersResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Query call members
+  /api/v2/video/calls:
+    post:
+      description: |
+        Query calls with filter query
+
+        Required permissions:
+        - ReadCall
+      operationId: QueryCalls
+      parameters:
+      - in: query
+        name: connection_id
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryCallsRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryCallsResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Query call
+  /api/v2/video/calltypes:
+    get:
+      description: |2+
+
+      operationId: ListCallTypes
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListCallTypeResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: List Call Type
+      tags:
+      - Server-side
+    post:
+      description: |2+
+
+      operationId: CreateCallType
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCallTypeRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateCallTypeResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Create Call Type
+      tags:
+      - Server-side
+  /api/v2/video/calltypes/{name}:
+    delete:
+      description: |2+
+
+      operationId: DeleteCallType
+      parameters:
+      - in: path
+        name: name
+        required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Delete Call Type
+      tags:
+      - Server-side
+    get:
+      description: |2+
+
+      operationId: GetCallType
+      parameters:
+      - in: path
+        name: name
+        required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCallTypeResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get Call Type
+      tags:
+      - Server-side
+    put:
+      description: |2+
+
+      operationId: UpdateCallType
+      parameters:
+      - in: path
+        name: name
+        required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCallTypeRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateCallTypeResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Update Call Type
+      tags:
+      - Server-side
+  /api/v2/video/edges:
+    get:
+      description: |
+        Returns the list of all edges available for video calls.
+      operationId: GetEdges
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetEdgesResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get Edges
 security:
 - JWT: []
   api_key: []
