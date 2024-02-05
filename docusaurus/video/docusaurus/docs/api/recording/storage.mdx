@@ -30,7 +30,6 @@ Alternatively, you can also have the storage configured and use it for specific 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
 ```js
-// TODO: code example for Node
 // 1. create a new storage with all the required parameters
 
 await serverSideClient.createExternalStorage({
@@ -39,17 +38,14 @@ await serverSideClient.createExternalStorage({
     storage_type: 's3',
     path: 'directory_name/',
     aws_s3: {
-    s3_region: 'us-east-1',
-    s3_api_key: 'my-access-key',
-    s3_secret: 'my-secret',
+      s3_region: 'us-east-1',
+      s3_api_key: 'my-access-key',
+      s3_secret: 'my-secret',
     },
 });
 
 // 2. update the call type to use the new storage
 await serverSideClient.updateCallType('my-call-type', {
-    settings: {},
-    grants: {},
-    notification_settings: {},
     external_storage: "my-s3",
 });
 
@@ -75,9 +71,11 @@ curl -X POST \
     "storage_type": "s3",
     "bucket": "my-bucket",
     "custom_folder": "my-folder",
-    "s3_region": "us-east-1",
-    "s3_api_key": "my-api-key",
-    "s3_secret": "my-secret"
+    "aws_s3": {
+      "s3_region": "us-east-1",
+      "s3_api_key": "my-api-key",
+      "s3_secret": "my-secret"
+    }
 }'
 
 
@@ -85,15 +83,14 @@ curl -X PATCH \
   https://video.stream-io-api.com/video/call_types/${CALL_TYPE_ID}?api_key=${API_KEY} \
   -H "Authorization: ${JWT_TOKEN}" -H "stream-auth-type: jwt" \
     -d '{
-    /// TODO: test current structure
-        "storage_provider": "my-storage"
+        "external_storage": "my-storage"
     }'
 
 curl -X POST \
     "https://video.stream-io-api.com/video/call/default/${CALL_ID}/start_recording?api_key=${API_KEY}" \
     -H "Authorization: ${JWT_TOKEN}" -H "stream-auth-type: jwt" \
     -d '{
-        "recording_storage": "my-storage"
+        "recording_external_storage": "my-storage"
     }'
 ```
 </TabItem>
@@ -118,7 +115,14 @@ Note: all Stream applications have Stream S3 storage enabled by default. You can
 ```js
 // TODO: code example for Node
 // 1. update the call type to use Stream S3 storage
-// 2. specify Stream S3 storage when starting call recording
+await serverSideClient.updateCallType('my-call-type', {
+  external_storage: "my-first-storage",
+});
+
+  // 2. specify Stream S3 storage when starting call recording
+await call.startRecording({
+  recording_external_storage: "my-second-storage",
+});
 ```
 </TabItem>
 <TabItem value="py" label="Python">
@@ -133,14 +137,14 @@ curl -X PATCH \
   -H "Authorization: ${JWT_TOKEN}" -H "stream-auth-type: jwt" \
     -d '{
     /// TODO: test current structure
-        "storage_provider": "my-storage"
+      "external_storage": "my-first-storage"
     }'
 
 curl -X POST \
     "https://video.stream-io-api.com/video/call/default/${CALL_ID}/start_recording?api_key=${API_KEY}" \
     -H "Authorization: ${JWT_TOKEN}" -H "stream-auth-type: jwt" \
     -d '{
-        "recording_storage": "my-storage"
+        "recording_external_storage": "my-second-storage"
     }'
 ```
 </TabItem>
@@ -161,13 +165,17 @@ To use Amazon S3 as your storage provider, you have two authentication options: 
 
 If you do not specify the `s3_api_key` parameter, Stream will use IAM role authentication. In that case make sure to have the correct IAM role configured for your application.
 
-TODO: copy/paste what is needed to do this (see other docs).
-
 | Name       | Description | Required |
 |------------|-------------|----------|
 | s3_region  |             |   yes    |
 | s3_api_key |             |          |
 | s3_secret  |             |          |
+
+There are 2 ways to configure authentication on your S3 bucket:
+- By providing a key and secret
+- Or by having Stream's AWS account assume a role on your SQS queue.
+With this option you omit the key and secret, but instead you set up a resource-based policy to grant Stream SendMessage permission on your S3 bucket.
+The following policy needs to be attached to your queue (replace the value of Resource with the fully qualified ARN of you S3 bucket):
 
 
 ### Example S3 policy
@@ -197,14 +205,21 @@ TODO: copy/paste what is needed to do this (see other docs).
 
 ## Google Cloud Storage
 
-To use Google Cloud Storage as your storage provider, you need to send your service account credentials as they are stored in your JSON file.
+To use Google Cloud Storage as your storage provider, you need to send your (service account)[https://cloud.google.com/iam/docs/service-accounts-create ] credentials as they are stored in your JSON file.
 
 Note: you can find the JSON service account credentials in the Google Cloud Console (...)
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
 ```js
-// TODO: show the param
+// 1. create a new storage using the service account credentials
+await serverSideClient.createExternalStorage({
+    bucket: 'my-bucket',
+    name: 'my-gcs',
+    storage_type: 'gcs',
+    path: 'directory_name/',
+    "gcs_credentials": "contetn of the service account file",
+});
 ```
 </TabItem>
 <TabItem value="py" label="Python">
@@ -214,7 +229,18 @@ Note: you can find the JSON service account credentials in the Google Cloud Cons
 </TabItem>
 <TabItem value="curl" label="cURL">
 ```bash
-// TODO: curl code example
+curl -X POST \
+  curl -X POST \
+  https://video.stream-io-api.com/video/external_storage?api_key=${API_KEY} \
+  -H "Authorization: ${JWT_TOKEN}" -H "stream-auth-type: jwt" \
+  -d '{
+  "name": "my-storage",
+  "storage_type": "gcs",
+  "bucket": "my-bucket",
+  "custom_folder": "my-folder",
+  "gcs_credentials": "content of the service account file"
+}'
+
 ```
 </TabItem>
 </Tabs>
@@ -239,4 +265,4 @@ To use Azure Blob Storage as your storage provider, you need to create a contain
 | Name             | Description | Required |
 |------------------|-------------|----------|
 | abs_account_name |             | yes      |
-| abs_account_key  |             |          |
+| abs_account_key  |             | yes      |
