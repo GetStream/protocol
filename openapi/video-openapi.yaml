@@ -555,6 +555,33 @@ components:
       - members
       - own_capabilities
       type: object
+    CallTranscription:
+      description: CallTranscription represents a transcription of a call.
+      properties:
+        end_time:
+          format: date-time
+          title: The end time of the transcription.
+          type: string
+          x-stream-index: "004"
+        filename:
+          title: The filename of the transcription.
+          type: string
+          x-stream-index: "001"
+        start_time:
+          format: date-time
+          title: The start time of the transcription.
+          type: string
+          x-stream-index: "003"
+        url:
+          title: The URL of the transcription.
+          type: string
+          x-stream-index: "002"
+      required:
+      - filename
+      - url
+      - start_time
+      - end_time
+      type: object
     CallTypeResponse:
       properties:
         created_at:
@@ -1155,6 +1182,9 @@ components:
           x-stream-index: "004"
         start_transcription:
           type: boolean
+          x-stream-index: "007"
+        transcription_storage_name:
+          type: string
           x-stream-index: "006"
       type: object
     GoLiveResponse:
@@ -1326,6 +1356,21 @@ components:
       required:
       - duration
       - recordings
+      type: object
+    ListTranscriptionsResponse:
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "001.001"
+        transcriptions:
+          items:
+            $ref: '#/components/schemas/CallTranscription'
+          type: array
+          x-stream-index: "002"
+      required:
+      - duration
+      - transcriptions
       type: object
     MemberRequest:
       properties:
@@ -1834,6 +1879,10 @@ components:
       type: object
     StartTranscriptionRequest:
       nullable: true
+      properties:
+        transcription_external_storage:
+          type: string
+          x-stream-index: "002"
       type: object
     StartTranscriptionResponse:
       nullable: true
@@ -2469,7 +2518,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v98.2.0
+  version: v98.2.0-fix-transcriptions.14
 openapi: 3.0.3
 paths:
   /video/call/{type}/{id}:
@@ -3245,6 +3294,12 @@ paths:
           type: string
           writeOnly: true
           x-stream-index: "001.002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartTranscriptionRequest'
+        required: true
       responses:
         "201":
           content:
@@ -3455,6 +3510,51 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Stop transcription
+  /video/call/{type}/{id}/transcriptions:
+    get:
+      description: |
+        Lists transcriptions
+
+        Required permissions:
+        - ListTranscriptions
+      operationId: ListTranscriptions
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListTranscriptionsResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: List transcriptions
   /video/call/{type}/{id}/unblock:
     post:
       description: |
