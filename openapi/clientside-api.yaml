@@ -5072,6 +5072,11 @@ components:
       type: object
     Label:
       properties:
+        harm_labels:
+          items:
+            type: string
+          type: array
+          x-stream-index: "003"
         name:
           type: string
           x-stream-index: "001"
@@ -9844,45 +9849,6 @@ components:
       - channel_count
       - unread_count
       type: object
-    UnreadCountsResponse:
-      nullable: true
-      properties:
-        channel_type:
-          items:
-            $ref: '#/components/schemas/UnreadCountsChannelType'
-          type: array
-          x-stream-index: "004"
-        channels:
-          items:
-            $ref: '#/components/schemas/UnreadCountsChannel'
-          type: array
-          x-stream-index: "003"
-        duration:
-          description: Duration of the request in human-readable format
-          title: Duration
-          type: string
-          x-stream-index: "006.001"
-        threads:
-          items:
-            $ref: '#/components/schemas/UnreadCountsThread'
-          type: array
-          x-stream-index: "005"
-        total_unread_count:
-          format: int32
-          type: integer
-          x-stream-index: "001"
-        total_unread_threads_count:
-          format: int32
-          type: integer
-          x-stream-index: "002"
-      required:
-      - total_unread_count
-      - total_unread_threads_count
-      - channels
-      - channel_type
-      - threads
-      - duration
-      type: object
     UnreadCountsThread:
       properties:
         last_read:
@@ -11217,6 +11183,45 @@ components:
       - $ref: '#/components/schemas/UserUpdatedEvent'
       - $ref: '#/components/schemas/UserWatchingStartEvent'
       - $ref: '#/components/schemas/UserWatchingStopEvent'
+    WrappedUnreadCountsResponse:
+      nullable: true
+      properties:
+        channel_type:
+          items:
+            $ref: '#/components/schemas/UnreadCountsChannelType'
+          type: array
+          x-stream-index: "001.004"
+        channels:
+          items:
+            $ref: '#/components/schemas/UnreadCountsChannel'
+          type: array
+          x-stream-index: "001.003"
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        threads:
+          items:
+            $ref: '#/components/schemas/UnreadCountsThread'
+          type: array
+          x-stream-index: "001.005"
+        total_unread_count:
+          format: int32
+          type: integer
+          x-stream-index: "001.001"
+        total_unread_threads_count:
+          format: int32
+          type: integer
+          x-stream-index: "001.002"
+      required:
+      - total_unread_count
+      - total_unread_threads_count
+      - channels
+      - channel_type
+      - threads
+      - duration
+      type: object
     XiaomiConfigFields:
       properties:
         enabled:
@@ -11275,7 +11280,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v98.2.0
+  version: v98.2.1-prev-next-messages-crdb.1
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -13688,14 +13693,14 @@ paths:
   /api/v2/chat/unread:
     get:
       description: |
-        UnreadCount counts
+        Fetch unread counts for a single user
       operationId: UnreadCounts
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UnreadCountsResponse'
+                $ref: '#/components/schemas/WrappedUnreadCountsResponse'
           description: Successful response
         "400":
           content:
@@ -13709,7 +13714,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
-      summary: UnreadCount counts
+      summary: Unread counts
       tags:
       - Channels
   /api/v2/connect:
