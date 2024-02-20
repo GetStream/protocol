@@ -2386,6 +2386,9 @@ components:
       description: Block list contains restricted words
       nullable: true
       properties:
+        custom_validation:
+          type: boolean
+          x-stream-index: "004"
         name:
           description: Block list name
           maxLength: 255
@@ -2397,8 +2400,9 @@ components:
           enum:
           - regex
           - regular
-          - domains
-          - emails
+          - domain
+          - email
+          - word
           title: Type
           type: string
           x-stream-index: "003"
@@ -4621,6 +4625,11 @@ components:
       type: object
     Label:
       properties:
+        harm_labels:
+          items:
+            type: string
+          type: array
+          x-stream-index: "003"
         name:
           type: string
           x-stream-index: "001"
@@ -8237,6 +8246,35 @@ components:
       - target_id
       - target_ids
       type: object
+    UnreadCountsBatchRequest:
+      nullable: true
+      properties:
+        user_ids:
+          items:
+            type: string
+          maximum: 100
+          type: array
+          x-stream-index: "001"
+      required:
+      - user_ids
+      type: object
+    UnreadCountsBatchResponse:
+      nullable: true
+      properties:
+        counts_by_user:
+          additionalProperties:
+            $ref: '#/components/schemas/UnreadCountsResponse'
+          type: object
+          x-stream-index: "001"
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+      required:
+      - counts_by_user
+      - duration
+      type: object
     UnreadCountsChannel:
       properties:
         channel_id:
@@ -8286,11 +8324,6 @@ components:
             $ref: '#/components/schemas/UnreadCountsChannel'
           type: array
           x-stream-index: "003"
-        duration:
-          description: Duration of the request in human-readable format
-          title: Duration
-          type: string
-          x-stream-index: "006.001"
         threads:
           items:
             $ref: '#/components/schemas/UnreadCountsThread'
@@ -8310,7 +8343,6 @@ components:
       - channels
       - channel_type
       - threads
-      - duration
       type: object
     UnreadCountsThread:
       properties:
@@ -8496,6 +8528,9 @@ components:
           type: string
           writeOnly: true
           x-stream-index: "001"
+        custom_validation:
+          type: boolean
+          x-stream-index: "003"
         words:
           items:
             type: string
@@ -9620,6 +9655,45 @@ components:
       title: Event
       type: object
       x-stream-docs-page-id: event_object
+    WrappedUnreadCountsResponse:
+      nullable: true
+      properties:
+        channel_type:
+          items:
+            $ref: '#/components/schemas/UnreadCountsChannelType'
+          type: array
+          x-stream-index: "001.004"
+        channels:
+          items:
+            $ref: '#/components/schemas/UnreadCountsChannel'
+          type: array
+          x-stream-index: "001.003"
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        threads:
+          items:
+            $ref: '#/components/schemas/UnreadCountsThread'
+          type: array
+          x-stream-index: "001.005"
+        total_unread_count:
+          format: int32
+          type: integer
+          x-stream-index: "001.001"
+        total_unread_threads_count:
+          format: int32
+          type: integer
+          x-stream-index: "001.002"
+      required:
+      - total_unread_count
+      - total_unread_threads_count
+      - channels
+      - channel_type
+      - threads
+      - duration
+      type: object
     XiaomiConfigFields:
       properties:
         enabled:
@@ -9691,7 +9765,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v98.2.0
+  version: v98.2.1-advanced-filters.4
 openapi: 3.0.3
 paths:
   /app:
@@ -9930,6 +10004,40 @@ paths:
       summary: Update block list
       tags:
       - Settings
+      - Moderation
+  /blocklists/{type}/validate:
+    post:
+      description: |
+        Runs specific blocklist validation, returns an appropriate error if the blocklist is invalid
+      operationId: ValidateBlockList
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBlockListRequest'
+        description: Block list
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Validate Blocklist
+      tags:
       - Moderation
   /calls:
     post:
@@ -13639,14 +13747,14 @@ paths:
   /unread:
     get:
       description: |
-        UnreadCount counts
+        Fetch unread counts for a single user
       operationId: UnreadCounts
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UnreadCountsResponse'
+                $ref: '#/components/schemas/WrappedUnreadCountsResponse'
           description: Successful response
         "400":
           content:
@@ -13660,7 +13768,40 @@ paths:
               schema:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
-      summary: UnreadCount counts
+      summary: Unread counts
+      tags:
+      - Channels
+  /unread_batch:
+    post:
+      description: |
+        Fetch unread counts in batch for multiple users in one call
+      operationId: UnreadCountsBatch
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnreadCountsBatchRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnreadCountsBatchResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Batch unread counts
       tags:
       - Channels
   /users:
