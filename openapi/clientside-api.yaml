@@ -842,6 +842,33 @@ components:
       x-stream-event-call-type: true
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    CallClosedCaption:
+      description: CallClosedCaption represents a closed caption of a call.
+      properties:
+        end_time:
+          format: date-time
+          title: The end time of the closed caption.
+          type: string
+          x-stream-index: "003"
+        speaker_id:
+          title: The speaker ID of the closed caption.
+          type: string
+          x-stream-index: "004"
+        start_time:
+          format: date-time
+          title: The start time of the closed caption.
+          type: string
+          x-stream-index: "002"
+        text:
+          title: The text of the closed caption.
+          type: string
+          x-stream-index: "001"
+      required:
+      - text
+      - start_time
+      - end_time
+      - speaker_id
+      type: object
     CallCreatedEvent:
       description: "This event is sent when a call is created. Clients receiving this
         event should check if the ringing \nfield is set to true and if so, show the
@@ -2031,6 +2058,33 @@ components:
       - call
       - members
       - own_capabilities
+      type: object
+    CallTranscription:
+      description: CallTranscription represents a transcription of a call.
+      properties:
+        end_time:
+          format: date-time
+          title: The end time of the transcription.
+          type: string
+          x-stream-index: "004"
+        filename:
+          title: The filename of the transcription.
+          type: string
+          x-stream-index: "001"
+        start_time:
+          format: date-time
+          title: The start time of the transcription.
+          type: string
+          x-stream-index: "003"
+        url:
+          title: The URL of the transcription.
+          type: string
+          x-stream-index: "002"
+      required:
+      - filename
+      - url
+      - start_time
+      - end_time
       type: object
     CallType:
       nullable: true
@@ -3494,6 +3548,38 @@ components:
       - duration
       title: Channels list
       type: object
+    ClosedCaptionEvent:
+      description: This event is sent when closed captions are being sent in a call,
+        clients should use this to show the closed captions in the call screen
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        closed_caption:
+          $ref: '#/components/schemas/CallClosedCaption'
+          description: The closed caption object
+          title: CallClosedCaption
+          x-stream-index: "003"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        type:
+          default: call.closed_caption
+          description: 'The type of event: "call.closed_caption" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - closed_caption
+      title: ClosedCaptionEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     Command:
       description: Represents custom chat command
       nullable: true
@@ -3686,12 +3772,16 @@ components:
         api_key:
           type: string
           x-stream-index: "001"
+        enabled:
+          type: boolean
+          x-stream-index: "003"
         site:
           type: string
           x-stream-index: "002"
       required:
       - api_key
       - site
+      - enabled
       type: object
     DeleteChannelResponse:
       nullable: true
@@ -4229,12 +4319,6 @@ components:
           title: Target Message ID
           type: string
           x-stream-index: "001"
-        user:
-          $ref: '#/components/schemas/UserObjectRequest'
-          x-stream-index: "005.002"
-        user_id:
-          type: string
-          x-stream-index: "005.001"
       type: object
     FlagResponse:
       nullable: true
@@ -4588,6 +4672,9 @@ components:
           x-stream-index: "004"
         start_transcription:
           type: boolean
+          x-stream-index: "007"
+        transcription_storage_name:
+          type: string
           x-stream-index: "006"
       type: object
     GoLiveResponse:
@@ -4723,12 +4810,6 @@ components:
           title: Clear history
           type: boolean
           x-stream-index: "001"
-        user:
-          $ref: '#/components/schemas/UserObjectRequest'
-          x-stream-index: "003.002"
-        user_id:
-          type: string
-          x-stream-index: "003.001"
       type: object
     HideChannelResponse:
       nullable: true
@@ -5072,6 +5153,11 @@ components:
       type: object
     Label:
       properties:
+        harm_labels:
+          items:
+            type: string
+          type: array
+          x-stream-index: "003"
         name:
           type: string
           x-stream-index: "001"
@@ -5160,15 +5246,23 @@ components:
       - duration
       - recordings
       type: object
-    MarkChannelsReadRequest:
+    ListTranscriptionsResponse:
       nullable: true
       properties:
-        user:
-          $ref: '#/components/schemas/UserObjectRequest'
-          x-stream-index: "002.002"
-        user_id:
+        duration:
           type: string
-          x-stream-index: "002.001"
+          x-stream-index: "001.001"
+        transcriptions:
+          items:
+            $ref: '#/components/schemas/CallTranscription'
+          type: array
+          x-stream-index: "002"
+      required:
+      - duration
+      - transcriptions
+      type: object
+    MarkChannelsReadRequest:
+      nullable: true
       type: object
     MarkReadRequest:
       nullable: true
@@ -5183,12 +5277,6 @@ components:
           title: Thread ID
           type: string
           x-stream-index: "004"
-        user:
-          $ref: '#/components/schemas/UserObjectRequest'
-          x-stream-index: "003.002"
-        user_id:
-          type: string
-          x-stream-index: "003.001"
       type: object
     MarkReadResponse:
       nullable: true
@@ -5217,12 +5305,6 @@ components:
           title: Thread ID
           type: string
           x-stream-index: "003"
-        user:
-          $ref: '#/components/schemas/UserObjectRequest'
-          x-stream-index: "004.002"
-        user_id:
-          type: string
-          x-stream-index: "004.001"
       required:
       - message_id
       - thread_id
@@ -5687,12 +5769,6 @@ components:
           title: Form data
           type: object
           x-stream-index: "002"
-        user:
-          $ref: '#/components/schemas/UserObjectRequest'
-          x-stream-index: "003.002"
-        user_id:
-          type: string
-          x-stream-index: "003.001"
       required:
       - form_data
       type: object
@@ -5912,7 +5988,7 @@ components:
           type: array
           x-stream-index: "001.002"
         type:
-          default: notification.thread_message_new
+          default: message.new
           type: string
           x-stream-index: "004.001"
         user:
@@ -6206,12 +6282,6 @@ components:
           title: Expiration
           type: integer
           x-stream-index: "003"
-        user:
-          $ref: '#/components/schemas/UserObjectRequest'
-          x-stream-index: "004.002"
-        user_id:
-          type: string
-          x-stream-index: "004.001"
       required:
       - channel_cids
       type: object
@@ -6258,12 +6328,6 @@ components:
           title: Timeout
           type: integer
           x-stream-index: "003"
-        user:
-          $ref: '#/components/schemas/UserObjectRequest'
-          x-stream-index: "004.002"
-        user_id:
-          type: string
-          x-stream-index: "004.001"
       required:
       - target_ids
       type: object
@@ -7405,16 +7469,6 @@ components:
           maximum: 1
           type: array
           x-stream-index: "002"
-        user:
-          $ref: '#/components/schemas/UserObject'
-          description: '**Server-side only**. User object which server acts upon'
-          title: User
-          x-stream-index: "007.002"
-        user_id:
-          description: '**Server-side only**. User ID which server acts upon'
-          title: User ID
-          type: string
-          x-stream-index: "007.001"
       required:
       - filter_conditions
       type: object
@@ -7541,12 +7595,6 @@ components:
           title: State
           type: boolean
           x-stream-index: "004"
-        user:
-          $ref: '#/components/schemas/UserObjectRequest'
-          x-stream-index: "010.002"
-        user_id:
-          type: string
-          x-stream-index: "010.001"
         watch:
           description: Whether to start watching found channels or not
           title: Watch
@@ -7620,12 +7668,6 @@ components:
           title: Channel type
           type: string
           x-stream-index: "001"
-        user:
-          $ref: '#/components/schemas/UserObject'
-          x-stream-index: "007.002"
-        user_id:
-          type: string
-          x-stream-index: "007.001"
         user_id_gt:
           type: string
           x-stream-index: "006.006"
@@ -7726,16 +7768,6 @@ components:
           maximum: 5
           type: array
           x-stream-index: "003.005"
-        user:
-          $ref: '#/components/schemas/UserObject'
-          description: '**Server-side only**. User object which server acts upon'
-          title: User
-          x-stream-index: "004.002"
-        user_id:
-          description: '**Server-side only**. User ID which server acts upon'
-          title: User ID
-          type: string
-          x-stream-index: "004.001"
       type: object
     QueryMessageFlagsResponse:
       nullable: true
@@ -7867,12 +7899,6 @@ components:
           title: Sort
           type: array
           x-stream-index: "002"
-        user:
-          $ref: '#/components/schemas/UserObject'
-          x-stream-index: "005.002"
-        user_id:
-          type: string
-          x-stream-index: "005.001"
       required:
       - filter_conditions
       type: object
@@ -8719,13 +8745,6 @@ components:
       type: object
     ShowChannelRequest:
       nullable: true
-      properties:
-        user:
-          $ref: '#/components/schemas/UserObjectRequest'
-          x-stream-index: "002.002"
-        user_id:
-          type: string
-          x-stream-index: "002.001"
       type: object
     ShowChannelResponse:
       nullable: true
@@ -8804,6 +8823,10 @@ components:
       type: object
     StartTranscriptionRequest:
       nullable: true
+      properties:
+        transcription_external_storage:
+          type: string
+          x-stream-index: "002"
       type: object
     StartTranscriptionResponse:
       nullable: true
@@ -8906,12 +8929,6 @@ components:
           title: Last sync at
           type: string
           x-stream-index: "002"
-        user:
-          $ref: '#/components/schemas/UserObjectRequest'
-          x-stream-index: "005.002"
-        user_id:
-          type: string
-          x-stream-index: "005.001"
         watch:
           description: If set to true this will start watching requested and newly
             added channels that user has access to. If error occurred with this option
@@ -9720,26 +9737,20 @@ components:
     UnmuteChannelRequest:
       nullable: true
       properties:
-        channel_cid:
-          type: string
-          x-stream-index: "001.001"
         channel_cids:
+          description: Channel CIDs to mute (if multiple channels)
           items:
             type: string
           maximum: 25
+          title: Channel CIDs
           type: array
           x-stream-index: "001.002"
         expiration:
+          description: Duration of mute in milliseconds
+          title: Expiration
           type: integer
           x-stream-index: "001.003"
-        user:
-          $ref: '#/components/schemas/UserObjectRequest'
-          x-stream-index: "002.002"
-        user_id:
-          type: string
-          x-stream-index: "002.001"
       required:
-      - channel_cid
       - channel_cids
       type: object
     UnmuteResponse:
@@ -9761,27 +9772,21 @@ components:
     UnmuteUserRequest:
       nullable: true
       properties:
-        target_id:
-          type: string
-          x-stream-index: "001.001"
         target_ids:
+          description: User IDs to mute (if multiple users)
           items:
             type: string
           maximum: 1000
+          title: Target IDs
           type: array
           x-stream-index: "001.002"
         timeout:
+          description: Duration of mute in minutes
           minimum: 0
+          title: Timeout
           type: integer
           x-stream-index: "001.003"
-        user:
-          $ref: '#/components/schemas/UserObjectRequest'
-          x-stream-index: "002.002"
-        user_id:
-          type: string
-          x-stream-index: "002.001"
       required:
-      - target_id
       - target_ids
       type: object
     UnpinRequest:
@@ -9843,45 +9848,6 @@ components:
       - channel_type
       - channel_count
       - unread_count
-      type: object
-    UnreadCountsResponse:
-      nullable: true
-      properties:
-        channel_type:
-          items:
-            $ref: '#/components/schemas/UnreadCountsChannelType'
-          type: array
-          x-stream-index: "004"
-        channels:
-          items:
-            $ref: '#/components/schemas/UnreadCountsChannel'
-          type: array
-          x-stream-index: "003"
-        duration:
-          description: Duration of the request in human-readable format
-          title: Duration
-          type: string
-          x-stream-index: "006.001"
-        threads:
-          items:
-            $ref: '#/components/schemas/UnreadCountsThread'
-          type: array
-          x-stream-index: "005"
-        total_unread_count:
-          format: int32
-          type: integer
-          x-stream-index: "001"
-        total_unread_threads_count:
-          format: int32
-          type: integer
-          x-stream-index: "002"
-      required:
-      - total_unread_count
-      - total_unread_threads_count
-      - channels
-      - channel_type
-      - threads
-      - duration
       type: object
     UnreadCountsThread:
       properties:
@@ -10003,12 +9969,6 @@ components:
             type: string
           type: array
           x-stream-index: "002.002"
-        user:
-          $ref: '#/components/schemas/UserObjectRequest'
-          x-stream-index: "003.002"
-        user_id:
-          type: string
-          x-stream-index: "003.001"
       required:
       - set
       - unset
@@ -11059,6 +11019,7 @@ components:
         mapping:
           call.accepted: '#/components/schemas/CallAcceptedEvent'
           call.blocked_user: '#/components/schemas/BlockedUserEvent'
+          call.closed_caption: '#/components/schemas/ClosedCaptionEvent'
           call.created: '#/components/schemas/CallCreatedEvent'
           call.deleted: '#/components/schemas/CallDeletedEvent'
           call.ended: '#/components/schemas/CallEndedEvent'
@@ -11175,6 +11136,7 @@ components:
       - $ref: '#/components/schemas/ChannelUnFrozenEvent'
       - $ref: '#/components/schemas/ChannelUpdatedEvent'
       - $ref: '#/components/schemas/ChannelVisibleEvent'
+      - $ref: '#/components/schemas/ClosedCaptionEvent'
       - $ref: '#/components/schemas/ConnectedEvent'
       - $ref: '#/components/schemas/ConnectionErrorEvent'
       - $ref: '#/components/schemas/HealthCheckEvent'
@@ -11217,6 +11179,45 @@ components:
       - $ref: '#/components/schemas/UserUpdatedEvent'
       - $ref: '#/components/schemas/UserWatchingStartEvent'
       - $ref: '#/components/schemas/UserWatchingStopEvent'
+    WrappedUnreadCountsResponse:
+      nullable: true
+      properties:
+        channel_type:
+          items:
+            $ref: '#/components/schemas/UnreadCountsChannelType'
+          type: array
+          x-stream-index: "001.004"
+        channels:
+          items:
+            $ref: '#/components/schemas/UnreadCountsChannel'
+          type: array
+          x-stream-index: "001.003"
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        threads:
+          items:
+            $ref: '#/components/schemas/UnreadCountsThread'
+          type: array
+          x-stream-index: "001.005"
+        total_unread_count:
+          format: int32
+          type: integer
+          x-stream-index: "001.001"
+        total_unread_threads_count:
+          format: int32
+          type: integer
+          x-stream-index: "001.002"
+      required:
+      - total_unread_count
+      - total_unread_threads_count
+      - channels
+      - channel_type
+      - threads
+      - duration
+      type: object
     XiaomiConfigFields:
       properties:
         enabled:
@@ -11275,7 +11276,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v98.2.0
+  version: v99.1.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -12109,6 +12110,8 @@ paths:
         name: type
         required: true
         schema:
+          description: Channel type to interact with
+          title: Channel type
           type: string
           writeOnly: true
           x-stream-index: "001.001"
@@ -12116,6 +12119,8 @@ paths:
         name: id
         required: true
         schema:
+          description: Channel ID to interact with
+          title: Channel ID
           type: string
           writeOnly: true
           x-stream-index: "001.002"
@@ -13688,14 +13693,14 @@ paths:
   /api/v2/chat/unread:
     get:
       description: |
-        UnreadCount counts
+        Fetch unread counts for a single user
       operationId: UnreadCounts
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UnreadCountsResponse'
+                $ref: '#/components/schemas/WrappedUnreadCountsResponse'
           description: Successful response
         "400":
           content:
@@ -13709,7 +13714,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
-      summary: UnreadCount counts
+      summary: Unread counts
       tags:
       - Channels
   /api/v2/connect:
@@ -15116,6 +15121,12 @@ paths:
           type: string
           writeOnly: true
           x-stream-index: "001.002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartTranscriptionRequest'
+        required: true
       responses:
         "201":
           content:
@@ -15326,6 +15337,51 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Stop transcription
+  /api/v2/video/call/{type}/{id}/transcriptions:
+    get:
+      description: |
+        Lists transcriptions
+
+        Required permissions:
+        - ListTranscriptions
+      operationId: ListTranscriptions
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListTranscriptionsResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: List transcriptions
   /api/v2/video/call/{type}/{id}/unblock:
     post:
       description: |
