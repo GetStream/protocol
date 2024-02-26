@@ -2893,9 +2893,9 @@ components:
           description: Block list type.
           enum:
           - regex
-          - regular
-          - domains
-          - emails
+          - domain
+          - email
+          - word
           title: Type
           type: string
           x-stream-index: "003"
@@ -2903,6 +2903,7 @@ components:
           description: List of words to block
           items:
             type: string
+          minimum: 1
           title: Words
           type: array
           x-stream-index: "002"
@@ -10088,11 +10089,16 @@ components:
           writeOnly: true
           x-stream-index: "001"
         words:
+          description: List of words to block
           items:
             type: string
+          minimum: 1
+          title: Words
           type: array
           x-stream-index: "002"
+      title: Update block list
       type: object
+      x-stream-docs-page-id: update_block_list
     UpdateCallMembersRequest:
       nullable: true
       properties:
@@ -11590,7 +11596,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v99.1.1
+  version: v99.2.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -11798,6 +11804,8 @@ paths:
         name: name
         required: true
         schema:
+          description: Block list name
+          title: Name
           type: string
           writeOnly: true
           x-stream-index: "001"
@@ -11806,6 +11814,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UpdateBlockListRequest'
+        description: Update block list
         required: true
       responses:
         "201":
@@ -11829,6 +11838,40 @@ paths:
       summary: Update block list
       tags:
       - Settings
+      - Moderation
+  /api/v2/chat/blocklists/{type}/validate:
+    post:
+      description: |
+        Runs specific blocklist validation, returns an appropriate error if the blocklist is invalid
+      operationId: ValidateBlockList
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBlockListRequest'
+        description: Block list
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Validate Blocklist
+      tags:
       - Moderation
   /api/v2/chat/channels:
     post:
