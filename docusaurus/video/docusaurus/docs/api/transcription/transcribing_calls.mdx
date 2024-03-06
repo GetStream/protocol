@@ -1,0 +1,187 @@
+---
+id: transcription_calls
+sidebar_position: 1
+slug: /transcribing/calls
+title: Transcribing calls
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+Transcribing calls allows for the conversion of spoken words into written text. Transcription can be started/stopped via API calls or configured to start automatically when the first user joins the call. Call transcription is done by the Stream server-side and later stored on AWS S3. You can also configure your Stream application to have files stored on your own S3 bucket (in that case, storage costs will not apply).
+
+By default, transcriptions will be provided in a jsonl file.
+
+Note: Transcriptions will capture all speakers in a single file. 
+
+## Start and stop call transcription
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+// starts transcription
+call.startTranscription();
+
+// stops the transcription for the call
+call.stopTranscription();
+```
+
+</TabItem>
+<TabItem value="py" label="Python">
+
+```py
+// starts transcribing
+call.start_transcription()
+
+// stops the transcription for the call
+call.stop_transcription()
+```
+
+</TabItem>
+<TabItem value="curl" label="cURL">
+
+```bash
+curl -X POST "https://video.stream-io-api.com/video/call/default/${CALL_ID}/start_transcription?api_key=${API_KEY}" -H "Authorization: ${JWT_TOKEN}" -H "stream-auth-type: jwt"
+
+curl -X POST "https://video.stream-io-api.com/video/call/default/${CALL_ID}/stop_transcription?api_key=${API_KEY}" -H "Authorization: ${JWT_TOKEN}" -H "stream-auth-type: jwt"
+```
+
+</TabItem>
+</Tabs>
+
+## List call transcriptions
+
+This endpoint returns the list of transcriptionss for a call. When using Stream S3 as storage (default) all links are signed and expire after 2-weeks.
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+call.listTranscriptions();
+```
+
+</TabItem>
+<TabItem value="py" label="Python">
+
+```py
+call.list_transcriptions()
+```
+
+</TabItem>
+<TabItem value="curl" label="cURL">
+
+```bash
+curl -X GET "https://video.stream-io-api.com/video/call/default/${CALL_ID}/transcriptions?api_key=${API_KEY}" -H "Authorization: ${JWT_TOKEN}" -H "stream-auth-type: jwt"
+```
+
+</TabItem>
+</Tabs>
+
+## Events
+
+These events are sent to users connected to the call and your webhook/SQS:
+
+- `call.transcription_started` when the call transcription has started
+- `call.transcription_stopped` when the call transcription has stopped
+- `call.transcription_ready` when the transcription is available for download
+- `call.transcription_failed` when transcribing fails for any reason
+
+## User Permissions
+
+The following permissions are checked when users interact with the call transcription API.
+
+- `StartTranscription` required to start the transcription
+- `StopTranscription` required to stop the transcription
+- `ListTranscriptions` required to retrieve the list of transcriptionss
+
+## Enabling / Disabling call transcription
+
+Transcription can be configured from the Dashboard (see call type screen) or directly via the API. It is also possible to change the transcription settings for a call and override the default settings coming from the its call type.
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+// Disable on call level
+call.update({
+  settings_override: {
+    transcription: {
+      mode: VideoTranscriptionSettingsRequestModeEnum.DISABLED,
+    },
+  },
+});
+
+// Disable on call type level
+client.video.updateCallType('<call type name>', {
+  settings: {
+    transcription: {
+      mode: VideoTranscriptionSettingsModeEnum.DISABLED,
+    },
+  },
+});
+
+// Enable
+call.update({
+  settings_override: {
+    transcription: {
+      mode: VideoTranscriptionSettingsRequestModeEnum.AVAILABLE,
+    },
+  },
+});
+
+// Other settings
+call.update({
+  settings_override: {
+    transcription: {
+      audio_only: false,
+      quality: VideoTranscriptionSettingsRequestQualityEnum.AUTO_ON,
+    },
+  },
+});
+```
+
+</TabItem>
+<TabItem value="py" label="Python">
+
+```py
+# Disable on call level
+call.update(
+    settings_override=CallSettingsRequest(
+        transcription=TranscriptionSettingsRequest(
+            mode='disabled',
+        ),
+    ),
+)
+
+# Disable on call type level
+call_type_name = 'default'
+client.video.update_call_type(call_type_name,
+    settings=CallSettingsRequest(
+        transcription=TranscriptionSettingsRequest(
+            mode='disabled',
+        ),
+    ),
+)
+
+# Automatically transcribe calls
+client.video.update_call_type(
+    settings=CallSettingsRequest(
+        transcription=TranscriptionSettingsRequest(
+            mode='auto-on',
+        ),
+    ),
+)
+
+# Enable
+client.update(
+    settings_override=CallSettingsRequest(
+        transcription=TranscriptionSettingsRequest(
+            mode='available',
+        ),
+    ),
+)
+```
+
+</TabItem>
+</Tabs>
