@@ -208,6 +208,29 @@ components:
       - enabled
       - hls
       type: object
+    CallEvent:
+      nullable: true
+      properties:
+        description:
+          type: string
+          x-stream-index: "003"
+        severity:
+          format: int32
+          type: integer
+          x-stream-index: "002"
+        timestamp:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+        type:
+          type: string
+          x-stream-index: "004"
+      required:
+      - timestamp
+      - severity
+      - description
+      - type
+      type: object
     CallIngressResponse:
       properties:
         rtmp:
@@ -555,6 +578,16 @@ components:
       - members
       - own_capabilities
       type: object
+    CallTimeline:
+      properties:
+        events:
+          items:
+            $ref: '#/components/schemas/CallEvent'
+          type: array
+          x-stream-index: "001"
+      required:
+      - events
+      type: object
     CallTranscription:
       description: CallTranscription represents a transcription of a call.
       properties:
@@ -649,6 +682,20 @@ components:
           x-stream-index: "002"
       required:
       - id
+      type: object
+    Coordinates:
+      properties:
+        latitude:
+          format: float
+          type: number
+          x-stream-index: "001"
+        longitude:
+          format: float
+          type: number
+          x-stream-index: "002"
+      required:
+      - latitude
+      - longitude
       type: object
     CreateCallTypeRequest:
       nullable: true
@@ -1053,6 +1100,77 @@ components:
       - own_capabilities
       - duration
       type: object
+    GetCallStatsResponse:
+      nullable: true
+      properties:
+        average_jitter:
+          format: float
+          type: number
+          x-stream-index: "005"
+        average_latency:
+          format: float
+          type: number
+          x-stream-index: "004"
+        call_duration_seconds:
+          format: int64
+          type: integer
+          x-stream-index: "002"
+        call_timeline:
+          $ref: '#/components/schemas/CallTimeline'
+          x-stream-index: "012"
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+        max_participants:
+          format: int32
+          type: integer
+          x-stream-index: "006"
+        participant_report:
+          additionalProperties:
+            $ref: '#/components/schemas/UserStats'
+          type: object
+          x-stream-index: "013"
+        publishing_participants:
+          format: int32
+          type: integer
+          x-stream-index: "007"
+        quality_score:
+          format: int32
+          type: integer
+          x-stream-index: "003"
+        sfu_count:
+          format: int32
+          type: integer
+          x-stream-index: "008"
+        sfus:
+          items:
+            $ref: '#/components/schemas/SFULocationResponse'
+          type: array
+          x-stream-index: "011"
+        total_freezes_duration:
+          format: float
+          type: number
+          x-stream-index: "010"
+        total_quality_limitation_duration:
+          format: float
+          type: number
+          x-stream-index: "009"
+      required:
+      - duration
+      - call_duration_seconds
+      - quality_score
+      - average_latency
+      - average_jitter
+      - max_participants
+      - publishing_participants
+      - sfu_count
+      - total_quality_limitation_duration
+      - total_freezes_duration
+      - sfus
+      - participant_report
+      type: object
     GetCallTypeResponse:
       nullable: true
       properties:
@@ -1371,6 +1489,22 @@ components:
       required:
       - duration
       - transcriptions
+      type: object
+    Location:
+      properties:
+        continent_code:
+          type: string
+          x-stream-index: "003"
+        country_iso_code:
+          type: string
+          x-stream-index: "002"
+        subdivision_iso_code:
+          type: string
+          x-stream-index: "001"
+      required:
+      - subdivision_iso_code
+      - country_iso_code
+      - continent_code
       type: object
     MemberRequest:
       properties:
@@ -1789,6 +1923,26 @@ components:
           x-stream-index: "003"
       required:
       - s3_region
+      type: object
+    SFULocationResponse:
+      properties:
+        coordinates:
+          $ref: '#/components/schemas/Coordinates'
+          x-stream-index: "004"
+        datacenter:
+          type: string
+          x-stream-index: "002"
+        id:
+          type: string
+          x-stream-index: "001"
+        location:
+          $ref: '#/components/schemas/Location'
+          x-stream-index: "003"
+      required:
+      - id
+      - datacenter
+      - location
+      - coordinates
       type: object
     ScreensharingSettings:
       properties:
@@ -2325,6 +2479,25 @@ components:
       required:
       - duration
       type: object
+    UserInfoResponse:
+      properties:
+        Custom:
+          type: object
+          writeOnly: true
+          x-stream-index: "003"
+        Image:
+          type: string
+          writeOnly: true
+          x-stream-index: "002"
+        Name:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      required:
+      - Name
+      - Image
+      - Custom
+      type: object
     UserRequest:
       properties:
         custom:
@@ -2412,6 +2585,43 @@ components:
       - teams
       - created_at
       - updated_at
+      type: object
+    UserSessionStats:
+      properties:
+        os:
+          type: string
+          x-stream-index: "002"
+        sdk:
+          type: string
+          x-stream-index: "004"
+        sdk_version:
+          type: string
+          x-stream-index: "005"
+        timeline:
+          $ref: '#/components/schemas/CallTimeline'
+          x-stream-index: "001"
+        webrtc_version:
+          type: string
+          x-stream-index: "003"
+      required:
+      - os
+      - webrtc_version
+      - sdk
+      - sdk_version
+      type: object
+    UserStats:
+      properties:
+        info:
+          $ref: '#/components/schemas/UserInfoResponse'
+          x-stream-index: "001"
+        session_stats:
+          additionalProperties:
+            $ref: '#/components/schemas/UserSessionStats'
+          type: object
+          x-stream-index: "002"
+      required:
+      - info
+      - session_stats
       type: object
     VideoSettings:
       properties:
@@ -2518,7 +2728,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v100.9.0
+  version: v100.10.0
 openapi: 3.0.3
 paths:
   /video/call/{type}/{id}:
@@ -3320,6 +3530,59 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Start transcription
+  /video/call/{type}/{id}/stats/{session}:
+    get:
+      description: |2
+
+
+        Required permissions:
+        - ReadCallStats
+      operationId: GetCallStats
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
+      - in: path
+        name: session
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "003"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCallStatsResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get Call Stats
   /video/call/{type}/{id}/stop_broadcasting:
     post:
       description: |
