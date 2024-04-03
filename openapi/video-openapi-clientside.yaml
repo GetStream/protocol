@@ -1460,6 +1460,27 @@ components:
       - members
       - own_capabilities
       type: object
+    CallStatsReportSummaryResponse:
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "001"
+        call_session_id:
+          type: string
+          x-stream-index: "002"
+        call_status:
+          type: string
+          x-stream-index: "004"
+        first_stats_time:
+          format: date-time
+          type: string
+          x-stream-index: "003"
+      required:
+      - call_cid
+      - call_session_id
+      - first_stats_time
+      - call_status
+      type: object
     CallTimeline:
       properties:
         events:
@@ -2691,6 +2712,54 @@ components:
       required:
       - duration
       type: object
+    QueryCallStatsRequest:
+      nullable: true
+      properties:
+        filter_conditions:
+          type: object
+          x-stream-index: "001"
+        limit:
+          format: int32
+          maximum: 25
+          minimum: 0
+          type: integer
+          x-stream-index: "004.001"
+        next:
+          type: string
+          x-stream-index: "004.002"
+        prev:
+          type: string
+          x-stream-index: "004.003"
+        sort:
+          items:
+            $ref: '#/components/schemas/SortParamRequest'
+          maximum: 2
+          type: array
+          x-stream-index: "002"
+      type: object
+    QueryCallStatsResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        next:
+          type: string
+          x-stream-index: "003.001"
+        prev:
+          type: string
+          x-stream-index: "003.002"
+        reports:
+          items:
+            $ref: '#/components/schemas/CallStatsReportSummaryResponse'
+          type: array
+          x-stream-index: "001"
+      required:
+      - reports
+      - duration
+      type: object
     QueryCallsRequest:
       nullable: true
       properties:
@@ -3869,7 +3938,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v101.3.2
+  version: v102.0.0
 openapi: 3.0.3
 paths:
   /video/call/{type}/{id}:
@@ -5433,6 +5502,40 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Query call members
+  /video/call/stats:
+    post:
+      description: |2
+
+
+        Required permissions:
+        - ReadCallStats
+      operationId: QueryCallStats
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryCallStatsRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryCallStatsResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Query Call Stats
   /video/calls:
     post:
       description: |
