@@ -703,6 +703,7 @@ components:
           enum:
           - flag
           - block
+          - shadow_block
           type: string
           x-stream-index: "002"
         blocklist:
@@ -2082,6 +2083,27 @@ components:
       - members
       - own_capabilities
       type: object
+    CallStatsReportSummaryResponse:
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "001"
+        call_session_id:
+          type: string
+          x-stream-index: "002"
+        call_status:
+          type: string
+          x-stream-index: "004"
+        first_stats_time:
+          format: date-time
+          type: string
+          x-stream-index: "003"
+      required:
+      - call_cid
+      - call_session_id
+      - first_stats_time
+      - call_status
+      type: object
     CallTimeline:
       properties:
         events:
@@ -2454,6 +2476,7 @@ components:
           enum:
           - flag
           - block
+          - shadow_block
           type: string
           x-stream-index: "001.019"
         automod_thresholds:
@@ -2466,6 +2489,7 @@ components:
           enum:
           - flag
           - block
+          - shadow_block
           type: string
           x-stream-index: "001.021"
         blocklists:
@@ -2650,6 +2674,7 @@ components:
           enum:
           - flag
           - block
+          - shadow_block
           type: string
           x-stream-index: 001.002.019
         automod_thresholds:
@@ -2662,6 +2687,7 @@ components:
           enum:
           - flag
           - block
+          - shadow_block
           type: string
           x-stream-index: 001.002.021
         blocklists:
@@ -6240,7 +6266,7 @@ components:
           type: array
           x-stream-index: "001.002"
         type:
-          default: message.new
+          default: notification.thread_message_new
           type: string
           x-stream-index: "004.001"
         user:
@@ -7785,6 +7811,54 @@ components:
       - bans
       - duration
       type: object
+    QueryCallStatsRequest:
+      nullable: true
+      properties:
+        filter_conditions:
+          type: object
+          x-stream-index: "001"
+        limit:
+          format: int32
+          maximum: 25
+          minimum: 0
+          type: integer
+          x-stream-index: "004.001"
+        next:
+          type: string
+          x-stream-index: "004.002"
+        prev:
+          type: string
+          x-stream-index: "004.003"
+        sort:
+          items:
+            $ref: '#/components/schemas/SortParamRequest'
+          maximum: 2
+          type: array
+          x-stream-index: "002"
+      type: object
+    QueryCallStatsResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        next:
+          type: string
+          x-stream-index: "003.001"
+        prev:
+          type: string
+          x-stream-index: "003.002"
+        reports:
+          items:
+            $ref: '#/components/schemas/CallStatsReportSummaryResponse'
+          type: array
+          x-stream-index: "001"
+      required:
+      - reports
+      - duration
+      type: object
     QueryCallsRequest:
       nullable: true
       properties:
@@ -9155,6 +9229,20 @@ components:
           x-stream-index: "001.001"
       required:
       - duration
+      type: object
+    Stats:
+      properties:
+        average_seconds:
+          format: float
+          type: number
+          x-stream-index: "001"
+        max_seconds:
+          format: float
+          type: number
+          x-stream-index: "002"
+      required:
+      - average_seconds
+      - max_seconds
       type: object
     StatsOptions:
       properties:
@@ -10626,7 +10714,10 @@ components:
       properties:
         duration:
           type: string
-          x-stream-index: "002.001"
+          x-stream-index: "003.001"
+        membership_deletion_task_id:
+          type: string
+          x-stream-index: "002"
         users:
           additionalProperties:
             $ref: '#/components/schemas/UserObject'
@@ -10638,6 +10729,7 @@ components:
             key: user_id
       required:
       - users
+      - membership_deletion_task_id
       - duration
       type: object
     UpdatedCallPermissionsEvent:
@@ -10800,10 +10892,16 @@ components:
         name:
           type: string
           x-stream-index: "001"
+        roles:
+          items:
+            type: string
+          type: array
+          x-stream-index: "004"
       required:
       - name
       - image
       - custom
+      - roles
       type: object
     UserMute:
       nullable: true
@@ -11156,9 +11254,27 @@ components:
       type: object
     UserSessionStats:
       properties:
+        freeze_duration_seconds:
+          format: float
+          type: number
+          x-stream-index: "009"
+        jitter:
+          $ref: '#/components/schemas/Stats'
+          x-stream-index: "006"
+        latency:
+          $ref: '#/components/schemas/Stats'
+          x-stream-index: "007"
         os:
           type: string
           x-stream-index: "002"
+        packet_loss_fraction:
+          format: float
+          type: number
+          x-stream-index: "010"
+        quality_score:
+          format: float
+          type: number
+          x-stream-index: "008"
         sdk:
           type: string
           x-stream-index: "004"
@@ -11176,6 +11292,9 @@ components:
       - webrtc_version
       - sdk
       - sdk_version
+      - quality_score
+      - freeze_duration_seconds
+      - packet_loss_fraction
       type: object
     UserStats:
       properties:
@@ -11672,7 +11791,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v100.14.1
+  version: v102.0.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -16035,6 +16154,40 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Query call members
+  /api/v2/video/call/stats:
+    post:
+      description: |2
+
+
+        Required permissions:
+        - ReadCallStats
+      operationId: QueryCallStats
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryCallStatsRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryCallStatsResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Query Call Stats
   /api/v2/video/calls:
     post:
       description: |
