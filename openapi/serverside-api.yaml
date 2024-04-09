@@ -2832,6 +2832,50 @@ components:
       - status
       - duration
       type: object
+    CollectUserFeedbackRequest:
+      nullable: true
+      properties:
+        custom:
+          type: object
+          x-stream-index: "009"
+        rating:
+          format: int32
+          maximum: 5
+          minimum: 1
+          type: integer
+          x-stream-index: "007"
+        reason:
+          maxLength: 1000
+          type: string
+          x-stream-index: "008"
+        sdk:
+          maxLength: 50
+          type: string
+          x-stream-index: "005"
+        sdk_version:
+          maxLength: 50
+          type: string
+          x-stream-index: "006"
+        user_session_id:
+          maxLength: 50
+          type: string
+          x-stream-index: "004"
+      required:
+      - user_session_id
+      - sdk
+      - sdk_version
+      type: object
+    CollectUserFeedbackResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      type: object
     Command:
       description: Represents custom chat command
       nullable: true
@@ -11954,7 +11998,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v102.1.0
+  version: v103.0.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -16663,6 +16707,65 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Send custom event
+  /api/v2/video/call/{type}/{id}/feedback/{session}:
+    post:
+      description: |2
+
+
+        Required permissions:
+        - JoinCall
+      operationId: CollectUserFeedback
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
+      - in: path
+        name: session
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "003"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CollectUserFeedbackRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollectUserFeedbackResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Collect user feedback
   /api/v2/video/call/{type}/{id}/go_live:
     post:
       description: |2
