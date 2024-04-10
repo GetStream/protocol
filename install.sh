@@ -40,16 +40,16 @@ wget -nv -O "$PROTOC_DIR/protoc-${PROTOC_VERSION}-${PROTO_ARCH}.zip" https://git
 unzip -qq -o $PROTOC_DIR/protoc-"${PROTOC_VERSION}"-${PROTO_ARCH}.zip -d "${PROTOC_DIR}"
 rm -f $PROTOC_DIR/protoc-"${PROTOC_VERSION}"-${PROTO_ARCH}.zip "$PROTOC_DIR/readme.txt"
 
-GOBIN=$PROTOC_DIR/bin
+GOBIN=/bin
 echo $GOBIN
 
-go install github.com/twitchtv/twirp/protoc-gen-twirp@"${PROTO_TWIRP_VERSION}"
-go install google.golang.org/protobuf/cmd/protoc-gen-go@"${PROTO_GO_VERSION}"
-go install github.com/planetscale/vtprotobuf/cmd/protoc-gen-go-vtproto@"${PROTO_VTPROTO_VERSION}"
-go install github.com/yoheimuta/protolint/cmd/protolint@"${PROTO_LINT_VERSION}"
+GOBIN=$PROTOC_DIR/bin go install github.com/twitchtv/twirp/protoc-gen-twirp@"${PROTO_TWIRP_VERSION}"
+GOBIN=$PROTOC_DIR/bin go install google.golang.org/protobuf/cmd/protoc-gen-go@"${PROTO_GO_VERSION}"
+GOBIN=$PROTOC_DIR/bin go install github.com/planetscale/vtprotobuf/cmd/protoc-gen-go-vtproto@"${PROTO_VTPROTO_VERSION}"
+GOBIN=$PROTOC_DIR/bin go install github.com/yoheimuta/protolint/cmd/protolint@"${PROTO_LINT_VERSION}"
 (
   cd "$REPO/tools"
-  ./install.sh
+  PROTOC_DIR=$PROTOC_DIR ./install.sh
 )
 
 echo "Installing plugins..."
