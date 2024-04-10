@@ -2,19 +2,21 @@
 id: transcription_calls
 sidebar_position: 1
 slug: /transcribing/calls
-title: Transcribing calls
+title: Call Transcription and Closed Captions
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-Transcribing calls allows for the conversion of spoken words into written text. Transcription can be started/stopped via API calls or configured to start automatically when the first user joins the call. Call transcription is done by the Stream server-side and later stored on AWS S3. You can also configure your Stream application to have files stored on your own S3 bucket (in that case, storage costs will not apply).
+You can transcribe calls to text using API calls or configure your call types to be automatically transcribed. When transcription is enabled automatically, the transcription process will start when the first user joins the call, and then stop when all participant have left the call. 
 
-By default, transcriptions will be provided in a jsonl file.
+Transcriptions are structured as plain-text JSONL files and automatically uploaded to Stream managed storage or to your own configurable storage. Websocket and webhook events are also sent when transcription starts, stops and completes.
 
-Note: Transcriptions will capture all speakers in a single file. 
+Stream supports transcribing calls in multiple languages as well as transcriptions for closed captions. You can find more information about both later in this document.
 
-## Start and stop call transcription
+> **Note:**: we transcribe 1 dominant speaker and 2 other participants at a time
+
+## Quick Start
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
@@ -31,10 +33,10 @@ call.stopTranscription();
 <TabItem value="py" label="Python">
 
 ```py
-// starts transcribing
+# starts transcribing
 call.start_transcription()
 
-// stops the transcription for the call
+# stops the transcription for the call
 call.stop_transcription()
 ```
 
@@ -47,12 +49,14 @@ curl -X POST "https://video.stream-io-api.com/video/call/default/${CALL_ID}/star
 curl -X POST "https://video.stream-io-api.com/video/call/default/${CALL_ID}/stop_transcription?api_key=${API_KEY}" -H "Authorization: ${JWT_TOKEN}" -H "stream-auth-type: jwt"
 ```
 
+By default the transcriptions are stored on Stream’s S3 bucket and retained for 2-weeks. You can also configure your application to have transcriptions stored on your own external storage, see the storage section of tis document for more detail.
+
 </TabItem>
 </Tabs>
 
 ## List call transcriptions
 
-This endpoint returns the list of transcriptionss for a call. When using Stream S3 as storage (default) all links are signed and expire after 2-weeks.
+> **Note:** transcriptions stored on Stream’s S3 bucket (the default) will be returned with a signed URL.
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
@@ -82,14 +86,42 @@ curl -X GET "https://video.stream-io-api.com/video/call/default/${CALL_ID}/trans
 
 These events are sent to users connected to the call and your webhook/SQS:
 
-- `call.transcription_started` when the call transcription has started
-- `call.transcription_stopped` when the call transcription has stopped
-- `call.transcription_ready` when the transcription is available for download
-- `call.transcription_failed` when transcribing fails for any reason
+- `call.transcription_started` sent when the transcription of the call has started
+- `call.transcription_stopped` this event is sent only when the transcription is explicitly stopped through an API call, not in cases where the transcription process encounters an error.
+- `call.transcription_ready` dispatched when the transcription is completed and available for download. An example payload of this event is detailed below.
+- `call.transcription_failed` sent if the transcription process encounters any issues.
+
+## `transcription.ready` event example
+```json
+{
+    "type": "call.transcription_ready",
+    "created_at": "2024-03-18T08:24:14.769328551Z",
+    "call_cid": "default:mkzN17EUrgvn",
+    "call_transcription": {
+        "filename": "transcript_default_mkzN17EUrgvn_1710750207642.jsonl",
+        "url": "https://frankfurt.stream-io-cdn.com/1129528/video/transcriptions/default_mkzN17EUrgvn/transcript_default_mkzN17EUrgvn_1710750207642.jsonl?Expires=1710751154&Signature=OhdoTClQm5MT8ITPLAEJcKNflsJ7B2G3j7kx~kQyPrAETftrM2rzZy4IIT1XIC~8MrbPduWcj1tILXoSg3ldfZEHWRPqeMFr0caljPAVAL~mybUb4Kct2JoPjfsYfmj4FzSQbT7Iib38qPr7uiP0axTFm0VKRenkNwwCoS0F858u9Mdr8r6fTzILhiOZ1hOjw3V-TT1YbR20Yn4abKi6i50GAs5fqUDtSlo9DmEJgcS79Y0wUD1g18cGZvg3NiH3ogHQnmvoNrf28Cxc0JhBCe4wFErCMJ3pinewEOwDEEOMdHcRtcfWy72w6MTEwi0yomHYIU5flaYgUXCkkOJODw__&Key-Pair-Id=APKAIHG36VEWPDULE23Q",
+        "start_time": "2024-03-18T08:23:27.642688204Z",
+        "end_time": "2024-03-18T08:24:14.754731786Z"
+    },
+    "received_at": "2024-03-18T08:24:14.790Z"
+}
+
+```
+## Transcription JSONL file format
+
+  ```json
+  {"type":"speech", "start_time": "2024-02-28T08:18:18.061031795Z", "stop_time":"2024-02-28T08:18:22.401031795Z", "speaker_id": "Sacha_Arbonel", "text": "hello"}
+  {"type":"speech", "start_time": "2024-02-28T08:18:22.401031795Z", "stop_time":"2024-02-28T08:18:26.741031795Z", "speaker_id": "Sacha_Arbonel", "text": "how are you"}
+  {"type":"speech", "start_time": "2024-02-28T08:18:26.741031795Z", "stop_time":"2024-02-28T08:18:31.081031795Z", "speaker_id": "Tommaso_Barbugli", "text": "I'm good"}
+  {"type":"speech", "start_time": "2024-02-28T08:18:31.081031795Z", "stop_time":"2024-02-28T08:18:35.421031795Z", "speaker_id": "Tommaso_Barbugli", "text": "how about you"}
+  {"type":"speech", "start_time": "2024-02-28T08:18:35.421031795Z", "stop_time":"2024-02-28T08:18:39.761031795Z", "speaker_id": "Sacha_Arbonel", "text": "I'm good too"}
+  {"type":"speech", "start_time": "2024-02-28T08:18:39.761031795Z", "stop_time":"2024-02-28T08:18:44.101031795Z", "speaker_id": "Tommaso_Barbugli", "text": "that's great"}
+  {"type":"speech", "start_time": "2024-02-28T08:18:44.101031795Z", "stop_time":"2024-02-28T08:18:48.441031795Z", "speaker_id": "Tommaso_Barbugli", "text": "I'm glad to hear that"}
+  ```
 
 ## User Permissions
 
-The following permissions are checked when users interact with the call transcription API.
+The following permissions are available to grant/restrict access to this functionality when used client-side.
 
 - `StartTranscription` required to start the transcription
 - `StopTranscription` required to stop the transcription
@@ -185,3 +217,48 @@ client.update(
 
 </TabItem>
 </Tabs>
+
+
+## Multi language support
+
+When using out of the box, transcriptions are optimized for calls with english speakers. You can configure call transcription to optimize for a different language than english. You can also specify as secondary language as well if you expect to have two languages used simultaneously in the same call.
+
+Please note: the call transcription feature does not perform any language translation. When you select a different language, the trascription process will simply improve the speech-to-text detection for that language. 
+
+You can set the transcription languages in two ways: either as a call setting or you can provide them to the `StartTranscription` API call. Languages are specified using their international language code (ISO639)
+Please note: we currently don’t support changing language settings during the call.
+
+## Supported languages
+
+- English (en) - default
+- French (fr)
+- Spanish (es)
+- German (de)
+- Italian (it)
+- Dutch (nl)
+- Portuguese (pt)
+- Polish (pl)
+- Catalan (ca)
+- Czech (cs)
+- Danish (da)
+- Greek (el)
+- Finnish (fi)
+- Indonesian (id)
+- Japanese (ja)
+- Russian (ru)
+- Swedish (sv)
+- Tamil (ta)
+- Thai (th)
+- Turkish (tr)
+- Hungarian (hu)
+- Romanian (to)
+- Chinese (zh)
+- Arabic (ar)
+- Tagalog (tl)
+- Hebrew (he)
+- Hindi (hi)
+- Croatian (hr)
+- Korean (ko)
+- Malay (ms)
+- Norwegian (no)
+- Ukrainian (uk)
