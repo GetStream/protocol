@@ -4,7 +4,7 @@ set -e
 
 REPO="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 PB=$REPO/protobuf
-PROTOC_DIR=$REPO/.protoc
+PROTOC_DIR=${PROTOC_DIR:-"/opt/.protoc"}
 echo "Installing protoc and plugins in $PROTOC_DIR"
 
 cd "$PB"
