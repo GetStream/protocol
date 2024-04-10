@@ -2,21 +2,21 @@
 id: transcription_calls
 sidebar_position: 1
 slug: /transcribing/calls
-title: Call Transcriptions
+title: Call Transcription and Closed Captions
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-Transcribing calls allows for the conversion of spoken words into written text. Transcription can be started/stopped via API calls or configured to start automatically when the first user joins the call. Call transcription is done by the Stream server-side and later stored on AWS S3. There is no charge for storage of transcriptions. You can also configure your Stream application to have files stored on your own S3 bucket. 
+You can transcribe calls to text using API calls or configure your call types to be automatically transcribed. When transcription is enabled automatically, the transcription process will start when the first user joins the call, and then stop when all participant have left the call. 
 
-By default, transcriptions will be provided in a jsonl file.
+Transcriptions are structured as plain-text JSONL files and automatically uploaded to Stream managed storage or to your own configurable storage. Websocket and webhook events are also sent when transcription starts, stops and completes.
 
-> **Note:**  Transcriptions will capture all speakers in a single file. 
+Stream supports transcribing calls in multiple languages as well as transcriptions for closed captions. You can find more information about both later in this document.
 
-> **Note:**  It's important to note that transcriptions should not be used as a replacement for closed captioning (CC). We have it planned on our [roadmap](https://github.com/GetStream/protocol/discussions/127) to support CC in the future.
+> **Note:**: we transcribe 1 dominant speaker and 2 other participants at a time
 
-## Start and stop call transcription
+## Quick Start
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
@@ -49,12 +49,14 @@ curl -X POST "https://video.stream-io-api.com/video/call/default/${CALL_ID}/star
 curl -X POST "https://video.stream-io-api.com/video/call/default/${CALL_ID}/stop_transcription?api_key=${API_KEY}" -H "Authorization: ${JWT_TOKEN}" -H "stream-auth-type: jwt"
 ```
 
+By default the transcriptions are stored on Stream’s S3 bucket and retained for 2-weeks. You can also configure your application to have transcriptions stored on your own external storage, see the storage section of tis document for more detail.
+
 </TabItem>
 </Tabs>
 
 ## List call transcriptions
 
-This endpoint returns the list of transcriptionss for a call. When using Stream S3 as storage (default) all links are signed and expire after 2-weeks.
+> **Note:** transcriptions stored on Stream’s S3 bucket (the default) will be returned with a signed URL.
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
@@ -89,8 +91,8 @@ These events are sent to users connected to the call and your webhook/SQS:
 - `call.transcription_ready` dispatched when the transcription is completed and available for download. An example payload of this event is detailed below.
 - `call.transcription_failed` sent if the transcription process encounters any issues.
 
-## Transcription ready format
-```
+## `transcription.ready` event example
+```json
 {
     "type": "call.transcription_ready",
     "created_at": "2024-03-18T08:24:14.769328551Z",
@@ -107,7 +109,7 @@ These events are sent to users connected to the call and your webhook/SQS:
 ```
 ## Transcription JSONL file format
 
-  ```jsonl
+  ```json
   {"type":"speech", "start_time": "2024-02-28T08:18:18.061031795Z", "stop_time":"2024-02-28T08:18:22.401031795Z", "speaker_id": "Sacha_Arbonel", "text": "hello"}
   {"type":"speech", "start_time": "2024-02-28T08:18:22.401031795Z", "stop_time":"2024-02-28T08:18:26.741031795Z", "speaker_id": "Sacha_Arbonel", "text": "how are you"}
   {"type":"speech", "start_time": "2024-02-28T08:18:26.741031795Z", "stop_time":"2024-02-28T08:18:31.081031795Z", "speaker_id": "Tommaso_Barbugli", "text": "I'm good"}
@@ -119,7 +121,7 @@ These events are sent to users connected to the call and your webhook/SQS:
 
 ## User Permissions
 
-The following permissions are checked when users interact with the call transcription API.
+The following permissions are available to grant/restrict access to this functionality when used client-side.
 
 - `StartTranscription` required to start the transcription
 - `StopTranscription` required to stop the transcription
@@ -215,3 +217,48 @@ client.update(
 
 </TabItem>
 </Tabs>
+
+
+## Multi language support
+
+When using out of the box, transcriptions are optimized for calls with english speakers. You can configure call transcription to optimize for a different language than english. You can also specify as secondary language as well if you expect to have two languages used simultaneously in the same call.
+
+Please note: the call transcription feature does not perform any language translation. When you select a different language, the trascription process will simply improve the speech-to-text detection for that language. 
+
+You can set the transcription languages in two ways: either as a call setting or you can provide them to the `StartTranscription` API call. Languages are specified using their international language code (ISO639)
+Please note: we currently don’t support changing language settings during the call.
+
+## Supported languages
+
+- English (en) - default
+- French (fr)
+- Spanish (es)
+- German (de)
+- Italian (it)
+- Dutch (nl)
+- Portuguese (pt)
+- Polish (pl)
+- Catalan (ca)
+- Czech (cs)
+- Danish (da)
+- Greek (el)
+- Finnish (fi)
+- Indonesian (id)
+- Japanese (ja)
+- Russian (ru)
+- Swedish (sv)
+- Tamil (ta)
+- Thai (th)
+- Turkish (tr)
+- Hungarian (hu)
+- Romanian (to)
+- Chinese (zh)
+- Arabic (ar)
+- Tagalog (tl)
+- Hebrew (he)
+- Hindi (hi)
+- Croatian (hr)
+- Korean (ko)
+- Malay (ms)
+- Norwegian (no)
+- Ukrainian (uk)
