@@ -58,7 +58,25 @@ await call.startRecording({
 <TabItem value="py" label="Python">
 
 ```py
-// TODO: code example for Python
+# 1. create a new storage with all the required parameters
+aws_s3_config = S3Request(
+    s3_region='us-east-1',
+    s3_api_key='my-access-key',
+    s3_secret='my-secret',
+)
+
+response = client.video.create_external_storage(
+    name='my-s3',
+    storage_type='s3',
+    bucket='my-bucket',
+    path='directory_name/',
+    aws_s3=aws_s3_config
+)
+# 2. update the call type to use the new storage
+client.video.update_call_type(name='allhands', external_storage= "my-s3")
+
+# 3. alternative, specify the storage when starting call recording
+call.start_recording(recording_external_storage= "my-s3")
 ```
 
 </TabItem>
@@ -130,7 +148,11 @@ await call.startRecording({
 <TabItem value="py" label="Python">
 
 ```py
-# TODO: code example for Python
+# 1. update the call type to use Stream S3 storage
+client.video.update_call_type('my-call-type', external_storage="stream-s3")
+
+# 2. specify Stream S3 storage when starting call recording
+call.start_recording(recording_external_storage="my-storage")
 ```
 
 </TabItem>
@@ -159,10 +181,10 @@ curl -X POST "https://video.stream-io-api.com/video/call/default/${CALL_ID}/star
 
 | Name          | Description | Required |
 |---------------|-------------|----------|
-| name          |             |          |
-| storage_type  |             |          |
-| bucket        |             |          |
-| custom_folder |             |          |
+| name          |unique name  |   yes    |
+| storage_type  |s3, gcs or abs|   yes    |
+| bucket        |bucket name|   yes    |
+| custom_folder |path inside the bucket|          |
 
 ## Amazon S3
 
@@ -170,15 +192,15 @@ To use Amazon S3 as your storage provider, you have two authentication options: 
 
 If you do not specify the `s3_api_key` parameter, Stream will use IAM role authentication. In that case make sure to have the correct IAM role configured for your application.
 
-| Name       | Description | Required |
-|------------|-------------|----------|
-| s3_region  |             |   yes    |
-| s3_api_key |             |          |
-| s3_secret  |             |          |
+| Name       | Required |
+|------------|----------|
+| s3_region  |   yes    |
+| s3_api_key |          |
+| s3_secret  |          |
 
 There are 2 ways to configure authentication on your S3 bucket:
 - By providing a key and secret
-- Or by having Stream's AWS account assume a role on your SQS queue.
+- Or by having Stream's AWS account assume a role on S3 bucket.
 With this option you omit the key and secret, but instead you set up a resource-based policy to grant Stream SendMessage permission on your S3 bucket.
 The following policy needs to be attached to your queue (replace the value of Resource with the fully qualified ARN of you S3 bucket):
 
@@ -230,13 +252,21 @@ await serverSideClient.createExternalStorage({
 ```
 
 </TabItem>
+
 <TabItem value="py" label="Python">
 
 ```py
-# TODO: code example for Python
+response = client.video.create_external_storage(
+    name='my-gcs',
+    storage_type='gcs',
+    bucket='my-bucket',
+    path='directory_name/',
+    gcs_credentials="content of the service account file"
+)
 ```
 
 </TabItem>
+
 <TabItem value="curl" label="cURL">
 
 ```bash

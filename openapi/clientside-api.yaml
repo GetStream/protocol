@@ -177,7 +177,7 @@ components:
       properties:
         agora_options:
           $ref: '#/components/schemas/Config'
-          x-stream-index: "001.038"
+          x-stream-index: "001.039"
         allowed_flag_reasons:
           items:
             type: string
@@ -203,7 +203,7 @@ components:
         cdn_expiration_seconds:
           format: int32
           type: integer
-          x-stream-index: "001.036"
+          x-stream-index: "001.037"
         channel_configs:
           additionalProperties:
             $ref: '#/components/schemas/ChannelConfig'
@@ -218,7 +218,7 @@ components:
           x-stream-index: "001.021"
         datadog_info:
           $ref: '#/components/schemas/DataDogInfo'
-          x-stream-index: "001.041"
+          x-stream-index: "001.042"
         disable_auth_checks:
           type: boolean
           x-stream-index: "001.010"
@@ -235,7 +235,7 @@ components:
           items:
             $ref: '#/components/schemas/GeofenceResponse'
           type: array
-          x-stream-index: "001.040"
+          x-stream-index: "001.041"
         grants:
           additionalProperties:
             items:
@@ -245,7 +245,7 @@ components:
           x-stream-index: "001.032"
         hms_options:
           $ref: '#/components/schemas/Config'
-          x-stream-index: "001.039"
+          x-stream-index: "001.040"
         image_moderation_enabled:
           type: boolean
           x-stream-index: "001.015"
@@ -276,13 +276,16 @@ components:
             type: array
           type: object
           x-stream-index: "001.007"
+        polls_enabled:
+          type: boolean
+          x-stream-index: "001.034"
         push_notifications:
           $ref: '#/components/schemas/PushNotificationFields'
           x-stream-index: "001.003"
         reminders_interval:
           format: int32
           type: integer
-          x-stream-index: "001.035"
+          x-stream-index: "001.036"
         revoke_tokens_issued_before:
           format: date-time
           type: string
@@ -318,12 +321,12 @@ components:
           x-stream-index: "001.013"
         video_provider:
           type: string
-          x-stream-index: "001.037"
+          x-stream-index: "001.038"
         webhook_events:
           items:
             type: string
           type: array
-          x-stream-index: "001.034"
+          x-stream-index: "001.035"
         webhook_url:
           type: string
           x-stream-index: "001.004"
@@ -356,6 +359,7 @@ components:
       - image_upload_config
       - grants
       - campaign_enabled
+      - polls_enabled
       - webhook_events
       - reminders_interval
       - cdn_expiration_seconds
@@ -367,7 +371,7 @@ components:
         Custom:
           type: object
           writeOnly: true
-          x-stream-index: "018"
+          x-stream-index: "020"
         actions:
           items:
             $ref: '#/components/schemas/Action'
@@ -404,21 +408,27 @@ components:
           x-stream-index: "014"
         giphy:
           $ref: '#/components/schemas/Images'
-          x-stream-index: "019"
+          x-stream-index: "021"
         image_url:
           type: string
           x-stream-index: "011"
         og_scrape_url:
           type: string
-          x-stream-index: "020"
+          x-stream-index: "022"
         original_height:
           format: int32
           type: integer
-          x-stream-index: "022"
+          x-stream-index: "024"
         original_width:
           format: int32
           type: integer
-          x-stream-index: "021"
+          x-stream-index: "023"
+        poll:
+          $ref: '#/components/schemas/Poll'
+          x-stream-index: "019"
+        poll_id:
+          type: string
+          x-stream-index: "018"
         pretext:
           type: string
           x-stream-index: "004"
@@ -435,7 +445,7 @@ components:
           type: string
           x-stream-index: "009"
         type:
-          description: Attachment type (e.g. image, video, url)
+          description: Attachment type (e.g. image, video, url, poll)
           title: Type
           type: string
           x-stream-index: "001"
@@ -450,7 +460,7 @@ components:
         Custom:
           type: object
           writeOnly: true
-          x-stream-index: "018"
+          x-stream-index: "020"
         actions:
           items:
             $ref: '#/components/schemas/ActionRequest'
@@ -487,21 +497,27 @@ components:
           x-stream-index: "014"
         giphy:
           $ref: '#/components/schemas/ImagesRequest'
-          x-stream-index: "019"
+          x-stream-index: "021"
         image_url:
           type: string
           x-stream-index: "011"
         og_scrape_url:
           type: string
-          x-stream-index: "020"
+          x-stream-index: "022"
         original_height:
           format: int32
           type: integer
-          x-stream-index: "022"
+          x-stream-index: "024"
         original_width:
           format: int32
           type: integer
-          x-stream-index: "021"
+          x-stream-index: "023"
+        poll:
+          $ref: '#/components/schemas/PollRequest'
+          x-stream-index: "019"
+        poll_id:
+          type: string
+          x-stream-index: "018"
         pretext:
           type: string
           x-stream-index: "004"
@@ -518,7 +534,7 @@ components:
           type: string
           x-stream-index: "009"
         type:
-          description: Attachment type (e.g. image, video, url)
+          description: Attachment type (e.g. image, video, url, poll)
           title: Type
           type: string
           x-stream-index: "001"
@@ -990,20 +1006,25 @@ components:
       properties:
         description:
           type: string
-          x-stream-index: "003"
+          x-stream-index: "004"
+        end_timestamp:
+          format: int64
+          type: integer
+          x-stream-index: "002"
         severity:
           format: int32
           type: integer
-          x-stream-index: "002"
+          x-stream-index: "003"
         timestamp:
           format: int32
           type: integer
           x-stream-index: "001"
         type:
           type: string
-          x-stream-index: "004"
+          x-stream-index: "005"
       required:
       - timestamp
+      - end_timestamp
       - severity
       - description
       - type
@@ -2376,6 +2397,19 @@ components:
       x-stream-event-call-type: true
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    CastPollVoteRequest:
+      nullable: true
+      properties:
+        poll_id:
+          maxLength: 255
+          type: string
+          x-stream-index: "002"
+        vote:
+          $ref: '#/components/schemas/VoteDataRequest'
+          x-stream-index: "003"
+      required:
+      - poll_id
+      type: object
     Channel:
       properties:
         Custom:
@@ -2470,39 +2504,39 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "001.023"
+          x-stream-index: "001.024"
         automod:
           enum:
           - disabled
           - simple
           - AI
           type: string
-          x-stream-index: "001.018"
+          x-stream-index: "001.019"
         automod_behavior:
           enum:
           - flag
           - block
           - shadow_block
           type: string
-          x-stream-index: "001.019"
+          x-stream-index: "001.020"
         automod_thresholds:
           $ref: '#/components/schemas/Thresholds'
-          x-stream-index: "001.024"
+          x-stream-index: "001.025"
         blocklist:
           type: string
-          x-stream-index: "001.020"
+          x-stream-index: "001.021"
         blocklist_behavior:
           enum:
           - flag
           - block
           - shadow_block
           type: string
-          x-stream-index: "001.021"
+          x-stream-index: "001.022"
         blocklists:
           items:
             $ref: '#/components/schemas/BlockListOptions'
           type: array
-          x-stream-index: "001.022"
+          x-stream-index: "001.023"
         commands:
           description: List of commands that channel supports
           items:
@@ -2527,16 +2561,19 @@ components:
           format: int32
           maximum: 20000
           type: integer
-          x-stream-index: "001.017"
+          x-stream-index: "001.018"
         message_retention:
           type: string
-          x-stream-index: "001.016"
+          x-stream-index: "001.017"
         mutes:
           type: boolean
           x-stream-index: "001.009"
         name:
           type: string
           x-stream-index: "001.001"
+        polls:
+          type: boolean
+          x-stream-index: "001.016"
         push_notifications:
           type: boolean
           x-stream-index: "001.013"
@@ -2587,6 +2624,7 @@ components:
       - push_notifications
       - reminders
       - mark_messages_pending
+      - polls
       - message_retention
       - max_message_length
       - automod
@@ -2668,39 +2706,39 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: 001.002.023
+          x-stream-index: 001.002.024
         automod:
           enum:
           - disabled
           - simple
           - AI
           type: string
-          x-stream-index: 001.002.018
+          x-stream-index: 001.002.019
         automod_behavior:
           enum:
           - flag
           - block
           - shadow_block
           type: string
-          x-stream-index: 001.002.019
+          x-stream-index: 001.002.020
         automod_thresholds:
           $ref: '#/components/schemas/Thresholds'
-          x-stream-index: 001.002.024
+          x-stream-index: 001.002.025
         blocklist:
           type: string
-          x-stream-index: 001.002.020
+          x-stream-index: 001.002.021
         blocklist_behavior:
           enum:
           - flag
           - block
           - shadow_block
           type: string
-          x-stream-index: 001.002.021
+          x-stream-index: 001.002.022
         blocklists:
           items:
             $ref: '#/components/schemas/BlockListOptions'
           type: array
-          x-stream-index: 001.002.022
+          x-stream-index: 001.002.023
         commands:
           items:
             $ref: '#/components/schemas/Command'
@@ -2735,16 +2773,19 @@ components:
           format: int32
           maximum: 20000
           type: integer
-          x-stream-index: 001.002.017
+          x-stream-index: 001.002.018
         message_retention:
           type: string
-          x-stream-index: 001.002.016
+          x-stream-index: 001.002.017
         mutes:
           type: boolean
           x-stream-index: 001.002.009
         name:
           type: string
           x-stream-index: 001.002.001
+        polls:
+          type: boolean
+          x-stream-index: 001.002.016
         push_notifications:
           type: boolean
           x-stream-index: 001.002.013
@@ -2797,6 +2838,7 @@ components:
       - push_notifications
       - reminders
       - mark_messages_pending
+      - polls
       - message_retention
       - max_message_length
       - automod
@@ -3978,6 +4020,91 @@ components:
           type: boolean
           x-stream-index: "004"
       type: object
+    CreatePollOptionRequest:
+      nullable: true
+      properties:
+        Custom:
+          type: object
+          writeOnly: true
+          x-stream-index: "004"
+        poll_id:
+          maxLength: 255
+          type: string
+          x-stream-index: "001"
+        position:
+          format: int32
+          type: integer
+          x-stream-index: "003"
+        text:
+          type: string
+          x-stream-index: "002"
+      required:
+      - poll_id
+      - text
+      type: object
+    CreatePollRequest:
+      description: Contains all information needed to create a new poll
+      nullable: true
+      properties:
+        Custom:
+          type: object
+          writeOnly: true
+          x-stream-index: "011"
+        allow_answers:
+          description: Indicates whether users can suggest user defined answers
+          title: Allow answers
+          type: boolean
+          x-stream-index: "009"
+        allow_user_suggested_options:
+          type: boolean
+          x-stream-index: "008"
+        description:
+          description: A description of the poll
+          title: Description
+          type: string
+          x-stream-index: "003"
+        enforce_unique_vote:
+          description: Indicates whether users can cast multiple votes
+          title: Multiple choice
+          type: boolean
+          x-stream-index: "006"
+        id:
+          maxLength: 255
+          type: string
+          x-stream-index: "001"
+        is_closed:
+          description: Indicates whether the poll is open for voting
+          title: Is closed
+          type: boolean
+          x-stream-index: "010"
+        max_votes_allowed:
+          description: Indicates the maximum amount of votes a user can cast
+          format: int32
+          maximum: 10
+          title: Maximum votes allowed
+          type: integer
+          x-stream-index: "007"
+        name:
+          description: The name of the poll
+          title: Name
+          type: string
+          x-stream-index: "002"
+        options:
+          items:
+            $ref: '#/components/schemas/PollOptionRequest_1'
+          maximum: 100
+          type: array
+          x-stream-index: "004"
+        voting_visibility:
+          enum:
+          - anonymous
+          - public
+          type: string
+          x-stream-index: "005"
+      required:
+      - name
+      title: Create Poll Request
+      type: object
     Credentials:
       properties:
         ice_servers:
@@ -4608,6 +4735,38 @@ components:
           type: array
           x-stream-index: "001"
       type: object
+    GeolocationResult:
+      properties:
+        AccuracyRadius:
+          format: int32
+          type: integer
+          writeOnly: true
+          x-stream-index: "003"
+        continent_code:
+          type: string
+          x-stream-index: "002.003"
+        country_iso_code:
+          type: string
+          x-stream-index: "002.002"
+        latitude:
+          format: float
+          type: number
+          x-stream-index: "001.001"
+        longitude:
+          format: float
+          type: number
+          x-stream-index: "001.002"
+        subdivision_iso_code:
+          type: string
+          x-stream-index: "002.001"
+      required:
+      - latitude
+      - longitude
+      - subdivision_iso_code
+      - country_iso_code
+      - continent_code
+      - AccuracyRadius
+      type: object
     GetApplicationResponse:
       nullable: true
       properties:
@@ -4663,30 +4822,38 @@ components:
           type: number
           x-stream-index: "004"
         call_duration_seconds:
-          format: int64
+          format: int32
           type: integer
           x-stream-index: "002"
         call_timeline:
           $ref: '#/components/schemas/CallTimeline'
-          x-stream-index: "012"
+          x-stream-index: "014"
         duration:
           description: Duration of the request in human-readable format
           title: Duration
           type: string
           x-stream-index: "001.001"
+        max_jitter:
+          format: float
+          type: number
+          x-stream-index: "007"
+        max_latency:
+          format: float
+          type: number
+          x-stream-index: "006"
         max_participants:
           format: int32
           type: integer
-          x-stream-index: "006"
+          x-stream-index: "008"
         participant_report:
           additionalProperties:
             $ref: '#/components/schemas/UserStats'
           type: object
-          x-stream-index: "013"
+          x-stream-index: "015"
         publishing_participants:
           format: int32
           type: integer
-          x-stream-index: "007"
+          x-stream-index: "009"
         quality_score:
           format: int32
           type: integer
@@ -4694,26 +4861,28 @@ components:
         sfu_count:
           format: int32
           type: integer
-          x-stream-index: "008"
+          x-stream-index: "010"
         sfus:
           items:
             $ref: '#/components/schemas/SFULocationResponse'
           type: array
-          x-stream-index: "011"
+          x-stream-index: "013"
         total_freezes_duration:
           format: float
           type: number
-          x-stream-index: "010"
+          x-stream-index: "012"
         total_quality_limitation_duration:
           format: float
           type: number
-          x-stream-index: "009"
+          x-stream-index: "011"
       required:
       - duration
       - call_duration_seconds
       - quality_score
       - average_latency
       - average_jitter
+      - max_latency
+      - max_jitter
       - max_participants
       - publishing_participants
       - sfu_count
@@ -4762,7 +4931,7 @@ components:
         Custom:
           type: object
           writeOnly: true
-          x-stream-index: "001.018"
+          x-stream-index: "001.020"
         actions:
           items:
             $ref: '#/components/schemas/Action'
@@ -4808,7 +4977,7 @@ components:
           x-stream-index: "001.014"
         giphy:
           $ref: '#/components/schemas/Images'
-          x-stream-index: "001.019"
+          x-stream-index: "001.021"
         image_url:
           description: URL of detected image
           title: Image URL
@@ -4818,15 +4987,21 @@ components:
           description: extracted url from the text
           title: OG Scrape URL
           type: string
-          x-stream-index: "001.020"
+          x-stream-index: "001.022"
         original_height:
           format: int32
           type: integer
-          x-stream-index: "001.022"
+          x-stream-index: "001.024"
         original_width:
           format: int32
           type: integer
-          x-stream-index: "001.021"
+          x-stream-index: "001.023"
+        poll:
+          $ref: '#/components/schemas/Poll'
+          x-stream-index: "001.019"
+        poll_id:
+          type: string
+          x-stream-index: "001.018"
         pretext:
           type: string
           x-stream-index: "001.004"
@@ -5971,6 +6146,14 @@ components:
           title: Pinned by
           x-stream-docs-page-id: pinned_messages
           x-stream-index: "047"
+        poll:
+          $ref: '#/components/schemas/Poll'
+          x-stream-index: "051"
+        poll_id:
+          description: Identifier of the poll to include in the message
+          title: Poll ID
+          type: string
+          x-stream-index: "050"
         quoted_message:
           $ref: '#/components/schemas/Message'
           description: Contains quoted message
@@ -6080,6 +6263,7 @@ components:
       - mentioned_users
       - silent
       - pinned
+      - poll_id
       title: Message
       type: object
       x-stream-docs-page-id: send_message
@@ -6463,6 +6647,9 @@ components:
           nullable: true
           type: string
           x-stream-index: "014"
+        poll_id:
+          type: string
+          x-stream-index: "038"
         quoted_message_id:
           type: string
           x-stream-index: "009"
@@ -7678,6 +7865,678 @@ components:
       - created_at
       - updated_at
       type: object
+    Poll:
+      properties:
+        Custom:
+          type: object
+          writeOnly: true
+          x-stream-index: "023"
+        allow_answers:
+          type: boolean
+          x-stream-index: "010"
+        allow_user_suggested_options:
+          type: boolean
+          x-stream-index: "009"
+        answers_count:
+          format: int32
+          type: integer
+          x-stream-index: "015"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "021"
+        created_by:
+          $ref: '#/components/schemas/UserObject'
+          x-stream-index: "020"
+        created_by_id:
+          type: string
+          x-stream-index: "019"
+        description:
+          type: string
+          x-stream-index: "005"
+        enforce_unique_vote:
+          type: boolean
+          x-stream-index: "007"
+        id:
+          type: string
+          x-stream-index: "003"
+        is_closed:
+          type: boolean
+          x-stream-index: "011"
+        latest_answers:
+          items:
+            $ref: '#/components/schemas/PollVote'
+          type: array
+          x-stream-index: "017"
+        latest_votes_by_option:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/PollVote'
+            type: array
+          type: object
+          x-stream-index: "016"
+        max_votes_allowed:
+          format: int32
+          type: integer
+          x-stream-index: "008"
+        name:
+          type: string
+          x-stream-index: "004"
+        options:
+          items:
+            $ref: '#/components/schemas/PollOption'
+          type: array
+          x-stream-index: "013"
+        own_votes:
+          items:
+            $ref: '#/components/schemas/PollVote'
+          type: array
+          x-stream-index: "018"
+        updated_at:
+          format: date-time
+          type: string
+          x-stream-index: "022"
+        vote_count:
+          format: int32
+          type: integer
+          x-stream-index: "012"
+        vote_counts_by_option:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "014"
+        voting_visibility:
+          type: string
+          x-stream-index: "006"
+      required:
+      - id
+      - name
+      - description
+      - enforce_unique_vote
+      - allow_user_suggested_options
+      - allow_answers
+      - vote_count
+      - options
+      - vote_counts_by_option
+      - answers_count
+      - latest_votes_by_option
+      - latest_answers
+      - own_votes
+      - created_by_id
+      - created_at
+      - updated_at
+      - Custom
+      type: object
+    PollClosedEvent:
+      properties:
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "002.002"
+        poll:
+          $ref: '#/components/schemas/Poll'
+          x-stream-index: "001"
+        type:
+          default: poll.closed
+          type: string
+          x-stream-index: "002.001"
+      required:
+      - type
+      - created_at
+      title: PollClosedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    PollCreatedEvent:
+      properties:
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "002.002"
+        poll:
+          $ref: '#/components/schemas/Poll'
+          x-stream-index: "001"
+        type:
+          default: poll.created
+          type: string
+          x-stream-index: "002.001"
+      required:
+      - type
+      - created_at
+      title: PollCreatedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    PollDeletedEvent:
+      properties:
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "002.002"
+        poll:
+          $ref: '#/components/schemas/Poll'
+          x-stream-index: "001"
+        type:
+          default: poll.deleted
+          type: string
+          x-stream-index: "002.001"
+      required:
+      - type
+      - created_at
+      title: PollDeletedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    PollOption:
+      nullable: true
+      properties:
+        custom:
+          type: object
+          x-stream-index: "003"
+        id:
+          maxLength: 255
+          type: string
+          x-stream-index: "001"
+        text:
+          type: string
+          x-stream-index: "002"
+      required:
+      - id
+      - text
+      - custom
+      type: object
+    PollOptionRequest:
+      nullable: true
+      properties:
+        custom:
+          type: object
+          x-stream-index: "003"
+        id:
+          maxLength: 255
+          type: string
+          x-stream-index: "001"
+        text:
+          type: string
+          x-stream-index: "002"
+      required:
+      - id
+      type: object
+    PollOptionRequest_1:
+      nullable: true
+      properties:
+        custom:
+          type: object
+          x-stream-index: "003"
+        text:
+          type: string
+          x-stream-index: "002"
+      type: object
+    PollOptionResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        poll_option:
+          $ref: '#/components/schemas/PollOptionResponseData'
+          x-stream-index: "001"
+      required:
+      - poll_option
+      - duration
+      type: object
+    PollOptionResponseData:
+      nullable: true
+      properties:
+        custom:
+          type: object
+          x-stream-index: "003"
+        id:
+          type: string
+          x-stream-index: "001"
+        text:
+          type: string
+          x-stream-index: "002"
+      required:
+      - id
+      - text
+      - custom
+      type: object
+    PollRequest:
+      properties:
+        Custom:
+          type: object
+          writeOnly: true
+          x-stream-index: "023"
+        allow_answers:
+          type: boolean
+          x-stream-index: "010"
+        allow_user_suggested_options:
+          type: boolean
+          x-stream-index: "009"
+        answers_count:
+          format: int32
+          type: integer
+          x-stream-index: "015"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "021"
+        created_by:
+          $ref: '#/components/schemas/UserObjectRequest'
+          x-stream-index: "020"
+        created_by_id:
+          type: string
+          x-stream-index: "019"
+        description:
+          type: string
+          x-stream-index: "005"
+        enforce_unique_vote:
+          type: boolean
+          x-stream-index: "007"
+        id:
+          type: string
+          x-stream-index: "003"
+        is_closed:
+          type: boolean
+          x-stream-index: "011"
+        latest_answers:
+          items:
+            $ref: '#/components/schemas/PollVoteRequest'
+          type: array
+          x-stream-index: "017"
+        latest_votes_by_option:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/PollVoteRequest'
+            type: array
+          type: object
+          x-stream-index: "016"
+        max_votes_allowed:
+          format: int32
+          type: integer
+          x-stream-index: "008"
+        name:
+          type: string
+          x-stream-index: "004"
+        options:
+          items:
+            $ref: '#/components/schemas/PollOptionRequest'
+          type: array
+          x-stream-index: "013"
+        own_votes:
+          items:
+            $ref: '#/components/schemas/PollVoteRequest'
+          type: array
+          x-stream-index: "018"
+        updated_at:
+          format: date-time
+          type: string
+          x-stream-index: "022"
+        vote_count:
+          format: int32
+          type: integer
+          x-stream-index: "012"
+        vote_counts_by_option:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "014"
+        voting_visibility:
+          type: string
+          x-stream-index: "006"
+      type: object
+    PollResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        poll:
+          $ref: '#/components/schemas/PollResponseData'
+          x-stream-index: "001"
+      required:
+      - poll
+      - duration
+      type: object
+    PollResponseData:
+      properties:
+        Custom:
+          type: object
+          writeOnly: true
+          x-stream-index: "020"
+        allow_answers:
+          type: boolean
+          x-stream-index: "008"
+        allow_user_suggested_options:
+          type: boolean
+          x-stream-index: "007"
+        answers_count:
+          format: int32
+          type: integer
+          x-stream-index: "012"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "018"
+        created_by:
+          $ref: '#/components/schemas/UserObject'
+          x-stream-index: "017"
+        created_by_id:
+          type: string
+          x-stream-index: "016"
+        description:
+          type: string
+          x-stream-index: "003"
+        enforce_unique_vote:
+          type: boolean
+          x-stream-index: "005"
+        id:
+          type: string
+          x-stream-index: "001"
+        is_closed:
+          type: boolean
+          x-stream-index: "009"
+        latest_votes_by_option:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/PollVoteResponseData'
+            type: array
+          type: object
+          x-stream-index: "014"
+        max_votes_allowed:
+          format: int32
+          type: integer
+          x-stream-index: "006"
+        name:
+          type: string
+          x-stream-index: "002"
+        options:
+          items:
+            $ref: '#/components/schemas/PollOptionResponseData'
+          type: array
+          x-stream-index: "011"
+        own_votes:
+          items:
+            $ref: '#/components/schemas/PollVoteResponseData'
+          type: array
+          x-stream-index: "015"
+        updated_at:
+          format: date-time
+          type: string
+          x-stream-index: "019"
+        vote_count:
+          format: int32
+          type: integer
+          x-stream-index: "010"
+        vote_counts_by_option:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "013"
+        voting_visibility:
+          type: string
+          x-stream-index: "004"
+      required:
+      - id
+      - name
+      - description
+      - voting_visibility
+      - enforce_unique_vote
+      - allow_user_suggested_options
+      - allow_answers
+      - vote_count
+      - options
+      - answers_count
+      - vote_counts_by_option
+      - latest_votes_by_option
+      - own_votes
+      - created_by_id
+      - created_at
+      - updated_at
+      - Custom
+      type: object
+    PollUpdatedEvent:
+      properties:
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "002.002"
+        poll:
+          $ref: '#/components/schemas/Poll'
+          x-stream-index: "001"
+        type:
+          default: poll.updated
+          type: string
+          x-stream-index: "002.001"
+      required:
+      - type
+      - created_at
+      title: PollUpdatedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    PollVote:
+      nullable: true
+      properties:
+        answer_text:
+          type: string
+          x-stream-index: "007"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "010"
+        id:
+          type: string
+          x-stream-index: "004"
+        is_answer:
+          type: boolean
+          x-stream-index: "006"
+        option_id:
+          type: string
+          x-stream-index: "005"
+        poll_id:
+          type: string
+          x-stream-index: "003"
+        updated_at:
+          format: date-time
+          type: string
+          x-stream-index: "011"
+        user:
+          $ref: '#/components/schemas/UserObject'
+          x-stream-index: "009"
+        user_id:
+          type: string
+          x-stream-index: "008"
+      required:
+      - poll_id
+      - id
+      - option_id
+      - created_at
+      - updated_at
+      type: object
+    PollVoteCastedEvent:
+      properties:
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "002.002"
+        type:
+          default: poll.vote_casted
+          type: string
+          x-stream-index: "002.001"
+        vote:
+          $ref: '#/components/schemas/PollVote'
+          x-stream-index: "001"
+      required:
+      - type
+      - created_at
+      title: PollVoteCastedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    PollVoteChangedEvent:
+      properties:
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "002.002"
+        type:
+          default: poll.vote_changed
+          type: string
+          x-stream-index: "002.001"
+        vote:
+          $ref: '#/components/schemas/PollVote'
+          x-stream-index: "001"
+      required:
+      - type
+      - created_at
+      title: PollVoteChangedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    PollVoteRemovedEvent:
+      properties:
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "002.002"
+        type:
+          default: poll.vote_removed
+          type: string
+          x-stream-index: "002.001"
+        vote:
+          $ref: '#/components/schemas/PollVote'
+          x-stream-index: "001"
+      required:
+      - type
+      - created_at
+      title: PollVoteRemovedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    PollVoteRequest:
+      nullable: true
+      properties:
+        answer_text:
+          type: string
+          x-stream-index: "007"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "010"
+        id:
+          type: string
+          x-stream-index: "004"
+        is_answer:
+          type: boolean
+          x-stream-index: "006"
+        option_id:
+          type: string
+          x-stream-index: "005"
+        poll_id:
+          type: string
+          x-stream-index: "003"
+        updated_at:
+          format: date-time
+          type: string
+          x-stream-index: "011"
+        user:
+          $ref: '#/components/schemas/UserObjectRequest'
+          x-stream-index: "009"
+        user_id:
+          type: string
+          x-stream-index: "008"
+      type: object
+    PollVoteResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        vote:
+          $ref: '#/components/schemas/PollVoteResponseData'
+          x-stream-index: "001"
+      required:
+      - duration
+      type: object
+    PollVoteResponseData:
+      nullable: true
+      properties:
+        answer_text:
+          type: string
+          x-stream-index: "005"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "008"
+        id:
+          type: string
+          x-stream-index: "002"
+        is_answer:
+          type: boolean
+          x-stream-index: "004"
+        option_id:
+          type: string
+          x-stream-index: "003"
+        poll_id:
+          type: string
+          x-stream-index: "001"
+        updated_at:
+          format: date-time
+          type: string
+          x-stream-index: "009"
+        user:
+          $ref: '#/components/schemas/UserObject'
+          x-stream-index: "007"
+        user_id:
+          type: string
+          x-stream-index: "006"
+      required:
+      - poll_id
+      - id
+      - option_id
+      - created_at
+      - updated_at
+      type: object
+    PollVotesResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "003.001"
+        next:
+          type: string
+          x-stream-index: "002.001"
+        prev:
+          type: string
+          x-stream-index: "002.002"
+        votes:
+          items:
+            $ref: '#/components/schemas/PollVoteResponseData'
+          type: array
+          x-stream-index: "001"
+      required:
+      - votes
+      - duration
+      type: object
     PushNotificationFields:
       properties:
         apn:
@@ -8227,6 +9086,85 @@ components:
           x-stream-index: "001"
       required:
       - flags
+      - duration
+      type: object
+    QueryPollVotesRequest:
+      nullable: true
+      properties:
+        filter:
+          type: object
+          x-stream-index: "003"
+        limit:
+          format: int32
+          maximum: 25
+          minimum: 0
+          type: integer
+          x-stream-index: "005.001"
+        next:
+          type: string
+          x-stream-index: "005.002"
+        poll_id:
+          maxLength: 255
+          type: string
+          x-stream-index: "002"
+        prev:
+          type: string
+          x-stream-index: "005.003"
+        sort:
+          items:
+            $ref: '#/components/schemas/SortParamRequest'
+          maximum: 5
+          type: array
+          x-stream-index: "004"
+      required:
+      - poll_id
+      type: object
+    QueryPollsRequest:
+      nullable: true
+      properties:
+        filter:
+          type: object
+          x-stream-index: "002"
+        limit:
+          format: int32
+          maximum: 25
+          minimum: 0
+          type: integer
+          x-stream-index: "005.001"
+        next:
+          type: string
+          x-stream-index: "005.002"
+        prev:
+          type: string
+          x-stream-index: "005.003"
+        sort:
+          items:
+            $ref: '#/components/schemas/SortParamRequest'
+          maximum: 5
+          type: array
+          x-stream-index: "003"
+      type: object
+    QueryPollsResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "003.001"
+        next:
+          type: string
+          x-stream-index: "002.001"
+        polls:
+          items:
+            $ref: '#/components/schemas/PollResponseData'
+          type: array
+          x-stream-index: "001"
+        prev:
+          type: string
+          x-stream-index: "002.002"
+      required:
+      - polls
       - duration
       type: object
     QueryThreadsRequest:
@@ -9018,6 +9956,12 @@ components:
         pinned_by:
           $ref: '#/components/schemas/UserObject'
           x-stream-index: "001.047"
+        poll:
+          $ref: '#/components/schemas/Poll'
+          x-stream-index: "001.051"
+        poll_id:
+          type: string
+          x-stream-index: "001.050"
         quoted_message:
           $ref: '#/components/schemas/Message'
           x-stream-index: "001.023"
@@ -9087,6 +10031,7 @@ components:
       - mentioned_users
       - silent
       - pinned
+      - poll_id
       type: object
     SearchWarning:
       properties:
@@ -9396,6 +10341,24 @@ components:
           x-stream-index: "001.001"
       required:
       - duration
+      type: object
+    Subsession:
+      properties:
+        sfu_id:
+          type: string
+          x-stream-index: "003"
+        ts_ended_at:
+          format: int64
+          type: integer
+          x-stream-index: "002"
+        ts_joined_at:
+          format: int64
+          type: integer
+          x-stream-index: "001"
+      required:
+      - ts_joined_at
+      - ts_ended_at
+      - sfu_id
       type: object
     SyncRequest:
       nullable: true
@@ -10682,6 +11645,107 @@ components:
       - message
       - duration
       type: object
+    UpdatePollOptionRequest:
+      nullable: true
+      properties:
+        Custom:
+          type: object
+          writeOnly: true
+          x-stream-index: "004"
+        id:
+          maxLength: 255
+          type: string
+          x-stream-index: "002"
+        poll_id:
+          maxLength: 255
+          type: string
+          x-stream-index: "001"
+        text:
+          type: string
+          x-stream-index: "003"
+      required:
+      - poll_id
+      - id
+      - text
+      type: object
+    UpdatePollPartialRequest:
+      nullable: true
+      properties:
+        poll_id:
+          maxLength: 255
+          type: string
+          x-stream-index: "001"
+        set:
+          description: Sets new field values
+          title: Set
+          type: object
+          x-stream-index: "002.001"
+          x-stream-map:
+            description: New value to set
+            key: field
+            title: Value
+        unset:
+          description: Array of field names to unset
+          items:
+            type: string
+          title: Unset
+          type: array
+          x-stream-index: "002.002"
+      required:
+      - poll_id
+      - set
+      - unset
+      type: object
+    UpdatePollRequest:
+      nullable: true
+      properties:
+        Custom:
+          type: object
+          writeOnly: true
+          x-stream-index: "011"
+        allow_answers:
+          type: boolean
+          x-stream-index: "009"
+        allow_user_suggested_options:
+          type: boolean
+          x-stream-index: "008"
+        description:
+          type: string
+          x-stream-index: "003"
+        enforce_unique_vote:
+          type: boolean
+          x-stream-index: "005"
+        id:
+          maxLength: 255
+          type: string
+          x-stream-index: "001"
+        is_closed:
+          type: boolean
+          x-stream-index: "010"
+        max_votes_allowed:
+          format: int32
+          maximum: 10
+          type: integer
+          x-stream-index: "007"
+        name:
+          type: string
+          x-stream-index: "002"
+        options:
+          items:
+            $ref: '#/components/schemas/PollOptionRequest'
+          maximum: 100
+          type: array
+          x-stream-index: "004"
+        voting_visibility:
+          enum:
+          - anonymous
+          - public
+          type: string
+          x-stream-index: "006"
+      required:
+      - id
+      - name
+      type: object
     UpdateThreadPartialRequest:
       nullable: true
       properties:
@@ -11327,47 +12391,118 @@ components:
       type: object
     UserSessionStats:
       properties:
+        browser:
+          type: string
+          x-stream-index: "009"
+        browser_version:
+          type: string
+          x-stream-index: "010"
+        current_ip:
+          type: string
+          x-stream-index: "028"
+        current_sfu:
+          type: string
+          x-stream-index: "029"
+        device_model:
+          type: string
+          x-stream-index: "007"
+        device_version:
+          type: string
+          x-stream-index: "008"
         freeze_duration_seconds:
           format: float
           type: number
-          x-stream-index: "009"
+          x-stream-index: "023"
+        geolocation:
+          $ref: '#/components/schemas/GeolocationResult'
+          x-stream-index: "030"
         jitter:
           $ref: '#/components/schemas/Stats'
-          x-stream-index: "006"
+          x-stream-index: "011"
         latency:
           $ref: '#/components/schemas/Stats'
-          x-stream-index: "007"
+          x-stream-index: "012"
+        max_fir_per_minute:
+          format: float
+          type: number
+          x-stream-index: "019"
+        max_freezes_per_minute:
+          format: float
+          type: number
+          x-stream-index: "020"
+        max_nack_per_minute:
+          format: float
+          type: number
+          x-stream-index: "018"
+        max_pli_per_minute:
+          format: float
+          type: number
+          x-stream-index: "017"
+        max_publishing_video_quality:
+          $ref: '#/components/schemas/VideoQuality'
+          x-stream-index: "016"
+        max_receiving_video_quality:
+          $ref: '#/components/schemas/VideoQuality'
+          x-stream-index: "025"
         os:
           type: string
           x-stream-index: "002"
+        os_version:
+          type: string
+          x-stream-index: "003"
         packet_loss_fraction:
           format: float
           type: number
-          x-stream-index: "010"
+          x-stream-index: "021"
+        publishing_audio_codec:
+          type: string
+          x-stream-index: "015"
+        publishing_duration_seconds:
+          format: int32
+          type: integer
+          x-stream-index: "014"
         quality_score:
           format: float
           type: number
-          x-stream-index: "008"
+          x-stream-index: "013"
+        receiving_audio_codec:
+          type: string
+          x-stream-index: "024"
+        receiving_duration_seconds:
+          format: int32
+          type: integer
+          x-stream-index: "022"
         sdk:
           type: string
-          x-stream-index: "004"
+          x-stream-index: "005"
         sdk_version:
           type: string
-          x-stream-index: "005"
+          x-stream-index: "006"
+        subsessions:
+          items:
+            $ref: '#/components/schemas/Subsession'
+          type: array
+          x-stream-index: "031"
         timeline:
           $ref: '#/components/schemas/CallTimeline'
           x-stream-index: "001"
+        total_pixels_in:
+          type: integer
+          x-stream-index: "026"
+        total_pixels_out:
+          type: integer
+          x-stream-index: "027"
         webrtc_version:
           type: string
-          x-stream-index: "003"
+          x-stream-index: "004"
       required:
-      - os
-      - webrtc_version
-      - sdk
-      - sdk_version
       - quality_score
-      - freeze_duration_seconds
+      - publishing_duration_seconds
       - packet_loss_fraction
+      - receiving_duration_seconds
+      - freeze_duration_seconds
+      - total_pixels_in
+      - total_pixels_out
       type: object
     UserStats:
       properties:
@@ -11540,6 +12675,28 @@ components:
       - users
       - duration
       type: object
+    VideoQuality:
+      properties:
+        resolution:
+          $ref: '#/components/schemas/VideoResolution'
+          x-stream-index: "001"
+      required:
+      - resolution
+      type: object
+    VideoResolution:
+      properties:
+        height:
+          format: int32
+          type: integer
+          x-stream-index: "002"
+        width:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+      required:
+      - width
+      - height
+      type: object
     VideoSettings:
       properties:
         access_request_enabled:
@@ -11589,6 +12746,19 @@ components:
         target_resolution:
           $ref: '#/components/schemas/TargetResolutionRequest'
           x-stream-index: "003"
+      type: object
+    VoteDataRequest:
+      properties:
+        Option:
+          $ref: '#/components/schemas/PollOptionRequest'
+          x-stream-index: "003"
+        answer_text:
+          type: string
+          x-stream-index: "002"
+        option_id:
+          maxLength: 255
+          type: string
+          x-stream-index: "001"
       type: object
     WSEvent:
       description: The discriminator object for all websocket events, it maps events'
@@ -11664,6 +12834,13 @@ components:
           notification.mutes_updated: '#/components/schemas/NotificationMutesUpdatedEvent'
           notification.removed_from_channel: '#/components/schemas/NotificationRemovedFromChannelEvent'
           notification.thread_message_new: '#/components/schemas/MessageNewEvent'
+          poll.closed: '#/components/schemas/PollClosedEvent'
+          poll.created: '#/components/schemas/PollCreatedEvent'
+          poll.deleted: '#/components/schemas/PollDeletedEvent'
+          poll.updated: '#/components/schemas/PollUpdatedEvent'
+          poll.vote_casted: '#/components/schemas/PollVoteCastedEvent'
+          poll.vote_changed: '#/components/schemas/PollVoteChangedEvent'
+          poll.vote_removed: '#/components/schemas/PollVoteRemovedEvent'
           reaction.deleted: '#/components/schemas/ReactionDeletedEvent'
           reaction.new: '#/components/schemas/ReactionNewEvent'
           reaction.updated: '#/components/schemas/ReactionUpdatedEvent'
@@ -11749,6 +12926,13 @@ components:
       - $ref: '#/components/schemas/NotificationNewMessageEvent'
       - $ref: '#/components/schemas/NotificationRemovedFromChannelEvent'
       - $ref: '#/components/schemas/PermissionRequestEvent'
+      - $ref: '#/components/schemas/PollClosedEvent'
+      - $ref: '#/components/schemas/PollCreatedEvent'
+      - $ref: '#/components/schemas/PollDeletedEvent'
+      - $ref: '#/components/schemas/PollUpdatedEvent'
+      - $ref: '#/components/schemas/PollVoteCastedEvent'
+      - $ref: '#/components/schemas/PollVoteChangedEvent'
+      - $ref: '#/components/schemas/PollVoteRemovedEvent'
       - $ref: '#/components/schemas/ReactionDeletedEvent'
       - $ref: '#/components/schemas/ReactionNewEvent'
       - $ref: '#/components/schemas/ReactionUpdatedEvent'
@@ -11864,7 +13048,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v104.0.0
+  version: v106.0.1
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -13550,6 +14734,121 @@ paths:
       summary: Translate message
       tags:
       - Messages
+  /api/v2/chat/messages/{message_id}/polls/{poll_id}/vote:
+    post:
+      description: |
+        Cast a vote on a poll
+
+        Sends events:
+        - poll.vote_casted
+
+        Required permissions:
+        - CastVote
+      operationId: CastPollVote
+      parameters:
+      - in: path
+        name: message_id
+        required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      - in: path
+        name: poll_id
+        required: true
+        schema:
+          maxLength: 255
+          type: string
+          x-stream-index: "002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CastPollVoteRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PollVoteResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Cast vote
+      tags:
+      - Polls
+  /api/v2/chat/messages/{message_id}/polls/{poll_id}/vote/{vote_id}:
+    delete:
+      description: |
+        Delete a vote from a poll
+
+        Sends events:
+        - poll.vote_removed
+
+        Required permissions:
+        - CastVote
+      operationId: RemovePollVote
+      parameters:
+      - in: path
+        name: message_id
+        required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "002"
+      - in: path
+        name: poll_id
+        required: true
+        schema:
+          maxLength: 255
+          type: string
+          x-stream-index: "003"
+      - in: path
+        name: vote_id
+        required: true
+        schema:
+          maxLength: 255
+          type: string
+          x-stream-index: "004"
+      - in: query
+        name: user_id
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PollVoteResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Delete vote
+      tags:
+      - Polls
   /api/v2/chat/messages/{parent_id}/replies:
     get:
       description: |
@@ -13981,6 +15280,499 @@ paths:
       summary: Unmute channel
       tags:
       - Channels
+  /api/v2/chat/polls:
+    post:
+      description: |
+        Creates a new poll
+
+        Sends events:
+        - poll.created
+
+        Required permissions:
+        - CreatePoll
+      operationId: CreatePoll
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePollRequest'
+        description: Create Poll Request
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PollResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Create poll
+      tags:
+      - Polls
+    put:
+      description: |
+        Updates a poll
+
+        Sends events:
+        - poll.updated
+
+        Required permissions:
+        - UpdatePoll
+      operationId: UpdatePoll
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePollRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PollResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Update poll
+      tags:
+      - Polls
+  /api/v2/chat/polls/{poll_id}:
+    delete:
+      description: |
+        Deletes a poll
+
+        Sends events:
+        - poll.deleted
+
+        Required permissions:
+        - DeletePoll
+      operationId: DeletePoll
+      parameters:
+      - in: path
+        name: poll_id
+        required: true
+        schema:
+          maxLength: 255
+          type: string
+          x-stream-index: "002"
+      - in: query
+        name: user_id
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Delete poll
+      tags:
+      - Polls
+    get:
+      description: |
+        Retrieves a poll
+      operationId: GetPoll
+      parameters:
+      - in: path
+        name: poll_id
+        required: true
+        schema:
+          maxLength: 255
+          type: string
+          x-stream-index: "002"
+      - in: query
+        name: user_id
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PollResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get poll
+      tags:
+      - Polls
+    patch:
+      description: |
+        Updates a poll partially
+
+        Sends events:
+        - poll.updated
+
+        Required permissions:
+        - UpdatePoll
+      operationId: UpdatePollPartial
+      parameters:
+      - in: path
+        name: poll_id
+        required: true
+        schema:
+          maxLength: 255
+          type: string
+          x-stream-index: "001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePollPartialRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PollResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Partial update poll
+      tags:
+      - Polls
+  /api/v2/chat/polls/{poll_id}/options:
+    post:
+      description: |
+        Creates a poll option
+
+        Sends events:
+        - poll.updated
+
+        Required permissions:
+        - CastVote
+        - UpdatePoll
+      operationId: CreatePollOption
+      parameters:
+      - in: path
+        name: poll_id
+        required: true
+        schema:
+          maxLength: 255
+          type: string
+          x-stream-index: "001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePollOptionRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PollOptionResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Create poll option
+      tags:
+      - Polls
+    put:
+      description: |
+        Updates a poll option
+
+        Sends events:
+        - poll.updated
+
+        Required permissions:
+        - UpdatePoll
+      operationId: UpdatePollOption
+      parameters:
+      - in: path
+        name: poll_id
+        required: true
+        schema:
+          maxLength: 255
+          type: string
+          x-stream-index: "001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePollOptionRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PollOptionResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Update poll option
+      tags:
+      - Polls
+  /api/v2/chat/polls/{poll_id}/options/{option_id}:
+    delete:
+      description: |
+        Deletes a poll option
+
+        Sends events:
+        - poll.updated
+
+        Required permissions:
+        - UpdatePoll
+      operationId: DeletePollOption
+      parameters:
+      - in: path
+        name: poll_id
+        required: true
+        schema:
+          maxLength: 255
+          type: string
+          x-stream-index: "002"
+      - in: path
+        name: option_id
+        required: true
+        schema:
+          maxLength: 255
+          type: string
+          x-stream-index: "003"
+      - in: query
+        name: user_id
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Delete poll option
+      tags:
+      - Polls
+    get:
+      description: |
+        Retrieves a poll option
+      operationId: GetPollOption
+      parameters:
+      - in: path
+        name: poll_id
+        required: true
+        schema:
+          maxLength: 255
+          type: string
+          x-stream-index: "002"
+      - in: path
+        name: option_id
+        required: true
+        schema:
+          maxLength: 255
+          type: string
+          x-stream-index: "003"
+      - in: query
+        name: user_id
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PollOptionResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get poll option
+      tags:
+      - Polls
+  /api/v2/chat/polls/{poll_id}/votes:
+    post:
+      description: |
+        Queries votes
+      operationId: QueryPollVotes
+      parameters:
+      - in: path
+        name: poll_id
+        required: true
+        schema:
+          maxLength: 255
+          type: string
+          x-stream-index: "002"
+      - in: query
+        name: user_id
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryPollVotesRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PollVotesResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Query votes
+      tags:
+      - Polls
+  /api/v2/chat/polls/query:
+    post:
+      description: |
+        Queries polls
+      operationId: QueryPolls
+      parameters:
+      - in: query
+        name: user_id
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryPollsRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryPollsResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Query polls
+      tags:
+      - Polls
   /api/v2/chat/query_banned_users:
     get:
       description: |
