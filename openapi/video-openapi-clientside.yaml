@@ -402,7 +402,7 @@ components:
           type: string
           x-stream-index: "004"
         end_timestamp:
-          format: int64
+          format: int32
           type: integer
           x-stream-index: "002"
         severity:
@@ -1476,21 +1476,34 @@ components:
         call_cid:
           type: string
           x-stream-index: "001"
+        call_duration_seconds:
+          format: int32
+          type: integer
+          x-stream-index: "007"
         call_session_id:
           type: string
           x-stream-index: "002"
         call_status:
           type: string
           x-stream-index: "004"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "006"
         first_stats_time:
           format: date-time
           type: string
           x-stream-index: "003"
+        quality_score:
+          format: int32
+          type: integer
+          x-stream-index: "005"
       required:
       - call_cid
       - call_session_id
       - first_stats_time
       - call_status
+      - call_duration_seconds
       type: object
     CallTimeline:
       properties:
@@ -2118,10 +2131,9 @@ components:
       type: object
     GeolocationResult:
       properties:
-        AccuracyRadius:
+        accuracy_radius:
           format: int32
           type: integer
-          writeOnly: true
           x-stream-index: "003"
         continent_code:
           type: string
@@ -2146,7 +2158,7 @@ components:
       - subdivision_iso_code
       - country_iso_code
       - continent_code
-      - AccuracyRadius
+      - accuracy_radius
       type: object
     GetCallResponse:
       nullable: true
@@ -2179,47 +2191,45 @@ components:
     GetCallStatsResponse:
       nullable: true
       properties:
-        average_jitter:
-          format: float
-          type: number
-          x-stream-index: "005"
-        average_latency:
-          format: float
-          type: number
-          x-stream-index: "004"
         call_duration_seconds:
           format: int32
           type: integer
           x-stream-index: "002"
         call_timeline:
           $ref: '#/components/schemas/CallTimeline'
-          x-stream-index: "014"
+          x-stream-index: "012"
         duration:
           description: Duration of the request in human-readable format
           title: Duration
           type: string
           x-stream-index: "001.001"
-        max_jitter:
-          format: float
-          type: number
-          x-stream-index: "007"
-        max_latency:
-          format: float
-          type: number
-          x-stream-index: "006"
+        jitter:
+          $ref: '#/components/schemas/Stats'
+          x-stream-index: "004"
+        latency:
+          $ref: '#/components/schemas/Stats'
+          x-stream-index: "005"
+        max_freezes_duration_seconds:
+          format: int32
+          type: integer
+          x-stream-index: "010"
         max_participants:
           format: int32
           type: integer
-          x-stream-index: "008"
-        participant_report:
-          additionalProperties:
-            $ref: '#/components/schemas/UserStats'
-          type: object
-          x-stream-index: "015"
-        publishing_participants:
+          x-stream-index: "006"
+        max_total_quality_limitation_duration_seconds:
           format: int32
           type: integer
           x-stream-index: "009"
+        participant_report:
+          items:
+            $ref: '#/components/schemas/UserStats'
+          type: array
+          x-stream-index: "013"
+        publishing_participants:
+          format: int32
+          type: integer
+          x-stream-index: "007"
         quality_score:
           format: int32
           type: integer
@@ -2227,33 +2237,21 @@ components:
         sfu_count:
           format: int32
           type: integer
-          x-stream-index: "010"
+          x-stream-index: "008"
         sfus:
           items:
             $ref: '#/components/schemas/SFULocationResponse'
           type: array
-          x-stream-index: "013"
-        total_freezes_duration:
-          format: float
-          type: number
-          x-stream-index: "012"
-        total_quality_limitation_duration:
-          format: float
-          type: number
           x-stream-index: "011"
       required:
       - duration
       - call_duration_seconds
       - quality_score
-      - average_latency
-      - average_jitter
-      - max_latency
-      - max_jitter
       - max_participants
       - publishing_participants
       - sfu_count
-      - total_quality_limitation_duration
-      - total_freezes_duration
+      - max_total_quality_limitation_duration_seconds
+      - max_freezes_duration_seconds
       - sfus
       - participant_report
       type: object
@@ -2668,7 +2666,6 @@ components:
           enum:
           - available
           - disabled
-          - auto-on
           type: string
           x-stream-index: "001"
       required:
@@ -2680,7 +2677,6 @@ components:
           enum:
           - available
           - disabled
-          - auto-on
           type: string
           x-stream-index: "001"
       type: object
@@ -3175,6 +3171,9 @@ components:
         enabled:
           type: boolean
           x-stream-index: "001"
+        target_resolution:
+          $ref: '#/components/schemas/TargetResolution'
+          x-stream-index: "003"
       required:
       - enabled
       - access_request_enabled
@@ -3187,6 +3186,9 @@ components:
         enabled:
           type: boolean
           x-stream-index: "001"
+        target_resolution:
+          $ref: '#/components/schemas/TargetResolutionRequest'
+          x-stream-index: "003"
       type: object
     SendEventRequest:
       nullable: true
@@ -3386,20 +3388,20 @@ components:
       type: object
     Subsession:
       properties:
+        ended_at:
+          format: int32
+          type: integer
+          x-stream-index: "002"
+        joined_at:
+          format: int32
+          type: integer
+          x-stream-index: "001"
         sfu_id:
           type: string
           x-stream-index: "003"
-        ts_ended_at:
-          format: int64
-          type: integer
-          x-stream-index: "002"
-        ts_joined_at:
-          format: int64
-          type: integer
-          x-stream-index: "001"
       required:
-      - ts_joined_at
-      - ts_ended_at
+      - joined_at
+      - ended_at
       - sfu_id
       type: object
     TargetResolution:
@@ -3842,10 +3844,10 @@ components:
           x-stream-index: "010"
         current_ip:
           type: string
-          x-stream-index: "028"
+          x-stream-index: "014"
         current_sfu:
           type: string
-          x-stream-index: "029"
+          x-stream-index: "015"
         device_model:
           type: string
           x-stream-index: "007"
@@ -3853,40 +3855,40 @@ components:
           type: string
           x-stream-index: "008"
         freeze_duration_seconds:
-          format: float
-          type: number
-          x-stream-index: "023"
+          format: int32
+          type: integer
+          x-stream-index: "020.007"
         geolocation:
           $ref: '#/components/schemas/GeolocationResult'
-          x-stream-index: "030"
+          x-stream-index: "016"
         jitter:
           $ref: '#/components/schemas/Stats'
           x-stream-index: "011"
         latency:
           $ref: '#/components/schemas/Stats'
           x-stream-index: "012"
-        max_fir_per_minute:
+        max_fir_per_second:
           format: float
           type: number
-          x-stream-index: "019"
-        max_freezes_per_minute:
+          x-stream-index: "020.003"
+        max_freezes_per_second:
           format: float
           type: number
-          x-stream-index: "020"
-        max_nack_per_minute:
+          x-stream-index: "020.004"
+        max_nack_per_second:
           format: float
           type: number
-          x-stream-index: "018"
-        max_pli_per_minute:
+          x-stream-index: "020.002"
+        max_pli_per_second:
           format: float
           type: number
-          x-stream-index: "017"
+          x-stream-index: "020.001"
         max_publishing_video_quality:
           $ref: '#/components/schemas/VideoQuality'
-          x-stream-index: "016"
+          x-stream-index: "019.003"
         max_receiving_video_quality:
           $ref: '#/components/schemas/VideoQuality'
-          x-stream-index: "025"
+          x-stream-index: "020.009"
         os:
           type: string
           x-stream-index: "002"
@@ -3896,67 +3898,72 @@ components:
         packet_loss_fraction:
           format: float
           type: number
-          x-stream-index: "021"
+          x-stream-index: "020.005"
         publishing_audio_codec:
           type: string
-          x-stream-index: "015"
+          x-stream-index: "019.002"
         publishing_duration_seconds:
           format: int32
           type: integer
-          x-stream-index: "014"
+          x-stream-index: "019.001"
         quality_score:
           format: float
           type: number
           x-stream-index: "013"
         receiving_audio_codec:
           type: string
-          x-stream-index: "024"
+          x-stream-index: "020.008"
         receiving_duration_seconds:
           format: int32
           type: integer
-          x-stream-index: "022"
+          x-stream-index: "020.006"
         sdk:
           type: string
           x-stream-index: "005"
         sdk_version:
           type: string
           x-stream-index: "006"
+        session_id:
+          type: string
+          x-stream-index: "018"
         subsessions:
           items:
             $ref: '#/components/schemas/Subsession'
           type: array
-          x-stream-index: "031"
+          x-stream-index: "017"
         timeline:
           $ref: '#/components/schemas/CallTimeline'
           x-stream-index: "001"
         total_pixels_in:
           type: integer
-          x-stream-index: "026"
+          x-stream-index: "020.010"
         total_pixels_out:
           type: integer
-          x-stream-index: "027"
+          x-stream-index: "019.004"
         webrtc_version:
           type: string
           x-stream-index: "004"
       required:
       - quality_score
+      - session_id
       - publishing_duration_seconds
+      - total_pixels_out
       - packet_loss_fraction
       - receiving_duration_seconds
       - freeze_duration_seconds
       - total_pixels_in
-      - total_pixels_out
       type: object
     UserStats:
+      nullable: true
       properties:
         info:
           $ref: '#/components/schemas/UserInfoResponse'
           x-stream-index: "001"
         session_stats:
-          additionalProperties:
+          items:
             $ref: '#/components/schemas/UserSessionStats'
-          type: object
-          x-stream-index: "002"
+          type: array
+          x-stream-index: "003"
       required:
       - info
       - session_stats
@@ -3965,9 +3972,10 @@ components:
       properties:
         resolution:
           $ref: '#/components/schemas/VideoResolution'
+          x-stream-index: "002"
+        usage_type:
+          type: string
           x-stream-index: "001"
-      required:
-      - resolution
       type: object
     VideoResolution:
       properties:
@@ -4169,7 +4177,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v106.0.1
+  version: v108.0.0
 openapi: 3.0.3
 paths:
   /video/call/{type}/{id}:
