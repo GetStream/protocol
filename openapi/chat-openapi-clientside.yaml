@@ -3971,7 +3971,6 @@ components:
       - mentioned_users
       - silent
       - pinned
-      - poll_id
       title: Message
       type: object
       x-stream-docs-page-id: send_message
@@ -6380,6 +6379,58 @@ components:
       - polls
       - duration
       type: object
+    QueryReactionsRequest:
+      properties:
+        MessageID:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+        filter:
+          type: object
+          x-stream-index: "002"
+        limit:
+          format: int32
+          maximum: 25
+          minimum: 0
+          type: integer
+          x-stream-index: "006.001"
+        next:
+          type: string
+          x-stream-index: "006.002"
+        prev:
+          type: string
+          x-stream-index: "006.003"
+        sort:
+          items:
+            $ref: '#/components/schemas/SortParamRequest'
+          maximum: 2
+          type: array
+          x-stream-index: "003"
+      required:
+      - MessageID
+      type: object
+    QueryReactionsResponse:
+      properties:
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        next:
+          type: string
+          x-stream-index: "003.001"
+        prev:
+          type: string
+          x-stream-index: "003.002"
+        reactions:
+          items:
+            $ref: '#/components/schemas/ReactionResponse'
+          type: array
+          x-stream-index: "001"
+      required:
+      - reactions
+      - duration
+      type: object
     QueryThreadsRequest:
       nullable: true
       properties:
@@ -7103,7 +7154,6 @@ components:
       - mentioned_users
       - silent
       - pinned
-      - poll_id
       type: object
     SearchWarning:
       properties:
@@ -9414,7 +9464,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v108.2.1
+  version: v108.5.0
 openapi: 3.0.3
 paths:
   /app:
@@ -11386,6 +11436,49 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Get reactions
+      tags:
+      - Messages
+      - Reactions
+    post:
+      description: |
+        Get reactions on a message
+
+        Required permissions:
+        - ReadChannel
+      operationId: QueryReactions
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryReactionsRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryReactionsResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
       tags:
       - Messages
       - Reactions
