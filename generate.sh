@@ -13,7 +13,7 @@ export PATH=/opt/.protoc/bin:$PWD/.protoc/bin:$PATH
 # The coreutils installed with Homebrew (as mentioned in README)
 # installs GNU realpath which could be available as "grealpath"
 # which actually works. Hence, the option to customize REALPATH
-REALPATH=${REALPATH:-grealpath}
+REALPATH=${REALPATH:-realpath}
 
 GEN_PROFILE=${1:-go}
 
