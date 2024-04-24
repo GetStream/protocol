@@ -544,6 +544,11 @@ func (m *Error) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.ReconnectStrategy != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.ReconnectStrategy))
+		i--
+		dAtA[i] = 0x28
+	}
 	if m.Error != nil {
 		if marshalto, ok := interface{}(m.Error).(interface {
 			MarshalToSizedBufferVT([]byte) (int, error)
@@ -2507,6 +2512,9 @@ func (m *Error) SizeVT() (n int) {
 		}
 		n += 1 + l + sov(uint64(l))
 	}
+	if m.ReconnectStrategy != 0 {
+		n += 1 + sov(uint64(m.ReconnectStrategy))
+	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
 	}
@@ -4220,6 +4228,25 @@ func (m *Error) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 			iNdEx = postIndex
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ReconnectStrategy", wireType)
+			}
+			m.ReconnectStrategy = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.ReconnectStrategy |= models.WebsocketReconnectStrategy(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])
