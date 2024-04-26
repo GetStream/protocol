@@ -1,0 +1,189 @@
+---
+id: multi-tenant
+sidebar_position: 4
+slug: /multi-tenant
+title: Multi-Tenant & Teams
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+Stream Video can be configured for teams/multi-tenant operation, allowing users to be organized into distinct, isolated teams. This configuration is essential for applications like Zoom or Disqus, where it's crucial that users within one team remain completely separated from others to ensure privacy and security.
+
+## Teams
+
+Stream Video has the concept of teams for users and calls. The purpose of teams is to provide a simple way to separate different groups of users and calls within a single application.
+
+If a user belongs to a team, the API will ensure that such user will only be able to connect to calls from the same team. Features such as user search are limited so that a user can only search for users from the same team by default.
+
+When enabling multi-tenant mode all user requests will always ensure that the request applies to a team the user belongs to. For instance, if a user from team "blue" tries to delete a message that was created on a channel from team "red" the API will return an error. If user doesn't have team set, it will only have access to users and channels that don't have team.
+
+## Enable Teams for your application
+
+In order to use Teams, your application must have multi-tenant mode enabled. You can enable multi-tenant from the dashboard (Overview screen).
+
+## User teams
+
+When multi-tenant is enabled, users can only be created from your back-end. This is necessary to ensure that a user cannot pick its own team/tenant.
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+client.upsertUsers({
+  users: {
+    ['<user id>']: {
+      id: '<user id>',
+      name: 'Sara',
+      teams: ['red', 'blue'],
+    },
+  },
+});
+```
+
+</TabItem>
+<TabItem value="py" label="Python">
+
+```py
+client.upsert_users(
+    UserRequest(id=user_id, teams=["red", "blue"])
+)
+```
+
+</TabItem>
+</Tabs>
+
+A user can be a member of up to 250 teams, a team name can be up to 100 characters. There is **no limit** to how many teams your application can have.
+
+## Call team
+
+Calls can be associated with a team. Users can create calls client-side but if their user is part of a team, they will have to specify a team or the request will be rejected with an error.
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+client.call('default', 'red-team-weekly').create({
+  data: { team: 'red', created_by_id: '<user_id>' },
+});
+```
+
+</TabItem>
+<TabItem value="py" label="Python">
+
+```py
+call = client.video.call("default", call_id)
+
+response = call.create(
+    data=CallRequest(
+        created_by_id=user_id,
+        team="blue",
+    )
+)
+```
+
+</TabItem>
+</Tabs>
+
+Call teams allow you to ensure proper permission checking for a multi tenant application. Keep in mind that you will still need to enforce that call IDs are unique.
+There are two common way to address this: generate random IDs using a random UUID, prefix the team name to the id of the call.
+
+## User search
+
+By default client-side user search will only return results from teams that authenticated user is a part of. API injects filter `{team: {$in: [<user_teams>]}}` for every request that doesn't already contain filter for teams field. If you want to query users from all teams, you have to provide empty filter like this: `{teams:{}}`.
+
+For server-side requests, this filter does not apply and you can search as usual and also filter by teams.
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+// search for users by name and team
+client.queryUsers({
+  filter_conditions: {
+    name: 'Nick',
+    teams: { $in: ['red', 'blue'] },
+  },
+});
+
+// search for users that are not part of any team
+client.queryUsers({
+  filter_conditions: {
+    name: 'Tom',
+    teams: null,
+  },
+});
+```
+
+</TabItem>
+<TabItem value="py" label="Python">
+
+```py
+# search for users by name and team
+response = client.query_users(
+    QueryUsersPayload(
+        filter_conditions={
+            "name": {"$eq": "Nick"},
+            "teams": {"$in": ["red", "blue"]},
+        }
+    )
+)
+
+# search for users that are not part of any team
+response = client.query_users(
+    QueryUsersPayload(
+        filter_conditions={
+            "teams": None,
+        }
+    )
+)
+```
+
+</TabItem>
+</Tabs>
+
+## Query Calls
+
+When using multi-tenant, the client-side query calls endpoint will only return calls that match the query and are on the same team as the authenticated user. The API injects filter `{team: {$in: [<user_teams>]}}` for every request that doesn't already contain filter for team field. If you want to query channels from all teams, you have to provide empty filter like this: `{team:{}}`.
+
+For server-side requests, this filter does not apply and you can search as usual and also filter by teams.
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+// All calls
+client.video.queryCalls();
+
+// Calls without team
+client.video.queryCalls({
+  filter_conditions: {
+    team: null,
+  },
+});
+
+// Calls with specific team
+client.video.queryCalls({
+  filter_conditions: {
+    team: 'blue',
+  },
+});
+```
+
+</TabItem>
+<TabItem value="py" label="Python">
+
+```py
+# query calls by team field
+response = client.video.query_calls(
+    filter_conditions={"id": call_id, "team": {"$eq": "blue"}}
+)
+
+# retrieve calls without a team
+response = client.video.query_calls(
+    filter_conditions={"id": call_id, "team": {"$eq": "blue"}}
+)
+```
+
+</TabItem>
+</Tabs>
