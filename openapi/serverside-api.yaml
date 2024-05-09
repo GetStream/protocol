@@ -623,22 +623,22 @@ components:
           $ref: '#/components/schemas/UserRequest'
           description: User who issued a ban
           title: Banned by
-          x-stream-index: "009"
+          x-stream-index: "010"
         banned_by_id:
           description: User ID who issued a ban
           title: Banned by ID
           type: string
-          x-stream-index: "008"
-        id:
-          description: Channel ID to ban user in
-          title: ID
+          x-stream-index: "009"
+        channel_cid:
+          description: Channel CID to ban user in eg. messaging:123
+          title: Channel CID
           type: string
-          x-stream-index: "005"
+          x-stream-index: "006"
         ip_ban:
           description: Whether to perform IP ban or not
           title: IP ban
           type: boolean
-          x-stream-index: "007"
+          x-stream-index: "008"
         reason:
           description: Ban reason
           title: Reason
@@ -648,7 +648,7 @@ components:
           description: Whether to perform shadow ban or not
           title: Shadow
           type: boolean
-          x-stream-index: "006"
+          x-stream-index: "007"
         target_user_id:
           description: ID of user to ban
           title: Target user ID
@@ -660,17 +660,12 @@ components:
           title: Timeout
           type: integer
           x-stream-index: "002"
-        type:
-          description: Channel type to ban user in
-          title: Type
-          type: string
-          x-stream-index: "004"
         user:
           $ref: '#/components/schemas/UserRequest'
-          x-stream-index: "010.002"
+          x-stream-index: "011.002"
         user_id:
           type: string
-          x-stream-index: "010.001"
+          x-stream-index: "011.001"
       required:
       - target_user_id
       type: object
@@ -1199,11 +1194,6 @@ components:
       type: object
     CallStateResponseFields:
       properties:
-        blocked_users:
-          items:
-            $ref: '#/components/schemas/UserResponse'
-          type: array
-          x-stream-index: "005"
         call:
           $ref: '#/components/schemas/CallResponse'
           x-stream-index: "001"
@@ -4679,11 +4669,6 @@ components:
     GetCallResponse:
       nullable: true
       properties:
-        blocked_users:
-          items:
-            $ref: '#/components/schemas/UserResponse'
-          type: array
-          x-stream-index: "001.005"
         call:
           $ref: '#/components/schemas/CallResponse'
           x-stream-index: "001.001"
@@ -5103,11 +5088,6 @@ components:
     GetOrCreateCallResponse:
       nullable: true
       properties:
-        blocked_users:
-          items:
-            $ref: '#/components/schemas/UserResponse'
-          type: array
-          x-stream-index: "001.005"
         call:
           $ref: '#/components/schemas/CallResponse'
           x-stream-index: "001.001"
@@ -7228,6 +7208,12 @@ components:
         mute_all_users:
           type: boolean
           x-stream-index: "003"
+        muted_by:
+          $ref: '#/components/schemas/UserRequest'
+          x-stream-index: "010"
+        muted_by_id:
+          type: string
+          x-stream-index: "009"
         screenshare:
           title: Screenshare
           type: boolean
@@ -11255,11 +11241,6 @@ components:
       description: Represents a call
       nullable: true
       properties:
-        blocked_users:
-          items:
-            $ref: '#/components/schemas/UserResponse'
-          type: array
-          x-stream-index: "001.005"
         call:
           $ref: '#/components/schemas/CallResponse'
           x-stream-index: "001.001"
@@ -13004,7 +12985,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v112.5.0
+  version: v112.6.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -13066,7 +13047,7 @@ paths:
       summary: Update App Settings
       tags:
       - product:common
-  /api/v2/chat/blocklists:
+  /api/v2/blocklists:
     get:
       description: |
         Returns all available block lists
@@ -13092,7 +13073,7 @@ paths:
           description: Too many requests
       summary: List block lists
       tags:
-      - product:chat
+      - product:common
     post:
       description: |
         Creates a new application blocklist, once created the blocklist can be used by any channel type
@@ -13125,8 +13106,8 @@ paths:
           description: Too many requests
       summary: Create block list
       tags:
-      - product:chat
-  /api/v2/chat/blocklists/{name}:
+      - product:common
+  /api/v2/blocklists/{name}:
     delete:
       description: |
         Deletes previously created application blocklist
@@ -13162,7 +13143,7 @@ paths:
           description: Too many requests
       summary: Delete block list
       tags:
-      - product:chat
+      - product:common
     get:
       description: |
         Returns block list by given name
@@ -13198,7 +13179,7 @@ paths:
           description: Too many requests
       summary: Get block list
       tags:
-      - product:chat
+      - product:common
     put:
       description: |
         Updates contents of the block list
@@ -13241,7 +13222,7 @@ paths:
           description: Too many requests
       summary: Update block list
       tags:
-      - product:chat
+      - product:common
   /api/v2/chat/channels:
     post:
       description: |
@@ -15566,142 +15547,6 @@ paths:
       summary: Get replies
       tags:
       - product:chat
-  /api/v2/chat/moderation/ban:
-    delete:
-      description: |
-        Removes previously applied ban
-
-        Sends events:
-        - user.unbanned
-
-        Required permissions:
-        - BanChannelMember
-        - BanUser
-      operationId: Unban
-      parameters:
-      - in: query
-        name: target_user_id
-        required: true
-        schema:
-          type: string
-          x-stream-index: "001"
-      - in: query
-        name: type
-        schema:
-          type: string
-          x-stream-index: "002"
-      - in: query
-        name: id
-        schema:
-          type: string
-          x-stream-index: "003"
-      - in: query
-        name: created_by
-        schema:
-          type: string
-          x-stream-index: "004"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Response'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Unban user
-      tags:
-      - product:chat
-    post:
-      description: |
-        Restricts user activity either in specific channel or globally
-
-        Sends events:
-        - user.banned
-
-        Required permissions:
-        - BanChannelMember
-        - BanUser
-      operationId: Ban
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/BanRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Response'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Ban user
-      tags:
-      - product:chat
-  /api/v2/chat/moderation/flag:
-    post:
-      description: |
-        Reports message or user for review by moderators
-
-        Sends events:
-        - message.flagged
-        - user.flagged
-
-        Required permissions:
-        - FlagMessage
-        - FlagUser
-      operationId: Flag
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/FlagRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FlagResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Flag
-      tags:
-      - product:chat
   /api/v2/chat/moderation/flags/message:
     get:
       description: |
@@ -15738,45 +15583,6 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Query Message Flags
-      tags:
-      - product:chat
-  /api/v2/chat/moderation/mute:
-    post:
-      description: |
-        Mutes one or several users
-
-        Sends events:
-        - user.muted
-
-        Required permissions:
-        - MuteUser
-      operationId: MuteUser
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MuteUserRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MuteUserResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Mute user
       tags:
       - product:chat
   /api/v2/chat/moderation/mute/channel:
@@ -15816,45 +15622,6 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Mute channel
-      tags:
-      - product:chat
-  /api/v2/chat/moderation/unmute:
-    post:
-      description: |
-        Unmutes previously muted user
-
-        Sends events:
-        - user.unmuted
-
-        Required permissions:
-        - MuteUser
-      operationId: UnmuteUser
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UnmuteUserRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UnmuteResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Unmute user
       tags:
       - product:chat
   /api/v2/chat/moderation/unmute/channel:
@@ -17132,6 +16899,218 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Get import
+      tags:
+      - product:common
+  /api/v2/moderation/ban:
+    delete:
+      description: |
+        Removes previously applied ban
+
+        Sends events:
+        - user.unbanned
+
+        Required permissions:
+        - BanChannelMember
+        - BanUser
+      operationId: Unban
+      parameters:
+      - in: query
+        name: target_user_id
+        required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      - in: query
+        name: channel_cid
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "002"
+      - in: query
+        name: created_by
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "005"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Unban user
+      tags:
+      - product:common
+    post:
+      description: |
+        Restricts user activity either in specific channel or globally
+
+        Sends events:
+        - user.banned
+
+        Required permissions:
+        - BanChannelMember
+        - BanUser
+      operationId: Ban
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BanRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Ban user
+      tags:
+      - product:common
+  /api/v2/moderation/flag:
+    post:
+      description: |
+        Reports message or user for review by moderators
+
+        Sends events:
+        - message.flagged
+        - user.flagged
+
+        Required permissions:
+        - FlagMessage
+        - FlagUser
+      operationId: Flag
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FlagRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlagResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Flag
+      tags:
+      - product:common
+  /api/v2/moderation/mute:
+    post:
+      description: |
+        Mutes one or several users
+
+        Sends events:
+        - user.muted
+
+        Required permissions:
+        - MuteUser
+      operationId: MuteUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MuteUserRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MuteUserResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Mute user
+      tags:
+      - product:common
+  /api/v2/moderation/unmute:
+    post:
+      description: |
+        Unmutes previously muted user
+
+        Sends events:
+        - user.unmuted
+
+        Required permissions:
+        - MuteUser
+      operationId: UnmuteUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnmuteUserRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnmuteResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Unmute user
       tags:
       - product:common
   /api/v2/og:
