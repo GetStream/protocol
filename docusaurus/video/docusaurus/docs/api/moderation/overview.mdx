@@ -38,10 +38,10 @@ call.unblockUser({ user_id: 'sara' });
 
 ```py
 # Block user
-call.block_user( user_id='sara' )
+call.block_user(user_id='sara')
 
 # Unblock user
-call.unblock_user( user_id= 'sara' )
+call.unblock_user(user_id='sara')
 ```
 
 </TabItem>
@@ -66,10 +66,14 @@ call.update({
 <TabItem value="py" label="Python">
 
 ```py
+from getstream.models import CallSettingsRequest
+
 call.update(
-  settings_override = CallSettingsRequest(
-    screensharing= ScreensharingSettingsRequest( enabled= True, access_request_enabled= True ),
-  ),
+    settings_override=CallSettingsRequest(
+        screensharing=ScreensharingSettingsRequest(
+            enabled=True, access_request_enabled=True
+        ),
+    ),
 )
 ```
 
@@ -97,8 +101,8 @@ call.muteUsers({
 ```py
 # You can specify which kind of stream(s) to mute
 call.mute_users(
-  mute_all_users= True,
-  audio=True,
+    mute_all_users=True,
+    audio=True,
 )
 ```
 
@@ -125,11 +129,12 @@ call.muteUsers({
 
 ```py
 call.mute_users(
-  user_ids= ['sara'],
-  audio= True,
-  video= True,
-  screenshare= True,
-  screenshare_audio = True,
+    muted_by_id=user_id,
+    user_ids=[alice.id, bob.id],
+    audio=True,
+    video=True,
+    screenshare=True,
+    screenshare_audio=True,
 )
 ```
 
@@ -162,9 +167,11 @@ call.updateUserPermissions({
 <TabItem value="py" label="Python">
 
 ```py
+from getstream.models import OwnCapability
+
 call.update_user_permissions(
-  user_id= 'sara',
-  grant_permissions= [OwnCapability.SEND_AUDIO.to_str()],
+    user_id=alice.id,
+    grant_permissions=[OwnCapability.SEND_AUDIO],
 )
 ```
 
@@ -193,10 +200,92 @@ call.updateUserPermissions({
 <TabItem value="py" label="Python">
 
 ```py
+from getstream.models import OwnCapability
+
 call.update_user_permissions(
-  user_id= 'sara',
-  revoke_permissions= [OwnCapability.SEND_AUDIO.to_str()],
+    user_id=alice.id,
+    revoke_permissions=[OwnCapability.SEND_AUDIO],
 )
+```
+
+</TabItem>
+</Tabs>
+
+### Banning users
+
+Users can be banned, when doing that they are not allowed to join or create calls. Banned users also cannot ring or notify other users.
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+// TODO: not implemented yet
+```
+
+</TabItem>
+<TabItem value="py" label="Python">
+
+```py
+# ban a user
+client.ban(
+    target_user_id=bad_user.id,
+    banned_by_id=moderator.id,
+    reason="banned reason here",
+)
+
+# remove the ban for a user
+client.unban(target_user_id=bad_user.id)
+
+# ban a user for 30 minutes
+client.ban(
+    target_user_id=bad_user.id,
+    banned_by_id=moderator.id,
+    timeout=30,
+)
+
+# ban a user and all users sharing the same IP
+client.ban(
+    target_user_id=bad_user.id,
+    banned_by_id=moderator.id,
+    reason="Banned user and all users sharing the same IP for half hour",
+    ip_ban=True,
+)
+```
+
+</TabItem>
+</Tabs>
+
+### Deactivating users
+
+Deactivated users are no longer able to make any API call or connect to websockets (and receive updates on event of any kind).
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+// TODO: not implemented yet
+```
+
+</TabItem>
+<TabItem value="py" label="Python">
+
+```py
+# deactivate one user
+client.deactivate_user(user_id=alice.id)
+
+# reactivates the user
+client.reactivate_user(user_id=alice.id)
+
+# deactivates users in bulk, this is an async operation
+response = client.deactivate_users(user_ids=[alice.id, bob.id])
+task_id = response.data.task_id
+
+# get information about the task
+task_status = client.get_task(task_id)
+
+# just an example, in reality it can take a few seconds for a task to be processed
+if task_status.data.status == "completed":
+    print(task_status.data.result)
 ```
 
 </TabItem>

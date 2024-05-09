@@ -27,20 +27,19 @@ console.log(rtmpURL, streamKey);
 <TabItem value="py" label="Python">
 
 ```py
-resp = call.get()
-# user ID of an existing user
-user_id = 'jane'
+call = client.video.call("default", uuid.uuid4())
+# create the call where the RTMP will be sent to
+response = call.get_or_create()
+
+# ensure we have a user for the host to send video via RTMP
 client.upsert_users(
-	UserRequest(id=user_id)
+    UserRequest(id="tommaso-the-host")
 )
 
-# the token will be valid for 1 hour
-exp = int(time.time()) + 60 * 60
+# create a token for the user sending video, this can be used as the stream key
+stream_key = client.create_token(user_id, expiration=3600)
 
-token = client.create_token(user_id,expiration=exp)
-
-rtmp_url = response.data().call.ingress.rtmp.address
-stream_key = token
+rtmp_url = response.data.call.ingress.rtmp.address
 print(rtmp_url, stream_key)
 ```
 
