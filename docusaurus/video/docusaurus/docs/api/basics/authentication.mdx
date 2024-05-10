@@ -40,8 +40,16 @@ await client.upsertUsers({
 <TabItem value="py" label="Python">
 
 ```py
-client.upsert_users(UserRequest(
-  id='user_id', role="user", custom={"color": "red"}, name="This is a test user",image= "link/to/profile/image",)
+from getstream.models import UserRequest
+
+client.upsert_users(
+    UserRequest(
+        id="user_id",
+        role="user",
+        custom={"color": "red"},
+        name="This is a test user",
+        image="link/to/profile/image",
+    )
 )
 ```
 
@@ -104,15 +112,15 @@ client.upsert_users(UserRequest(
 
 # or
 client.update_users_partial(
-  users= [
-    {
-      id: 'userid',
-      set: {
-        color: 'blue',
-      },
-      unset: ['name'],
-    },
-  ],
+    users=[
+        UpdateUserPartialRequest(
+            id="userid",
+            set={
+                "color": "blue",
+            },
+            unset=["name"],
+        )
+    ],
 )
 ```
 
@@ -145,7 +153,7 @@ Deleting a user means:
 Delete has the following opitions:
 
 | Name                   | Type                       | Description                                                                                                                                                                                                                                                                                                   | Optional |
-| ---------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+|------------------------|----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|
 | `user`                 | Enum (soft, pruning, hard) | - Soft: marks user as deleted and retains all user data. <br /> - Pruning: marks user as deleted and nullifies user information. <br /> - Hard: deletes user completely - this requires hard option for messages and conversation as well.                                                                    | Yes      |
 | `conversations`        | Enum (soft, hard)          | - Soft: marks all conversation channels as deleted (same effect as Delete Channels with 'hard' option disabled). <br /> - Hard: deletes channel and all its data completely including messages (same effect as Delete Channels with 'hard' option enabled).                                                   | Yes      |
 | `messages`             | Enum (soft, pruning, hard) | - Soft: marks all user messages as deleted without removing any related message data. <br /> - Pruning: marks all user messages as deleted, nullifies message information and removes some message data such as reactions and flags. <br /> - Hard: deletes messages completely with all related information. | Yes      |
@@ -176,18 +184,18 @@ client.restoreUsers({ user_ids: ['<id>'] });
 
 ```py
 client.deactivate_user(
-  user_id= '<id>',
+    user_id="<id>",
 )
 
 # reactivate
 client.reactivate_users(
-  user_ids= ['<id>'],
+    user_ids=["<id>"],
 )
 
-client.delete_users( user_ids= ['<id>'] )
+client.delete_users(user_ids=["<id>"])
 
 # restore
-client.restore_users( user_ids= ['<id>'] )
+client.restore_users(user_ids=["<id>"])
 ```
 
 </TabItem>
@@ -226,12 +234,13 @@ def create_user_token(request):
     user_id = request.user.id
 
     # the token will be valid for 1 hour
-    exp = int(time.time()) + 60 * 60
+    exp = 3600
+
     # Here client is Stream client and it's called with the 'user_id' and the expiration time.
-    token = client.create_token(user_id, expiration = exp)
+    token = client.create_token(user_id, expiration=exp)
 
     # The token is then returned in the response.
-    return JsonResponse({'token': token})
+    return JsonResponse({"token": token})
 
 ```
 
@@ -261,16 +270,14 @@ client.createCallToken(userId, call_cids, exp);
 <TabItem value="py" label="Python">
 
 ```py
-import time
-
-user_id = 'john'
+user_id = "john"
 
 # exp and iat are optional, token will be valid for 1 hour
-exp = int(time.time()) + 60 * 60
+exp = 3600
 
-call_cids = ['default:call1', 'livestream:call2']
+call_cids = ["default:call1", "livestream:call2"]
 
-client.create_cal_token(user_id=user_id, expiration=exp,call_cids= call_cids)
+client.create_call_token(user_id=user_id, expiration=exp, call_cids=call_cids)
 ```
 
 </TabItem>

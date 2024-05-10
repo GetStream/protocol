@@ -80,33 +80,40 @@ call.start_transcription(transcription_external_storage= "my-s3")
 <TabItem value="curl" label="cURL">
 
 ```bash
+# 1. create a new storage with all the required parameters
 curl -X POST https://video.stream-io-api.com/video/external_storage?api_key=${API_KEY} \
--H "Authorization: ${JWT_TOKEN}" \
--H "stream-auth-type: jwt" \
--d '{
-  "name": "my-storage",
-  "storage_type": "s3",
-  "bucket": "my-bucket",
-  "custom_folder": "my-folder",
-  "aws_s3": {
-    "s3_region": "us-east-1",
-    "s3_api_key": "my-api-key",
-    "s3_secret": "my-secret"
-  }
-}'
+    -H "Authorization: ${JWT_TOKEN}" \
+    -H "Content-Type: application/json" \
+    -H "stream-auth-type: jwt" \
+    -d '{
+      "name": "my-storage",
+      "storage_type": "s3",
+      "bucket": "my-bucket",
+      "custom_folder": "my-folder",
+      "aws_s3": {
+        "s3_region": "us-east-1",
+        "s3_api_key": "my-api-key",
+        "s3_secret": "my-secret"
+      }
+    }'
 
+# 2. update the call type to use the new storage
+curl -X PUT https://video.stream-io-api.com/video/calltypes/${CALL_TYPE}?api_key=${API_KEY} \
+    -H "Authorization: ${JWT_TOKEN}" \
+    -H "Content-Type: application/json" \
+    -H "stream-auth-type: jwt" \
+    -d '{
+        "external_storage": "my-storage"
+    }'
 
-curl -X PATCH https://video.stream-io-api.com/video/call_types/${CALL_TYPE_ID}?api_key=${API_KEY} \
--H "Authorization: ${JWT_TOKEN}" -H "stream-auth-type: jwt" \
--d '{
-    "external_storage": "my-storage"
-}'
-
-curl -X POST "https://video.stream-io-api.com/video/call/default/${CALL_ID}/start_transcription?api_key=${API_KEY}" \
--H "Authorization: ${JWT_TOKEN}" -H "stream-auth-type: jwt" \
--d '{
-    "transcription_external_storage": "my-storage"
-}'
+# 3. alternative, specify the storage when starting call transcribing
+curl -X POST "https://video.stream-io-api.com/video/call/${CALL_TYPE}/${CALL_ID}/start_transcription?api_key=${API_KEY}" \
+    -H "Authorization: ${JWT_TOKEN}" \
+    -H "Content-Type: application/json" \
+    -H "stream-auth-type: jwt" \
+    -d '{
+        "transcription_external_storage": "my-storage"
+    }'
 ```
 
 </TabItem>
@@ -136,7 +143,7 @@ await serverSideClient.updateCallType('my-call-type', {
   external_storage: "stream-s3",
 });
 
-  // 2. specify Stream S3 storage when starting call transcribing
+// 2. specify Stream S3 storage when starting call transcribing
 await call.startTranscription({
   transcription_external_storage: "my-storage",
 });
@@ -157,16 +164,20 @@ call.start_transcription(transcription_external_storage="my-storage")
 <TabItem value="curl" label="cURL">
 
 ```bash
-
-curl -X PATCH https://video.stream-io-api.com/video/call_types/${CALL_TYPE_ID}?api_key=${API_KEY} \
+# 1. update the call type to use Stream S3 storage
+curl -X PUT https://video.stream-io-api.com/video/calltypes/${CALL_TYPE}?api_key=${API_KEY} \
 -H "Authorization: ${JWT_TOKEN}" \
 -H "stream-auth-type: jwt" \
+-H 'Content-Type: application/json' \
 -d '{
   "external_storage": "my-first-storage"
 }'
 
-curl -X POST "https://video.stream-io-api.com/video/call/default/${CALL_ID}/start_transcription?api_key=${API_KEY}" \
--H "Authorization: ${JWT_TOKEN}" -H "stream-auth-type: jwt" \
+# 2. specify Stream S3 storage when starting call transcribing
+curl -X POST "https://video.stream-io-api.com/video/call/${CALL_TYPE}/${CALL_ID}/start_transcription?api_key=${API_KEY}" \
+-H "Authorization: ${JWT_TOKEN}" \
+-H "stream-auth-type: jwt" \
+-H 'Content-Type: application/json' \
 -d '{
     "transcription_external_storage": "my-second-storage"
 }'
@@ -269,7 +280,9 @@ response = client.video.create_external_storage(
 ```bash
 
 curl -X POST https://video.stream-io-api.com/video/external_storage?api_key=${API_KEY} \
--H "Authorization: ${JWT_TOKEN}" -H "stream-auth-type: jwt" \
+-H "Authorization: ${JWT_TOKEN}" \
+-H "stream-auth-type: jwt" \
+-H 'Content-Type: application/json' \
 -d '{
   "name": "my-storage",
   "storage_type": "gcs",
