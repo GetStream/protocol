@@ -45,6 +45,29 @@ call.unblock_user(user_id='sara')
 ```
 
 </TabItem>
+<TabItem value="curl" label="cURL">
+
+```bash
+# Block user
+curl -X POST "https://video.stream-io-api.com/api/v2/video/call/${CALL_TYPE}/${CALL_ID}/unblock?api_key=${API_KEY}" \
+  -H "Authorization: ${TOKEN}" \
+  -H "stream-auth-type: jwt" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": "sara"
+  }'
+
+# Unblock user
+curl -X POST "https://video.stream-io-api.com/api/v2/video/call/${CALL_TYPE}/${CALL_ID}/unblock?api_key=${API_KEY}" \
+  -H "Authorization: ${TOKEN}" \
+  -H "stream-auth-type: jwt" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": "sara"
+  }'
+```
+
+</TabItem>
 </Tabs>
 
 ### Call permissions
@@ -78,6 +101,27 @@ call.update(
 ```
 
 </TabItem>
+<TabItem value="curl" label="cURL">
+
+```bash
+curl -X PATCH "https://video.stream-io-api.com/api/v2/video/call/${CALL_TYPE}/${CALL_ID}?api_key=${API_KEY}" \
+  -H "Authorization: ${TOKEN}" \
+  -H "Content-Type: application/json" \
+  -H "stream-auth-type: jwt" \
+  -d '{
+    "data": {
+      "created_by_id": "john",
+      "settings_override": {
+        "screensharing": {
+          "enabled": true,
+          "access_request_enabled": true
+        }
+      }
+    }
+  }'
+```
+
+</TabItem>
 </Tabs>
 
 ### Muting everyone
@@ -104,6 +148,21 @@ call.mute_users(
     mute_all_users=True,
     audio=True,
 )
+```
+
+</TabItem>
+<TabItem value="curl" label="cURL">
+
+```bash
+curl -X POST "https://video.stream-io-api.com/api/v2/video/call/${CALL_TYPE}/${CALL_ID}/mute_users?api_key=${API_KEY}" \
+  -H "Authorization: ${TOKEN}" \
+  -H "Content-Type: application/json" \
+  -H "stream-auth-type: jwt" \
+  -d '{
+    "mute_all_users": true,
+    "audio": true,
+    "muted_by_id": "john"
+  }'
 ```
 
 </TabItem>
@@ -136,6 +195,24 @@ call.mute_users(
     screenshare=True,
     screenshare_audio=True,
 )
+```
+
+</TabItem>
+<TabItem value="curl" label="cURL">
+
+```bash
+curl -X POST "https://video.stream-io-api.com/api/v2/video/call/${CALL_TYPE}/${CALL_ID}/mute_users?api_key=${API_KEY}" \
+  -H "Authorization: ${TOKEN}" \
+  -H "Content-Type: application/json" \
+  -H "stream-auth-type: jwt" \
+  -d '{
+    "user_ids": ["sara"],
+    "audio": true,
+    "video": true,
+    "screenshare": true,
+    "screenshare_audio": true,
+    "muted_by_id": "john"
+  }'
 ```
 
 </TabItem>
@@ -176,6 +253,17 @@ call.update_user_permissions(
 ```
 
 </TabItem>
+<TabItem value="curl" label="cURL">
+
+```bash
+curl -X POST "https://video.stream-io-api.com/api/v2/video/call/${CALL_TYPE}/${CALL_ID}/user_permissions?api_key=${API_KEY}" \
+  -H "Authorization: ${TOKEN}" \
+  -H "Content-Type: application/json" \
+  -H "stream-auth-type: jwt" \
+  -d '{ "user_id": "sara", "grant_permissions": ["send-audio"] }'
+```
+
+</TabItem>
 </Tabs>
 
 For moderation purposes any user's permission to
@@ -206,6 +294,17 @@ call.update_user_permissions(
     user_id=alice.id,
     revoke_permissions=[OwnCapability.SEND_AUDIO],
 )
+```
+
+</TabItem>
+<TabItem value="curl" label="cURL">
+
+```bash
+curl -X POST "https://video.stream-io-api.com/api/v2/video/call/${CALL_TYPE}/${CALL_ID}/user_permissions?api_key=${API_KEY}" \
+  -H "Authorization: ${TOKEN}" \
+  -H "Content-Type: application/json" \
+  -H "stream-auth-type: jwt" \
+  -d '{ "user_id": "sara", "revoke_permissions": ["send-audio"] }'
 ```
 
 </TabItem>
@@ -253,6 +352,54 @@ client.ban(
 ```
 
 </TabItem>
+
+<TabItem value="curl" label="cURL">
+
+```bash
+# Ban a user
+curl -X POST https://video.stream-io-api.com/api/v2/moderation/ban?api_key=${API_KEY} \
+  -H "Authorization: ${TOKEN}" \
+  -H "stream-auth-type: jwt" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "target_user_id": "sara",
+    "banned_by_id": "john",
+    "reason": "banned reason here"
+  }'
+
+# Removes ban for user
+curl -X DELETE https://video.stream-io-api.com/api/v2/moderation/ban?api_key=${API_KEY} \
+  -H "Authorization: ${TOKEN}" \
+  -H "stream-auth-type: jwt" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "target_user_id": "sara"
+  }'
+
+# Ban a user for 30 minutes
+curl -X POST https://video.stream-io-api.com/api/v2/moderation/ban?api_key=${API_KEY} \
+  -H "Authorization: ${TOKEN}" \
+  -H "stream-auth-type: jwt" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "target_user_id": "sara",
+    "banned_by_id": "john",
+    "timeout": 30
+  }'
+
+# Ban a user and all users sharing the same IP
+curl -X POST https://video.stream-io-api.com/api/v2/moderation/ban?api_key=${API_KEY} \
+  -H "Authorization: ${TOKEN}" \
+  -H "stream-auth-type: jwt" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "target_user_id": "sara",
+    "banned_by_id": "john",
+    "ip_ban": true
+  }'
+```
+
+</TabItem>
 </Tabs>
 
 ### Deactivating users
@@ -286,6 +433,30 @@ task_status = client.get_task(task_id)
 # just an example, in reality it can take a few seconds for a task to be processed
 if task_status.data.status == "completed":
     print(task_status.data.result)
+```
+
+</TabItem>
+
+<TabItem value="curl" label="cURL">
+
+```bash
+# Deactivate users
+curl -X POST https://video.stream-io-api.com/api/v2/users/deactivate?api_key=${API_KEY} \
+  -H "Authorization: ${TOKEN}" \
+  -H "stream-auth-type: jwt" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_ids": ["sara"]
+  }'
+
+# Reactivate users
+curl -X POST https://video.stream-io-api.com/api/v2/users/deactivate?api_key=${API_KEY} \
+  -H "Authorization: ${TOKEN}" \
+  -H "stream-auth-type: jwt" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_ids": ["sara"]
+  }'
 ```
 
 </TabItem>
