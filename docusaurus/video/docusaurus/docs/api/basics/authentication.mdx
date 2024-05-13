@@ -54,6 +54,29 @@ client.upsert_users(
 ```
 
 </TabItem>
+<TabItem value="curl" label="cURL">
+
+```bash
+curl -X POST https://video.stream-io-api.com/api/v2/users?api_key=${API_KEY} \
+-H "Authorization: ${TOKEN}" \
+-H "stream-auth-type: jwt" \
+-H "Content-Type: application/json" \
+-d '{
+  "users": {
+    "john": {
+      "id": "john",
+      "role": "user",
+      "custom": {
+        "color": "red"
+      },
+      "name": "John",
+      "image": "link/to/profile/image"
+    }
+  }
+}'
+```
+
+</TabItem>
 </Tabs>
 
 ## Updating users
@@ -125,6 +148,47 @@ client.update_users_partial(
 ```
 
 </TabItem>
+<TabItem value="curl" label="cURL">
+
+```bash
+# Upserting a user, all existing user data will be overridden
+curl -X POST https://video.stream-io-api.com/api/v2/users?api_key=${API_KEY} \
+  -H "Authorization: ${TOKEN}" \
+  -H "stream-auth-type: jwt" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "users": {
+      "john": {
+        "id": "john",
+        "role": "user",
+        "custom": {
+          "color": "red"
+        },
+        "name": "John",
+        "image": "link/to/profile/image"
+      }
+    }
+  }'
+
+# Partial update
+curl -X PATCH https://video.stream-io-api.com/api/v2/users?api_key=${API_KEY} \
+  -H "Authorization: ${TOKEN}" \
+  -H "stream-auth-type: jwt" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "users": [
+      {
+        "id": "john",
+        "set": {
+          "color": "blue"
+        },
+        "unset": ["name"]
+      }
+    ]
+  }'
+```
+
+</TabItem>
 </Tabs>
 
 ## Anonymous users
@@ -153,7 +217,7 @@ Deleting a user means:
 Delete has the following opitions:
 
 | Name                   | Type                       | Description                                                                                                                                                                                                                                                                                                   | Optional |
-|------------------------|----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|
+| ---------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
 | `user`                 | Enum (soft, pruning, hard) | - Soft: marks user as deleted and retains all user data. <br /> - Pruning: marks user as deleted and nullifies user information. <br /> - Hard: deletes user completely - this requires hard option for messages and conversation as well.                                                                    | Yes      |
 | `conversations`        | Enum (soft, hard)          | - Soft: marks all conversation channels as deleted (same effect as Delete Channels with 'hard' option disabled). <br /> - Hard: deletes channel and all its data completely including messages (same effect as Delete Channels with 'hard' option enabled).                                                   | Yes      |
 | `messages`             | Enum (soft, pruning, hard) | - Soft: marks all user messages as deleted without removing any related message data. <br /> - Pruning: marks all user messages as deleted, nullifies message information and removes some message data such as reactions and flags. <br /> - Hard: deletes messages completely with all related information. | Yes      |
@@ -196,6 +260,47 @@ client.delete_users(user_ids=["<id>"])
 
 # restore
 client.restore_users(user_ids=["<id>"])
+```
+
+</TabItem>
+<TabItem value="curl" label="cURL">
+
+```bash
+# Deactivate users
+curl -X POST https://video.stream-io-api.com/api/v2/users/deactivate?api_key=${API_KEY} \
+  -H "Authorization: ${TOKEN}" \
+  -H "stream-auth-type: jwt" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_ids": ["sara"]
+  }'
+
+# Reactivate users
+curl -X POST https://video.stream-io-api.com/api/v2/users/deactivate?api_key=${API_KEY} \
+  -H "Authorization: ${TOKEN}" \
+  -H "stream-auth-type: jwt" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_ids": ["sara"]
+  }'
+
+# Delete users
+curl -X POST https://video.stream-io-api.com/api/v2/users/delete?api_key=${API_KEY} \
+  -H "Authorization: ${TOKEN}" \
+  -H "stream-auth-type: jwt" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_ids": ["sara"]
+  }'
+
+# Restore users
+curl -X POST https://video.stream-io-api.com/api/v2/users/restore?api_key=${API_KEY} \
+  -H "Authorization: ${TOKEN}" \
+  -H "stream-auth-type: jwt" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_ids": ["sara"]
+  }'
 ```
 
 </TabItem>
@@ -245,6 +350,22 @@ def create_user_token(request):
 ```
 
 </TabItem>
+
+<TabItem value="bash" label="Bash">
+
+```bash
+HEADER=$(echo -n '{"alg": "HS256", "typ": "JWT"}' | base64);
+USER_ID='<user id>';
+CURRENT_TIMESTAMP=$(date +%s);
+HOUR_FROM_NOW=$((CURRENT_TIMESTAMP + 3600))
+PAYLOAD=$(echo -n '{"user_id": "'${USER_ID}'", "iat": '${CURRENT_TIMESTAMP}', "exp": '${HOUR_FROM_NOW}'}' | base64);
+SECRET='<API secret>';
+SIGNATURE=$(echo -n ${HEADER}.${PAYLOAD} | openssl dgst -sha256 -hmac ${SECRET} -binary | base64 | tr -d '=');
+
+echo "${HEADER}.${PAYLOAD}.${SIGNATURE}"
+```
+
+</TabItem>
 </Tabs>
 
 You need to provide the generated tokens to the client SDKs. Stream SDKs accept a token provider, that can be called to retrieve and renew tokens. You need to implement the token provider in your own application, this is usually an HTTP endpoint.
@@ -278,6 +399,24 @@ exp = 3600
 call_cids = ["default:call1", "livestream:call2"]
 
 client.create_call_token(user_id=user_id, expiration=exp, call_cids=call_cids)
+```
+
+</TabItem>
+
+<TabItem value="bash" label="Bash">
+
+```bash
+HEADER=$(echo -n '{"alg": "HS256", "typ": "JWT"}' | base64);
+USER_ID='<user id>';
+CURRENT_TIMESTAMP=$(date +%s);
+HOUR_FROM_NOW=$((CURRENT_TIMESTAMP + 3600))
+CALL_CID1='livestream:1';
+CALL_CID2='livestream:2';
+PAYLOAD=$(echo -n '{"user_id": "'${USER_ID}'", "call_cids": ["'${CALL_CID1}'", "'${CALL_CID2}'"], "iat": '${CURRENT_TIMESTAMP}', "exp": '${HOUR_FROM_NOW}'}' | base64);
+SECRET='<API secret>';
+SIGNATURE=$(echo -n ${HEADER}.${PAYLOAD} | openssl dgst -sha256 -hmac ${SECRET} -binary | base64 | tr -d '=');
+
+echo "${HEADER}.${PAYLOAD}.${SIGNATURE}"
 ```
 
 </TabItem>
