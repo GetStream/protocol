@@ -5,7 +5,6 @@ slug: /recording/calls
 title: Recording calls
 ---
 
-
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
@@ -44,14 +43,12 @@ call.stop_recording()
 <TabItem value="curl" label="cURL">
 
 ```bash
-curl -X POST "https://video.stream-io-api.com/video/call/${CALL_TYPE}/${CALL_ID}/start_recording?api_key=${API_KEY}" \
-    -H "Authorization: ${JWT_TOKEN}" \
-    -H "Content-Type: application/json" \
+curl -X POST "https://video.stream-io-api.com/api/v2/video/call/${CALL_TYPE}/${CALL_ID}/start_recording?api_key=${API_KEY}" \
+    -H "Authorization: ${TOKEN}" \
     -H "stream-auth-type: jwt"
 
-curl -X POST "https://video.stream-io-api.com/video/call/${CALL_TYPE}/${CALL_ID}/stop_recording?api_key=${API_KEY}" \
-    -H "Authorization: ${JWT_TOKEN}" \
-    -H "Content-Type: application/json" \
+curl -X POST "https://video.stream-io-api.com/api/v2/video/call/${CALL_TYPE}/${CALL_ID}/stop_recording?api_key=${API_KEY}" \
+    -H "Authorization: ${TOKEN}" \
     -H "stream-auth-type: jwt"
 ```
 
@@ -80,8 +77,8 @@ call.list_recordings()
 <TabItem value="curl" label="cURL">
 
 ```bash
-curl "https://video.stream-io-api.com/video/call/${CALL_TYPE}/${CALL_ID}/recordings?api_key=${API_KEY}" \
-    -H "Authorization: ${JWT_TOKEN}" \
+curl "https://video.stream-io-api.com/api/v2/video/call/${CALL_TYPE}/${CALL_ID}/recordings?api_key=${API_KEY}" \
+    -H "Authorization: ${TOKEN}" \
     -H "stream-auth-type: jwt"
 ```
 
@@ -178,6 +175,7 @@ call.update({
 call.update({
   settings_override: {
     recording: {
+      mode: VideoRecordSettingsRequestModeEnum.AVAILABLE,
       audio_only: false,
       quality: VideoRecordSettingsRequestQualityEnum._1080P,
     },
@@ -242,6 +240,66 @@ call.update(
 ```
 
 </TabItem>
+
+<TabItem value="curl" label="cURL">
+
+```bash
+# Disable on call level
+curl -X PATCH "https://video.stream-io-api.com/api/v2/video/call/default/${CALL_ID}?api_key=${API_KEY}" \
+  -H "Authorization: ${TOKEN}" \
+  -H "stream-auth-type: jwt" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "settings_override": {
+      "recording": {
+        "mode": "disabled"
+      }
+    }
+  }'
+
+# Enable on call level
+curl -X PATCH "https://video.stream-io-api.com/api/v2/video/call/default/${CALL_ID}?api_key=${API_KEY}" \
+  -H "Authorization: ${TOKEN}" \
+  -H "stream-auth-type: jwt" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "settings_override": {
+      "recording": {
+        "mode": "available"
+      }
+    }
+  }'
+
+# Other settings
+curl -X PATCH "https://video.stream-io-api.com/api/v2/video/call/default/${CALL_ID}?api_key=${API_KEY}" \
+  -H "Authorization: ${TOKEN}" \
+  -H "stream-auth-type: jwt" \
+  -H "Content-Type: application/json" \
+  -d '{
+  "settings_override": {
+    "recording": {
+      "mode": "available",
+      "audio_only": false,
+      "quality": "1080p"
+    }
+  }
+}'
+
+# Enable/disable on call type level
+curl -X PUT "https://video.stream-io-api.com/api/v2/video/calltypes/${CALL_TYPE_NAME}?api_key=${API_KEY}" \
+  -H "Authorization: ${TOKEN}" \
+  -H "stream-auth-type: jwt" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "settings": {
+      "recording": {
+        "mode": "disabled"
+      }
+    }
+  }'
+```
+
+</TabItem>
 </Tabs>
 
 ## Audio only recording
@@ -279,6 +337,26 @@ call.update(
 ```
 
 </TabItem>
+
+<TabItem value="curl" label="cURL">
+
+```bash
+curl -X PATCH "https://video.stream-io-api.com/api/v2/video/call/default/${CALL_ID}?api_key=${API_KEY}" \
+  -H "Authorization: ${TOKEN}" \
+  -H "stream-auth-type: jwt" \
+  -H "Content-Type: application/json" \
+  -d '{
+  "settings_override": {
+    "recording": {
+      "mode": "available",
+      "audio_only": true
+    }
+  }
+}'
+```
+
+</TabItem>
+
 </Tabs>
 
 ## Recording layouts
@@ -340,7 +418,7 @@ Each layout has a number of options that you can configure. Here is an example:
 ```js
 const layoutOptions = {
   'logo.image_url':
-  'https://theme.zdassets.com/theme_assets/9442057/efc3820e436f9150bc8cf34267fff4df052a1f9c.png',
+    'https://theme.zdassets.com/theme_assets/9442057/efc3820e436f9150bc8cf34267fff4df052a1f9c.png',
   'logo.horizontal_position': 'center',
   'title.text': 'Building Stream Video Q&A',
   'title.horizontal_position': 'center',
@@ -404,6 +482,43 @@ client.video.update_call_type(
         ),
     ),
 )
+```
+
+</TabItem>
+
+<TabItem value="curl" label="cURL">
+
+```bash
+curl -X PUT "https://video.stream-io-api.com/api/v2/video/calltypes/${CALL_TYPE_NAME}?api_key=${API_KEY}" \
+  -H "Authorization: ${TOKEN}" \
+  -H "stream-auth-type: jwt" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "settings": {
+      "recording": {
+        "mode": "available",
+        "audio_only": false,
+        "quality": "1080p",
+        "layout": {
+          "name": "spotlight",
+          "options": {
+            "logo.image_url": "https://theme.zdassets.com/theme_assets/9442057/efc3820e436f9150bc8cf34267fff4df052a1f9c.png",
+            "logo.horizontal_position": "center",
+            "title.text": "Building Stream Video Q&A",
+            "title.horizontal_position": "center",
+            "title.color": "black",
+            "participant_label.border_radius": "0px",
+            "participant.border_radius": "0px",
+            "layout.spotlight.participants_bar_position": "top",
+            "layout.background_color": "#f2f2f2",
+            "participant.placeholder_background_color": "#1f1f1f",
+            "layout.single-participant.padding_inline": "20%",
+            "participant_label.background_color": "transparent"
+          }
+        }
+      }
+    }
+  }'
 ```
 
 </TabItem>
@@ -549,6 +664,30 @@ client.video.update_call_type(
 ```
 
 </TabItem>
+
+<TabItem value="curl" label="cURL">
+
+```bash
+curl -X PUT "https://video.stream-io-api.com/api/v2/video/calltypes/${CALL_TYPE_NAME}?api_key=${API_KEY}" \
+  -H "Authorization: ${TOKEN}" \
+  -H "stream-auth-type: jwt" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "settings": {
+      "recording": {
+        "mode": "available",
+        "audio_only": false,
+        "quality": "1080p",
+        "layout": {
+          "name": "spotlight",
+          "external_css_url": "https://path/to/custom.css"
+        }
+      }
+    }
+  }'
+```
+
+</TabItem>
 </Tabs>
 
 ## Advanced - record calls using a custom web application
@@ -596,6 +735,29 @@ client.video.update_call_type(
         ),
     ),
 )
+```
+
+</TabItem>
+<TabItem value="curl" label="cURL">
+
+```bash
+curl -X PUT "https://video.stream-io-api.com/api/v2/video/calltypes/${CALL_TYPE_NAME}?api_key=${API_KEY}" \
+  -H "Authorization: ${TOKEN}" \
+  -H "stream-auth-type: jwt" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "settings": {
+      "recording": {
+        "mode": "available",
+        "audio_only": false,
+        "quality": "1080p",
+        "layout": {
+          "name": "custom",
+          "external_app_url": "https://path/to/layout/app"
+        }
+      }
+    }
+  }'
 ```
 
 </TabItem>

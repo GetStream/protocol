@@ -1,0 +1,350 @@
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+## Use your own storage
+
+Stream supports the following external storage providers:
+
+- [Amazon S3](#amazon-s3)
+- [Google Cloud Storage](#google-cloud-storage)
+- [Azure Blob Storage](#azure-blob-storage)
+
+If you need support for a different storage provider, you can participate in the conversation [here](https://github.com/GetStream/protocol/discussions/371).
+
+To use your own storage you need to:
+
+1. Configure a new storage for your Stream application
+2. Configure your call type(s) to use the new storage
+
+Once the setup is complete, call recordings and transcription files will be automatically stored in your own storage.
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+// 1. create a new storage with all the required parameters
+await serverSideClient.createExternalStorage({
+    bucket: 'my-bucket',
+    name: 'my-s3',
+    storage_type: 's3',
+    path: 'directory_name/',
+    aws_s3: {
+      s3_region: 'us-east-1',
+      s3_api_key: 'my-access-key',
+      s3_secret: 'my-secret',
+    },
+});
+
+// 2. update the call type to use the new storage
+await serverSideClient.updateCallType('my-call-type', {
+    external_storage: "my-s3",
+});
+```
+</TabItem>
+<TabItem value="py" label="Python">
+
+```py
+from getstream.models import S3Request
+
+# 1. create a new storage with all the required parameters
+client.create_external_storage(
+    name='my-s3',
+    storage_type='s3',
+    bucket='my-bucket',
+    path='directory_name/',
+    aws_s3=S3Request(
+        s3_region='us-east-1',
+        s3_api_key='my-access-key',
+        s3_secret='my-secret',
+    ),
+)
+
+# 2. update the call type to use the new storage
+client.video.update_call_type(name='allhands', external_storage= "my-s3")
+```
+</TabItem>
+<TabItem value="curl" label="cURL">
+
+```bash
+# 1. create a new storage with all the required parameters
+curl -X POST https://video.stream-io-api.com/video/external_storage?api_key=${API_KEY} \
+    -H "Authorization: ${TOKEN}" \
+    -H "Content-Type: application/json" \
+    -H "stream-auth-type: jwt" \
+    -d '{
+      "name": "my-storage",
+      "storage_type": "s3",
+      "bucket": "my-bucket",
+      "path": "my-folder",
+      "aws_s3": {
+        "s3_region": "us-east-1",
+        "s3_api_key": "my-api-key",
+        "s3_secret": "my-secret"
+      }
+    }'
+
+# 2. update the call type to use the new storage
+curl -X PUT https://video.stream-io-api.com/api/v2/video/calltypes/${CALL_TYPE}?api_key=${API_KEY} \
+    -H "Authorization: ${TOKEN}" \
+    -H "Content-Type: application/json" \
+    -H "stream-auth-type: jwt" \
+    -d '{
+        "external_storage": "my-storage"
+    }'
+```
+
+</TabItem>
+</Tabs>
+
+### Multiple storage providers and default storage
+
+You can configure multiple storage providers for your application. When starting a transcription or recording, you can specify which storage provider to use for that particular call. If none is specified, the default storage provider will be used.
+
+When transcribing or recording a call, the storage provider is selected in this order:
+
+1. If specified at the call level, the storage provider chosen for that particular call will be used.
+2. If specified at the call type level, the storage provider designated for that call type will be used.
+3. If neither applies, Stream S3 storage will be used.
+
+Note: All Stream applications have Stream S3 storage enabled by default, which you can refer to as `"stream-s3"` in the configuration.
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+// update the call type to use Stream S3 storage for recordings
+await serverSideClient.updateCallType('my-call-type', {
+  external_storage: "stream-s3",
+});
+
+// specify Stream S3 storage when starting call transcribing
+await call.startTranscription({
+  transcription_external_storage: "my-storage",
+});
+```
+
+</TabItem>
+<TabItem value="py" label="Python">
+
+```py
+# update the call type to use Stream S3 storage for recordings
+client.video.update_call_type('my-call-type', external_storage="stream-s3")
+
+# specify my-storage storage when starting call transcribing
+call.start_transcription(transcription_external_storage="my-storage")
+
+# specify my-storage storage for recording
+call.start_recording(recording_external_storage="my-storage")
+```
+
+</TabItem>
+<TabItem value="curl" label="cURL">
+
+```bash
+# update the call type to use Stream S3 storage for recordings
+curl -X PUT https://video.stream-io-api.com/api/v2/video/calltypes/${CALL_TYPE}?api_key=${API_KEY} \
+    -H "Authorization: ${TOKEN}" \
+    -H "stream-auth-type: jwt" \
+    -H 'Content-Type: application/json' \
+-d '{
+  "external_storage": "my-first-storage"
+}'
+
+# specify Stream S3 storage when starting call transcribing
+curl -X POST "https://video.stream-io-api.com/api/v2/video/call/${CALL_TYPE}/${CALL_ID}/start_transcription?api_key=${API_KEY}" \
+    -H "Authorization: ${TOKEN}" \
+    -H "stream-auth-type: jwt" \
+    -H 'Content-Type: application/json' \
+-d '{
+    "transcription_external_storage": "my-second-storage"
+}'
+```
+
+</TabItem>
+</Tabs>
+
+## Storage configuration
+
+All storage providers have these 4 shared parameters:
+
+| Name         | Description                                                           | Required |
+|--------------|-----------------------------------------------------------------------|----------|
+| name         | The name of the provider, this must be unique                         | yes      |
+| storage_type | The type of storage to use, allowed values are: `s3`, `gcs` and `abs` | yes      |
+| bucket       | The name of the bucket on the service provider                        | yes      |
+| path         | The path prefix to use for storing files                              | no       |
+
+## Amazon S3
+
+To use Amazon S3 as your storage provider, you have two authentication options: IAM role or API key.
+
+If you do not specify the `s3_api_key` parameter, Stream will use IAM role authentication. In that case make sure to have the correct IAM role configured for your application.
+
+| Name       | Description                               | Required |
+|------------|-------------------------------------------|----------|
+| s3_region  | The AWS region where the bucket is hosted | yes      |
+| s3_api_key | The AWS API key                           | no       |
+| s3_secret  | The AWS API Secret                        | no       |
+
+
+### Example S3 policy
+
+With this option you omit the key and secret, but instead you set up a resource-based policy to grant Stream SendMessage permission on your S3 bucket.
+The following policy needs to be attached to your queue (replace the value of Resource with the fully qualified ARN of you S3 bucket):
+
+```json
+{
+    "Version": "2012-10-17",
+    "Id": "StreamExternalStoragePolicy",
+    "Statement": [
+        {
+            "Sid": "ExampleStatement01",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::185583345998:root"
+            },
+            "Action": [
+                "s3:PutObject"
+            ],
+            "Resource": [
+                "arn:aws:s3:::bucket_name/*",
+                "arn:aws:s3:::bucket_name"
+            ]
+        }
+    ]
+}
+```
+
+## Google Cloud Storage
+
+To use Google Cloud Storage as your storage provider, you need to send your [service account](https://cloud.google.com/iam/docs/service-accounts-create) credentials as they are stored in your JSON file.
+Stream only needs permission to write new files, it is not necessary to grant any other permission.
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+await serverSideClient.createExternalStorage({
+    bucket: 'my-bucket',
+    name: 'my-gcs',
+    storage_type: 'gcs',
+    path: 'directory_name/',
+    gcs_credentials: "content of the service account file",
+});
+```
+
+</TabItem>
+
+<TabItem value="py" label="Python">
+
+```py
+client.create_external_storage(
+    name='my-gcs',
+    storage_type='gcs',
+    bucket='my-bucket',
+    path='directory_name/',
+    gcs_credentials="content of the service account file"
+)
+```
+</TabItem>
+
+<TabItem value="curl" label="cURL">
+
+```bash
+curl -X POST https://video.stream-io-api.com/video/external_storage?api_key=${API_KEY} \
+    -H "Authorization: ${TOKEN}" \
+    -H "stream-auth-type: jwt" \
+    -H 'Content-Type: application/json' \
+-d '{
+  "name": "my-storage",
+  "storage_type": "gcs",
+  "bucket": "my-bucket",
+  "path": "my-folder",
+  "gcs_credentials": "content of the service account file"
+}'
+
+```
+
+</TabItem>
+</Tabs>
+
+### Example policy
+
+```json
+{
+	"bindings": [
+		{
+			"role": "roles/storage.objectCreator",
+			"members": ["service_account_principal_identifier"]
+		}
+	]
+}
+```
+
+## Azure Blob Storage
+
+To use Azure Blob Storage as your storage provider, you need to create a container and a service principal with the following parameters:
+
+| Name              | Description       | Required |
+|-------------------|-------------------|----------|
+| abs_account_name  | The account name  | yes      |
+| abs_account_key   | The account key   | yes      |
+| abs_client_secret | The client secret | yes      |
+| abs_tenant_id     | The tenant ID     | yes      |
+
+Stream only needs permission to write new files, it is not necessary to grant any other permission.
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+await serverSideClient.createExternalStorage({
+    name: 'my-abs',
+    storage_type: 'abs',
+    bucket: 'my-bucket',
+    path: 'directory_name/',
+    abs_account_name: "...",
+    abs_account_key: "...",
+});
+```
+
+</TabItem>
+
+<TabItem value="py" label="Python">
+
+```py
+from getstream.models import AzureRequest
+
+client.create_external_storage(
+    name="my-abs",
+    storage_type="abs",
+    bucket="my-bucket",
+    path="directory_name/",
+    azure_blob=AzureRequest(
+        abs_account_name="...",
+        abs_client_id="...",
+        abs_client_secret="...",
+        abs_tenant_id="...",
+    ),
+)
+```
+</TabItem>
+
+<TabItem value="curl" label="cURL">
+
+```bash
+curl -X POST https://video.stream-io-api.com/video/external_storage?api_key=${API_KEY} \
+    -H "Authorization: ${TOKEN}" \
+    -H "stream-auth-type: jwt" \
+    -H 'Content-Type: application/json' \
+-d '{
+  "name": "my-abs",
+  "storage_type": "abs",
+  "bucket": "my-bucket",
+  "path": "my-folder",
+  "gcs_credentials": "content of the service account file"
+}'
+```
+
+</TabItem>
+</Tabs>

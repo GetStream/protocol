@@ -519,6 +519,26 @@ components:
           $ref: '#/components/schemas/MessageModerationResult'
           x-stream-index: "003"
       type: object
+    AzureRequest:
+      properties:
+        abs_account_name:
+          type: string
+          x-stream-index: "001"
+        abs_client_id:
+          type: string
+          x-stream-index: "003"
+        abs_client_secret:
+          type: string
+          x-stream-index: "004"
+        abs_tenant_id:
+          type: string
+          x-stream-index: "002"
+      required:
+      - abs_account_name
+      - abs_tenant_id
+      - abs_client_id
+      - abs_client_secret
+      type: object
     BackstageSettings:
       properties:
         enabled:
@@ -1822,6 +1842,17 @@ components:
       - automod_behavior
       - commands
       type: object
+    CheckExternalStorageResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      type: object
     CheckPushRequest:
       nullable: true
       properties:
@@ -2547,6 +2578,46 @@ components:
       - id
       - push_provider
       type: object
+    CreateExternalStorageRequest:
+      nullable: true
+      properties:
+        aws_s3:
+          $ref: '#/components/schemas/S3Request'
+          x-stream-index: "003.004"
+        azure_blob:
+          $ref: '#/components/schemas/AzureRequest'
+          x-stream-index: "003.006"
+        bucket:
+          type: string
+          x-stream-index: "003.002"
+        gcs_credentials:
+          type: string
+          x-stream-index: "003.005"
+        name:
+          type: string
+          x-stream-index: "001"
+        path:
+          type: string
+          x-stream-index: "003.003"
+        storage_type:
+          type: string
+          x-stream-index: "003.001"
+      required:
+      - name
+      - storage_type
+      - bucket
+      type: object
+    CreateExternalStorageResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      type: object
     CreateGuestRequest:
       nullable: true
       properties:
@@ -2916,6 +2987,17 @@ components:
       - name
       - duration
       type: object
+    DeleteExternalStorageResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      type: object
     DeleteMessageResponse:
       nullable: true
       properties:
@@ -3261,6 +3343,26 @@ components:
       required:
       - task_id
       - duration
+      type: object
+    ExternalStorageResponse:
+      properties:
+        bucket:
+          type: string
+          x-stream-index: "003"
+        name:
+          type: string
+          x-stream-index: "001"
+        path:
+          type: string
+          x-stream-index: "004"
+        type:
+          type: string
+          x-stream-index: "002"
+      required:
+      - name
+      - type
+      - bucket
+      - path
       type: object
     Field:
       nullable: true
@@ -4612,6 +4714,23 @@ components:
       required:
       - devices
       - duration
+      type: object
+    ListExternalStorageResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+        external_storages:
+          additionalProperties:
+            $ref: '#/components/schemas/ExternalStorageResponse'
+          type: object
+          x-stream-index: "002"
+      required:
+      - duration
+      - external_storages
       type: object
     ListImportsResponse:
       nullable: true
@@ -7711,6 +7830,20 @@ components:
       - created_at
       - updated_at
       type: object
+    S3Request:
+      properties:
+        s3_api_key:
+          type: string
+          x-stream-index: "002"
+        s3_region:
+          type: string
+          x-stream-index: "001"
+        s3_secret:
+          type: string
+          x-stream-index: "003"
+      required:
+      - s3_region
+      type: object
     ScreensharingSettings:
       properties:
         access_request_enabled:
@@ -9569,6 +9702,58 @@ components:
       required:
       - duration
       type: object
+    UpdateExternalStorageRequest:
+      nullable: true
+      properties:
+        aws_s3:
+          $ref: '#/components/schemas/S3Request'
+          x-stream-index: "003.004"
+        azure_blob:
+          $ref: '#/components/schemas/AzureRequest'
+          x-stream-index: "003.006"
+        bucket:
+          type: string
+          x-stream-index: "003.002"
+        gcs_credentials:
+          type: string
+          x-stream-index: "003.005"
+        path:
+          type: string
+          x-stream-index: "003.003"
+        storage_type:
+          type: string
+          x-stream-index: "003.001"
+      required:
+      - storage_type
+      - bucket
+      type: object
+    UpdateExternalStorageResponse:
+      nullable: true
+      properties:
+        bucket:
+          type: string
+          x-stream-index: "001.003"
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        name:
+          type: string
+          x-stream-index: "001.001"
+        path:
+          type: string
+          x-stream-index: "001.004"
+        type:
+          type: string
+          x-stream-index: "001.002"
+      required:
+      - name
+      - type
+      - bucket
+      - path
+      - duration
+      type: object
     UpdateMessagePartialRequest:
       nullable: true
       properties:
@@ -10407,7 +10592,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v112.7.0
+  version: v113.0.0
 openapi: 3.0.3
 paths:
   /app:
@@ -12494,6 +12679,175 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Export channels status
+      tags:
+      - product:chat
+  /external_storage:
+    get:
+      description: |
+        Lists external storage
+      operationId: ListExternalStorage
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListExternalStorageResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: List external storage
+      tags:
+      - product:chat
+    post:
+      description: |
+        Creates new external storage
+      operationId: CreateExternalStorage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateExternalStorageRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateExternalStorageResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Create external storage
+      tags:
+      - product:chat
+  /external_storage/{name}:
+    delete:
+      description: |
+        Deletes external storage
+      operationId: DeleteExternalStorage
+      parameters:
+      - in: path
+        name: name
+        required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "002"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteExternalStorageResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Delete external storage
+      tags:
+      - product:chat
+    put:
+      description: |2+
+
+      operationId: UpdateExternalStorage
+      parameters:
+      - in: path
+        name: name
+        required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateExternalStorageRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateExternalStorageResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Update External Storage
+      tags:
+      - product:chat
+  /external_storage/{name}/check:
+    get:
+      description: |2+
+
+      operationId: CheckExternalStorage
+      parameters:
+      - in: path
+        name: name
+        required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "002"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckExternalStorageResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Check External Storage
       tags:
       - product:chat
   /guest:
