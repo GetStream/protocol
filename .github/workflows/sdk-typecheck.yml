@@ -1,0 +1,53 @@
+name: SDK Typecheck
+
+on:
+  pull_request:
+    paths:
+      - 'openapi/video-openapi-clientside.yaml'
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  sdk-typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: protocol
+
+      - name: Compile definitions
+        run: docker run --rm \
+          -v $(pwd)/protocol:/local ghcr.io/getstream/openapi-generator:master generate \
+          -i /local/openapi/video-openapi-clientside.yaml \
+          -g typescript-fetch \
+          -o /local/ts-sdk
+          --additional-properties=supportsES6=true \
+          --additional-properties=modelPropertyNaming=original \
+          --additional-properties=enumPropertyNaming=UPPERCASE \
+          --additional-properties=withoutRuntimeChecks=true
+
+      - name: Checkout SDK
+        uses: actions/checkout@v4
+        with:
+          repository: 'GetStream/stream-video-js'
+          path: stream-video-js
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        cwd: stream-video-js
+        with:
+          node-version: 20.x
+          cache: 'yarn'
+
+      - name: Install SDK dependencies
+        cwd: stream-video-js
+        run: yarn install --immutable \
+          rm -r packages/client/src/gen/coordinator \
+          cp protocol/ts-sdk packages/client/src/gen/coordinator
+
+      - name: Typecheck
+        cwd: stream-video-js
+        run: yarn run build:client
