@@ -22,19 +22,23 @@ const CallEventModels = () => {
     <React.Fragment>
       <table>
         <thead>
-          <th>Name</th>
-          <th>Description</th>
-        </thead>
-        {events.map((event) => (
           <tr>
-            <td>
-              <a href={'#' + event.key}>
-                <code>{event.type}</code>
-              </a>
-            </td>
-            <td>{event.description}</td>
+            <th>Name</th>
+            <th>Description</th>
           </tr>
-        ))}
+        </thead>
+        <tbody>
+          {events.map((event) => (
+            <tr key={event.type}>
+              <td>
+                <a href={'#' + event.key}>
+                  <code>{event.type}</code>
+                </a>
+              </td>
+              <td>{event.description}</td>
+            </tr>
+          ))}
+        </tbody>
       </table>
       <OpenApiModels
         modelFilter={filter}
