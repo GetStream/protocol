@@ -5270,6 +5270,40 @@ components:
       - created_at
       - updated_at
       type: object
+    MessageHistoryEntry:
+      nullable: true
+      properties:
+        Custom:
+          additionalProperties: {}
+          type: object
+          writeOnly: true
+          x-stream-index: "008"
+        attachments:
+          items:
+            $ref: '#/components/schemas/Attachment'
+          type: array
+          x-stream-index: "007"
+        message_id:
+          type: string
+          x-stream-index: "003"
+        message_updated_at:
+          format: date-time
+          type: string
+          x-stream-index: "005"
+        message_updated_by_id:
+          type: string
+          x-stream-index: "004"
+        text:
+          type: string
+          x-stream-index: "006"
+      required:
+      - message_id
+      - message_updated_by_id
+      - message_updated_at
+      - text
+      - attachments
+      - Custom
+      type: object
     MessageModerationResult:
       properties:
         action:
@@ -7186,6 +7220,59 @@ components:
           x-stream-index: "001"
       required:
       - flags
+      - duration
+      type: object
+    QueryMessageHistoryRequest:
+      nullable: true
+      properties:
+        filter:
+          additionalProperties: {}
+          maximum: 3
+          minimum: 1
+          type: object
+          x-stream-index: "001"
+        limit:
+          format: int32
+          maximum: 25
+          minimum: 0
+          type: integer
+          x-stream-index: "004.001"
+        next:
+          type: string
+          x-stream-index: "004.002"
+        prev:
+          type: string
+          x-stream-index: "004.003"
+        sort:
+          items:
+            $ref: '#/components/schemas/SortParam'
+          maximum: 5
+          type: array
+          x-stream-index: "002"
+      required:
+      - filter
+      type: object
+    QueryMessageHistoryResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "003.001"
+        message_history:
+          items:
+            $ref: '#/components/schemas/MessageHistoryEntry'
+          type: array
+          x-stream-index: "001"
+        next:
+          type: string
+          x-stream-index: "002.001"
+        prev:
+          type: string
+          x-stream-index: "002.002"
+      required:
+      - message_history
       - duration
       type: object
     QueryPollVotesRequest:
@@ -10592,7 +10679,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v113.1.0
+  version: v114.1.0
 openapi: 3.0.3
 paths:
   /app:
@@ -13853,6 +13940,39 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Get replies
+      tags:
+      - product:chat
+  /messages/history:
+    post:
+      description: |
+        Queries history for one message
+      operationId: QueryMessageHistory
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryMessageHistoryRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryMessageHistoryResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Query message history
       tags:
       - product:chat
   /moderation/ban:
