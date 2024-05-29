@@ -42,7 +42,21 @@ await client.call('default', 'test-outgoing-call').getOrCreate({
 ```
 
 </TabItem>
+<TabItem value="py" label="Python">
 
+```python
+from getstream.models import CallRequest, MemberRequest
+
+call.get_or_create(
+    data=CallRequest(
+        created_by_id=user_id,
+        members=[MemberRequest(user_id=alice.id), MemberRequest(user_id=bob.id)],
+    ),
+    ring=True
+)
+```
+
+</TabItem>
 <TabItem value="curl" label="cURL">
 
 ```bash
@@ -83,6 +97,21 @@ await client.call('default', 'test-outgoing-call').getOrCreate({
     members: [{ user_id: 'myself' }, { user_id: 'my friend' }],
   },
 });
+```
+
+</TabItem>
+<TabItem value="py" label="Python">
+
+```python
+from getstream.models import CallRequest, MemberRequest
+
+call.get_or_create(
+    data=CallRequest(
+        created_by_id=user_id,
+        members=[MemberRequest(user_id=alice.id), MemberRequest(user_id=bob.id)],
+    ),
+    notify=True
+)
 ```
 
 </TabItem>
@@ -151,12 +180,29 @@ if (!callMemberGrants.includes(VideoOwnCapability.JOIN_CALL)) {
 
 // Update the call type with the changes
 await client.video.updateCallType(callTypeName, {
-  grants: { user: userGrants, call_member: callMemberGrants },
+  grants: { user: [], call_member: [VideoOwnCapability.JOIN_CALL, VideoOwnCapability.GET_CALL, VideoOwnCapability.SEND_AUDIO, VideoOwnCapability.JOIN_CALL] },
 });
 ```
 
 </TabItem>
+<TabItem value="py" label="Python">
 
+```python
+response = client.video.update_call_type(
+    name="default",
+    grants={
+        "user": [],
+        "call_member": [
+            OwnCapability.READ_CALL,
+            OwnCapability.SEND_VIDEO,
+            OwnCapability.SEND_AUDIO,
+            OwnCapability.JOIN_CALL,
+        ],
+    },
+)
+```
+
+</TabItem>
 <TabItem value="curl" label="cURL">
 
 ```bash
@@ -196,7 +242,13 @@ await call.endCall();
 ```
 
 </TabItem>
+<TabItem value="py" label="Python">
 
+```python
+call.end()
+```
+
+</TabItem>
 <TabItem value="curl" label="cURL">
 
 ```bash
@@ -556,6 +608,22 @@ await call.sendCustomEvent({
 
 </TabItem>
 
+<TabItem value="py" label="Python">
+
+```python
+# custom events can contain arbitrary data
+call.send_call_event(
+    user_id="john",
+    custom={
+        "type": "draw",
+        "x": 10,
+        "y": 30,
+    },
+)
+```
+
+</TabItem>
+
 <TabItem value="curl" label="cURL">
 
 ```bash
@@ -589,13 +657,24 @@ You can pin the video of a participant in a call session. The SDKs will make sur
 ```js
 await call.pinVideo({
   session_id: 'session-id',
-  user_id: 'user-id-to-unpin',
+  user_id: 'user-id-to-pin',
 });
 
 await call.unpinVideo({
   session_id: 'session-id',
-  user_id: 'user-id-to-pin',
+  user_id: 'user-id-to-unpin',
 });
+```
+
+</TabItem>
+<TabItem value="py" label="Python">
+
+```python
+# Pin video for all participants
+call.video_pin(session_id="session-id", user_id="user-id-to-pin")
+
+# Unpin video for all participants
+call.video_unpin(session_id="session-id", user_id="user-id-to-unpin")
 ```
 
 </TabItem>
@@ -609,7 +688,7 @@ curl -X POST "https://video.stream-io-api.com/api/v2/video/call/${CALL_TYPE}/${C
   -H "Content-Type: application/json" \
   -d '{
     "session_id": "session-id",
-    "user_id": "user-id-to-unpin"
+    "user_id": "user-id-to-pin"
   }'
 
 # Unpin video
@@ -640,23 +719,23 @@ You can configure all calls to have a default max duration, this can be done fro
 
 ```js
 await client.video.updateCallType({
-        name: 'default',
-        settings: {
-          limits: {
+    name: 'default',
+    settings: {
+        limits: {
             max_duration_seconds: 3600
-          }
         }
-      });
+    }
+});
 
 // Disable the default session timer
 await client.video.updateCallType({
-        name: 'default',
-        settings: {
-          limits: {
+    name: 'default',
+    settings: {
+        limits: {
             max_duration_seconds: 0
-          }
         }
-      });
+    }
+});
 ```
 
 </TabItem>
