@@ -15,7 +15,8 @@ To use your own storage you need to:
 
 1. Configure a new storage for your Stream application
 2. (Optional) Check storage configuration for correctness.
-    Calling check endpoint will create a test markdown file in the storage to verify the configuration. It will return an error if the file is not created.  3
+    Calling check endpoint will create a test markdown file in the storage to verify the configuration. It will return an error if the file is not created.
+    In case of success, the file with a name `stream-<uuid>.md` will be uploaded to the storage. Every time you call this endpoint, a new file will be created.
 3. Configure your call type(s) to use the new storage
 
 Once the setup is complete, call recordings and transcription files will be automatically stored in your own storage.
@@ -46,10 +47,10 @@ await serverSideClient.updateCallType('my-call-type', {
 <TabItem value="py" label="Python">
 
 ```py
-from getstream.models import S3Request
-
 # 1. create a new storage with all the required parameters
-client.create_external_storage(
+from getstream.models.s_3_request import S3Request
+
+client.video.create_external_storage(
     name='my-s3',
     storage_type='s3',
     bucket='my-bucket',
@@ -61,8 +62,12 @@ client.create_external_storage(
     ),
 )
 
-# 2. update the call type to use the new storage
-client.video.update_call_type(name='allhands', external_storage= "my-s3")
+# 2. (Optional) Check storage configuration for correctness
+# In case of any errors, this will throw a StreamAPIException. 
+response = client.video.check_external_storage(name='my-s3')
+
+# 3. update the call type to use the new storage
+client.video.update_call_type(name='allhands', external_storage='my-s3')
 ```
 </TabItem>
 <TabItem value="curl" label="cURL">
@@ -85,13 +90,13 @@ curl -X POST https://video.stream-io-api.com/video/external_storage?api_key=${AP
       }
     }'
 
-# 1a. (Optional) Check storage configuration for correctness
+    # 2. (Optional) Check storage configuration for correctness
 curl -X GET https://video.stream-io-api.com/video/external_storage/check?api_key=${API_KEY} \
     -H "Authorization: ${TOKEN}" \
     -H "stream-auth-type: jwt"
 
 
-# 2. update the call type to use the new storage
+# 3. update the call type to use the new storage
 curl -X PUT https://video.stream-io-api.com/api/v2/video/calltypes/${CALL_TYPE}?api_key=${API_KEY} \
     -H "Authorization: ${TOKEN}" \
     -H "Content-Type: application/json" \
