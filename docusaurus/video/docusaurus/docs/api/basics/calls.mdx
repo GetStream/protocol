@@ -628,13 +628,12 @@ curl -X POST "https://video.stream-io-api.com/api/v2/video/call/${CALL_TYPE}/${C
 
 ## Session Timers
 
-You can limit the maximum duration for your calls. This limit can be set for individual calls or set to a default value for all calls with the same type
+You can limit the maximum duration for calls. This limit can be set for individual calls or set to a default value for all calls with the same type.
+When set, users will be automatically removed from a call when the time runs out and the call will be marked as ended.
 
-When set, users will be automatically removed from a call when the time runs out.
+### Call type configuration
 
-### Configure all calls with maximum duration
-
-You can configure all calls to have a default max duration, this can be done from the Dashboard (Call Type Settings) or using the platform API.
+You can configure all calls to have a default max duration, this can be done from the Dashboard (Call Type Settings) or using the API.
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
@@ -665,24 +664,27 @@ await client.video.updateCallType({
 <TabItem value="py" label="Python">
 
 ```py
+from getstream.models import CallSettingsRequest, LimitsSettingsRequest
+
+# Set default max duration to 1 hour
 client.video.update_call_type(
-            default,
-            settings=CallSettingsRequest(
-                limits=LimitsSettingsRequest(
-                    max_duration_seconds=3600,
-                ),
-            ),
-        )
+    "default",
+    settings=CallSettingsRequest(
+        limits=LimitsSettingsRequest(
+            max_duration_seconds=3600,
+        ),
+    ),
+)
 
 # Disable the default session timer
 client.video.update_call_type(
-            default,
-            settings=CallSettingsRequest(
-                limits=LimitsSettingsRequest(
-                    max_duration_seconds=0,
-                ),
-            ),
-        )
+    "default",
+    settings=CallSettingsRequest(
+        limits=LimitsSettingsRequest(
+            max_duration_seconds=0,
+        ),
+    ),
+)
 ```
 
 </TabItem>
@@ -732,11 +734,11 @@ await client.call('default', 'test-outgoing-call').getOrCreate({
     data: {
         created_by_id: 'john',
         settings_override: {
-          limits: {
-            max_duration_seconds: 3600,
-          },
+            limits: {
+                max_duration_seconds: 3600,
+            },
         },
-      },
+    },
 });
 ```
 
@@ -745,9 +747,12 @@ await client.call('default', 'test-outgoing-call').getOrCreate({
 <TabItem value="py" label="Python">
 
 ```py
+from getstream.models import CallRequest, CallSettingsRequest, LimitsSettingsRequest
+
+
 call.get_or_create(
     data=CallRequest(
-        created_by_id=john,
+        created_by_id="john",
         settings_override=CallSettingsRequest(
             limits=LimitsSettingsRequest(
                 max_duration_seconds=3600,
@@ -784,7 +789,7 @@ curl -X POST "https://video.stream-io-api.com/api/v2/video/call/${CALL_TYPE}/${C
 
 ### Updating call object to extend session time
 
-It is possible to update a call and extend the session time. In that case a call.updated event is sent to all connected clients so that their UI can be updated accordingly.
+It is possible to update a call and extend the session time. In that case a `call.updated` event is sent to all connected clients so that their UI can be updated accordingly.
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
@@ -818,22 +823,24 @@ await client.call.update({
 <TabItem value="py" label="Python">
 
 ```py
+from getstream.models import CallSettingsRequest, LimitsSettingsRequest
+
 # Updates a call with session timer
 call.update(
-        settings_override=CallSettingsRequest(
-            limits=LimitsSettingsRequest(
-                max_duration_seconds=3600,
-            ),
+    settings_override=CallSettingsRequest(
+        limits=LimitsSettingsRequest(
+            max_duration_seconds=3600,
         ),
+    ),
 )
 
 # Disable the session timer
 call.update(
-        settings_override=CallSettingsRequest(
-            limits=LimitsSettingsRequest(
-                max_duration_seconds=0,
-            ),
+    settings_override=CallSettingsRequest(
+        limits=LimitsSettingsRequest(
+            max_duration_seconds=0,
         ),
+    ),
 )
 ```
 
