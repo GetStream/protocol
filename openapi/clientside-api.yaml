@@ -1617,6 +1617,10 @@ components:
           format: date-time
           type: number
           x-stream-index: "002"
+        timer_ends_at:
+          format: date-time
+          type: number
+          x-stream-index: "010"
       required:
       - id
       - participants
@@ -1675,6 +1679,9 @@ components:
         geofencing:
           $ref: '#/components/schemas/GeofenceSettingsRequest'
           x-stream-index: "003"
+        limits:
+          $ref: '#/components/schemas/LimitsSettingsRequest'
+          x-stream-index: "011"
         recording:
           $ref: '#/components/schemas/RecordSettingsRequest'
           x-stream-index: "005"
@@ -1708,6 +1715,9 @@ components:
         geofencing:
           $ref: '#/components/schemas/GeofenceSettingsResponse'
           x-stream-index: "004"
+        limits:
+          $ref: '#/components/schemas/LimitsSettingsResponse'
+          x-stream-index: "011"
         recording:
           $ref: '#/components/schemas/RecordSettingsResponse'
           x-stream-index: "005"
@@ -1737,6 +1747,7 @@ components:
       - transcription
       - video
       - thumbnails
+      - limits
       type: object
     CallStateResponseFields:
       properties:
@@ -2691,6 +2702,9 @@ components:
           title: Is moderator
           type: boolean
           x-stream-index: "006"
+        notifications_muted:
+          type: boolean
+          x-stream-index: "021"
         shadow_banned:
           description: Whether member is shadow banned in this channel or not
           title: Shadow banned
@@ -4256,6 +4270,7 @@ components:
       - banned
       - online
       - devices
+      - invisible
       - mutes
       - channel_mutes
       - total_unread_count
@@ -5100,6 +5115,29 @@ components:
           minimum: 0
           title: Flag
           type: number
+          x-stream-index: "001"
+      type: object
+    LimitsSettingsRequest:
+      properties:
+        max_duration_seconds:
+          format: int32
+          minimum: 0
+          type: integer
+          x-stream-index: "002"
+        max_participants:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+      type: object
+    LimitsSettingsResponse:
+      properties:
+        max_duration_seconds:
+          format: int32
+          type: integer
+          x-stream-index: "002"
+        max_participants:
+          format: int32
+          type: integer
           x-stream-index: "001"
       type: object
     ListDevicesResponse:
@@ -5955,7 +5993,7 @@ components:
           type: array
           x-stream-index: "001.002"
         type:
-          default: message.new
+          default: notification.thread_message_new
           type: string
           x-stream-index: "004.001"
         user:
@@ -5978,16 +6016,6 @@ components:
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
     MessagePaginationParams:
-      properties:
-        limit:
-          format: int32
-          minimum: 0
-          type: integer
-          x-stream-index: "001"
-        offset:
-          format: int32
-          type: integer
-          x-stream-index: "002"
       type: object
     MessageReadEvent:
       properties:
@@ -7215,6 +7243,7 @@ components:
       description: All possibility of string to use
       enum:
       - block-users
+      - change-max-duration
       - create-call
       - create-reaction
       - enable-noise-cancellation
@@ -7458,6 +7487,7 @@ components:
       - banned
       - online
       - devices
+      - invisible
       - mutes
       - channel_mutes
       - total_unread_count
@@ -10078,36 +10108,40 @@ components:
           format: date-time
           title: Created at
           type: number
-          x-stream-index: "007"
+          x-stream-index: "008"
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "010"
+          x-stream-index: "011"
         last_read_at:
           format: date-time
           type: number
-          x-stream-index: "009"
+          x-stream-index: "010"
+        last_thread_message_at:
+          format: date-time
+          type: number
+          x-stream-index: "004"
         left_thread_at:
           description: Left Thread At is the time when the user left the thread
           format: date-time
           title: Left Thread At
           type: number
-          x-stream-index: "008"
+          x-stream-index: "009"
         thread_id:
           description: Thead ID is unique string identifier of the thread
           title: ID
           type: string
-          x-stream-index: "004"
+          x-stream-index: "005"
         user:
           $ref: '#/components/schemas/UserObject'
           description: User is the user object
           title: User
-          x-stream-index: "006"
+          x-stream-index: "007"
         user_id:
           description: User ID is unique string identifier of the user
           title: User ID
           type: string
-          x-stream-index: "005"
+          x-stream-index: "006"
       required:
       - app_pk
       - channel_cid
@@ -12612,7 +12646,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v114.1.2
+  version: v115.0.1
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -14463,6 +14497,19 @@ paths:
           type: array
           writeOnly: true
           x-stream-index: "002"
+      - in: query
+        name: limit
+        schema:
+          format: int32
+          minimum: 0
+          type: integer
+          x-stream-index: "003.001"
+      - in: query
+        name: offset
+        schema:
+          format: int32
+          type: integer
+          x-stream-index: "003.002"
       - in: query
         name: id_gte
         schema:
