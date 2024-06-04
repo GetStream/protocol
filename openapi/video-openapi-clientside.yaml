@@ -729,6 +729,58 @@ components:
       x-stream-event-call-type: true
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    CallMissedEvent:
+      description: This event is sent to call members who did not accept/reject/join
+        the call to notify they missed the call
+      properties:
+        call:
+          $ref: '#/components/schemas/CallResponse'
+          description: Call object
+          title: Call
+          x-stream-index: "004"
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        members:
+          description: List of members who missed the call
+          items:
+            $ref: '#/components/schemas/MemberResponse'
+          title: Members
+          type: array
+          x-stream-index: "005"
+        session_id:
+          description: Call session ID
+          title: Session ID
+          type: string
+          x-stream-index: "003.001"
+        type:
+          default: call.missed
+          description: 'The type of event: "call.notification" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          description: The caller from whom the call was missed
+          title: User
+          x-stream-index: "006"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - session_id
+      - call
+      - members
+      - user
+      title: CallMissedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     CallNotificationEvent:
       description: This event is sent to all call members to notify they are getting
         called
@@ -981,6 +1033,9 @@ components:
           format: date-time
           type: string
           x-stream-index: "001.002"
+        reason:
+          type: string
+          x-stream-index: "005"
         type:
           default: call.rejected
           description: 'The type of event: "call.rejected" in this case'
@@ -1315,10 +1370,16 @@ components:
         live_ended_at:
           format: date-time
           type: string
-          x-stream-index: "009"
+          x-stream-index: "010"
         live_started_at:
           format: date-time
           type: string
+          x-stream-index: "009"
+        missed_by:
+          additionalProperties:
+            format: date-time
+            type: string
+          type: object
           x-stream-index: "008"
         participants:
           items:
@@ -1344,13 +1405,14 @@ components:
         timer_ends_at:
           format: date-time
           type: string
-          x-stream-index: "010"
+          x-stream-index: "011"
       required:
       - id
       - participants
       - participants_count_by_role
       - rejected_by
       - accepted_by
+      - missed_by
       type: object
     CallSessionStartedEvent:
       description: This event is sent when a call session starts
@@ -2028,6 +2090,11 @@ components:
           title: Auto translation language
           type: string
           x-stream-index: "022"
+        blocked:
+          description: Whether this channel is blocked by current user or not
+          title: Blocked
+          type: boolean
+          x-stream-index: "027"
         cid:
           description: Channel CID (<type>:<id>)
           title: CID
@@ -2058,7 +2125,7 @@ components:
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "029"
+          x-stream-index: "030"
         deleted_at:
           description: Date/time of deletion
           format: date-time
@@ -2136,10 +2203,10 @@ components:
           format: date-time
           title: Truncated At
           type: string
-          x-stream-index: "027"
+          x-stream-index: "028"
         truncated_by:
           $ref: '#/components/schemas/UserObject'
-          x-stream-index: "028"
+          x-stream-index: "029"
         type:
           description: Type of the channel
           title: Type
@@ -3427,6 +3494,11 @@ components:
         banned:
           type: boolean
           x-stream-index: "014"
+        blocked_user_ids:
+          items:
+            type: string
+          type: array
+          x-stream-index: "042"
         channel_mutes:
           items:
             $ref: '#/components/schemas/ChannelMute'
@@ -3990,6 +4062,12 @@ components:
       type: object
     RejectCallRequest:
       nullable: true
+      properties:
+        reason:
+          description: Reason for rejecting the call
+          title: Reason
+          type: string
+          x-stream-index: "003"
       type: object
     RejectCallResponse:
       nullable: true
@@ -4046,6 +4124,12 @@ components:
           minimum: 5000
           type: integer
           x-stream-index: "001"
+        missed_call_timeout_ms:
+          format: int32
+          maximum: 180000
+          minimum: 5000
+          type: integer
+          x-stream-index: "003"
       required:
       - incoming_call_timeout_ms
       - auto_cancel_timeout_ms
@@ -4060,9 +4144,14 @@ components:
           format: int32
           type: integer
           x-stream-index: "001"
+        missed_call_timeout_ms:
+          format: int32
+          type: integer
+          x-stream-index: "003"
       required:
       - incoming_call_timeout_ms
       - auto_cancel_timeout_ms
+      - missed_call_timeout_ms
       type: object
     SFULocationResponse:
       properties:
@@ -5537,6 +5626,7 @@ components:
           call.member_removed: '#/components/schemas/CallMemberRemovedEvent'
           call.member_updated: '#/components/schemas/CallMemberUpdatedEvent'
           call.member_updated_permission: '#/components/schemas/CallMemberUpdatedPermissionEvent'
+          call.missed: '#/components/schemas/CallMissedEvent'
           call.notification: '#/components/schemas/CallNotificationEvent'
           call.permission_request: '#/components/schemas/PermissionRequestEvent'
           call.permissions_updated: '#/components/schemas/UpdatedCallPermissionsEvent'
@@ -5585,6 +5675,7 @@ components:
       - $ref: '#/components/schemas/CallMemberRemovedEvent'
       - $ref: '#/components/schemas/CallMemberUpdatedEvent'
       - $ref: '#/components/schemas/CallMemberUpdatedPermissionEvent'
+      - $ref: '#/components/schemas/CallMissedEvent'
       - $ref: '#/components/schemas/CallNotificationEvent'
       - $ref: '#/components/schemas/CallReactionEvent'
       - $ref: '#/components/schemas/CallRecordingFailedEvent'
@@ -5660,7 +5751,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v116.0.0
+  version: v116.0.3
 openapi: 3.0.3
 paths:
   /video/call/{type}/{id}:
@@ -6713,7 +6804,7 @@ paths:
           title: Type
           type: string
           writeOnly: true
-          x-stream-index: "001.001"
+          x-stream-index: "002.001"
       - in: path
         name: id
         required: true
@@ -6723,7 +6814,13 @@ paths:
           title: ID
           type: string
           writeOnly: true
-          x-stream-index: "001.002"
+          x-stream-index: "002.002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RejectCallRequest'
+        required: true
       responses:
         "201":
           content:
