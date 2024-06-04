@@ -455,6 +455,34 @@ components:
       required:
       - duration
       type: object
+    BlockUsersRequest:
+      nullable: true
+      properties:
+        blocked_user_id:
+          description: User id to block
+          title: BlockedUserID
+          type: string
+          x-stream-index: "001"
+      required:
+      - blocked_user_id
+      type: object
+    BlockUsersResponse:
+      nullable: true
+      properties:
+        blocked_users:
+          items:
+            $ref: '#/components/schemas/UserBlock'
+          type: array
+          x-stream-index: "002"
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      - blocked_users
+      type: object
     BlockedUserEvent:
       description: "This event is sent to call participants to notify when a user
         is blocked on a call, clients can use this event to show a notification. \nIf
@@ -494,6 +522,40 @@ components:
       x-stream-event-call-type: true
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    BlockedUserResponse:
+      nullable: true
+      properties:
+        blocked_user:
+          $ref: '#/components/schemas/UserResponse'
+          description: User who got blocked
+          title: User
+          x-stream-index: "003"
+        blocked_user_id:
+          description: ID of the user who got blocked
+          title: UserID
+          type: string
+          x-stream-index: "004"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "005"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          description: User who blocked another user
+          title: User
+          x-stream-index: "001"
+        user_id:
+          description: ID of the user who blocked another user
+          title: UserID
+          type: string
+          x-stream-index: "002"
+      required:
+      - user
+      - user_id
+      - blocked_user
+      - blocked_user_id
+      - created_at
+      type: object
     BroadcastSettingsRequest:
       properties:
         enabled:
@@ -1005,6 +1067,58 @@ components:
       x-stream-event-call-type: true
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    CallMissedEvent:
+      description: This event is sent to call members who did not accept/reject/join
+        the call to notify they missed the call
+      properties:
+        call:
+          $ref: '#/components/schemas/CallResponse'
+          description: Call object
+          title: Call
+          x-stream-index: "004"
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "001.002"
+        members:
+          description: List of members who missed the call
+          items:
+            $ref: '#/components/schemas/MemberResponse'
+          title: Members
+          type: array
+          x-stream-index: "005"
+        session_id:
+          description: Call session ID
+          title: Session ID
+          type: string
+          x-stream-index: "003.001"
+        type:
+          default: call.missed
+          description: 'The type of event: "call.notification" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          description: The caller from whom the call was missed
+          title: User
+          x-stream-index: "006"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - session_id
+      - call
+      - members
+      - user
+      title: CallMissedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     CallNotificationEvent:
       description: This event is sent to all call members to notify they are getting
         called
@@ -1257,6 +1371,9 @@ components:
           format: date-time
           type: number
           x-stream-index: "001.002"
+        reason:
+          type: string
+          x-stream-index: "005"
         type:
           default: call.rejected
           description: 'The type of event: "call.rejected" in this case'
@@ -1591,10 +1708,16 @@ components:
         live_ended_at:
           format: date-time
           type: number
-          x-stream-index: "009"
+          x-stream-index: "010"
         live_started_at:
           format: date-time
           type: number
+          x-stream-index: "009"
+        missed_by:
+          additionalProperties:
+            format: date-time
+            type: number
+          type: object
           x-stream-index: "008"
         participants:
           items:
@@ -1620,13 +1743,14 @@ components:
         timer_ends_at:
           format: date-time
           type: number
-          x-stream-index: "010"
+          x-stream-index: "011"
       required:
       - id
       - participants
       - participants_count_by_role
       - rejected_by
       - accepted_by
+      - missed_by
       type: object
     CallSessionStartedEvent:
       description: This event is sent when a call session starts
@@ -2781,6 +2905,11 @@ components:
           title: Auto translation language
           type: string
           x-stream-index: "022"
+        blocked:
+          description: Whether this channel is blocked by current user or not
+          title: Blocked
+          type: boolean
+          x-stream-index: "027"
         cid:
           description: Channel CID (<type>:<id>)
           title: CID
@@ -2811,7 +2940,7 @@ components:
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "029"
+          x-stream-index: "030"
         deleted_at:
           description: Date/time of deletion
           format: date-time
@@ -2889,10 +3018,10 @@ components:
           format: date-time
           title: Truncated At
           type: number
-          x-stream-index: "027"
+          x-stream-index: "028"
         truncated_by:
           $ref: '#/components/schemas/UserObject'
-          x-stream-index: "028"
+          x-stream-index: "029"
         type:
           description: Type of the channel
           title: Type
@@ -4357,6 +4486,23 @@ components:
       required:
       - app
       - duration
+      type: object
+    GetBlockedUsersResponse:
+      nullable: true
+      properties:
+        blocks:
+          description: Array of blocked user object
+          items:
+            $ref: '#/components/schemas/BlockedUserResponse'
+          title: Blocks
+          type: array
+          x-stream-index: "002"
+        duration:
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      - blocks
       type: object
     GetCallResponse:
       nullable: true
@@ -5993,7 +6139,7 @@ components:
           type: array
           x-stream-index: "001.002"
         type:
-          default: message.new
+          default: notification.thread_message_new
           type: string
           x-stream-index: "004.001"
         user:
@@ -7275,6 +7421,11 @@ components:
         banned:
           type: boolean
           x-stream-index: "014"
+        blocked_user_ids:
+          items:
+            type: string
+          type: array
+          x-stream-index: "042"
         channel_mutes:
           items:
             $ref: '#/components/schemas/ChannelMute'
@@ -9200,6 +9351,12 @@ components:
       type: object
     RejectCallRequest:
       nullable: true
+      properties:
+        reason:
+          description: Reason for rejecting the call
+          title: Reason
+          type: string
+          x-stream-index: "003"
       type: object
     RejectCallResponse:
       nullable: true
@@ -9256,6 +9413,12 @@ components:
           minimum: 5000
           type: integer
           x-stream-index: "001"
+        missed_call_timeout_ms:
+          format: int32
+          maximum: 180000
+          minimum: 5000
+          type: integer
+          x-stream-index: "003"
       required:
       - incoming_call_timeout_ms
       - auto_cancel_timeout_ms
@@ -9270,9 +9433,14 @@ components:
           format: int32
           type: integer
           x-stream-index: "001"
+        missed_call_timeout_ms:
+          format: int32
+          type: integer
+          x-stream-index: "003"
       required:
       - incoming_call_timeout_ms
       - auto_cancel_timeout_ms
+      - missed_call_timeout_ms
       type: object
     SFULocationResponse:
       properties:
@@ -10726,6 +10894,24 @@ components:
       required:
       - duration
       type: object
+    UnblockUsersRequest:
+      nullable: true
+      properties:
+        blocked_user_id:
+          type: string
+          x-stream-index: "001"
+      required:
+      - blocked_user_id
+      type: object
+    UnblockUsersResponse:
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      type: object
     UnblockedUserEvent:
       description: "This event is sent when a user is unblocked on a call, \nthis
         can be useful to notify the user that they can now join the call again"
@@ -11513,6 +11699,39 @@ components:
       x-stream-event-client-type: true
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    UserBlock:
+      nullable: true
+      properties:
+        AppPK:
+          format: int32
+          type: integer
+          writeOnly: true
+          x-stream-index: "003"
+        BlockedByUser:
+          $ref: '#/components/schemas/UserObject'
+          x-stream-index: "004"
+        BlockedByUserID:
+          type: string
+          writeOnly: true
+          x-stream-index: "005"
+        BlockedUser:
+          $ref: '#/components/schemas/UserObject'
+          x-stream-index: "006"
+        BlockedUserID:
+          type: string
+          writeOnly: true
+          x-stream-index: "007"
+        CreatedAt:
+          format: date-time
+          type: number
+          writeOnly: true
+          x-stream-index: "008"
+      required:
+      - AppPK
+      - BlockedByUserID
+      - BlockedUserID
+      - CreatedAt
+      type: object
     UserDeactivatedEvent:
       properties:
         created_at:
@@ -12393,6 +12612,7 @@ components:
           call.member_removed: '#/components/schemas/CallMemberRemovedEvent'
           call.member_updated: '#/components/schemas/CallMemberUpdatedEvent'
           call.member_updated_permission: '#/components/schemas/CallMemberUpdatedPermissionEvent'
+          call.missed: '#/components/schemas/CallMissedEvent'
           call.notification: '#/components/schemas/CallNotificationEvent'
           call.permission_request: '#/components/schemas/PermissionRequestEvent'
           call.permissions_updated: '#/components/schemas/UpdatedCallPermissionsEvent'
@@ -12487,6 +12707,7 @@ components:
       - $ref: '#/components/schemas/CallMemberRemovedEvent'
       - $ref: '#/components/schemas/CallMemberUpdatedEvent'
       - $ref: '#/components/schemas/CallMemberUpdatedPermissionEvent'
+      - $ref: '#/components/schemas/CallMissedEvent'
       - $ref: '#/components/schemas/CallNotificationEvent'
       - $ref: '#/components/schemas/CallReactionEvent'
       - $ref: '#/components/schemas/CallRecordingFailedEvent'
@@ -12646,7 +12867,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v116.0.0
+  version: v116.0.2
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -16075,6 +16296,98 @@ paths:
       summary: Upsert users
       tags:
       - product:common
+  /api/v2/users/block:
+    get:
+      description: |
+        Get list of blocked Users
+      operationId: GetBlockedUsers
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetBlockedUsersResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get list of blocked Users
+      tags:
+      - product:common
+    post:
+      description: |
+        Block users
+      operationId: BlockUsers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BlockUsersRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlockUsersResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Block user
+      tags:
+      - product:common
+  /api/v2/users/unblock:
+    post:
+      description: |
+        Unblock users
+      operationId: UnblockUsers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnblockUsersRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnblockUsersResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Unblock user
+      tags:
+      - product:common
   /api/v2/video/call/{type}/{id}:
     get:
       description: |2
@@ -17125,7 +17438,7 @@ paths:
           title: Type
           type: string
           writeOnly: true
-          x-stream-index: "001.001"
+          x-stream-index: "002.001"
       - in: path
         name: id
         required: true
@@ -17135,7 +17448,13 @@ paths:
           title: ID
           type: string
           writeOnly: true
-          x-stream-index: "001.002"
+          x-stream-index: "002.002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RejectCallRequest'
+        required: true
       responses:
         "201":
           content:
