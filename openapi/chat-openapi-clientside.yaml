@@ -353,6 +353,68 @@ components:
       - blocklist
       - behavior
       type: object
+    BlockUsersRequest:
+      nullable: true
+      properties:
+        blocked_user_id:
+          description: User id to block
+          title: BlockedUserID
+          type: string
+          x-stream-index: "001"
+      required:
+      - blocked_user_id
+      type: object
+    BlockUsersResponse:
+      nullable: true
+      properties:
+        blocked_users:
+          items:
+            $ref: '#/components/schemas/UserBlock'
+          type: array
+          x-stream-index: "002"
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      - blocked_users
+      type: object
+    BlockedUserResponse:
+      nullable: true
+      properties:
+        blocked_user:
+          $ref: '#/components/schemas/UserResponse'
+          description: User who got blocked
+          title: User
+          x-stream-index: "003"
+        blocked_user_id:
+          description: ID of the user who got blocked
+          title: UserID
+          type: string
+          x-stream-index: "004"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "005"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          description: User who blocked another user
+          title: User
+          x-stream-index: "001"
+        user_id:
+          description: ID of the user who blocked another user
+          title: UserID
+          type: string
+          x-stream-index: "002"
+      required:
+      - user
+      - user_id
+      - blocked_user
+      - blocked_user_id
+      - created_at
+      type: object
     Call:
       properties:
         agora:
@@ -1045,6 +1107,9 @@ components:
           title: Is moderator
           type: boolean
           x-stream-index: "006"
+        notifications_muted:
+          type: boolean
+          x-stream-index: "021"
         shadow_banned:
           description: Whether member is shadow banned in this channel or not
           title: Shadow banned
@@ -1121,6 +1186,11 @@ components:
           title: Auto translation language
           type: string
           x-stream-index: "022"
+        blocked:
+          description: Whether this channel is blocked by current user or not
+          title: Blocked
+          type: boolean
+          x-stream-index: "027"
         cid:
           description: Channel CID (<type>:<id>)
           title: CID
@@ -1151,7 +1221,7 @@ components:
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "029"
+          x-stream-index: "030"
         deleted_at:
           description: Date/time of deletion
           format: date-time
@@ -1229,10 +1299,10 @@ components:
           format: date-time
           title: Truncated At
           type: string
-          x-stream-index: "027"
+          x-stream-index: "028"
         truncated_by:
           $ref: '#/components/schemas/UserObject'
-          x-stream-index: "028"
+          x-stream-index: "029"
         type:
           description: Type of the channel
           title: Type
@@ -2332,6 +2402,7 @@ components:
       - banned
       - online
       - devices
+      - invisible
       - mutes
       - channel_mutes
       - total_unread_count
@@ -2353,6 +2424,23 @@ components:
       required:
       - app
       - duration
+      type: object
+    GetBlockedUsersResponse:
+      nullable: true
+      properties:
+        blocks:
+          description: Array of blocked user object
+          items:
+            $ref: '#/components/schemas/BlockedUserResponse'
+          title: Blocks
+          type: array
+          x-stream-index: "002"
+        duration:
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      - blocks
       type: object
     GetCallTokenRequest:
       nullable: true
@@ -3526,16 +3614,6 @@ components:
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
     MessagePaginationParams:
-      properties:
-        limit:
-          format: int32
-          minimum: 0
-          type: integer
-          x-stream-index: "001"
-        offset:
-          format: int32
-          type: integer
-          x-stream-index: "002"
       type: object
     MessageReadEvent:
       properties:
@@ -4712,6 +4790,11 @@ components:
         banned:
           type: boolean
           x-stream-index: "014"
+        blocked_user_ids:
+          items:
+            type: string
+          type: array
+          x-stream-index: "042"
         channel_mutes:
           items:
             $ref: '#/components/schemas/ChannelMute'
@@ -6816,36 +6899,40 @@ components:
           format: date-time
           title: Created at
           type: string
-          x-stream-index: "007"
+          x-stream-index: "008"
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "010"
+          x-stream-index: "011"
         last_read_at:
           format: date-time
           type: string
-          x-stream-index: "009"
+          x-stream-index: "010"
+        last_thread_message_at:
+          format: date-time
+          type: string
+          x-stream-index: "004"
         left_thread_at:
           description: Left Thread At is the time when the user left the thread
           format: date-time
           title: Left Thread At
           type: string
-          x-stream-index: "008"
+          x-stream-index: "009"
         thread_id:
           description: Thead ID is unique string identifier of the thread
           title: ID
           type: string
-          x-stream-index: "004"
+          x-stream-index: "005"
         user:
           $ref: '#/components/schemas/UserObject'
           description: User is the user object
           title: User
-          x-stream-index: "006"
+          x-stream-index: "007"
         user_id:
           description: User ID is unique string identifier of the user
           title: User ID
           type: string
-          x-stream-index: "005"
+          x-stream-index: "006"
       required:
       - app_pk
       - channel_cid
@@ -7342,6 +7429,24 @@ components:
       x-stream-event-client-type: true
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    UnblockUsersRequest:
+      nullable: true
+      properties:
+        blocked_user_id:
+          type: string
+          x-stream-index: "001"
+      required:
+      - blocked_user_id
+      type: object
+    UnblockUsersResponse:
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      type: object
     UnmuteChannelRequest:
       nullable: true
       properties:
@@ -7914,6 +8019,39 @@ components:
       x-stream-event-client-type: true
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    UserBlock:
+      nullable: true
+      properties:
+        AppPK:
+          format: int32
+          type: integer
+          writeOnly: true
+          x-stream-index: "003"
+        BlockedByUser:
+          $ref: '#/components/schemas/UserObject'
+          x-stream-index: "004"
+        BlockedByUserID:
+          type: string
+          writeOnly: true
+          x-stream-index: "005"
+        BlockedUser:
+          $ref: '#/components/schemas/UserObject'
+          x-stream-index: "006"
+        BlockedUserID:
+          type: string
+          writeOnly: true
+          x-stream-index: "007"
+        CreatedAt:
+          format: date-time
+          type: string
+          writeOnly: true
+          x-stream-index: "008"
+      required:
+      - AppPK
+      - BlockedByUserID
+      - BlockedUserID
+      - CreatedAt
+      type: object
     UserDeactivatedEvent:
       properties:
         created_at:
@@ -8647,7 +8785,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v113.0.0
+  version: v116.0.2
 openapi: 3.0.3
 paths:
   /app:
@@ -10817,6 +10955,19 @@ paths:
           writeOnly: true
           x-stream-index: "002"
       - in: query
+        name: limit
+        schema:
+          format: int32
+          minimum: 0
+          type: integer
+          x-stream-index: "003.001"
+      - in: query
+        name: offset
+        schema:
+          format: int32
+          type: integer
+          x-stream-index: "003.002"
+      - in: query
         name: id_gte
         schema:
           type: string
@@ -12195,6 +12346,98 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Upsert users
+      tags:
+      - product:chat
+  /users/block:
+    get:
+      description: |
+        Get list of blocked Users
+      operationId: GetBlockedUsers
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetBlockedUsersResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get list of blocked Users
+      tags:
+      - product:chat
+    post:
+      description: |
+        Block users
+      operationId: BlockUsers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BlockUsersRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlockUsersResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Block user
+      tags:
+      - product:chat
+  /users/unblock:
+    post:
+      description: |
+        Unblock users
+      operationId: UnblockUsers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnblockUsersRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnblockUsersResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Unblock user
       tags:
       - product:chat
 security:

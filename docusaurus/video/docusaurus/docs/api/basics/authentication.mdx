@@ -7,6 +7,7 @@ title: Users & Tokens
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import DeactivateReactivate from '../_common_/deactivate-reactivate.mdx';
 
 ## Creating users
 
@@ -227,15 +228,6 @@ Delete has the following opitions:
 <TabItem value="js" label="JavaScript">
 
 ```js
-client.deactivateUser({
-  user_id: '<id>',
-});
-
-//reactivate
-client.reactivateUsers({
-  user_ids: ['<id>'],
-});
-
 client.deleteUsers({ user_ids: ['<id>'] });
 
 //restore
@@ -247,15 +239,6 @@ client.restoreUsers({ user_ids: ['<id>'] });
 <TabItem value="py" label="Python">
 
 ```py
-client.deactivate_user(
-    user_id="<id>",
-)
-
-# reactivate
-client.reactivate_users(
-    user_ids=["<id>"],
-)
-
 client.delete_users(user_ids=["<id>"])
 
 # restore
@@ -266,24 +249,6 @@ client.restore_users(user_ids=["<id>"])
 <TabItem value="curl" label="cURL">
 
 ```bash
-# Deactivate users
-curl -X POST https://video.stream-io-api.com/api/v2/users/deactivate?api_key=${API_KEY} \
-  -H "Authorization: ${TOKEN}" \
-  -H "stream-auth-type: jwt" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "user_ids": ["sara"]
-  }'
-
-# Reactivate users
-curl -X POST https://video.stream-io-api.com/api/v2/users/deactivate?api_key=${API_KEY} \
-  -H "Authorization: ${TOKEN}" \
-  -H "stream-auth-type: jwt" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "user_ids": ["sara"]
-  }'
-
 # Delete users
 curl -X POST https://video.stream-io-api.com/api/v2/users/delete?api_key=${API_KEY} \
   -H "Authorization: ${TOKEN}" \
@@ -305,6 +270,8 @@ curl -X POST https://video.stream-io-api.com/api/v2/users/restore?api_key=${API_
 
 </TabItem>
 </Tabs>
+
+<DeactivateReactivate />
 
 ## User tokens
 
@@ -354,13 +321,13 @@ def create_user_token(request):
 <TabItem value="bash" label="Bash">
 
 ```bash
-HEADER=$(echo -n '{"alg": "HS256", "typ": "JWT"}' | base64);
+HEADER=$(echo -n '{"alg": "HS256", "typ": "JWT"}' | openssl base64 -e -A | tr '+/' '-_' | tr -d '=');
 USER_ID='<user id>';
 CURRENT_TIMESTAMP=$(date +%s);
 HOUR_FROM_NOW=$((CURRENT_TIMESTAMP + 3600))
-PAYLOAD=$(echo -n '{"user_id": "'${USER_ID}'", "iat": '${CURRENT_TIMESTAMP}', "exp": '${HOUR_FROM_NOW}'}' | base64);
+PAYLOAD=$(echo -n '{"user_id": "'${USER_ID}'", "iat": '${CURRENT_TIMESTAMP}', "exp": '${HOUR_FROM_NOW}'}' | openssl base64 -e -A | tr '+/' '-_' | tr -d '=');
 SECRET='<API secret>';
-SIGNATURE=$(echo -n ${HEADER}.${PAYLOAD} | openssl dgst -sha256 -hmac ${SECRET} -binary | base64 | tr -d '=');
+SIGNATURE=$(echo -n ${HEADER}.${PAYLOAD} | openssl dgst -sha256 -hmac ${SECRET} -binary | openssl base64 -e -A | tr '+/' '-_' | tr -d '=');
 
 echo "${HEADER}.${PAYLOAD}.${SIGNATURE}"
 ```
@@ -372,7 +339,9 @@ You need to provide the generated tokens to the client SDKs. Stream SDKs accept 
 
 ## Call tokens
 
-Call tokens contain a list of call IDs. If a user is authenticated with a call token, they can only access the specified calls. They are helpful if you want to limit call access, but you want to avoid managing call members (an example: a pay-pre-view link for livestreams, with hundreds of thousands of expected viewers).
+Call tokens contain a list of call IDs. When a user utilizes a call token, they will automatically be assigned the membership role for all the calls specified in the token’s claims. Additionally, the token may optionally include alternative roles, such as admin or moderator.
+
+> **Note:** Call tokens are designed to grant additional access, not restrict it. Most call types let regular users join calls. If all users can access any call, call tokens won't change this. Remove call access from the user role and grant it to specific members instead.
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
@@ -385,6 +354,9 @@ const exp = Math.round(new Date().getTime() / 1000) + 60 * 60;
 const call_cids = ['default:call1', 'livestream:call2'];
 
 client.createCallToken(userId, call_cids, exp);
+
+// Optionally provide a role for the call(s)
+client.createCallToken({ user_id: userId, role: 'admin' }, call_cids);
 ```
 
 </TabItem>
@@ -406,15 +378,17 @@ client.create_call_token(user_id=user_id, expiration=exp, call_cids=call_cids)
 <TabItem value="bash" label="Bash">
 
 ```bash
-HEADER=$(echo -n '{"alg": "HS256", "typ": "JWT"}' | base64);
+HEADER=$(echo -n '{"alg": "HS256", "typ": "JWT"}' | openssl base64 -e -A | tr '+/' '-_' | tr -d '=');
 USER_ID='<user id>';
 CURRENT_TIMESTAMP=$(date +%s);
 HOUR_FROM_NOW=$((CURRENT_TIMESTAMP + 3600))
 CALL_CID1='livestream:1';
 CALL_CID2='livestream:2';
-PAYLOAD=$(echo -n '{"user_id": "'${USER_ID}'", "call_cids": ["'${CALL_CID1}'", "'${CALL_CID2}'"], "iat": '${CURRENT_TIMESTAMP}', "exp": '${HOUR_FROM_NOW}'}' | base64);
+# Optionally provide a role for the call(s)
+ROLE='admin'
+PAYLOAD=$(echo -n '{"user_id": "'${USER_ID}'", "role": "'${ROLE}'", "call_cids": ["'${CALL_CID1}'", "'${CALL_CID2}'"], "iat": '${CURRENT_TIMESTAMP}', "exp": '${HOUR_FROM_NOW}'}' | openssl base64 -e -A | tr '+/' '-_' | tr -d '=');
 SECRET='<API secret>';
-SIGNATURE=$(echo -n ${HEADER}.${PAYLOAD} | openssl dgst -sha256 -hmac ${SECRET} -binary | base64 | tr -d '=');
+SIGNATURE=$(echo -n ${HEADER}.${PAYLOAD} | openssl dgst -sha256 -hmac ${SECRET} -binary | openssl base64 -e -A | tr '+/' '-_' | tr -d '=');
 
 echo "${HEADER}.${PAYLOAD}.${SIGNATURE}"
 ```

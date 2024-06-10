@@ -455,6 +455,34 @@ components:
       required:
       - duration
       type: object
+    BlockUsersRequest:
+      nullable: true
+      properties:
+        blocked_user_id:
+          description: User id to block
+          title: BlockedUserID
+          type: string
+          x-stream-index: "001"
+      required:
+      - blocked_user_id
+      type: object
+    BlockUsersResponse:
+      nullable: true
+      properties:
+        blocked_users:
+          items:
+            $ref: '#/components/schemas/UserBlock'
+          type: array
+          x-stream-index: "002"
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      - blocked_users
+      type: object
     BlockedUserEvent:
       description: "This event is sent to call participants to notify when a user
         is blocked on a call, clients can use this event to show a notification. \nIf
@@ -494,6 +522,40 @@ components:
       x-stream-event-call-type: true
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    BlockedUserResponse:
+      nullable: true
+      properties:
+        blocked_user:
+          $ref: '#/components/schemas/UserResponse'
+          description: User who got blocked
+          title: User
+          x-stream-index: "003"
+        blocked_user_id:
+          description: ID of the user who got blocked
+          title: UserID
+          type: string
+          x-stream-index: "004"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "005"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          description: User who blocked another user
+          title: User
+          x-stream-index: "001"
+        user_id:
+          description: ID of the user who blocked another user
+          title: UserID
+          type: string
+          x-stream-index: "002"
+      required:
+      - user
+      - user_id
+      - blocked_user
+      - blocked_user_id
+      - created_at
+      type: object
     BroadcastSettingsRequest:
       properties:
         enabled:
@@ -1005,6 +1067,58 @@ components:
       x-stream-event-call-type: true
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    CallMissedEvent:
+      description: This event is sent to call members who did not accept/reject/join
+        the call to notify they missed the call
+      properties:
+        call:
+          $ref: '#/components/schemas/CallResponse'
+          description: Call object
+          title: Call
+          x-stream-index: "004"
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "001.002"
+        members:
+          description: List of members who missed the call
+          items:
+            $ref: '#/components/schemas/MemberResponse'
+          title: Members
+          type: array
+          x-stream-index: "005"
+        session_id:
+          description: Call session ID
+          title: Session ID
+          type: string
+          x-stream-index: "003.001"
+        type:
+          default: call.missed
+          description: 'The type of event: "call.notification" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          description: The caller from whom the call was missed
+          title: User
+          x-stream-index: "006"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - session_id
+      - call
+      - members
+      - user
+      title: CallMissedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     CallNotificationEvent:
       description: This event is sent to all call members to notify they are getting
         called
@@ -1257,6 +1371,9 @@ components:
           format: date-time
           type: number
           x-stream-index: "001.002"
+        reason:
+          type: string
+          x-stream-index: "005"
         type:
           default: call.rejected
           description: 'The type of event: "call.rejected" in this case'
@@ -1591,10 +1708,16 @@ components:
         live_ended_at:
           format: date-time
           type: number
-          x-stream-index: "009"
+          x-stream-index: "010"
         live_started_at:
           format: date-time
           type: number
+          x-stream-index: "009"
+        missed_by:
+          additionalProperties:
+            format: date-time
+            type: number
+          type: object
           x-stream-index: "008"
         participants:
           items:
@@ -1617,12 +1740,17 @@ components:
           format: date-time
           type: number
           x-stream-index: "002"
+        timer_ends_at:
+          format: date-time
+          type: number
+          x-stream-index: "011"
       required:
       - id
       - participants
       - participants_count_by_role
       - rejected_by
       - accepted_by
+      - missed_by
       type: object
     CallSessionStartedEvent:
       description: This event is sent when a call session starts
@@ -1675,6 +1803,9 @@ components:
         geofencing:
           $ref: '#/components/schemas/GeofenceSettingsRequest'
           x-stream-index: "003"
+        limits:
+          $ref: '#/components/schemas/LimitsSettingsRequest'
+          x-stream-index: "011"
         recording:
           $ref: '#/components/schemas/RecordSettingsRequest'
           x-stream-index: "005"
@@ -1708,6 +1839,9 @@ components:
         geofencing:
           $ref: '#/components/schemas/GeofenceSettingsResponse'
           x-stream-index: "004"
+        limits:
+          $ref: '#/components/schemas/LimitsSettingsResponse'
+          x-stream-index: "011"
         recording:
           $ref: '#/components/schemas/RecordSettingsResponse'
           x-stream-index: "005"
@@ -1737,6 +1871,7 @@ components:
       - transcription
       - video
       - thumbnails
+      - limits
       type: object
     CallStateResponseFields:
       properties:
@@ -2691,6 +2826,9 @@ components:
           title: Is moderator
           type: boolean
           x-stream-index: "006"
+        notifications_muted:
+          type: boolean
+          x-stream-index: "021"
         shadow_banned:
           description: Whether member is shadow banned in this channel or not
           title: Shadow banned
@@ -2767,6 +2905,11 @@ components:
           title: Auto translation language
           type: string
           x-stream-index: "022"
+        blocked:
+          description: Whether this channel is blocked by current user or not
+          title: Blocked
+          type: boolean
+          x-stream-index: "027"
         cid:
           description: Channel CID (<type>:<id>)
           title: CID
@@ -2797,7 +2940,7 @@ components:
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "029"
+          x-stream-index: "030"
         deleted_at:
           description: Date/time of deletion
           format: date-time
@@ -2875,10 +3018,10 @@ components:
           format: date-time
           title: Truncated At
           type: number
-          x-stream-index: "027"
+          x-stream-index: "028"
         truncated_by:
           $ref: '#/components/schemas/UserObject'
-          x-stream-index: "028"
+          x-stream-index: "029"
         type:
           description: Type of the channel
           title: Type
@@ -4256,6 +4399,7 @@ components:
       - banned
       - online
       - devices
+      - invisible
       - mutes
       - channel_mutes
       - total_unread_count
@@ -4343,6 +4487,23 @@ components:
       - app
       - duration
       type: object
+    GetBlockedUsersResponse:
+      nullable: true
+      properties:
+        blocks:
+          description: Array of blocked user object
+          items:
+            $ref: '#/components/schemas/BlockedUserResponse'
+          title: Blocks
+          type: array
+          x-stream-index: "002"
+        duration:
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      - blocks
+      type: object
     GetCallResponse:
       nullable: true
       properties:
@@ -4378,10 +4539,13 @@ components:
         call_duration_seconds:
           format: int32
           type: integer
+          x-stream-index: "003"
+        call_status:
+          type: string
           x-stream-index: "002"
         call_timeline:
           $ref: '#/components/schemas/CallTimeline'
-          x-stream-index: "012"
+          x-stream-index: "013"
         duration:
           description: Duration of the request in human-readable format
           title: Duration
@@ -4389,46 +4553,47 @@ components:
           x-stream-index: "001.001"
         jitter:
           $ref: '#/components/schemas/Stats'
-          x-stream-index: "004"
+          x-stream-index: "005"
         latency:
           $ref: '#/components/schemas/Stats'
-          x-stream-index: "005"
+          x-stream-index: "006"
         max_freezes_duration_seconds:
           format: int32
           type: integer
-          x-stream-index: "010"
+          x-stream-index: "011"
         max_participants:
           format: int32
           type: integer
-          x-stream-index: "006"
+          x-stream-index: "007"
         max_total_quality_limitation_duration_seconds:
           format: int32
           type: integer
-          x-stream-index: "009"
+          x-stream-index: "010"
         participant_report:
           items:
             $ref: '#/components/schemas/UserStats'
           type: array
-          x-stream-index: "013"
+          x-stream-index: "014"
         publishing_participants:
           format: int32
           type: integer
-          x-stream-index: "007"
+          x-stream-index: "008"
         quality_score:
           format: int32
           type: integer
-          x-stream-index: "003"
+          x-stream-index: "004"
         sfu_count:
           format: int32
           type: integer
-          x-stream-index: "008"
+          x-stream-index: "009"
         sfus:
           items:
             $ref: '#/components/schemas/SFULocationResponse'
           type: array
-          x-stream-index: "011"
+          x-stream-index: "012"
       required:
       - duration
+      - call_status
       - call_duration_seconds
       - quality_score
       - max_participants
@@ -5096,6 +5261,29 @@ components:
           minimum: 0
           title: Flag
           type: number
+          x-stream-index: "001"
+      type: object
+    LimitsSettingsRequest:
+      properties:
+        max_duration_seconds:
+          format: int32
+          minimum: 0
+          type: integer
+          x-stream-index: "002"
+        max_participants:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+      type: object
+    LimitsSettingsResponse:
+      properties:
+        max_duration_seconds:
+          format: int32
+          type: integer
+          x-stream-index: "002"
+        max_participants:
+          format: int32
+          type: integer
           x-stream-index: "001"
       type: object
     ListDevicesResponse:
@@ -5951,7 +6139,7 @@ components:
           type: array
           x-stream-index: "001.002"
         type:
-          default: message.new
+          default: notification.thread_message_new
           type: string
           x-stream-index: "004.001"
         user:
@@ -5974,16 +6162,6 @@ components:
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
     MessagePaginationParams:
-      properties:
-        limit:
-          format: int32
-          minimum: 0
-          type: integer
-          x-stream-index: "001"
-        offset:
-          format: int32
-          type: integer
-          x-stream-index: "002"
       type: object
     MessageReadEvent:
       properties:
@@ -7211,6 +7389,7 @@ components:
       description: All possibility of string to use
       enum:
       - block-users
+      - change-max-duration
       - create-call
       - create-reaction
       - enable-noise-cancellation
@@ -7242,6 +7421,11 @@ components:
         banned:
           type: boolean
           x-stream-index: "014"
+        blocked_user_ids:
+          items:
+            type: string
+          type: array
+          x-stream-index: "042"
         channel_mutes:
           items:
             $ref: '#/components/schemas/ChannelMute'
@@ -7454,6 +7638,7 @@ components:
       - banned
       - online
       - devices
+      - invisible
       - mutes
       - channel_mutes
       - total_unread_count
@@ -8110,6 +8295,19 @@ components:
           x-stream-index: "002"
         typing_indicators:
           $ref: '#/components/schemas/TypingIndicators'
+          x-stream-index: "001"
+      type: object
+    PublishedTrackInfo:
+      properties:
+        codec_mime_type:
+          type: string
+          x-stream-index: "003"
+        duration_seconds:
+          format: int32
+          type: integer
+          x-stream-index: "002"
+        track_type:
+          type: string
           x-stream-index: "001"
       type: object
     PushNotificationSettings:
@@ -9153,6 +9351,12 @@ components:
       type: object
     RejectCallRequest:
       nullable: true
+      properties:
+        reason:
+          description: Reason for rejecting the call
+          title: Reason
+          type: string
+          x-stream-index: "003"
       type: object
     RejectCallResponse:
       nullable: true
@@ -9209,6 +9413,12 @@ components:
           minimum: 5000
           type: integer
           x-stream-index: "001"
+        missed_call_timeout_ms:
+          format: int32
+          maximum: 180000
+          minimum: 5000
+          type: integer
+          x-stream-index: "003"
       required:
       - incoming_call_timeout_ms
       - auto_cancel_timeout_ms
@@ -9223,9 +9433,14 @@ components:
           format: int32
           type: integer
           x-stream-index: "001"
+        missed_call_timeout_ms:
+          format: int32
+          type: integer
+          x-stream-index: "003"
       required:
       - incoming_call_timeout_ms
       - auto_cancel_timeout_ms
+      - missed_call_timeout_ms
       type: object
     SFULocationResponse:
       properties:
@@ -9586,6 +9801,24 @@ components:
       - warning_description
       - warning_code
       type: object
+    SendCallEventRequest:
+      nullable: true
+      properties:
+        custom:
+          additionalProperties: {}
+          title: Custom
+          type: object
+          x-stream-index: "004"
+      type: object
+    SendCallEventResponse:
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      type: object
     SendEventRequest:
       nullable: true
       properties:
@@ -9594,15 +9827,6 @@ components:
           x-stream-index: "001"
       required:
       - event
-      type: object
-    SendEventResponse:
-      nullable: true
-      properties:
-        duration:
-          type: string
-          x-stream-index: "001.001"
-      required:
-      - duration
       type: object
     SendMessageRequest:
       nullable: true
@@ -10052,36 +10276,40 @@ components:
           format: date-time
           title: Created at
           type: number
-          x-stream-index: "007"
+          x-stream-index: "008"
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "010"
+          x-stream-index: "011"
         last_read_at:
           format: date-time
           type: number
-          x-stream-index: "009"
+          x-stream-index: "010"
+        last_thread_message_at:
+          format: date-time
+          type: number
+          x-stream-index: "004"
         left_thread_at:
           description: Left Thread At is the time when the user left the thread
           format: date-time
           title: Left Thread At
           type: number
-          x-stream-index: "008"
+          x-stream-index: "009"
         thread_id:
           description: Thead ID is unique string identifier of the thread
           title: ID
           type: string
-          x-stream-index: "004"
+          x-stream-index: "005"
         user:
           $ref: '#/components/schemas/UserObject'
           description: User is the user object
           title: User
-          x-stream-index: "006"
+          x-stream-index: "007"
         user_id:
           description: User ID is unique string identifier of the user
           title: User ID
           type: string
-          x-stream-index: "005"
+          x-stream-index: "006"
       required:
       - app_pk
       - channel_cid
@@ -10661,6 +10889,24 @@ components:
         duration:
           description: Duration of the request in human-readable format
           title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      type: object
+    UnblockUsersRequest:
+      nullable: true
+      properties:
+        blocked_user_id:
+          type: string
+          x-stream-index: "001"
+      required:
+      - blocked_user_id
+      type: object
+    UnblockUsersResponse:
+      nullable: true
+      properties:
+        duration:
           type: string
           x-stream-index: "001.001"
       required:
@@ -11453,6 +11699,39 @@ components:
       x-stream-event-client-type: true
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    UserBlock:
+      nullable: true
+      properties:
+        AppPK:
+          format: int32
+          type: integer
+          writeOnly: true
+          x-stream-index: "003"
+        BlockedByUser:
+          $ref: '#/components/schemas/UserObject'
+          x-stream-index: "004"
+        BlockedByUserID:
+          type: string
+          writeOnly: true
+          x-stream-index: "005"
+        BlockedUser:
+          $ref: '#/components/schemas/UserObject'
+          x-stream-index: "006"
+        BlockedUserID:
+          type: string
+          writeOnly: true
+          x-stream-index: "007"
+        CreatedAt:
+          format: date-time
+          type: number
+          writeOnly: true
+          x-stream-index: "008"
+      required:
+      - AppPK
+      - BlockedByUserID
+      - BlockedUserID
+      - CreatedAt
+      type: object
     UserDeactivatedEvent:
       properties:
         created_at:
@@ -11922,7 +12201,7 @@ components:
           x-stream-index: "013.003"
         max_receiving_video_quality:
           $ref: '#/components/schemas/VideoQuality'
-          x-stream-index: "014.014"
+          x-stream-index: "014.013"
         os:
           type: string
           x-stream-index: "012.001"
@@ -11936,43 +12215,62 @@ components:
         pub_sub_hints:
           $ref: '#/components/schemas/MediaPubSubHint'
           x-stream-index: "011"
+        published_tracks:
+          items:
+            $ref: '#/components/schemas/PublishedTrackInfo'
+          type: array
+          x-stream-index: "013.002"
         publisher_audio_mos:
           $ref: '#/components/schemas/MOSStats'
           x-stream-index: "013.005"
         publisher_jitter:
           $ref: '#/components/schemas/Stats'
-          x-stream-index: "013.008"
+          x-stream-index: "013.010"
         publisher_latency:
           $ref: '#/components/schemas/Stats'
-          x-stream-index: "013.007"
+          x-stream-index: "013.009"
+        publisher_noise_cancellation_seconds:
+          format: float
+          type: number
+          x-stream-index: "013.013"
         publisher_packet_loss_fraction:
           format: float
           type: number
-          x-stream-index: "013.006"
+          x-stream-index: "013.008"
+        publisher_quality_limitation_fraction:
+          format: float
+          type: number
+          x-stream-index: "013.012"
         publisher_video_quality_limitation_duration_seconds:
           additionalProperties:
             format: float
             type: number
           type: object
-          x-stream-index: "013.009"
+          x-stream-index: "013.011"
         publishing_audio_codec:
           type: string
-          x-stream-index: "013.002"
+          x-stream-index: "013.006"
         publishing_duration_seconds:
           format: int32
           type: integer
           x-stream-index: "013.001"
+        publishing_video_codec:
+          type: string
+          x-stream-index: "013.007"
         quality_score:
           format: float
           type: number
           x-stream-index: "004"
         receiving_audio_codec:
           type: string
-          x-stream-index: "014.013"
+          x-stream-index: "014.015"
         receiving_duration_seconds:
           format: int32
           type: integer
           x-stream-index: "014.011"
+        receiving_video_codec:
+          type: string
+          x-stream-index: "014.016"
         sdk:
           type: string
           x-stream-index: "012.004"
@@ -11991,6 +12289,10 @@ components:
         subscriber_latency:
           $ref: '#/components/schemas/Stats'
           x-stream-index: "014.009"
+        subscriber_video_quality_throttled_duration_seconds:
+          format: float
+          type: number
+          x-stream-index: "014.017"
         subsessions:
           items:
             $ref: '#/components/schemas/Subsession'
@@ -12001,7 +12303,7 @@ components:
           x-stream-index: "001"
         total_pixels_in:
           type: integer
-          x-stream-index: "014.015"
+          x-stream-index: "014.014"
         total_pixels_out:
           type: integer
           x-stream-index: "013.004"
@@ -12027,14 +12329,23 @@ components:
         info:
           $ref: '#/components/schemas/UserInfoResponse'
           x-stream-index: "001"
+        min_event_ts:
+          format: int32
+          type: integer
+          x-stream-index: "004"
+        rating:
+          format: int32
+          type: integer
+          x-stream-index: "003"
         session_stats:
           items:
             $ref: '#/components/schemas/UserSessionStats'
           type: array
-          x-stream-index: "003"
+          x-stream-index: "002"
       required:
       - info
       - session_stats
+      - min_event_ts
       type: object
     UserUnbannedEvent:
       properties:
@@ -12301,6 +12612,7 @@ components:
           call.member_removed: '#/components/schemas/CallMemberRemovedEvent'
           call.member_updated: '#/components/schemas/CallMemberUpdatedEvent'
           call.member_updated_permission: '#/components/schemas/CallMemberUpdatedPermissionEvent'
+          call.missed: '#/components/schemas/CallMissedEvent'
           call.notification: '#/components/schemas/CallNotificationEvent'
           call.permission_request: '#/components/schemas/PermissionRequestEvent'
           call.permissions_updated: '#/components/schemas/UpdatedCallPermissionsEvent'
@@ -12395,6 +12707,7 @@ components:
       - $ref: '#/components/schemas/CallMemberRemovedEvent'
       - $ref: '#/components/schemas/CallMemberUpdatedEvent'
       - $ref: '#/components/schemas/CallMemberUpdatedPermissionEvent'
+      - $ref: '#/components/schemas/CallMissedEvent'
       - $ref: '#/components/schemas/CallNotificationEvent'
       - $ref: '#/components/schemas/CallReactionEvent'
       - $ref: '#/components/schemas/CallRecordingFailedEvent'
@@ -12554,7 +12867,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v113.0.0
+  version: v116.0.2
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -14406,6 +14719,19 @@ paths:
           writeOnly: true
           x-stream-index: "002"
       - in: query
+        name: limit
+        schema:
+          format: int32
+          minimum: 0
+          type: integer
+          x-stream-index: "003.001"
+      - in: query
+        name: offset
+        schema:
+          format: int32
+          type: integer
+          x-stream-index: "003.002"
+      - in: query
         name: id_gte
         schema:
           type: string
@@ -15970,6 +16296,98 @@ paths:
       summary: Upsert users
       tags:
       - product:common
+  /api/v2/users/block:
+    get:
+      description: |
+        Get list of blocked Users
+      operationId: GetBlockedUsers
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetBlockedUsersResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get list of blocked Users
+      tags:
+      - product:common
+    post:
+      description: |
+        Block users
+      operationId: BlockUsers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BlockUsersRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlockUsersResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Block user
+      tags:
+      - product:common
+  /api/v2/users/unblock:
+    post:
+      description: |
+        Unblock users
+      operationId: UnblockUsers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnblockUsersRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnblockUsersResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Unblock user
+      tags:
+      - product:common
   /api/v2/video/call/{type}/{id}:
     get:
       description: |2
@@ -16444,7 +16862,7 @@ paths:
           title: Type
           type: string
           writeOnly: true
-          x-stream-index: "002"
+          x-stream-index: "001.001"
       - in: path
         name: id
         required: true
@@ -16453,19 +16871,19 @@ paths:
           title: ID
           type: string
           writeOnly: true
-          x-stream-index: "003"
+          x-stream-index: "001.002"
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SendEventRequest'
+              $ref: '#/components/schemas/SendCallEventRequest'
         required: true
       responses:
         "201":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SendEventResponse'
+                $ref: '#/components/schemas/SendCallEventResponse'
           description: Successful response
         "400":
           content:
@@ -17020,7 +17438,7 @@ paths:
           title: Type
           type: string
           writeOnly: true
-          x-stream-index: "001.001"
+          x-stream-index: "002.001"
       - in: path
         name: id
         required: true
@@ -17030,7 +17448,13 @@ paths:
           title: ID
           type: string
           writeOnly: true
-          x-stream-index: "001.002"
+          x-stream-index: "002.002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RejectCallRequest'
+        required: true
       responses:
         "201":
           content:
