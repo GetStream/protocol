@@ -13,8 +13,11 @@ import TabItem from '@theme/TabItem';
 
 You can either soft-delete or hard-delete a call and all its related data (members, sessions, recordings, transcriptions).
 
-When hard-deleting a call, it is marked as deleted synchronously and then will be completely wiped from our system and its related data asynchronously.
-An ID is returned which allows you to follow the status of the async task.
+### Soft delete
+
+Soft-delete a call means that the call and all its related data will not be completely removed from our system but will no longer be accessible through the API.  
+The data can still be recovered.
+
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
@@ -23,14 +26,8 @@ An ID is returned which allows you to follow the status of the async task.
 // soft-delete a call
 const resp = await call.delete({
   hard: false,
-});
+})
 // resp.call contains call information
-
-// hard-delete a call
-const resp = await call.delete({
-  hard: true,
-});
-// resp.taskID is the ID to be used for following task status
 ```
 
 </TabItem>
@@ -45,8 +42,36 @@ curl -X POST "https://video.stream-io-api.com/api/v2/video/call/${CALL_TYPE}/${C
   -d '{
     "hard": false
   }'
+```
+</TabItem>
+</Tabs>
 
-# Unpin video
+
+### Hard delete
+
+Hard-delete a call means that the call and all its related data will be completely wiped out from our system.
+This action is irrevocable, and the data cannot be recovered.
+
+This operation is done asynchronously and you can use the returned `task_id` to monitor its progress.  
+See [how to monitor an async task](/api/misc/async).
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+// hard-delete a call
+const resp = await call.delete({
+  hard: true,
+});
+// resp.call contains call information
+// resp.task_id is the ID to be used for monitoring the task
+```
+
+</TabItem>
+<TabItem value="curl" label="cURL">
+
+```bash
+# Hard-delete a call
 curl -X POST "https://video.stream-io-api.com/api/v2/video/call/${CALL_TYPE}/${CALL_ID}/delete?api_key=${API_KEY}" \
   -H "Authorization: ${TOKEN}" \
   -H "stream-auth-type: jwt" \
