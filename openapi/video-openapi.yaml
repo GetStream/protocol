@@ -442,10 +442,16 @@ components:
         live_ended_at:
           format: date-time
           type: string
-          x-stream-index: "009"
+          x-stream-index: "010"
         live_started_at:
           format: date-time
           type: string
+          x-stream-index: "009"
+        missed_by:
+          additionalProperties:
+            format: date-time
+            type: string
+          type: object
           x-stream-index: "008"
         participants:
           items:
@@ -468,12 +474,17 @@ components:
           format: date-time
           type: string
           x-stream-index: "002"
+        timer_ends_at:
+          format: date-time
+          type: string
+          x-stream-index: "011"
       required:
       - id
       - participants
       - participants_count_by_role
       - rejected_by
       - accepted_by
+      - missed_by
       type: object
     CallSettingsRequest:
       properties:
@@ -489,6 +500,9 @@ components:
         geofencing:
           $ref: '#/components/schemas/GeofenceSettingsRequest'
           x-stream-index: "003"
+        limits:
+          $ref: '#/components/schemas/LimitsSettingsRequest'
+          x-stream-index: "011"
         recording:
           $ref: '#/components/schemas/RecordSettingsRequest'
           x-stream-index: "005"
@@ -522,6 +536,9 @@ components:
         geofencing:
           $ref: '#/components/schemas/GeofenceSettingsResponse'
           x-stream-index: "004"
+        limits:
+          $ref: '#/components/schemas/LimitsSettingsResponse'
+          x-stream-index: "011"
         recording:
           $ref: '#/components/schemas/RecordSettingsResponse'
           x-stream-index: "005"
@@ -551,6 +568,7 @@ components:
       - transcription
       - video
       - thumbnails
+      - limits
       type: object
     CallStateResponseFields:
       properties:
@@ -691,8 +709,12 @@ components:
           title: Duration
           type: string
           x-stream-index: "001.001"
+        file_url:
+          type: string
+          x-stream-index: "002"
       required:
       - duration
+      - file_url
       type: object
     CollectUserFeedbackRequest:
       nullable: true
@@ -875,6 +897,10 @@ components:
           type: string
           x-stream-index: "003.003"
         storage_type:
+          enum:
+          - s3
+          - gcs
+          - abs
           type: string
           x-stream-index: "003.001"
       required:
@@ -1118,6 +1144,10 @@ components:
           type: string
           x-stream-index: "004"
         type:
+          enum:
+          - s3
+          - gcs
+          - abs
           type: string
           x-stream-index: "002"
       required:
@@ -1223,10 +1253,13 @@ components:
         call_duration_seconds:
           format: int32
           type: integer
+          x-stream-index: "003"
+        call_status:
+          type: string
           x-stream-index: "002"
         call_timeline:
           $ref: '#/components/schemas/CallTimeline'
-          x-stream-index: "012"
+          x-stream-index: "013"
         duration:
           description: Duration of the request in human-readable format
           title: Duration
@@ -1234,46 +1267,47 @@ components:
           x-stream-index: "001.001"
         jitter:
           $ref: '#/components/schemas/Stats'
-          x-stream-index: "004"
+          x-stream-index: "005"
         latency:
           $ref: '#/components/schemas/Stats'
-          x-stream-index: "005"
+          x-stream-index: "006"
         max_freezes_duration_seconds:
           format: int32
           type: integer
-          x-stream-index: "010"
+          x-stream-index: "011"
         max_participants:
           format: int32
           type: integer
-          x-stream-index: "006"
+          x-stream-index: "007"
         max_total_quality_limitation_duration_seconds:
           format: int32
           type: integer
-          x-stream-index: "009"
+          x-stream-index: "010"
         participant_report:
           items:
             $ref: '#/components/schemas/UserStats'
           type: array
-          x-stream-index: "013"
+          x-stream-index: "014"
         publishing_participants:
           format: int32
           type: integer
-          x-stream-index: "007"
+          x-stream-index: "008"
         quality_score:
           format: int32
           type: integer
-          x-stream-index: "003"
+          x-stream-index: "004"
         sfu_count:
           format: int32
           type: integer
-          x-stream-index: "008"
+          x-stream-index: "009"
         sfus:
           items:
             $ref: '#/components/schemas/SFULocationResponse'
           type: array
-          x-stream-index: "011"
+          x-stream-index: "012"
       required:
       - duration
+      - call_status
       - call_duration_seconds
       - quality_score
       - max_participants
@@ -1525,6 +1559,29 @@ components:
       - name
       - external_app_url
       - external_css_url
+      type: object
+    LimitsSettingsRequest:
+      properties:
+        max_duration_seconds:
+          format: int32
+          minimum: 0
+          type: integer
+          x-stream-index: "002"
+        max_participants:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+      type: object
+    LimitsSettingsResponse:
+      properties:
+        max_duration_seconds:
+          format: int32
+          type: integer
+          x-stream-index: "002"
+        max_participants:
+          format: int32
+          type: integer
+          x-stream-index: "001"
       type: object
     ListCallTypeResponse:
       nullable: true
@@ -1793,6 +1850,9 @@ components:
         call_live_started:
           $ref: '#/components/schemas/EventNotificationSettings'
           x-stream-index: "002"
+        call_missed:
+          $ref: '#/components/schemas/EventNotificationSettings'
+          x-stream-index: "006"
         call_notification:
           $ref: '#/components/schemas/EventNotificationSettings'
           x-stream-index: "004"
@@ -1833,6 +1893,7 @@ components:
       description: All possibility of string to use
       enum:
       - block-users
+      - change-max-duration
       - create-call
       - create-reaction
       - enable-noise-cancellation
@@ -1890,6 +1951,19 @@ components:
           x-stream-index: "002"
         typing_indicators:
           $ref: '#/components/schemas/TypingIndicators'
+          x-stream-index: "001"
+      type: object
+    PublishedTrackInfo:
+      properties:
+        codec_mime_type:
+          type: string
+          x-stream-index: "003"
+        duration_seconds:
+          format: int32
+          type: integer
+          x-stream-index: "002"
+        track_type:
+          type: string
           x-stream-index: "001"
       type: object
     PushNotificationSettings:
@@ -2158,6 +2232,12 @@ components:
           minimum: 5000
           type: integer
           x-stream-index: "001"
+        missed_call_timeout_ms:
+          format: int32
+          maximum: 180000
+          minimum: 5000
+          type: integer
+          x-stream-index: "003"
       required:
       - incoming_call_timeout_ms
       - auto_cancel_timeout_ms
@@ -2172,9 +2252,14 @@ components:
           format: int32
           type: integer
           x-stream-index: "001"
+        missed_call_timeout_ms:
+          format: int32
+          type: integer
+          x-stream-index: "003"
       required:
       - incoming_call_timeout_ms
       - auto_cancel_timeout_ms
+      - missed_call_timeout_ms
       type: object
     S3Request:
       properties:
@@ -2237,7 +2322,7 @@ components:
       - enabled
       - access_request_enabled
       type: object
-    SendEventRequest:
+    SendCallEventRequest:
       nullable: true
       properties:
         custom:
@@ -2245,8 +2330,14 @@ components:
           title: Custom
           type: object
           x-stream-index: "004"
+        user:
+          $ref: '#/components/schemas/UserRequest'
+          x-stream-index: "003.002"
+        user_id:
+          type: string
+          x-stream-index: "003.001"
       type: object
-    SendEventResponse:
+    SendCallEventResponse:
       nullable: true
       properties:
         duration:
@@ -2724,6 +2815,10 @@ components:
           type: string
           x-stream-index: "003.003"
         storage_type:
+          enum:
+          - s3
+          - gcs
+          - abs
           type: string
           x-stream-index: "003.001"
       required:
@@ -2748,6 +2843,10 @@ components:
           type: string
           x-stream-index: "001.004"
         type:
+          enum:
+          - s3
+          - gcs
+          - abs
           type: string
           x-stream-index: "001.002"
       required:
@@ -2861,6 +2960,11 @@ components:
         banned:
           type: boolean
           x-stream-index: "001.011"
+        blocked_user_ids:
+          items:
+            type: string
+          type: array
+          x-stream-index: "001.016"
         created_at:
           description: Date/time of creation
           format: date-time
@@ -2942,6 +3046,7 @@ components:
       - updated_at
       - banned
       - online
+      - blocked_user_ids
       - shadow_banned
       - devices
       - invisible
@@ -3012,7 +3117,7 @@ components:
           x-stream-index: "013.003"
         max_receiving_video_quality:
           $ref: '#/components/schemas/VideoQuality'
-          x-stream-index: "014.014"
+          x-stream-index: "014.013"
         os:
           type: string
           x-stream-index: "012.001"
@@ -3026,43 +3131,62 @@ components:
         pub_sub_hints:
           $ref: '#/components/schemas/MediaPubSubHint'
           x-stream-index: "011"
+        published_tracks:
+          items:
+            $ref: '#/components/schemas/PublishedTrackInfo'
+          type: array
+          x-stream-index: "013.002"
         publisher_audio_mos:
           $ref: '#/components/schemas/MOSStats'
           x-stream-index: "013.005"
         publisher_jitter:
           $ref: '#/components/schemas/Stats'
-          x-stream-index: "013.008"
+          x-stream-index: "013.010"
         publisher_latency:
           $ref: '#/components/schemas/Stats'
-          x-stream-index: "013.007"
+          x-stream-index: "013.009"
+        publisher_noise_cancellation_seconds:
+          format: float
+          type: number
+          x-stream-index: "013.013"
         publisher_packet_loss_fraction:
           format: float
           type: number
-          x-stream-index: "013.006"
+          x-stream-index: "013.008"
+        publisher_quality_limitation_fraction:
+          format: float
+          type: number
+          x-stream-index: "013.012"
         publisher_video_quality_limitation_duration_seconds:
           additionalProperties:
             format: float
             type: number
           type: object
-          x-stream-index: "013.009"
+          x-stream-index: "013.011"
         publishing_audio_codec:
           type: string
-          x-stream-index: "013.002"
+          x-stream-index: "013.006"
         publishing_duration_seconds:
           format: int32
           type: integer
           x-stream-index: "013.001"
+        publishing_video_codec:
+          type: string
+          x-stream-index: "013.007"
         quality_score:
           format: float
           type: number
           x-stream-index: "004"
         receiving_audio_codec:
           type: string
-          x-stream-index: "014.013"
+          x-stream-index: "014.015"
         receiving_duration_seconds:
           format: int32
           type: integer
           x-stream-index: "014.011"
+        receiving_video_codec:
+          type: string
+          x-stream-index: "014.016"
         sdk:
           type: string
           x-stream-index: "012.004"
@@ -3081,6 +3205,10 @@ components:
         subscriber_latency:
           $ref: '#/components/schemas/Stats'
           x-stream-index: "014.009"
+        subscriber_video_quality_throttled_duration_seconds:
+          format: float
+          type: number
+          x-stream-index: "014.017"
         subsessions:
           items:
             $ref: '#/components/schemas/Subsession'
@@ -3091,7 +3219,7 @@ components:
           x-stream-index: "001"
         total_pixels_in:
           type: integer
-          x-stream-index: "014.015"
+          x-stream-index: "014.014"
         total_pixels_out:
           type: integer
           x-stream-index: "013.004"
@@ -3117,14 +3245,23 @@ components:
         info:
           $ref: '#/components/schemas/UserInfoResponse'
           x-stream-index: "001"
+        min_event_ts:
+          format: int32
+          type: integer
+          x-stream-index: "004"
+        rating:
+          format: int32
+          type: integer
+          x-stream-index: "003"
         session_stats:
           items:
             $ref: '#/components/schemas/UserSessionStats'
           type: array
-          x-stream-index: "003"
+          x-stream-index: "002"
       required:
       - info
       - session_stats
+      - min_event_ts
       type: object
     VideoQuality:
       properties:
@@ -3240,7 +3377,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v113.0.0
+  version: v117.0.1
 openapi: 3.0.3
 paths:
   /video/call/{type}/{id}:
@@ -3651,7 +3788,7 @@ paths:
           title: Type
           type: string
           writeOnly: true
-          x-stream-index: "002"
+          x-stream-index: "001.001"
       - in: path
         name: id
         required: true
@@ -3660,19 +3797,19 @@ paths:
           title: ID
           type: string
           writeOnly: true
-          x-stream-index: "003"
+          x-stream-index: "001.002"
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SendEventRequest'
+              $ref: '#/components/schemas/SendCallEventRequest'
         required: true
       responses:
         "201":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SendEventResponse'
+                $ref: '#/components/schemas/SendCallEventResponse'
           description: Successful response
         "400":
           content:

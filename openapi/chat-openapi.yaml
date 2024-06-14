@@ -685,6 +685,74 @@ components:
       - blocklist
       - behavior
       type: object
+    BlockUsersRequest:
+      nullable: true
+      properties:
+        blocked_user_id:
+          description: User id to block
+          title: BlockedUserID
+          type: string
+          x-stream-index: "001"
+        user:
+          $ref: '#/components/schemas/UserRequest'
+          x-stream-index: "003.002"
+        user_id:
+          type: string
+          x-stream-index: "003.001"
+      required:
+      - blocked_user_id
+      type: object
+    BlockUsersResponse:
+      nullable: true
+      properties:
+        blocks:
+          items:
+            $ref: '#/components/schemas/UserBlock'
+          type: array
+          x-stream-index: "002"
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      - blocks
+      type: object
+    BlockedUserResponse:
+      nullable: true
+      properties:
+        blocked_user:
+          $ref: '#/components/schemas/UserResponse'
+          description: User who got blocked
+          title: User
+          x-stream-index: "003"
+        blocked_user_id:
+          description: ID of the user who got blocked
+          title: UserID
+          type: string
+          x-stream-index: "004"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "005"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          description: User who blocked another user
+          title: User
+          x-stream-index: "001"
+        user_id:
+          description: ID of the user who blocked another user
+          title: UserID
+          type: string
+          x-stream-index: "002"
+      required:
+      - user
+      - user_id
+      - blocked_user
+      - blocked_user_id
+      - created_at
+      type: object
     BroadcastSettings:
       properties:
         enabled:
@@ -733,6 +801,9 @@ components:
         geofencing:
           $ref: '#/components/schemas/GeofenceSettings'
           x-stream-index: "007"
+        limits:
+          $ref: '#/components/schemas/LimitsSettings'
+          x-stream-index: "011"
         recording:
           $ref: '#/components/schemas/RecordSettings'
           x-stream-index: "005"
@@ -1414,6 +1485,11 @@ components:
           title: Auto translation language
           type: string
           x-stream-index: "022"
+        blocked:
+          description: Whether this channel is blocked by current user or not
+          title: Blocked
+          type: boolean
+          x-stream-index: "027"
         cid:
           description: Channel CID (<type>:<id>)
           title: CID
@@ -1444,7 +1520,7 @@ components:
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "029"
+          x-stream-index: "030"
         deleted_at:
           description: Date/time of deletion
           format: date-time
@@ -1522,10 +1598,10 @@ components:
           format: date-time
           title: Truncated At
           type: string
-          x-stream-index: "027"
+          x-stream-index: "028"
         truncated_by:
           $ref: '#/components/schemas/UserObject'
-          x-stream-index: "028"
+          x-stream-index: "029"
         type:
           description: Type of the channel
           title: Type
@@ -1850,8 +1926,12 @@ components:
           title: Duration
           type: string
           x-stream-index: "001.001"
+        file_url:
+          type: string
+          x-stream-index: "002"
       required:
       - duration
+      - file_url
       type: object
     CheckPushRequest:
       nullable: true
@@ -2600,6 +2680,10 @@ components:
           type: string
           x-stream-index: "003.003"
         storage_type:
+          enum:
+          - s3
+          - gcs
+          - abs
           type: string
           x-stream-index: "003.001"
       required:
@@ -3356,6 +3440,10 @@ components:
           type: string
           x-stream-index: "004"
         type:
+          enum:
+          - s3
+          - gcs
+          - abs
           type: string
           x-stream-index: "002"
       required:
@@ -3677,6 +3765,11 @@ components:
         banned:
           type: boolean
           x-stream-index: "001.011"
+        blocked_user_ids:
+          items:
+            type: string
+          type: array
+          x-stream-index: "013"
         channel_mutes:
           items:
             $ref: '#/components/schemas/ChannelMute'
@@ -3783,12 +3876,14 @@ components:
       - banned
       - online
       - devices
+      - invisible
       - mutes
       - channel_mutes
       - total_unread_count
       - unread_channels
       - unread_threads
       - shadow_banned
+      - blocked_user_ids
       type: object
     GeofenceResponse:
       nullable: true
@@ -3848,6 +3943,23 @@ components:
           x-stream-index: "002.001"
       required:
       - duration
+      type: object
+    GetBlockedUsersResponse:
+      nullable: true
+      properties:
+        blocks:
+          description: Array of blocked user object
+          items:
+            $ref: '#/components/schemas/BlockedUserResponse'
+          title: Blocks
+          type: array
+          x-stream-index: "002"
+        duration:
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      - blocks
       type: object
     GetCallTokenRequest:
       nullable: true
@@ -4643,6 +4755,17 @@ components:
       title: Rate Limit info
       type: object
       x-stream-docs-page-id: rate_limits
+    LimitsSettings:
+      properties:
+        max_duration_seconds:
+          format: int32
+          type: integer
+          x-stream-index: "002"
+        max_participants:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+      type: object
     ListBlockListResponse:
       nullable: true
       properties:
@@ -5270,6 +5393,40 @@ components:
       - created_at
       - updated_at
       type: object
+    MessageHistoryEntry:
+      nullable: true
+      properties:
+        Custom:
+          additionalProperties: {}
+          type: object
+          writeOnly: true
+          x-stream-index: "008"
+        attachments:
+          items:
+            $ref: '#/components/schemas/Attachment'
+          type: array
+          x-stream-index: "007"
+        message_id:
+          type: string
+          x-stream-index: "003"
+        message_updated_at:
+          format: date-time
+          type: string
+          x-stream-index: "005"
+        message_updated_by_id:
+          type: string
+          x-stream-index: "004"
+        text:
+          type: string
+          x-stream-index: "006"
+      required:
+      - message_id
+      - message_updated_by_id
+      - message_updated_at
+      - text
+      - attachments
+      - Custom
+      type: object
     MessageModerationResult:
       properties:
         action:
@@ -5317,16 +5474,6 @@ components:
       - updated_at
       type: object
     MessagePaginationParams:
-      properties:
-        limit:
-          format: int32
-          minimum: 0
-          type: integer
-          x-stream-index: "001"
-        offset:
-          format: int32
-          type: integer
-          x-stream-index: "002"
       type: object
     MessageReadEvent:
       properties:
@@ -5936,6 +6083,9 @@ components:
         call_live_started:
           $ref: '#/components/schemas/EventNotificationSettings'
           x-stream-index: "002"
+        call_missed:
+          $ref: '#/components/schemas/EventNotificationSettings'
+          x-stream-index: "006"
         call_notification:
           $ref: '#/components/schemas/EventNotificationSettings'
           x-stream-index: "004"
@@ -5954,6 +6104,7 @@ components:
       - session_started
       - call_notification
       - call_ring
+      - call_missed
       type: object
     NullBool:
       properties:
@@ -5991,6 +6142,11 @@ components:
         banned:
           type: boolean
           x-stream-index: "014"
+        blocked_user_ids:
+          items:
+            type: string
+          type: array
+          x-stream-index: "042"
         channel_mutes:
           items:
             $ref: '#/components/schemas/ChannelMute'
@@ -7188,6 +7344,59 @@ components:
       - flags
       - duration
       type: object
+    QueryMessageHistoryRequest:
+      nullable: true
+      properties:
+        filter:
+          additionalProperties: {}
+          maximum: 3
+          minimum: 1
+          type: object
+          x-stream-index: "001"
+        limit:
+          format: int32
+          maximum: 25
+          minimum: 0
+          type: integer
+          x-stream-index: "004.001"
+        next:
+          type: string
+          x-stream-index: "004.002"
+        prev:
+          type: string
+          x-stream-index: "004.003"
+        sort:
+          items:
+            $ref: '#/components/schemas/SortParam'
+          maximum: 5
+          type: array
+          x-stream-index: "002"
+      required:
+      - filter
+      type: object
+    QueryMessageHistoryResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "003.001"
+        message_history:
+          items:
+            $ref: '#/components/schemas/MessageHistoryEntry'
+          type: array
+          x-stream-index: "001"
+        next:
+          type: string
+          x-stream-index: "002.001"
+        prev:
+          type: string
+          x-stream-index: "002.002"
+      required:
+      - message_history
+      - duration
+      type: object
     QueryPollVotesRequest:
       nullable: true
       properties:
@@ -7787,9 +7996,14 @@ components:
           format: int32
           type: integer
           x-stream-index: "001"
+        missed_call_timeout_ms:
+          format: int32
+          type: integer
+          x-stream-index: "003"
       required:
       - incoming_call_timeout_ms
       - auto_cancel_timeout_ms
+      - missed_call_timeout_ms
       type: object
     Role:
       properties:
@@ -8428,36 +8642,40 @@ components:
           format: date-time
           title: Created at
           type: string
-          x-stream-index: "007"
+          x-stream-index: "008"
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "010"
+          x-stream-index: "011"
         last_read_at:
           format: date-time
           type: string
-          x-stream-index: "009"
+          x-stream-index: "010"
+        last_thread_message_at:
+          format: date-time
+          type: string
+          x-stream-index: "004"
         left_thread_at:
           description: Left Thread At is the time when the user left the thread
           format: date-time
           title: Left Thread At
           type: string
-          x-stream-index: "008"
+          x-stream-index: "009"
         thread_id:
           description: Thead ID is unique string identifier of the thread
           title: ID
           type: string
-          x-stream-index: "004"
+          x-stream-index: "005"
         user:
           $ref: '#/components/schemas/UserObject'
           description: User is the user object
           title: User
-          x-stream-index: "006"
+          x-stream-index: "007"
         user_id:
           description: User ID is unique string identifier of the user
           title: User ID
           type: string
-          x-stream-index: "005"
+          x-stream-index: "006"
       required:
       - app_pk
       - channel_cid
@@ -8887,6 +9105,30 @@ components:
           x-stream-index: "001"
       required:
       - enabled
+      type: object
+    UnblockUsersRequest:
+      nullable: true
+      properties:
+        blocked_user_id:
+          type: string
+          x-stream-index: "001"
+        user:
+          $ref: '#/components/schemas/UserRequest'
+          x-stream-index: "003.002"
+        user_id:
+          type: string
+          x-stream-index: "003.001"
+      required:
+      - blocked_user_id
+      type: object
+    UnblockUsersResponse:
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
       type: object
     UnmuteChannelRequest:
       nullable: true
@@ -9721,6 +9963,10 @@ components:
           type: string
           x-stream-index: "003.003"
         storage_type:
+          enum:
+          - s3
+          - gcs
+          - abs
           type: string
           x-stream-index: "003.001"
       required:
@@ -9745,6 +9991,10 @@ components:
           type: string
           x-stream-index: "001.004"
         type:
+          enum:
+          - s3
+          - gcs
+          - abs
           type: string
           x-stream-index: "001.002"
       required:
@@ -10069,6 +10319,24 @@ components:
       - push_provider
       - duration
       type: object
+    UserBlock:
+      nullable: true
+      properties:
+        blocked_by_user_id:
+          type: string
+          x-stream-index: "005"
+        blocked_user_id:
+          type: string
+          x-stream-index: "007"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "008"
+      required:
+      - blocked_by_user_id
+      - blocked_user_id
+      - created_at
+      type: object
     UserCustomEventRequest:
       properties:
         custom:
@@ -10271,6 +10539,11 @@ components:
         banned:
           type: boolean
           x-stream-index: "001.011"
+        blocked_user_ids:
+          items:
+            type: string
+          type: array
+          x-stream-index: "001.016"
         created_at:
           description: Date/time of creation
           format: date-time
@@ -10352,6 +10625,7 @@ components:
       - updated_at
       - banned
       - online
+      - blocked_user_ids
       - shadow_banned
       - devices
       - invisible
@@ -10592,7 +10866,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v113.0.0
+  version: v117.0.1
 openapi: 3.0.3
 paths:
   /app:
@@ -13779,6 +14053,19 @@ paths:
           writeOnly: true
           x-stream-index: "002"
       - in: query
+        name: limit
+        schema:
+          format: int32
+          minimum: 0
+          type: integer
+          x-stream-index: "003.001"
+      - in: query
+        name: offset
+        schema:
+          format: int32
+          type: integer
+          x-stream-index: "003.002"
+      - in: query
         name: id_gte
         schema:
           type: string
@@ -13853,6 +14140,39 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Get replies
+      tags:
+      - product:chat
+  /messages/history:
+    post:
+      description: |
+        Queries history for one message
+      operationId: QueryMessageHistory
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryMessageHistoryRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryMessageHistoryResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Query message history
       tags:
       - product:chat
   /moderation/ban:
@@ -15660,6 +15980,72 @@ paths:
       summary: Reactivate user
       tags:
       - product:chat
+  /users/block:
+    get:
+      description: |
+        Get list of blocked Users
+      operationId: GetBlockedUsers
+      parameters:
+      - in: query
+        name: user_id
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "002.001"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetBlockedUsersResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get list of blocked Users
+      tags:
+      - product:chat
+    post:
+      description: |
+        Block users
+      operationId: BlockUsers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BlockUsersRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlockUsersResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Block user
+      tags:
+      - product:chat
   /users/deactivate:
     post:
       description: |
@@ -15800,6 +16186,39 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Restore users
+      tags:
+      - product:chat
+  /users/unblock:
+    post:
+      description: |
+        Unblock users
+      operationId: UnblockUsers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnblockUsersRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnblockUsersResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Unblock user
       tags:
       - product:chat
 security:

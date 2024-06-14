@@ -14,7 +14,10 @@ If you need support for a different storage provider, you can participate in the
 To use your own storage you need to:
 
 1. Configure a new storage for your Stream application
-2. Configure your call type(s) to use the new storage
+2. (Optional) Check storage configuration for correctness.
+    Calling check endpoint will create a test markdown file in the storage to verify the configuration. It will return an error if the file is not created.
+    In case of success, the file with`stream-<uuid>.md` will be uploaded to the storage. Every time you call this endpoint, a new file will be created.
+3. Configure your call type(s) to use the new storage
 
 Once the setup is complete, call recordings and transcription files will be automatically stored in your own storage.
 
@@ -35,7 +38,13 @@ await serverSideClient.createExternalStorage({
     },
 });
 
-// 2. update the call type to use the new storage
+// 2. (Optional) Check storage configuration for correctness
+// In case of any errors, this will throw a ResponseError.
+await serverSideClient.checkExternalStorage({
+    name: 'my-s3'
+});
+
+// 3. update the call type to use the new storage
 await serverSideClient.updateCallType('my-call-type', {
     external_storage: "my-s3",
 });
@@ -44,10 +53,10 @@ await serverSideClient.updateCallType('my-call-type', {
 <TabItem value="py" label="Python">
 
 ```py
-from getstream.models import S3Request
-
 # 1. create a new storage with all the required parameters
-client.create_external_storage(
+from getstream.models.s_3_request import S3Request
+
+client.video.create_external_storage(
     name='my-s3',
     storage_type='s3',
     bucket='my-bucket',
@@ -59,8 +68,12 @@ client.create_external_storage(
     ),
 )
 
-# 2. update the call type to use the new storage
-client.video.update_call_type(name='allhands', external_storage= "my-s3")
+# 2. (Optional) Check storage configuration for correctness
+# In case of any errors, this will throw a StreamAPIException. 
+response = client.video.check_external_storage(name='my-s3')
+
+# 3. update the call type to use the new storage
+client.video.update_call_type(name='allhands', external_storage='my-s3')
 ```
 </TabItem>
 <TabItem value="curl" label="cURL">
@@ -83,7 +96,13 @@ curl -X POST https://video.stream-io-api.com/video/external_storage?api_key=${AP
       }
     }'
 
-# 2. update the call type to use the new storage
+    # 2. (Optional) Check storage configuration for correctness
+curl -X GET https://video.stream-io-api.com/video/external_storage/check?api_key=${API_KEY} \
+    -H "Authorization: ${TOKEN}" \
+    -H "stream-auth-type: jwt"
+
+
+# 3. update the call type to use the new storage
 curl -X PUT https://video.stream-io-api.com/api/v2/video/calltypes/${CALL_TYPE}?api_key=${API_KEY} \
     -H "Authorization: ${TOKEN}" \
     -H "Content-Type: application/json" \
@@ -106,7 +125,7 @@ When transcribing or recording a call, the storage provider is selected in this 
 2. If specified at the call type level, the storage provider designated for that call type will be used.
 3. If neither applies, Stream S3 storage will be used.
 
-Note: All Stream applications have Stream S3 storage enabled by default, which you can refer to as `"stream-s3"` in the configuration.
+> **Note:**  All Stream applications have Stream S3 storage enabled by default, which you can refer to as `"stream-s3"` in the configuration.
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
@@ -220,6 +239,8 @@ The following policy needs to be attached to your queue (replace the value of Re
 To use Google Cloud Storage as your storage provider, you need to send your [service account](https://cloud.google.com/iam/docs/service-accounts-create) credentials as they are stored in your JSON file.
 Stream only needs permission to write new files, it is not necessary to grant any other permission.
 
+> **Note:**: Note: We recommend reading the credentials from the file to avoid issues with copying and pasting errors.
+
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
 
@@ -238,12 +259,15 @@ await serverSideClient.createExternalStorage({
 <TabItem value="py" label="Python">
 
 ```py
+with open("/path/to/your/service-account-file.json") as service_account_file:
+    creds = service_account_file.read()
+    
 client.create_external_storage(
     name='my-gcs',
     storage_type='gcs',
     bucket='my-bucket',
     path='directory_name/',
-    gcs_credentials="content of the service account file"
+    gcs_credentials=creds
 )
 ```
 </TabItem>
