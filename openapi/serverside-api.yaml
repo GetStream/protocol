@@ -599,6 +599,10 @@ components:
         enabled:
           type: boolean
           x-stream-index: "001"
+        join_ahead_time_seconds:
+          format: int32
+          type: integer
+          x-stream-index: "002"
       required:
       - enabled
       type: object
@@ -607,12 +611,20 @@ components:
         enabled:
           type: boolean
           x-stream-index: "001"
+        join_ahead_time_seconds:
+          format: int32
+          type: integer
+          x-stream-index: "002"
       type: object
     BackstageSettingsResponse:
       properties:
         enabled:
           type: boolean
           x-stream-index: "001"
+        join_ahead_time_seconds:
+          format: int32
+          type: integer
+          x-stream-index: "002"
       required:
       - enabled
       type: object
@@ -796,11 +808,16 @@ components:
     BlockUsersResponse:
       nullable: true
       properties:
-        blocks:
-          items:
-            $ref: '#/components/schemas/UserBlock'
-          type: array
+        blocked_by_user_id:
+          type: string
           x-stream-index: "002"
+        blocked_user_id:
+          type: string
+          x-stream-index: "003"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "004"
         duration:
           description: Duration of the request in human-readable format
           title: Duration
@@ -808,7 +825,9 @@ components:
           x-stream-index: "001.001"
       required:
       - duration
-      - blocks
+      - blocked_by_user_id
+      - blocked_user_id
+      - created_at
       type: object
     BlockedUserResponse:
       nullable: true
@@ -1046,6 +1065,10 @@ components:
         ingress:
           $ref: '#/components/schemas/CallIngressResponse'
           x-stream-index: "018"
+        join_ahead_time_seconds:
+          format: int32
+          type: integer
+          x-stream-index: "022"
         recording:
           type: boolean
           x-stream-index: "011"
@@ -3657,6 +3680,34 @@ components:
       - task_id
       - duration
       type: object
+    DeleteCallRequest:
+      nullable: true
+      properties:
+        hard:
+          description: if true the call will be hard deleted along with all related
+            data
+          title: Hard
+          type: boolean
+          x-stream-index: "001"
+      type: object
+    DeleteCallResponse:
+      nullable: true
+      properties:
+        call:
+          $ref: '#/components/schemas/CallResponse'
+          x-stream-index: "001"
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "003.001"
+        task_id:
+          type: string
+          x-stream-index: "002"
+      required:
+      - call
+      - duration
+      type: object
     DeleteChannelResponse:
       nullable: true
       properties:
@@ -3785,9 +3836,17 @@ components:
       nullable: true
       properties:
         calls:
+          description: |
+            Calls delete mode.
+            Affected calls are those that include exactly two members, one of whom is the user being deleted.
+
+            * null or empty string - doesn't delete any calls
+            * soft - marks user's calls and their related data as deleted (soft-delete)
+            * hard - deletes user's calls and their data completely (hard-delete)
           enum:
           - soft
           - hard
+          title: Delete User's calls
           type: string
           x-stream-index: 001.002.004
         conversations:
@@ -12535,24 +12594,6 @@ components:
       - push_provider
       - duration
       type: object
-    UserBlock:
-      nullable: true
-      properties:
-        blocked_by_user_id:
-          type: string
-          x-stream-index: "005"
-        blocked_user_id:
-          type: string
-          x-stream-index: "007"
-        created_at:
-          format: date-time
-          type: number
-          x-stream-index: "008"
-      required:
-      - blocked_by_user_id
-      - blocked_user_id
-      - created_at
-      type: object
     UserCustomEventRequest:
       properties:
         custom:
@@ -13390,7 +13431,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v117.0.1
+  version: v119.0.1
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -19003,6 +19044,66 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Block user on a call
+      tags:
+      - product:video
+  /api/v2/video/call/{type}/{id}/delete:
+    post:
+      description: |2
+
+
+        Sends events:
+        - call.deleted
+
+        Required permissions:
+        - DeleteCall
+      operationId: DeleteCall
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          description: The type of call
+          maxLength: 64
+          title: Type
+          type: string
+          writeOnly: true
+          x-stream-index: "002.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Call ID
+          maxLength: 64
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "002.002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteCallRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteCallResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Delete Call
       tags:
       - product:video
   /api/v2/video/call/{type}/{id}/event:
