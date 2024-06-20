@@ -3,6 +3,7 @@ syntax = "proto3";
 package stream.video.sfu.signal;
 
 import "video/sfu/models/models.proto";
+import "google/protobuf/struct.proto";
 
 option go_package = "github.com/GetStream/protocol/protobuf/video/sfu/signal_rpc";
 option java_multiple_files = true;
@@ -33,6 +34,42 @@ service SignalServer {
   rpc StartNoiseCancellation(StartNoiseCancellationRequest) returns (StartNoiseCancellationResponse);
 
   rpc StopNoiseCancellation(StopNoiseCancellationRequest) returns (StopNoiseCancellationResponse);
+
+  rpc ReportClientEvents(ReportClientEventsRequest) returns (ReportClientEventsResponse);
+}
+
+message ReportClientEventsRequest {
+  string session_id = 1;
+  repeated ClientEvent events = 2;
+}
+
+message ClientEvent {
+  oneof event {
+    InputChangedEvent input_changed = 1;
+    ClientGenericEvent generic = 99;
+  }
+}
+
+// This event could be emitted when the microphone or camera
+// (audio and video sources) change.
+message InputChangedEvent {
+  models.TrackType track_type = 1;
+  string device_name = 2;
+}
+
+// ClientGenericEvent is used to report any event which does
+// not have a specialisation yet. Client SDKs can use this
+// instead of waiting for a specialised event. The events
+// reported are shown on the stats dashboard.
+message ClientGenericEvent {
+  models.EventLevel level = 1;
+  string message = 2;
+  string component = 3;
+  google.protobuf.Struct additional = 4;
+}
+
+message ReportClientEventsResponse {
+  models.Error error = 1;
 }
 
 message StartNoiseCancellationRequest {
