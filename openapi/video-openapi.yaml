@@ -150,12 +150,20 @@ components:
         enabled:
           type: boolean
           x-stream-index: "001"
+        join_ahead_time_seconds:
+          format: int32
+          type: integer
+          x-stream-index: "002"
       type: object
     BackstageSettingsResponse:
       properties:
         enabled:
           type: boolean
           x-stream-index: "001"
+        join_ahead_time_seconds:
+          format: int32
+          type: integer
+          x-stream-index: "002"
       required:
       - enabled
       type: object
@@ -371,6 +379,10 @@ components:
         ingress:
           $ref: '#/components/schemas/CallIngressResponse'
           x-stream-index: "018"
+        join_ahead_time_seconds:
+          format: int32
+          type: integer
+          x-stream-index: "022"
         recording:
           type: boolean
           x-stream-index: "011"
@@ -442,10 +454,16 @@ components:
         live_ended_at:
           format: date-time
           type: string
-          x-stream-index: "009"
+          x-stream-index: "010"
         live_started_at:
           format: date-time
           type: string
+          x-stream-index: "009"
+        missed_by:
+          additionalProperties:
+            format: date-time
+            type: string
+          type: object
           x-stream-index: "008"
         participants:
           items:
@@ -471,13 +489,14 @@ components:
         timer_ends_at:
           format: date-time
           type: string
-          x-stream-index: "010"
+          x-stream-index: "011"
       required:
       - id
       - participants
       - participants_count_by_role
       - rejected_by
       - accepted_by
+      - missed_by
       type: object
     CallSettingsRequest:
       properties:
@@ -702,8 +721,12 @@ components:
           title: Duration
           type: string
           x-stream-index: "001.001"
+        file_url:
+          type: string
+          x-stream-index: "002"
       required:
       - duration
+      - file_url
       type: object
     CollectUserFeedbackRequest:
       nullable: true
@@ -886,6 +909,10 @@ components:
           type: string
           x-stream-index: "003.003"
         storage_type:
+          enum:
+          - s3
+          - gcs
+          - abs
           type: string
           x-stream-index: "003.001"
       required:
@@ -931,6 +958,34 @@ components:
       required:
       - user
       - access_token
+      - duration
+      type: object
+    DeleteCallRequest:
+      nullable: true
+      properties:
+        hard:
+          description: if true the call will be hard deleted along with all related
+            data
+          title: Hard
+          type: boolean
+          x-stream-index: "001"
+      type: object
+    DeleteCallResponse:
+      nullable: true
+      properties:
+        call:
+          $ref: '#/components/schemas/CallResponse'
+          x-stream-index: "001"
+        duration:
+          description: Duration of the request in human-readable format
+          title: Duration
+          type: string
+          x-stream-index: "003.001"
+        task_id:
+          type: string
+          x-stream-index: "002"
+      required:
+      - call
       - duration
       type: object
     DeleteExternalStorageResponse:
@@ -1129,6 +1184,10 @@ components:
           type: string
           x-stream-index: "004"
         type:
+          enum:
+          - s3
+          - gcs
+          - abs
           type: string
           x-stream-index: "002"
       required:
@@ -1831,6 +1890,9 @@ components:
         call_live_started:
           $ref: '#/components/schemas/EventNotificationSettings'
           x-stream-index: "002"
+        call_missed:
+          $ref: '#/components/schemas/EventNotificationSettings'
+          x-stream-index: "006"
         call_notification:
           $ref: '#/components/schemas/EventNotificationSettings'
           x-stream-index: "004"
@@ -2210,6 +2272,12 @@ components:
           minimum: 5000
           type: integer
           x-stream-index: "001"
+        missed_call_timeout_ms:
+          format: int32
+          maximum: 180000
+          minimum: 5000
+          type: integer
+          x-stream-index: "003"
       required:
       - incoming_call_timeout_ms
       - auto_cancel_timeout_ms
@@ -2224,9 +2292,14 @@ components:
           format: int32
           type: integer
           x-stream-index: "001"
+        missed_call_timeout_ms:
+          format: int32
+          type: integer
+          x-stream-index: "003"
       required:
       - incoming_call_timeout_ms
       - auto_cancel_timeout_ms
+      - missed_call_timeout_ms
       type: object
     S3Request:
       properties:
@@ -2782,6 +2855,10 @@ components:
           type: string
           x-stream-index: "003.003"
         storage_type:
+          enum:
+          - s3
+          - gcs
+          - abs
           type: string
           x-stream-index: "003.001"
       required:
@@ -2806,6 +2883,10 @@ components:
           type: string
           x-stream-index: "001.004"
         type:
+          enum:
+          - s3
+          - gcs
+          - abs
           type: string
           x-stream-index: "001.002"
       required:
@@ -2919,6 +3000,11 @@ components:
         banned:
           type: boolean
           x-stream-index: "001.011"
+        blocked_user_ids:
+          items:
+            type: string
+          type: array
+          x-stream-index: "001.016"
         created_at:
           description: Date/time of creation
           format: date-time
@@ -3000,6 +3086,7 @@ components:
       - updated_at
       - banned
       - online
+      - blocked_user_ids
       - shadow_banned
       - devices
       - invisible
@@ -3330,7 +3417,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v116.0.0
+  version: v120.1.1
 openapi: 3.0.3
 paths:
   /video/call/{type}/{id}:
@@ -3719,6 +3806,66 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Block user on a call
+      tags:
+      - product:video
+  /video/call/{type}/{id}/delete:
+    post:
+      description: |2
+
+
+        Sends events:
+        - call.deleted
+
+        Required permissions:
+        - DeleteCall
+      operationId: DeleteCall
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          description: The type of call
+          maxLength: 64
+          title: Type
+          type: string
+          writeOnly: true
+          x-stream-index: "002.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Call ID
+          maxLength: 64
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "002.002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteCallRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteCallResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Delete Call
       tags:
       - product:video
   /video/call/{type}/{id}/event:
