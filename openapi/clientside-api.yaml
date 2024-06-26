@@ -87,6 +87,20 @@ components:
       - text
       - type
       type: object
+    AggregatedStats:
+      properties:
+        countrywise_aggregate_stats:
+          additionalProperties:
+            $ref: '#/components/schemas/CountrywiseAggregateStats'
+          type: object
+          x-stream-index: "003"
+        publisher_aggregate_stats:
+          $ref: '#/components/schemas/PublisherAggregateStats'
+          x-stream-index: "002"
+        turn:
+          $ref: '#/components/schemas/TURNAggregatedStats'
+          x-stream-index: "001"
+      type: object
     AnyEvent:
       properties:
         created_at:
@@ -767,6 +781,13 @@ components:
     CallEvent:
       nullable: true
       properties:
+        additional:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "007"
+        component:
+          type: string
+          x-stream-index: "006"
         description:
           type: string
           x-stream-index: "004"
@@ -2631,6 +2652,10 @@ components:
         channel_id:
           type: string
           x-stream-index: "003.002"
+        channel_member_count:
+          format: int32
+          type: integer
+          x-stream-index: "003.005"
         channel_type:
           type: string
           x-stream-index: "003.003"
@@ -2654,6 +2679,7 @@ components:
       - cid
       - channel_id
       - channel_type
+      - channel_member_count
       title: ChannelDeletedEvent
       type: object
       x-stream-event-client-type: true
@@ -2737,6 +2763,10 @@ components:
         channel_id:
           type: string
           x-stream-index: "003.002"
+        channel_member_count:
+          format: int32
+          type: integer
+          x-stream-index: "003.005"
         channel_type:
           type: string
           x-stream-index: "003.003"
@@ -2762,6 +2792,7 @@ components:
       - cid
       - channel_id
       - channel_type
+      - channel_member_count
       - type
       - created_at
       title: ChannelHiddenEvent
@@ -2831,6 +2862,10 @@ components:
         channel_id:
           type: string
           x-stream-index: "002.002"
+        channel_member_count:
+          format: int32
+          type: integer
+          x-stream-index: "002.005"
         channel_type:
           type: string
           x-stream-index: "002.003"
@@ -2851,6 +2886,7 @@ components:
       - cid
       - channel_id
       - channel_type
+      - channel_member_count
       title: ChannelKickedEvent
       type: object
       x-stream-event-client-type: true
@@ -3283,6 +3319,10 @@ components:
         channel_id:
           type: string
           x-stream-index: "001.002"
+        channel_member_count:
+          format: int32
+          type: integer
+          x-stream-index: "001.005"
         channel_type:
           type: string
           x-stream-index: "001.003"
@@ -3301,6 +3341,7 @@ components:
       - cid
       - channel_id
       - channel_type
+      - channel_member_count
       - type
       - created_at
       title: ChannelTruncatedEvent
@@ -3346,6 +3387,10 @@ components:
         channel_id:
           type: string
           x-stream-index: "004.002"
+        channel_member_count:
+          format: int32
+          type: integer
+          x-stream-index: "004.005"
         channel_type:
           type: string
           x-stream-index: "004.003"
@@ -3375,6 +3420,7 @@ components:
       - cid
       - channel_id
       - channel_type
+      - channel_member_count
       title: ChannelUpdatedEvent
       type: object
       x-stream-event-client-type: true
@@ -3644,6 +3690,38 @@ components:
       required:
       - latitude
       - longitude
+      type: object
+    Count:
+      properties:
+        approximate:
+          type: boolean
+          x-stream-index: "002"
+        value:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+      required:
+      - value
+      - approximate
+      type: object
+    CountrywiseAggregateStats:
+      nullable: true
+      properties:
+        participant_count:
+          $ref: '#/components/schemas/Count'
+          x-stream-index: "001"
+        publisher_jitter:
+          $ref: '#/components/schemas/TimeStats'
+          x-stream-index: "003"
+        publisher_latency:
+          $ref: '#/components/schemas/TimeStats'
+          x-stream-index: "002"
+        subscriber_jitter:
+          $ref: '#/components/schemas/TimeStats'
+          x-stream-index: "005"
+        subscriber_latency:
+          $ref: '#/components/schemas/TimeStats'
+          x-stream-index: "004"
       type: object
     CreateDeviceRequest:
       nullable: true
@@ -4651,6 +4729,9 @@ components:
     GetCallStatsResponse:
       nullable: true
       properties:
+        aggregated:
+          $ref: '#/components/schemas/AggregatedStats'
+          x-stream-index: "005"
         call_duration_seconds:
           format: int32
           type: integer
@@ -4660,39 +4741,39 @@ components:
           x-stream-index: "002"
         call_timeline:
           $ref: '#/components/schemas/CallTimeline'
-          x-stream-index: "013"
+          x-stream-index: "014"
         duration:
           description: Duration of the request in human-readable format
           title: Duration
           type: string
           x-stream-index: "001.001"
         jitter:
-          $ref: '#/components/schemas/Stats'
-          x-stream-index: "005"
-        latency:
-          $ref: '#/components/schemas/Stats'
+          $ref: '#/components/schemas/TimeStats'
           x-stream-index: "006"
+        latency:
+          $ref: '#/components/schemas/TimeStats'
+          x-stream-index: "007"
         max_freezes_duration_seconds:
           format: int32
           type: integer
-          x-stream-index: "011"
+          x-stream-index: "012"
         max_participants:
           format: int32
           type: integer
-          x-stream-index: "007"
+          x-stream-index: "008"
         max_total_quality_limitation_duration_seconds:
           format: int32
           type: integer
-          x-stream-index: "010"
+          x-stream-index: "011"
         participant_report:
           items:
             $ref: '#/components/schemas/UserStats'
           type: array
-          x-stream-index: "014"
+          x-stream-index: "015"
         publishing_participants:
           format: int32
           type: integer
-          x-stream-index: "008"
+          x-stream-index: "009"
         quality_score:
           format: int32
           type: integer
@@ -4700,12 +4781,12 @@ components:
         sfu_count:
           format: int32
           type: integer
-          x-stream-index: "009"
+          x-stream-index: "010"
         sfus:
           items:
             $ref: '#/components/schemas/SFULocationResponse'
           type: array
-          x-stream-index: "012"
+          x-stream-index: "013"
       required:
       - duration
       - call_status
@@ -6254,7 +6335,7 @@ components:
           type: array
           x-stream-index: "001.002"
         type:
-          default: message.new
+          default: notification.thread_message_new
           type: string
           x-stream-index: "004.001"
         user:
@@ -6997,6 +7078,10 @@ components:
         channel_id:
           type: string
           x-stream-index: "003.002"
+        channel_member_count:
+          format: int32
+          type: integer
+          x-stream-index: "003.005"
         channel_type:
           type: string
           x-stream-index: "003.003"
@@ -7020,6 +7105,7 @@ components:
       - cid
       - channel_id
       - channel_type
+      - channel_member_count
       title: NotificationAddedToChannelEvent
       type: object
       x-stream-event-client-type: true
@@ -7033,6 +7119,10 @@ components:
         channel_id:
           type: string
           x-stream-index: "003.002"
+        channel_member_count:
+          format: int32
+          type: integer
+          x-stream-index: "003.005"
         channel_type:
           type: string
           x-stream-index: "003.003"
@@ -7056,6 +7146,7 @@ components:
       - cid
       - channel_id
       - channel_type
+      - channel_member_count
       title: NotificationChannelDeletedEvent
       type: object
       x-stream-event-client-type: true
@@ -7091,6 +7182,10 @@ components:
         channel_id:
           type: string
           x-stream-index: "002.002"
+        channel_member_count:
+          format: int32
+          type: integer
+          x-stream-index: "002.005"
         channel_type:
           type: string
           x-stream-index: "002.003"
@@ -7111,6 +7206,7 @@ components:
       - cid
       - channel_id
       - channel_type
+      - channel_member_count
       title: NotificationChannelTruncatedEvent
       type: object
       x-stream-event-client-type: true
@@ -7124,6 +7220,10 @@ components:
         channel_id:
           type: string
           x-stream-index: "002.002"
+        channel_member_count:
+          format: int32
+          type: integer
+          x-stream-index: "002.005"
         channel_type:
           type: string
           x-stream-index: "002.003"
@@ -7150,6 +7250,7 @@ components:
       - cid
       - channel_id
       - channel_type
+      - channel_member_count
       title: NotificationInviteAcceptedEvent
       type: object
       x-stream-event-client-type: true
@@ -7163,6 +7264,10 @@ components:
         channel_id:
           type: string
           x-stream-index: "002.002"
+        channel_member_count:
+          format: int32
+          type: integer
+          x-stream-index: "002.005"
         channel_type:
           type: string
           x-stream-index: "002.003"
@@ -7189,6 +7294,7 @@ components:
       - cid
       - channel_id
       - channel_type
+      - channel_member_count
       title: NotificationInviteRejectedEvent
       type: object
       x-stream-event-client-type: true
@@ -7202,6 +7308,10 @@ components:
         channel_id:
           type: string
           x-stream-index: "002.002"
+        channel_member_count:
+          format: int32
+          type: integer
+          x-stream-index: "002.005"
         channel_type:
           type: string
           x-stream-index: "002.003"
@@ -7228,6 +7338,7 @@ components:
       - cid
       - channel_id
       - channel_type
+      - channel_member_count
       title: NotificationInvitedEvent
       type: object
       x-stream-event-client-type: true
@@ -7241,6 +7352,10 @@ components:
         channel_id:
           type: string
           x-stream-index: "003.002"
+        channel_member_count:
+          format: int32
+          type: integer
+          x-stream-index: "003.005"
         channel_type:
           type: string
           x-stream-index: "003.003"
@@ -7283,6 +7398,7 @@ components:
       - cid
       - channel_id
       - channel_type
+      - channel_member_count
       - unread_count
       - total_unread_count
       - unread_channels
@@ -7300,6 +7416,10 @@ components:
         channel_id:
           type: string
           x-stream-index: "003.002"
+        channel_member_count:
+          format: int32
+          type: integer
+          x-stream-index: "003.005"
         channel_type:
           type: string
           x-stream-index: "003.003"
@@ -7356,6 +7476,7 @@ components:
       - cid
       - channel_id
       - channel_type
+      - channel_member_count
       - first_unread_message_id
       - last_read_at
       - unread_messages
@@ -7398,6 +7519,10 @@ components:
         channel_id:
           type: string
           x-stream-index: "004.002"
+        channel_member_count:
+          format: int32
+          type: integer
+          x-stream-index: "004.005"
         channel_type:
           type: string
           x-stream-index: "004.003"
@@ -7425,6 +7550,7 @@ components:
       - cid
       - channel_id
       - channel_type
+      - channel_member_count
       title: NotificationNewMessageEvent
       type: object
       x-stream-event-client-type: true
@@ -7438,6 +7564,10 @@ components:
         channel_id:
           type: string
           x-stream-index: "002.002"
+        channel_member_count:
+          format: int32
+          type: integer
+          x-stream-index: "002.005"
         channel_type:
           type: string
           x-stream-index: "002.003"
@@ -7464,6 +7594,7 @@ components:
       - cid
       - channel_id
       - channel_type
+      - channel_member_count
       title: NotificationRemovedFromChannelEvent
       type: object
       x-stream-event-client-type: true
@@ -8428,6 +8559,17 @@ components:
           x-stream-index: "002"
         track_type:
           type: string
+          x-stream-index: "001"
+      type: object
+    PublisherAggregateStats:
+      properties:
+        by_track_type:
+          additionalProperties:
+            $ref: '#/components/schemas/Count'
+          type: object
+          x-stream-index: "002"
+        total:
+          $ref: '#/components/schemas/Count'
           x-stream-index: "001"
       type: object
     PushNotificationSettings:
@@ -9447,6 +9589,11 @@ components:
           - 720p
           - 1080p
           - 1440p
+          - portrait-360x640
+          - portrait-480x854
+          - portrait-720x1280
+          - portrait-1080x1920
+          - portrait-1440x2560
           type: string
           x-stream-index: "003"
       required:
@@ -10103,20 +10250,6 @@ components:
       required:
       - duration
       type: object
-    Stats:
-      properties:
-        average_seconds:
-          format: float
-          type: number
-          x-stream-index: "001"
-        max_seconds:
-          format: float
-          type: number
-          x-stream-index: "002"
-      required:
-      - average_seconds
-      - max_seconds
-      type: object
     StatsOptions:
       properties:
         reporting_interval_ms:
@@ -10264,6 +10397,15 @@ components:
       required:
       - events
       - duration
+      type: object
+    TURNAggregatedStats:
+      properties:
+        tcp:
+          $ref: '#/components/schemas/Count'
+          x-stream-index: "002"
+        total:
+          $ref: '#/components/schemas/Count'
+          x-stream-index: "001"
       type: object
     TargetResolution:
       properties:
@@ -10759,6 +10901,20 @@ components:
           x-stream-index: "001"
       required:
       - enabled
+      type: object
+    TimeStats:
+      properties:
+        average_seconds:
+          format: float
+          type: number
+          x-stream-index: "001"
+        max_seconds:
+          format: float
+          type: number
+          x-stream-index: "002"
+      required:
+      - average_seconds
+      - max_seconds
       type: object
     TranscriptionSettingsRequest:
       properties:
@@ -12232,10 +12388,10 @@ components:
       properties:
         browser:
           type: string
-          x-stream-index: "012.008"
+          x-stream-index: "013.008"
         browser_version:
           type: string
-          x-stream-index: "012.009"
+          x-stream-index: "013.009"
         current_ip:
           type: string
           x-stream-index: "005"
@@ -12244,10 +12400,10 @@ components:
           x-stream-index: "006"
         device_model:
           type: string
-          x-stream-index: "012.006"
+          x-stream-index: "013.006"
         device_version:
           type: string
-          x-stream-index: "012.007"
+          x-stream-index: "013.007"
         distance_to_sfu_kilometers:
           format: float
           type: number
@@ -12255,56 +12411,56 @@ components:
         freeze_duration_seconds:
           format: int32
           type: integer
-          x-stream-index: "014.012"
+          x-stream-index: "015.012"
         geolocation:
           $ref: '#/components/schemas/GeolocationResult'
           x-stream-index: "008"
         jitter:
-          $ref: '#/components/schemas/Stats'
+          $ref: '#/components/schemas/TimeStats'
           x-stream-index: "002"
         latency:
-          $ref: '#/components/schemas/Stats'
+          $ref: '#/components/schemas/TimeStats'
           x-stream-index: "003"
         max_fir_per_second:
           format: float
           type: number
-          x-stream-index: "014.003"
+          x-stream-index: "015.003"
         max_freeze_fraction:
           format: float
           type: number
-          x-stream-index: "014.006"
+          x-stream-index: "015.006"
         max_freezes_duration_seconds:
           format: int32
           type: integer
-          x-stream-index: "014.005"
+          x-stream-index: "015.005"
         max_freezes_per_second:
           format: float
           type: number
-          x-stream-index: "014.004"
+          x-stream-index: "015.004"
         max_nack_per_second:
           format: float
           type: number
-          x-stream-index: "014.002"
+          x-stream-index: "015.002"
         max_pli_per_second:
           format: float
           type: number
-          x-stream-index: "014.001"
+          x-stream-index: "015.001"
         max_publishing_video_quality:
           $ref: '#/components/schemas/VideoQuality'
-          x-stream-index: "013.003"
+          x-stream-index: "014.003"
         max_receiving_video_quality:
           $ref: '#/components/schemas/VideoQuality'
-          x-stream-index: "014.013"
+          x-stream-index: "015.013"
         os:
           type: string
-          x-stream-index: "012.001"
+          x-stream-index: "013.001"
         os_version:
           type: string
-          x-stream-index: "012.002"
+          x-stream-index: "013.002"
         packet_loss_fraction:
           format: float
           type: number
-          x-stream-index: "014.008"
+          x-stream-index: "015.008"
         pub_sub_hints:
           $ref: '#/components/schemas/MediaPubSubHint'
           x-stream-index: "011"
@@ -12312,80 +12468,80 @@ components:
           items:
             $ref: '#/components/schemas/PublishedTrackInfo'
           type: array
-          x-stream-index: "013.002"
+          x-stream-index: "014.002"
         publisher_audio_mos:
           $ref: '#/components/schemas/MOSStats'
-          x-stream-index: "013.005"
+          x-stream-index: "014.005"
         publisher_jitter:
-          $ref: '#/components/schemas/Stats'
-          x-stream-index: "013.010"
+          $ref: '#/components/schemas/TimeStats'
+          x-stream-index: "014.010"
         publisher_latency:
-          $ref: '#/components/schemas/Stats'
-          x-stream-index: "013.009"
+          $ref: '#/components/schemas/TimeStats'
+          x-stream-index: "014.009"
         publisher_noise_cancellation_seconds:
           format: float
           type: number
-          x-stream-index: "013.013"
+          x-stream-index: "014.013"
         publisher_packet_loss_fraction:
           format: float
           type: number
-          x-stream-index: "013.008"
+          x-stream-index: "014.008"
         publisher_quality_limitation_fraction:
           format: float
           type: number
-          x-stream-index: "013.012"
+          x-stream-index: "014.012"
         publisher_video_quality_limitation_duration_seconds:
           additionalProperties:
             format: float
             type: number
           type: object
-          x-stream-index: "013.011"
+          x-stream-index: "014.011"
         publishing_audio_codec:
           type: string
-          x-stream-index: "013.006"
+          x-stream-index: "014.006"
         publishing_duration_seconds:
           format: int32
           type: integer
-          x-stream-index: "013.001"
+          x-stream-index: "014.001"
         publishing_video_codec:
           type: string
-          x-stream-index: "013.007"
+          x-stream-index: "014.007"
         quality_score:
           format: float
           type: number
           x-stream-index: "004"
         receiving_audio_codec:
           type: string
-          x-stream-index: "014.015"
+          x-stream-index: "015.015"
         receiving_duration_seconds:
           format: int32
           type: integer
-          x-stream-index: "014.011"
+          x-stream-index: "015.011"
         receiving_video_codec:
           type: string
-          x-stream-index: "014.016"
+          x-stream-index: "015.016"
         sdk:
           type: string
-          x-stream-index: "012.004"
+          x-stream-index: "013.004"
         sdk_version:
           type: string
-          x-stream-index: "012.005"
+          x-stream-index: "013.005"
         session_id:
           type: string
           x-stream-index: "010"
         subscriber_audio_mos:
           $ref: '#/components/schemas/MOSStats'
-          x-stream-index: "014.007"
+          x-stream-index: "015.007"
         subscriber_jitter:
-          $ref: '#/components/schemas/Stats'
-          x-stream-index: "014.010"
+          $ref: '#/components/schemas/TimeStats'
+          x-stream-index: "015.010"
         subscriber_latency:
-          $ref: '#/components/schemas/Stats'
-          x-stream-index: "014.009"
+          $ref: '#/components/schemas/TimeStats'
+          x-stream-index: "015.009"
         subscriber_video_quality_throttled_duration_seconds:
           format: float
           type: number
-          x-stream-index: "014.017"
+          x-stream-index: "015.017"
         subsessions:
           items:
             $ref: '#/components/schemas/Subsession'
@@ -12396,13 +12552,16 @@ components:
           x-stream-index: "001"
         total_pixels_in:
           type: integer
-          x-stream-index: "014.014"
+          x-stream-index: "015.014"
         total_pixels_out:
           type: integer
-          x-stream-index: "013.004"
+          x-stream-index: "014.004"
+        truncated:
+          type: boolean
+          x-stream-index: "012"
         webrtc_version:
           type: string
-          x-stream-index: "012.003"
+          x-stream-index: "013.003"
       required:
       - quality_score
       - session_id
@@ -12964,7 +13123,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v120.1.1
+  version: v122.2.2
 openapi: 3.0.3
 paths:
   /api/v2/app:
