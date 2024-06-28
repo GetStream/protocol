@@ -137,7 +137,7 @@ You can also mute every other participant’s video or audio.
 call.muteUsers({
   mute_all_users: true,
   audio: true,
-  muted_by_id: 'john'
+  muted_by_id: 'john',
 });
 ```
 
@@ -182,7 +182,7 @@ call.muteUsers({
   video: true,
   screenshare: true,
   screenshare_audio: true,
-  muted_by_id: 'john'
+  muted_by_id: 'john',
 });
 ```
 
@@ -326,19 +326,19 @@ Users can be banned, when doing that they are not allowed to join or create call
 client.banUser({
   target_user_id: '<bad user id>',
   user_id: '<moderator id>',
-  reason: '<reason>'
+  reason: '<reason>',
 });
 
 // remove the ban for a user
 client.unbanUser({
-  targetUserId: '<user id>'
+  targetUserId: '<user id>',
 });
 
 // ban a user for 30 minutes
 client.banUser({
   target_user_id: '<bad user id>',
   user_id: '<moderator id>',
-  timeout: 30
+  timeout: 30,
 });
 
 // ban a user and all users sharing the same IP
@@ -346,7 +346,7 @@ client.banUser({
   target_user_id: '<bad user id>',
   user_id: '<moderator id>',
   reason: '<reason>',
-  ip_ban: true
+  ip_ban: true,
 });
 ```
 
@@ -435,17 +435,27 @@ curl -X POST https://video.stream-io-api.com/api/v2/moderation/ban?api_key=${API
 
 Deactivated users are no longer able to make any API call or connect to websockets (and receive updates on event of any kind).
 
-<DeactivateReactivate/>
+<DeactivateReactivate />
 
 ### User blocking
 
 Users can block other users using the API, when a user blocks another it will no longer receive ringing calls or notification from the blocked user.
 
-
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
 
 ```js
+client.blockUsers({
+  blocked_user_id: 'bob',
+  user_id: 'alice',
+});
+
+client.getBlockedUsers({ userId: 'alice' });
+
+client.unblockUsers({
+  blocked_user_id: 'bob',
+  user_id: 'alice',
+});
 ```
 
 </TabItem>
@@ -467,6 +477,30 @@ client.unblock_users(blocked_user_id=bob.id, user_id=alice.id)
 <TabItem value="curl" label="cURL">
 
 ```bash
+curl -X POST https://video.stream-io-api.com/api/v2/users/block?api_key=${API_KEY} \
+  -H "Authorization: ${TOKEN}" \
+  -H "stream-auth-type: jwt" \
+  -H 'Content-Type: application/json' \
+  -d '{
+      "blocked_user_id": "bob",
+      "user_id": "alice"
+  }'
+
+USER_ID='alice';
+ENCODED_USER_ID=$(echo ${USER_ID} | perl -MURI::Escape -lne 'print uri_escape($_)')
+
+curl -X GET "https://video.stream-io-api.com/api/v2/users/block?api_key=${API_KEY}&user_id=${ENCODED_USER_ID}" \
+  -H "Authorization: ${TOKEN}" \
+  -H "stream-auth-type: jwt"
+
+curl -X POST https://video.stream-io-api.com/api/v2/users/unblock?api_key=${API_KEY} \
+  -H "Authorization: ${TOKEN}" \
+  -H "stream-auth-type: jwt" \
+  -H 'Content-Type: application/json' \
+  -d '{
+      "blocked_user_id": "bob",
+      "user_id": "alice"
+  }'
 ```
 
 </TabItem>
