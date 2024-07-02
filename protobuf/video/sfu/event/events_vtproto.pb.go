@@ -6040,7 +6040,7 @@ func (m *JoinResponse) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.FastReconnectDeadlineSeconds |= int64(b&0x7F) << shift
+				m.FastReconnectDeadlineSeconds |= int32(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
