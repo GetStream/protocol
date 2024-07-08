@@ -1267,9 +1267,9 @@ func (m *ReconnectDetails) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x10
 	}
-	if m.Migrated {
+	if m.Migration {
 		i--
-		if m.Migrated {
+		if m.Migration {
 			dAtA[i] = 1
 		} else {
 			dAtA[i] = 0
@@ -3062,7 +3062,7 @@ func (m *ReconnectDetails) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
-	if m.Migrated {
+	if m.Migration {
 		n += 2
 	}
 	if m.FastReconnect {
@@ -5998,7 +5998,7 @@ func (m *ReconnectDetails) UnmarshalVT(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Migrated", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Migration", wireType)
 			}
 			var v int
 			for shift := uint(0); ; shift += 7 {
@@ -6015,7 +6015,7 @@ func (m *ReconnectDetails) UnmarshalVT(dAtA []byte) error {
 					break
 				}
 			}
-			m.Migrated = bool(v != 0)
+			m.Migration = bool(v != 0)
 		case 2:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field FastReconnect", wireType)
@@ -6134,7 +6134,7 @@ func (m *ReconnectDetails) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.ReconnectAttempt |= uint64(b&0x7F) << shift
+				m.ReconnectAttempt |= uint32(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
