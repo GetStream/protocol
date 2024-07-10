@@ -76,6 +76,40 @@ components:
       - text
       - type
       type: object
+    ActionLog:
+      nullable: true
+      properties:
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "004"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "009"
+        id:
+          type: string
+          x-stream-index: "002"
+        reason:
+          type: string
+          x-stream-index: "008"
+        review_queue_item_id:
+          type: string
+          x-stream-index: "010"
+        type:
+          type: string
+          x-stream-index: "005"
+        user:
+          $ref: '#/components/schemas/UserObject'
+          x-stream-index: "007"
+      required:
+      - id
+      - created_at
+      - type
+      - reason
+      - custom
+      - review_queue_item_id
+      type: object
     AgoraCall:
       properties:
         channel:
@@ -116,6 +150,9 @@ components:
         image_upload_config:
           $ref: '#/components/schemas/FileUploadConfig'
           x-stream-index: "030"
+        moderation_enabled:
+          type: boolean
+          x-stream-index: "043"
         name:
           type: string
           x-stream-index: "001"
@@ -157,6 +194,7 @@ components:
       - reminders_interval
       - cdn_expiration_seconds
       - video_provider
+      - moderation_enabled
       type: object
     Attachment:
       nullable: true
@@ -232,7 +270,7 @@ components:
           type: string
           x-stream-index: "009"
         type:
-          description: Attachment type (e.g. image, video, url, poll)
+          description: Attachment type (e.g. image, video, url)
           title: Type
           type: string
           x-stream-index: "001"
@@ -444,125 +482,6 @@ components:
       - id
       - type
       type: object
-    Campaign:
-      properties:
-        channel_template:
-          $ref: '#/components/schemas/CampaignChannelTemplate'
-          x-stream-index: "021"
-        channels_created:
-          format: int32
-          type: integer
-          x-stream-index: "025.004"
-        completed_at:
-          format: date-time
-          type: string
-          x-stream-index: "025.002"
-        create_channels:
-          type: boolean
-          x-stream-index: "013"
-        created_at:
-          format: date-time
-          type: string
-          x-stream-index: "022"
-        deleted_at:
-          format: date-time
-          type: string
-          x-stream-index: "024"
-        description:
-          type: string
-          x-stream-index: "012"
-        id:
-          type: string
-          x-stream-index: "003"
-        message_template:
-          $ref: '#/components/schemas/CampaignMessageTemplate'
-          x-stream-index: "004"
-        messages_sent:
-          format: int32
-          type: integer
-          x-stream-index: "025.003"
-        name:
-          type: string
-          x-stream-index: "011"
-        progress:
-          format: float
-          type: number
-          x-stream-index: "025.005"
-        scheduled_for:
-          format: date-time
-          type: string
-          x-stream-index: "016"
-        segment_ids:
-          items:
-            type: string
-          type: array
-          x-stream-index: "005"
-        segments:
-          items:
-            $ref: '#/components/schemas/Segment'
-          type: array
-          x-stream-index: "006"
-        sender:
-          $ref: '#/components/schemas/UserObject'
-          x-stream-index: "010"
-        sender_id:
-          type: string
-          x-stream-index: "009"
-        skip_push:
-          type: boolean
-          x-stream-index: "014"
-        skip_webhook:
-          type: boolean
-          x-stream-index: "015"
-        started_at:
-          format: date-time
-          type: string
-          x-stream-index: "025.001"
-        status:
-          type: string
-          x-stream-index: "019"
-        status_details:
-          additionalProperties: {}
-          type: object
-          x-stream-index: "020"
-        stop_at:
-          format: date-time
-          type: string
-          x-stream-index: "017"
-        updated_at:
-          format: date-time
-          type: string
-          x-stream-index: "023"
-        user_ids:
-          items:
-            type: string
-          type: array
-          x-stream-index: "007"
-        users:
-          items:
-            $ref: '#/components/schemas/UserObject'
-          type: array
-          x-stream-index: "008"
-      required:
-      - id
-      - segment_ids
-      - user_ids
-      - sender_id
-      - name
-      - description
-      - create_channels
-      - skip_push
-      - skip_webhook
-      - status
-      - status_details
-      - created_at
-      - updated_at
-      - started_at
-      - completed_at
-      - messages_sent
-      - channels_created
-      - progress
-      type: object
     CampaignChannelTemplate:
       properties:
         custom:
@@ -587,26 +506,27 @@ components:
       - custom
       type: object
     CampaignCompletedEvent:
+      nullable: true
       properties:
         campaign:
-          $ref: '#/components/schemas/Campaign'
+          $ref: '#/components/schemas/CampaignResponse'
           x-stream-index: "001"
         created_at:
           format: date-time
           type: string
-          x-stream-index: "002.002"
+          x-stream-index: "002.003"
+        received_at:
+          format: date-time
+          type: string
+          x-stream-index: "002.004"
         type:
           default: campaign.completed
           type: string
-          x-stream-index: "002.001"
+          x-stream-index: "002.002"
       required:
       - type
       - created_at
-      title: CampaignCompletedEvent
       type: object
-      x-stream-event-client-type: true
-      x-stream-is-event: true
-      x-stream-ws-base-event-name: VideoEvent
     CampaignMessageTemplate:
       properties:
         attachments:
@@ -631,27 +551,148 @@ components:
       - poll_id
       - custom
       type: object
+    CampaignResponse:
+      properties:
+        channel_template:
+          $ref: '#/components/schemas/CampaignChannelTemplate'
+          x-stream-index: "014"
+        create_channels:
+          type: boolean
+          x-stream-index: "007"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "018"
+        description:
+          type: string
+          x-stream-index: "008"
+        id:
+          type: string
+          x-stream-index: "001"
+        message_template:
+          $ref: '#/components/schemas/CampaignMessageTemplate'
+          x-stream-index: "013"
+        name:
+          type: string
+          x-stream-index: "006"
+        scheduled_for:
+          format: date-time
+          type: string
+          x-stream-index: "011"
+        segment_ids:
+          items:
+            type: string
+          type: array
+          x-stream-index: "002"
+        segments:
+          items:
+            $ref: '#/components/schemas/Segment'
+          type: array
+          x-stream-index: "003"
+        sender:
+          $ref: '#/components/schemas/UserObject'
+          x-stream-index: "005"
+        sender_id:
+          type: string
+          x-stream-index: "004"
+        skip_push:
+          type: boolean
+          x-stream-index: "009"
+        skip_webhook:
+          type: boolean
+          x-stream-index: "010"
+        stats:
+          $ref: '#/components/schemas/CampaignStatsResponse'
+          x-stream-index: "020"
+        status:
+          type: string
+          x-stream-index: "017"
+        stop_at:
+          format: date-time
+          type: string
+          x-stream-index: "012"
+        updated_at:
+          format: date-time
+          type: string
+          x-stream-index: "019"
+        user_ids:
+          items:
+            type: string
+          type: array
+          x-stream-index: "015"
+        users:
+          items:
+            $ref: '#/components/schemas/UserObject'
+          type: array
+          x-stream-index: "016"
+      required:
+      - id
+      - segment_ids
+      - segments
+      - sender_id
+      - name
+      - create_channels
+      - description
+      - skip_push
+      - skip_webhook
+      - user_ids
+      - users
+      - status
+      - created_at
+      - updated_at
+      - stats
+      type: object
     CampaignStartedEvent:
+      nullable: true
       properties:
         campaign:
-          $ref: '#/components/schemas/Campaign'
+          $ref: '#/components/schemas/CampaignResponse'
           x-stream-index: "001"
         created_at:
           format: date-time
           type: string
-          x-stream-index: "002.002"
+          x-stream-index: "002.003"
+        received_at:
+          format: date-time
+          type: string
+          x-stream-index: "002.004"
         type:
           default: campaign.started
           type: string
-          x-stream-index: "002.001"
+          x-stream-index: "002.002"
       required:
       - type
       - created_at
-      title: CampaignStartedEvent
       type: object
-      x-stream-event-client-type: true
-      x-stream-is-event: true
-      x-stream-ws-base-event-name: VideoEvent
+    CampaignStatsResponse:
+      properties:
+        progress:
+          format: float
+          type: number
+          x-stream-index: "005"
+        stats_channels_created:
+          format: int32
+          type: integer
+          x-stream-index: "004"
+        stats_completed_at:
+          format: date-time
+          type: string
+          x-stream-index: "002"
+        stats_messages_sent:
+          format: int32
+          type: integer
+          x-stream-index: "003"
+        stats_started_at:
+          format: date-time
+          type: string
+          x-stream-index: "001"
+      required:
+      - stats_started_at
+      - stats_completed_at
+      - stats_messages_sent
+      - stats_channels_created
+      - progress
+      type: object
     CastPollVoteRequest:
       nullable: true
       properties:
@@ -2141,6 +2182,14 @@ components:
       - name
       title: Create Poll Request
       type: object
+    Data:
+      properties:
+        id:
+          type: string
+          x-stream-index: "001"
+      required:
+      - id
+      type: object
     DeleteChannelResponse:
       nullable: true
       properties:
@@ -2292,6 +2341,123 @@ components:
       required:
       - push_provider
       - id
+      type: object
+    EnrichedActivity:
+      properties:
+        actor:
+          $ref: '#/components/schemas/Data'
+          x-stream-index: "002"
+        foreign_id:
+          type: string
+          x-stream-index: "005"
+        id:
+          type: string
+          x-stream-index: "001"
+        latest_reactions:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/EnrichedReaction'
+            type: array
+          type: object
+          x-stream-index: "013"
+        object:
+          $ref: '#/components/schemas/Data'
+          x-stream-index: "004"
+        origin:
+          $ref: '#/components/schemas/Data'
+          x-stream-index: "008"
+        own_reactions:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/EnrichedReaction'
+            type: array
+          type: object
+          x-stream-index: "012"
+        reaction_counts:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "011"
+        score:
+          format: float
+          type: number
+          x-stream-index: "010"
+        target:
+          $ref: '#/components/schemas/Data'
+          x-stream-index: "006"
+        time:
+          $ref: '#/components/schemas/Time'
+          x-stream-index: "007"
+        to:
+          items:
+            type: string
+          type: array
+          x-stream-index: "009"
+        verb:
+          type: string
+          x-stream-index: "003"
+      type: object
+    EnrichedReaction:
+      nullable: true
+      properties:
+        activity_id:
+          type: string
+          x-stream-index: "003"
+        children_counts:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "010"
+        created_at:
+          $ref: '#/components/schemas/Time'
+          x-stream-index: "012"
+        data:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "005"
+        id:
+          type: string
+          x-stream-index: "001"
+        kind:
+          type: string
+          x-stream-index: "002"
+        latest_children:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/EnrichedReaction'
+            type: array
+          type: object
+          x-stream-index: "008"
+        own_children:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/EnrichedReaction'
+            type: array
+          type: object
+          x-stream-index: "009"
+        parent:
+          type: string
+          x-stream-index: "007"
+        target_feeds:
+          items:
+            type: string
+          type: array
+          x-stream-index: "006"
+        updated_at:
+          $ref: '#/components/schemas/Time'
+          x-stream-index: "013"
+        user:
+          $ref: '#/components/schemas/Data'
+          x-stream-index: "011"
+        user_id:
+          type: string
+          x-stream-index: "004"
+      required:
+      - kind
+      - activity_id
+      - user_id
       type: object
     EventRequest:
       properties:
@@ -2494,6 +2660,66 @@ components:
       - updated_at
       title: Flag
       type: object
+    Flag2:
+      nullable: true
+      properties:
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "017"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "013"
+        entity_creator_id:
+          type: string
+          x-stream-index: "009"
+        entity_id:
+          type: string
+          x-stream-index: "008"
+        entity_type:
+          type: string
+          x-stream-index: "007"
+        labels:
+          items:
+            type: string
+          type: array
+          x-stream-index: "014"
+        moderation_payload:
+          $ref: '#/components/schemas/ModerationPayload'
+          x-stream-index: "010"
+        moderation_payload_hash:
+          type: string
+          x-stream-index: "011"
+        reason:
+          type: string
+          x-stream-index: "012"
+        result:
+          items:
+            additionalProperties: {}
+            type: object
+          type: array
+          x-stream-index: "015"
+        review_queue_item_id:
+          type: string
+          x-stream-index: "016"
+        type:
+          type: string
+          x-stream-index: "004"
+        updated_at:
+          format: date-time
+          type: string
+          x-stream-index: "018"
+        user:
+          $ref: '#/components/schemas/UserObject'
+          x-stream-index: "006"
+      required:
+      - entity_type
+      - entity_id
+      - result
+      - created_at
+      - updated_at
+      type: object
     FlagDetails:
       properties:
         Extra:
@@ -2574,45 +2800,45 @@ components:
           description: Duration of the request in human-readable format
           title: Duration
           type: string
-          x-stream-index: "002.001"
+          x-stream-index: "003.001"
         flag:
           $ref: '#/components/schemas/Flag'
           x-stream-index: "001"
+        review_queue_item_id:
+          type: string
+          x-stream-index: "002"
       required:
+      - review_queue_item_id
       - duration
       type: object
     FlagUpdatedEvent:
+      nullable: true
       properties:
         CreatedBy:
-          $ref: '#/components/schemas/UserObject'
-          x-stream-index: "004"
+          $ref: '#/components/schemas/UserResponse'
+          x-stream-index: "003"
+        Message:
+          $ref: '#/components/schemas/MessageResponse'
+          x-stream-index: "001"
+        User:
+          $ref: '#/components/schemas/UserResponse'
+          x-stream-index: "002"
         created_at:
           format: date-time
           type: string
-          x-stream-index: "003.002"
-        message:
-          $ref: '#/components/schemas/Message'
-          x-stream-index: "001.001"
-        thread_participants:
-          items:
-            $ref: '#/components/schemas/UserObject'
-          type: array
-          x-stream-index: "001.002"
+          x-stream-index: "004.003"
+        received_at:
+          format: date-time
+          type: string
+          x-stream-index: "004.004"
         type:
           default: flag.updated
           type: string
-          x-stream-index: "003.001"
-        user:
-          $ref: '#/components/schemas/UserObject'
-          x-stream-index: "002.001"
+          x-stream-index: "004.002"
       required:
       - type
       - created_at
-      title: FlagUpdatedEvent
       type: object
-      x-stream-event-client-type: true
-      x-stream-is-event: true
-      x-stream-ws-base-event-name: VideoEvent
     FullUserResponse:
       properties:
         banned:
@@ -3955,7 +4181,7 @@ components:
           type: array
           x-stream-index: "001.002"
         type:
-          default: message.new
+          default: notification.thread_message_new
           type: string
           x-stream-index: "004.001"
         user:
@@ -4552,6 +4778,115 @@ components:
       - silent
       - pinned
       - channel
+      type: object
+    ModerationCustomActionEvent:
+      properties:
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "004.002"
+        item:
+          $ref: '#/components/schemas/ReviewQueueItem'
+          x-stream-index: "001"
+        message:
+          $ref: '#/components/schemas/Message'
+          x-stream-index: "002"
+        type:
+          default: moderation.custom_action
+          type: string
+          x-stream-index: "004.001"
+        user:
+          $ref: '#/components/schemas/UserObject'
+          x-stream-index: "003.001"
+      required:
+      - type
+      - created_at
+      title: ModerationCustomActionEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    ModerationFlaggedEvent:
+      properties:
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "004.002"
+        item:
+          type: string
+          x-stream-index: "001"
+        object_id:
+          type: string
+          x-stream-index: "002"
+        type:
+          default: moderation.flagged
+          type: string
+          x-stream-index: "004.001"
+        user:
+          $ref: '#/components/schemas/UserObject'
+          x-stream-index: "003.001"
+      required:
+      - type
+      - created_at
+      title: ModerationFlaggedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    ModerationMarkSafeEvent:
+      properties:
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "004.002"
+        item:
+          $ref: '#/components/schemas/ReviewQueueItem'
+          x-stream-index: "001"
+        message:
+          $ref: '#/components/schemas/Message'
+          x-stream-index: "002"
+        type:
+          default: moderation.mark_safe
+          type: string
+          x-stream-index: "004.001"
+        user:
+          $ref: '#/components/schemas/UserObject'
+          x-stream-index: "003.001"
+      required:
+      - type
+      - created_at
+      title: ModerationMarkSafeEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    ModerationPayload:
+      properties:
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "005"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "004"
+        images:
+          items:
+            type: string
+          type: array
+          x-stream-index: "002"
+        texts:
+          items:
+            type: string
+          type: array
+          x-stream-index: "001"
+        videos:
+          items:
+            type: string
+          type: array
+          x-stream-index: "003"
+      required:
+      - created_at
       type: object
     ModerationResponse:
       properties:
@@ -5959,6 +6294,15 @@ components:
           $ref: '#/components/schemas/TypingIndicators'
           x-stream-index: "001"
       type: object
+    PrivacySettingsResponse:
+      properties:
+        read_receipts:
+          $ref: '#/components/schemas/ReadReceipts'
+          x-stream-index: "002"
+        typing_indicators:
+          $ref: '#/components/schemas/TypingIndicators'
+          x-stream-index: "001"
+      type: object
     PushNotificationSettings:
       properties:
         disabled:
@@ -6797,6 +7141,113 @@ components:
           x-stream-index: "001"
       required:
       - duration
+      type: object
+    ReviewQueueItem:
+      properties:
+        actions:
+          items:
+            $ref: '#/components/schemas/ActionLog'
+          type: array
+          x-stream-index: "026"
+        assigned_to:
+          $ref: '#/components/schemas/UserObject'
+          x-stream-index: "024"
+        completed_at:
+          $ref: '#/components/schemas/NullTime'
+          x-stream-index: "016"
+        content_changed:
+          type: boolean
+          x-stream-index: "027"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "004"
+        entity_creator:
+          $ref: '#/components/schemas/UserObject'
+          x-stream-index: "023"
+        entity_id:
+          type: string
+          x-stream-index: "007"
+        entity_type:
+          type: string
+          x-stream-index: "006"
+        feeds_v2_activity:
+          $ref: '#/components/schemas/EnrichedActivity'
+          x-stream-index: "028"
+        feeds_v2_reaction:
+          $ref: '#/components/schemas/Reaction'
+          x-stream-index: "029"
+        flags:
+          items:
+            $ref: '#/components/schemas/Flag2'
+          type: array
+          x-stream-index: "025"
+        has_image:
+          type: boolean
+          x-stream-index: "011"
+        has_text:
+          type: boolean
+          x-stream-index: "013"
+        has_video:
+          type: boolean
+          x-stream-index: "012"
+        id:
+          type: string
+          x-stream-index: "003"
+        languages:
+          items:
+            type: string
+          type: array
+          x-stream-index: "017"
+        message:
+          $ref: '#/components/schemas/Message'
+          x-stream-index: "022"
+        moderation_payload:
+          $ref: '#/components/schemas/ModerationPayload'
+          x-stream-index: "009"
+        moderation_payload_hash:
+          type: string
+          x-stream-index: "010"
+        recommended_action:
+          type: string
+          x-stream-index: "015"
+        reviewed_at:
+          $ref: '#/components/schemas/NullTime'
+          x-stream-index: "019"
+        reviewed_by:
+          type: string
+          x-stream-index: "020"
+        severity:
+          format: int32
+          type: integer
+          x-stream-index: "018"
+        status:
+          type: string
+          x-stream-index: "014"
+        updated_at:
+          format: date-time
+          type: string
+          x-stream-index: "005"
+      required:
+      - id
+      - created_at
+      - updated_at
+      - entity_type
+      - entity_id
+      - moderation_payload_hash
+      - has_image
+      - has_video
+      - has_text
+      - status
+      - recommended_action
+      - completed_at
+      - languages
+      - severity
+      - reviewed_at
+      - reviewed_by
+      - flags
+      - actions
+      - content_changed
       type: object
     SearchRequest:
       properties:
@@ -7770,6 +8221,8 @@ components:
           x-stream-index: "003"
       title: Auto moderation thresholds
       type: object
+    Time:
+      type: object
     TranslateMessageRequest:
       nullable: true
       properties:
@@ -8606,6 +9059,85 @@ components:
       x-stream-event-client-type: true
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    UserEventPayload:
+      properties:
+        banned:
+          type: boolean
+          x-stream-index: "001.011"
+        blocked_user_ids:
+          items:
+            type: string
+          type: array
+          x-stream-index: "001.016"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.008"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "001.004"
+        deactivated_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.015"
+        deleted_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.010"
+        id:
+          type: string
+          x-stream-index: "001.001"
+        image:
+          type: string
+          x-stream-index: "001.003"
+        invisible:
+          type: boolean
+          x-stream-index: "002"
+        language:
+          type: string
+          x-stream-index: "001.005"
+        last_active:
+          format: date-time
+          type: string
+          x-stream-index: "001.013"
+        name:
+          type: string
+          x-stream-index: "001.002"
+        online:
+          type: boolean
+          x-stream-index: "001.012"
+        privacy_settings:
+          $ref: '#/components/schemas/PrivacySettingsResponse'
+          x-stream-index: "003"
+        revoke_tokens_issued_before:
+          format: date-time
+          type: string
+          x-stream-index: "001.014"
+        role:
+          type: string
+          x-stream-index: "001.006"
+        teams:
+          items:
+            type: string
+          type: array
+          x-stream-index: "001.007"
+        updated_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.009"
+      required:
+      - id
+      - custom
+      - language
+      - role
+      - teams
+      - created_at
+      - updated_at
+      - banned
+      - online
+      - blocked_user_ids
+      type: object
     UserFlaggedEvent:
       properties:
         created_at:
@@ -9060,26 +9592,28 @@ components:
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
     UserUpdatedEvent:
+      nullable: true
       properties:
         created_at:
           format: date-time
           type: string
-          x-stream-index: "002.002"
+          x-stream-index: "002.003"
+        received_at:
+          format: date-time
+          type: string
+          x-stream-index: "002.004"
         type:
           default: user.updated
           type: string
-          x-stream-index: "002.001"
+          x-stream-index: "002.002"
         user:
-          $ref: '#/components/schemas/UserObject'
+          $ref: '#/components/schemas/UserEventPayload'
           x-stream-index: "001"
       required:
+      - user
       - type
       - created_at
-      title: UserUpdatedEvent
       type: object
-      x-stream-event-client-type: true
-      x-stream-is-event: true
-      x-stream-ws-base-event-name: VideoEvent
     UserWatchingStartEvent:
       properties:
         channel_id:
@@ -9191,6 +9725,15 @@ components:
       - $ref: '#/components/schemas/PollVoteCastedEvent'
       - $ref: '#/components/schemas/PollVoteChangedEvent'
       - $ref: '#/components/schemas/PollVoteRemovedEvent'
+    WSClientEvent:
+      description: The discriminator object for all websocket client events, it maps
+        events' payload to the final type
+      discriminator:
+        mapping:
+          user.updated: '#/components/schemas/UserUpdatedEvent'
+        propertyName: type
+      oneOf:
+      - $ref: '#/components/schemas/UserUpdatedEvent'
     WSEvent:
       description: The discriminator object for all websocket events, it maps events'
         payload to the final type
@@ -9215,6 +9758,9 @@ components:
           message.read: '#/components/schemas/MessageReadEvent'
           message.undeleted: '#/components/schemas/MessageUndeletedEvent'
           message.updated: '#/components/schemas/MessageUpdatedEvent'
+          moderation.custom_action: '#/components/schemas/ModerationCustomActionEvent'
+          moderation.flagged: '#/components/schemas/ModerationFlaggedEvent'
+          moderation.mark_safe: '#/components/schemas/ModerationMarkSafeEvent'
           notification.added_to_channel: '#/components/schemas/NotificationAddedToChannelEvent'
           notification.channel_deleted: '#/components/schemas/NotificationChannelDeletedEvent'
           notification.channel_mutes_updated: '#/components/schemas/NotificationChannelMutesUpdatedEvent'
@@ -9241,7 +9787,6 @@ components:
           user.presence.changed: '#/components/schemas/UserPresenceChangedEvent'
           user.reactivated: '#/components/schemas/UserReactivatedEvent'
           user.unbanned: '#/components/schemas/UserUnbannedEvent'
-          user.updated: '#/components/schemas/UserUpdatedEvent'
           user.watching.start: '#/components/schemas/UserWatchingStartEvent'
           user.watching.stop: '#/components/schemas/UserWatchingStopEvent'
         propertyName: type
@@ -9266,6 +9811,9 @@ components:
       - $ref: '#/components/schemas/MessageReadEvent'
       - $ref: '#/components/schemas/MessageUndeletedEvent'
       - $ref: '#/components/schemas/MessageUpdatedEvent'
+      - $ref: '#/components/schemas/ModerationCustomActionEvent'
+      - $ref: '#/components/schemas/ModerationFlaggedEvent'
+      - $ref: '#/components/schemas/ModerationMarkSafeEvent'
       - $ref: '#/components/schemas/NotificationAddedToChannelEvent'
       - $ref: '#/components/schemas/NotificationChannelDeletedEvent'
       - $ref: '#/components/schemas/NotificationChannelMutesUpdatedEvent'
@@ -9291,7 +9839,6 @@ components:
       - $ref: '#/components/schemas/UserPresenceChangedEvent'
       - $ref: '#/components/schemas/UserReactivatedEvent'
       - $ref: '#/components/schemas/UserUnbannedEvent'
-      - $ref: '#/components/schemas/UserUpdatedEvent'
       - $ref: '#/components/schemas/UserWatchingStartEvent'
       - $ref: '#/components/schemas/UserWatchingStopEvent'
     WebhookEvent:
@@ -9323,6 +9870,9 @@ components:
           message.unblocked: '#/components/schemas/MessageUnblockedEvent'
           message.undeleted: '#/components/schemas/MessageUndeletedEvent'
           message.updated: '#/components/schemas/MessageUpdatedEvent'
+          moderation.custom_action: '#/components/schemas/ModerationCustomActionEvent'
+          moderation.flagged: '#/components/schemas/ModerationFlaggedEvent'
+          moderation.mark_safe: '#/components/schemas/ModerationMarkSafeEvent'
           notification.thread_message_new: '#/components/schemas/MessageNewEvent'
           reaction.deleted: '#/components/schemas/ReactionDeletedEvent'
           reaction.new: '#/components/schemas/ReactionNewEvent'
@@ -9365,6 +9915,9 @@ components:
       - $ref: '#/components/schemas/MessageUnblockedEvent'
       - $ref: '#/components/schemas/MessageUndeletedEvent'
       - $ref: '#/components/schemas/MessageUpdatedEvent'
+      - $ref: '#/components/schemas/ModerationCustomActionEvent'
+      - $ref: '#/components/schemas/ModerationFlaggedEvent'
+      - $ref: '#/components/schemas/ModerationMarkSafeEvent'
       - $ref: '#/components/schemas/ReactionDeletedEvent'
       - $ref: '#/components/schemas/ReactionNewEvent'
       - $ref: '#/components/schemas/ReactionUpdatedEvent'
@@ -9462,7 +10015,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v122.3.0
+  version: v125.3.1
 openapi: 3.0.3
 paths:
   /app:
@@ -12940,8 +13493,8 @@ paths:
         Updates certain fields of the user
 
         Sends events:
-        - user.presence.changed
         - user.updated
+        - user.presence.changed
       operationId: UpdateUsersPartial
       requestBody:
         content:
