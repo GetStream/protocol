@@ -256,6 +256,9 @@ components:
         image_upload_config:
           $ref: '#/components/schemas/FileUploadConfig'
           x-stream-index: "030"
+        moderation_enabled:
+          type: boolean
+          x-stream-index: "043"
         multi_tenant_enabled:
           type: boolean
           x-stream-index: "014"
@@ -364,6 +367,7 @@ components:
       - reminders_interval
       - cdn_expiration_seconds
       - video_provider
+      - moderation_enabled
       type: object
     AsyncModerationCallbackConfig:
       properties:
@@ -462,7 +466,7 @@ components:
           type: string
           x-stream-index: "009"
         type:
-          description: Attachment type (e.g. image, video, url, poll)
+          description: Attachment type (e.g. image, video, url)
           title: Type
           type: string
           x-stream-index: "001"
@@ -1032,6 +1036,9 @@ components:
         team:
           type: string
           x-stream-index: "001"
+        video:
+          type: boolean
+          x-stream-index: "008"
       type: object
     CallResponse:
       description: Represents a call
@@ -4651,11 +4658,15 @@ components:
           description: Duration of the request in human-readable format
           title: Duration
           type: string
-          x-stream-index: "002.001"
+          x-stream-index: "003.001"
         flag:
           $ref: '#/components/schemas/Flag'
           x-stream-index: "001"
+        review_queue_item_id:
+          type: string
+          x-stream-index: "002"
       required:
+      - review_queue_item_id
       - duration
       type: object
     FullUserResponse:
@@ -5337,7 +5348,7 @@ components:
           format: int32
           maximum: 100
           type: integer
-          x-stream-index: "006"
+          x-stream-index: "007"
         notify:
           description: if provided it sends a notification event to the members for
             this call
@@ -5349,6 +5360,9 @@ components:
           title: Ring
           type: boolean
           x-stream-index: "004"
+        video:
+          type: boolean
+          x-stream-index: "006"
       type: object
     GetOrCreateCallResponse:
       nullable: true
@@ -11499,6 +11513,11 @@ components:
         agora_options:
           $ref: '#/components/schemas/Config'
           x-stream-index: "001.038"
+        allowed_flag_reasons:
+          items:
+            type: string
+          type: array
+          x-stream-index: "001.015"
         apn_config:
           $ref: '#/components/schemas/APNConfig'
           x-stream-index: "001.003"
@@ -11542,6 +11561,12 @@ components:
           - team
           type: string
           x-stream-index: "001.020"
+        feeds_moderation_enabled:
+          type: boolean
+          x-stream-index: "001.043"
+        feeds_v2_region:
+          type: string
+          x-stream-index: "001.042"
         file_upload_config:
           $ref: '#/components/schemas/FileUploadConfig'
           x-stream-index: "001.028"
@@ -12897,6 +12922,10 @@ components:
       type: object
     UserResponse:
       properties:
+        ban_expires:
+          format: date-time
+          type: number
+          x-stream-index: "003"
         banned:
           type: boolean
           x-stream-index: "001.011"
@@ -12929,7 +12958,7 @@ components:
           items:
             $ref: '#/components/schemas/Device'
           type: array
-          x-stream-index: "004"
+          x-stream-index: "005"
         id:
           type: string
           x-stream-index: "001.001"
@@ -12938,7 +12967,7 @@ components:
           x-stream-index: "001.003"
         invisible:
           type: boolean
-          x-stream-index: "005"
+          x-stream-index: "006"
         language:
           type: string
           x-stream-index: "001.005"
@@ -12954,7 +12983,7 @@ components:
           x-stream-index: "001.012"
         push_notifications:
           $ref: '#/components/schemas/PushNotificationSettings'
-          x-stream-index: "003"
+          x-stream-index: "004"
         revoke_tokens_issued_before:
           format: date-time
           type: number
@@ -13515,7 +13544,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v122.3.0
+  version: v125.3.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -18310,8 +18339,8 @@ paths:
         Updates certain fields of the user
 
         Sends events:
-        - user.presence.changed
         - user.updated
+        - user.presence.changed
       operationId: UpdateUsersPartial
       requestBody:
         content:
@@ -18790,6 +18819,12 @@ paths:
           type: boolean
           writeOnly: true
           x-stream-index: "006"
+      - in: query
+        name: video
+        schema:
+          type: boolean
+          writeOnly: true
+          x-stream-index: "007"
       responses:
         "200":
           content:
