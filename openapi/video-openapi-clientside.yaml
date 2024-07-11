@@ -64,6 +64,63 @@ components:
       required:
       - duration
       type: object
+    Action:
+      nullable: true
+      properties:
+        name:
+          type: string
+          x-stream-index: "001"
+        style:
+          type: string
+          x-stream-index: "003"
+        text:
+          type: string
+          x-stream-index: "002"
+        type:
+          type: string
+          x-stream-index: "004"
+        value:
+          type: string
+          x-stream-index: "005"
+      required:
+      - name
+      - text
+      - type
+      type: object
+    ActionLog:
+      nullable: true
+      properties:
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "004"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "009"
+        id:
+          type: string
+          x-stream-index: "002"
+        reason:
+          type: string
+          x-stream-index: "008"
+        review_queue_item_id:
+          type: string
+          x-stream-index: "010"
+        type:
+          type: string
+          x-stream-index: "005"
+        user:
+          $ref: '#/components/schemas/UserObject'
+          x-stream-index: "007"
+      required:
+      - id
+      - created_at
+      - type
+      - reason
+      - custom
+      - review_queue_item_id
+      type: object
     AggregatedStats:
       properties:
         countrywise_aggregate_stats:
@@ -78,6 +135,89 @@ components:
           $ref: '#/components/schemas/TURNAggregatedStats'
           x-stream-index: "001"
       type: object
+    Attachment:
+      nullable: true
+      properties:
+        actions:
+          items:
+            $ref: '#/components/schemas/Action'
+          type: array
+          x-stream-index: "015"
+        asset_url:
+          type: string
+          x-stream-index: "017"
+        author_icon:
+          type: string
+          x-stream-index: "007"
+        author_link:
+          type: string
+          x-stream-index: "006"
+        author_name:
+          type: string
+          x-stream-index: "005"
+        color:
+          type: string
+          x-stream-index: "003"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "018"
+        fallback:
+          type: string
+          x-stream-index: "002"
+        fields:
+          items:
+            $ref: '#/components/schemas/Field'
+          type: array
+          x-stream-index: "016"
+        footer:
+          type: string
+          x-stream-index: "013"
+        footer_icon:
+          type: string
+          x-stream-index: "014"
+        giphy:
+          $ref: '#/components/schemas/Images'
+          x-stream-index: "019"
+        image_url:
+          type: string
+          x-stream-index: "011"
+        og_scrape_url:
+          type: string
+          x-stream-index: "020"
+        original_height:
+          format: int32
+          type: integer
+          x-stream-index: "022"
+        original_width:
+          format: int32
+          type: integer
+          x-stream-index: "021"
+        pretext:
+          type: string
+          x-stream-index: "004"
+        text:
+          type: string
+          x-stream-index: "010"
+        thumb_url:
+          type: string
+          x-stream-index: "012"
+        title:
+          type: string
+          x-stream-index: "008"
+        title_link:
+          type: string
+          x-stream-index: "009"
+        type:
+          description: Attachment type (e.g. image, video, url)
+          title: Type
+          type: string
+          x-stream-index: "001"
+      required:
+      - custom
+      title: Attachment
+      type: object
+      x-stream-docs-page-id: file_uploads
     AudioSettingsRequest:
       properties:
         access_request_enabled:
@@ -202,9 +342,9 @@ components:
       - duration
       type: object
     BlockedUserEvent:
-      description: "This event is sent to call participants to notify when a user
-        is blocked on a call, clients can use this event to show a notification. \nIf
-        the user is the current user, the client should leave the call screen as well"
+      description: |-
+        This event is sent to call participants to notify when a user is blocked on a call, clients can use this event to show a notification.
+        If the user is the current user, the client should leave the call screen as well
       properties:
         blocked_by_user:
           $ref: '#/components/schemas/UserResponse'
@@ -325,9 +465,9 @@ components:
       - speaker_id
       type: object
     CallCreatedEvent:
-      description: "This event is sent when a call is created. Clients receiving this
-        event should check if the ringing \nfield is set to true and if so, show the
-        call screen"
+      description: |-
+        This event is sent when a call is created. Clients receiving this event should check if the ringing
+        field is set to true and if so, show the call screen
       properties:
         call:
           $ref: '#/components/schemas/CallResponse'
@@ -1113,6 +1253,9 @@ components:
         team:
           type: string
           x-stream-index: "001"
+        video:
+          type: boolean
+          x-stream-index: "008"
       type: object
     CallResponse:
       description: Represents a call
@@ -1263,6 +1406,9 @@ components:
           description: The user that sent the call notification
           title: User
           x-stream-index: "007"
+        video:
+          type: boolean
+          x-stream-index: "008"
       required:
       - type
       - created_at
@@ -1271,6 +1417,7 @@ components:
       - call
       - members
       - user
+      - video
       title: CallRingEvent
       type: object
       x-stream-event-call-type: true
@@ -1836,9 +1983,9 @@ components:
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
     CallUpdatedEvent:
-      description: "This event is sent when a call is updated, clients should use
-        this update the local state of the call. \nThis event also contains the capabilities
-        by role for the call, clients should update the own_capability for the current."
+      description: |-
+        This event is sent when a call is updated, clients should use this update the local state of the call.
+        This event also contains the capabilities by role for the call, clients should update the own_capability for the current.
       properties:
         call:
           $ref: '#/components/schemas/CallResponse'
@@ -2699,6 +2846,14 @@ components:
       x-stream-event-call-type: true
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    Data:
+      properties:
+        id:
+          type: string
+          x-stream-index: "001"
+      required:
+      - id
+      type: object
     DeleteCallRequest:
       nullable: true
       properties:
@@ -2884,6 +3039,200 @@ components:
           x-stream-index: "001.001"
       required:
       - duration
+      type: object
+    EnrichedActivity:
+      properties:
+        actor:
+          $ref: '#/components/schemas/Data'
+          x-stream-index: "002"
+        foreign_id:
+          type: string
+          x-stream-index: "005"
+        id:
+          type: string
+          x-stream-index: "001"
+        latest_reactions:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/EnrichedReaction'
+            type: array
+          type: object
+          x-stream-index: "013"
+        object:
+          $ref: '#/components/schemas/Data'
+          x-stream-index: "004"
+        origin:
+          $ref: '#/components/schemas/Data'
+          x-stream-index: "008"
+        own_reactions:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/EnrichedReaction'
+            type: array
+          type: object
+          x-stream-index: "012"
+        reaction_counts:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "011"
+        score:
+          format: float
+          type: number
+          x-stream-index: "010"
+        target:
+          $ref: '#/components/schemas/Data'
+          x-stream-index: "006"
+        time:
+          $ref: '#/components/schemas/Time'
+          x-stream-index: "007"
+        to:
+          items:
+            type: string
+          type: array
+          x-stream-index: "009"
+        verb:
+          type: string
+          x-stream-index: "003"
+      type: object
+    EnrichedReaction:
+      nullable: true
+      properties:
+        activity_id:
+          type: string
+          x-stream-index: "003"
+        children_counts:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "010"
+        created_at:
+          $ref: '#/components/schemas/Time'
+          x-stream-index: "012"
+        data:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "005"
+        id:
+          type: string
+          x-stream-index: "001"
+        kind:
+          type: string
+          x-stream-index: "002"
+        latest_children:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/EnrichedReaction'
+            type: array
+          type: object
+          x-stream-index: "008"
+        own_children:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/EnrichedReaction'
+            type: array
+          type: object
+          x-stream-index: "009"
+        parent:
+          type: string
+          x-stream-index: "007"
+        target_feeds:
+          items:
+            type: string
+          type: array
+          x-stream-index: "006"
+        updated_at:
+          $ref: '#/components/schemas/Time'
+          x-stream-index: "013"
+        user:
+          $ref: '#/components/schemas/Data'
+          x-stream-index: "011"
+        user_id:
+          type: string
+          x-stream-index: "004"
+      required:
+      - kind
+      - activity_id
+      - user_id
+      type: object
+    Field:
+      nullable: true
+      properties:
+        short:
+          type: boolean
+          x-stream-index: "003"
+        title:
+          type: string
+          x-stream-index: "001"
+        value:
+          type: string
+          x-stream-index: "002"
+      required:
+      - title
+      - value
+      - short
+      type: object
+    Flag2:
+      nullable: true
+      properties:
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "017"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "013"
+        entity_creator_id:
+          type: string
+          x-stream-index: "009"
+        entity_id:
+          type: string
+          x-stream-index: "008"
+        entity_type:
+          type: string
+          x-stream-index: "007"
+        labels:
+          items:
+            type: string
+          type: array
+          x-stream-index: "014"
+        moderation_payload:
+          $ref: '#/components/schemas/ModerationPayload'
+          x-stream-index: "010"
+        moderation_payload_hash:
+          type: string
+          x-stream-index: "011"
+        reason:
+          type: string
+          x-stream-index: "012"
+        result:
+          items:
+            additionalProperties: {}
+            type: object
+          type: array
+          x-stream-index: "015"
+        review_queue_item_id:
+          type: string
+          x-stream-index: "016"
+        type:
+          type: string
+          x-stream-index: "004"
+        updated_at:
+          format: date-time
+          type: string
+          x-stream-index: "018"
+        user:
+          $ref: '#/components/schemas/UserObject'
+          x-stream-index: "006"
+      required:
+      - entity_type
+      - entity_id
+      - result
+      - created_at
+      - updated_at
       type: object
     GeofenceSettingsRequest:
       properties:
@@ -3081,7 +3430,7 @@ components:
           format: int32
           maximum: 100
           type: integer
-          x-stream-index: "006"
+          x-stream-index: "007"
         notify:
           description: if provided it sends a notification event to the members for
             this call
@@ -3093,6 +3442,9 @@ components:
           title: Ring
           type: boolean
           x-stream-index: "004"
+        video:
+          type: boolean
+          x-stream-index: "006"
       type: object
     GetOrCreateCallResponse:
       nullable: true
@@ -3245,6 +3597,62 @@ components:
       - username
       - password
       type: object
+    ImageData:
+      properties:
+        frames:
+          type: string
+          x-stream-index: "005"
+        height:
+          type: string
+          x-stream-index: "003"
+        size:
+          type: string
+          x-stream-index: "004"
+        url:
+          type: string
+          x-stream-index: "001"
+        width:
+          type: string
+          x-stream-index: "002"
+      required:
+      - url
+      - width
+      - height
+      - size
+      - frames
+      type: object
+    Images:
+      properties:
+        fixed_height:
+          $ref: '#/components/schemas/ImageData'
+          x-stream-index: "002"
+        fixed_height_downsampled:
+          $ref: '#/components/schemas/ImageData'
+          x-stream-index: "004"
+        fixed_height_still:
+          $ref: '#/components/schemas/ImageData'
+          x-stream-index: "003"
+        fixed_width:
+          $ref: '#/components/schemas/ImageData'
+          x-stream-index: "005"
+        fixed_width_downsampled:
+          $ref: '#/components/schemas/ImageData'
+          x-stream-index: "007"
+        fixed_width_still:
+          $ref: '#/components/schemas/ImageData'
+          x-stream-index: "006"
+        original:
+          $ref: '#/components/schemas/ImageData'
+          x-stream-index: "001"
+      required:
+      - original
+      - fixed_height
+      - fixed_height_still
+      - fixed_height_downsampled
+      - fixed_width
+      - fixed_width_still
+      - fixed_width_downsampled
+      type: object
     JoinCallRequest:
       nullable: true
       properties:
@@ -3259,19 +3667,19 @@ components:
         location:
           title: Location
           type: string
-          x-stream-index: "008"
+          x-stream-index: "009"
         members_limit:
           format: int32
           maximum: 100
           title: The amount of members that should be returned
           type: integer
-          x-stream-index: "006"
+          x-stream-index: "007"
         migrating_from:
           description: If the participant is migrating from another SFU, then this
             is the ID of the previous SFU
           title: MigratingFrom
           type: string
-          x-stream-index: "009"
+          x-stream-index: "010"
         notify:
           type: boolean
           x-stream-index: "005"
@@ -3281,6 +3689,9 @@ components:
           title: Ring
           type: boolean
           x-stream-index: "004"
+        video:
+          type: boolean
+          x-stream-index: "006"
       required:
       - location
       type: object
@@ -3540,6 +3951,383 @@ components:
       - custom
       - created_at
       - updated_at
+      type: object
+    Message:
+      description: Represents any chat message
+      properties:
+        attachments:
+          description: Array of message attachments
+          items:
+            $ref: '#/components/schemas/Attachment'
+          title: Message attachments
+          type: array
+          x-stream-docs-page-id: message_format#attachment-format
+          x-stream-index: "011"
+        before_message_send_failed:
+          description: Whether `before_message_send webhook` failed or not. Field
+            is only accessible in push webhook
+          title: Before Message Send Failed
+          type: boolean
+          x-stream-docs-page-id: before_message_send_webhook
+          x-stream-index: "044"
+        cid:
+          description: Channel unique identifier in <type>:<id> format
+          title: Channel CID
+          type: string
+          x-stream-index: "027"
+        command:
+          description: Contains provided slash command
+          title: Command
+          type: string
+          x-stream-docs-page-id: custom_commands_webhook
+          x-stream-index: "006"
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: "029"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "032"
+        deleted_at:
+          description: Date/time of deletion
+          format: date-time
+          title: Deleted at
+          type: string
+          x-stream-index: "031"
+        deleted_reply_count:
+          format: int32
+          type: integer
+          x-stream-index: "022"
+        html:
+          description: Contains HTML markup of the message. Can only be set when using
+            server-side API
+          title: HTML content
+          type: string
+          x-stream-index: "007"
+        i18n:
+          additionalProperties:
+            type: string
+          description: Object with translations. Key `language` contains the original
+            language key. Other keys contain translations
+          title: Internationalization info
+          type: object
+          x-stream-docs-page-id: translation
+          x-stream-index: "042"
+        id:
+          description: Message ID is unique string identifier of the message
+          title: ID
+          type: string
+          x-stream-index: "002"
+        image_labels:
+          additionalProperties:
+            items:
+              type: string
+            type: array
+          description: Contains image moderation information
+          title: Image moderation labels
+          type: object
+          x-stream-index: "038"
+        latest_reactions:
+          description: List of 10 latest reactions to this message
+          items:
+            $ref: '#/components/schemas/Reaction'
+          title: Latest reactions
+          type: array
+          x-stream-index: "012"
+        mentioned_users:
+          description: List of mentioned users
+          items:
+            $ref: '#/components/schemas/UserObject'
+          title: Mentioned Users
+          type: array
+          x-stream-index: "041"
+        message_text_updated_at:
+          format: date-time
+          type: string
+          x-stream-index: "050"
+        mml:
+          description: Should be empty if `text` is provided. Can only be set when
+            using server-side API
+          title: Messaging Markup Language
+          type: string
+          x-stream-docs-page-id: mml_overview
+          x-stream-index: "005"
+        own_reactions:
+          description: List of 10 latest reactions of authenticated user to this message
+          items:
+            $ref: '#/components/schemas/Reaction'
+          title: Own reactions
+          type: array
+          x-stream-index: "013"
+        parent_id:
+          description: ID of parent message (thread)
+          title: Parent message ID
+          type: string
+          x-stream-docs-page-id: threads
+          x-stream-index: "018"
+        pin_expires:
+          description: Date when pinned message expires
+          format: date-time
+          title: Pin expiration date
+          type: string
+          x-stream-docs-page-id: pinned_messages
+          x-stream-index: "049"
+        pinned:
+          description: Whether message is pinned or not
+          title: Pinned
+          type: boolean
+          x-stream-docs-page-id: pinned_messages
+          x-stream-index: "045"
+        pinned_at:
+          description: Date when message got pinned
+          format: date-time
+          title: Pinned at
+          type: string
+          x-stream-docs-page-id: pinned_messages
+          x-stream-index: "046"
+        pinned_by:
+          $ref: '#/components/schemas/UserObject'
+          description: Contains user who pinned the message
+          title: Pinned by
+          x-stream-docs-page-id: pinned_messages
+          x-stream-index: "048"
+        poll:
+          $ref: '#/components/schemas/Poll'
+          x-stream-index: "052"
+        poll_id:
+          description: Identifier of the poll to include in the message
+          title: Poll ID
+          type: string
+          x-stream-index: "051"
+        quoted_message:
+          $ref: '#/components/schemas/Message'
+          description: Contains quoted message
+          title: Quoted message
+          x-stream-docs-page-id: threads#quote-message
+          x-stream-index: "024"
+        quoted_message_id:
+          title: ID of quoted message
+          type: string
+          x-stream-docs-page-id: threads#quote-message
+          x-stream-index: "023"
+        reaction_counts:
+          additionalProperties:
+            format: int32
+            type: integer
+          description: 'An object containing number of reactions of each type. Key:
+            reaction type (string), value: number of reactions (int)'
+          title: Reaction counts
+          type: object
+          x-stream-index: "014"
+        reaction_groups:
+          additionalProperties:
+            $ref: '#/components/schemas/ReactionGroupResponse'
+          type: object
+          x-stream-index: "016"
+        reaction_scores:
+          additionalProperties:
+            format: int32
+            type: integer
+          description: 'An object containing scores of reactions of each type. Key:
+            reaction type (string), value: total score of reactions (int)'
+          title: Reaction scores
+          type: object
+          x-stream-index: "015"
+        reply_count:
+          description: Number of replies to this message
+          format: int32
+          title: Reply count
+          type: integer
+          x-stream-index: "021"
+        shadowed:
+          description: Whether the message was shadowed or not
+          title: Shadowed
+          type: boolean
+          x-stream-docs-page-id: moderation#shadow-ban
+          x-stream-index: "034"
+        show_in_channel:
+          description: Whether thread reply should be shown in the channel as well
+          title: Show in channel
+          type: boolean
+          x-stream-docs-page-id: threads
+          x-stream-index: "020"
+        silent:
+          description: Whether message is silent or not
+          title: Silent
+          type: boolean
+          x-stream-index: "043"
+        text:
+          description: Text of the message. Should be empty if `mml` is provided
+          title: Text
+          type: string
+          x-stream-index: "004"
+        thread_participants:
+          description: List of users who participate in thread
+          items:
+            $ref: '#/components/schemas/UserObject'
+          title: Thread participants
+          type: array
+          x-stream-docs-page-id: threads#quote-message
+          x-stream-index: "026"
+        type:
+          description: Contains type of the message
+          enum:
+          - regular
+          - ephemeral
+          - error
+          - reply
+          - system
+          - deleted
+          title: Message Type
+          type: string
+          x-stream-docs-page-id: message_format#message-types
+          x-stream-index: "008"
+        updated_at:
+          description: Date/time of the last update
+          format: date-time
+          title: Updated at
+          type: string
+          x-stream-index: "030"
+        user:
+          $ref: '#/components/schemas/UserObject'
+          description: Sender of the message. Required when using server-side API
+          title: User object
+          x-stream-index: "010"
+      required:
+      - id
+      - text
+      - html
+      - type
+      - attachments
+      - latest_reactions
+      - own_reactions
+      - reaction_counts
+      - reaction_scores
+      - reaction_groups
+      - reply_count
+      - deleted_reply_count
+      - cid
+      - created_at
+      - updated_at
+      - custom
+      - shadowed
+      - mentioned_users
+      - silent
+      - pinned
+      title: Message
+      type: object
+      x-stream-docs-page-id: send_message
+    ModerationCustomActionEvent:
+      properties:
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "004.002"
+        item:
+          $ref: '#/components/schemas/ReviewQueueItem'
+          x-stream-index: "001"
+        message:
+          $ref: '#/components/schemas/Message'
+          x-stream-index: "002"
+        type:
+          default: moderation.custom_action
+          type: string
+          x-stream-index: "004.001"
+        user:
+          $ref: '#/components/schemas/UserObject'
+          x-stream-index: "003.001"
+      required:
+      - type
+      - created_at
+      title: ModerationCustomActionEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    ModerationFlaggedEvent:
+      properties:
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "004.002"
+        item:
+          type: string
+          x-stream-index: "001"
+        object_id:
+          type: string
+          x-stream-index: "002"
+        type:
+          default: moderation.flagged
+          type: string
+          x-stream-index: "004.001"
+        user:
+          $ref: '#/components/schemas/UserObject'
+          x-stream-index: "003.001"
+      required:
+      - type
+      - created_at
+      title: ModerationFlaggedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    ModerationMarkSafeEvent:
+      properties:
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "004.002"
+        item:
+          $ref: '#/components/schemas/ReviewQueueItem'
+          x-stream-index: "001"
+        message:
+          $ref: '#/components/schemas/Message'
+          x-stream-index: "002"
+        type:
+          default: moderation.mark_safe
+          type: string
+          x-stream-index: "004.001"
+        user:
+          $ref: '#/components/schemas/UserObject'
+          x-stream-index: "003.001"
+      required:
+      - type
+      - created_at
+      title: ModerationMarkSafeEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    ModerationPayload:
+      properties:
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "005"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "004"
+        images:
+          items:
+            type: string
+          type: array
+          x-stream-index: "002"
+        texts:
+          items:
+            type: string
+          type: array
+          x-stream-index: "001"
+        videos:
+          items:
+            type: string
+          type: array
+          x-stream-index: "003"
+      required:
+      - created_at
       type: object
     MuteUsersRequest:
       nullable: true
@@ -3926,9 +4714,13 @@ components:
       nullable: true
       properties:
         session_id:
+          description: the session ID of the user who pinned the message
+          title: SessionID
           type: string
           x-stream-index: "003"
         user_id:
+          description: the user ID of the user who pinned the message
+          title: UserID
           type: string
           x-stream-index: "002"
       required:
@@ -3946,7 +4738,178 @@ components:
       required:
       - duration
       type: object
+    Poll:
+      properties:
+        Custom:
+          additionalProperties: {}
+          type: object
+          writeOnly: true
+          x-stream-index: "023"
+        allow_answers:
+          type: boolean
+          x-stream-index: "010"
+        allow_user_suggested_options:
+          type: boolean
+          x-stream-index: "009"
+        answers_count:
+          format: int32
+          type: integer
+          x-stream-index: "015"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "021"
+        created_by:
+          $ref: '#/components/schemas/UserObject'
+          x-stream-index: "020"
+        created_by_id:
+          type: string
+          x-stream-index: "019"
+        description:
+          type: string
+          x-stream-index: "005"
+        enforce_unique_vote:
+          type: boolean
+          x-stream-index: "007"
+        id:
+          type: string
+          x-stream-index: "003"
+        is_closed:
+          type: boolean
+          x-stream-index: "011"
+        latest_answers:
+          items:
+            $ref: '#/components/schemas/PollVote'
+          type: array
+          x-stream-index: "017"
+        latest_votes_by_option:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/PollVote'
+            type: array
+          type: object
+          x-stream-index: "016"
+        max_votes_allowed:
+          format: int32
+          type: integer
+          x-stream-index: "008"
+        name:
+          type: string
+          x-stream-index: "004"
+        options:
+          items:
+            $ref: '#/components/schemas/PollOption'
+          type: array
+          x-stream-index: "013"
+        own_votes:
+          items:
+            $ref: '#/components/schemas/PollVote'
+          type: array
+          x-stream-index: "018"
+        updated_at:
+          format: date-time
+          type: string
+          x-stream-index: "022"
+        vote_count:
+          format: int32
+          type: integer
+          x-stream-index: "012"
+        vote_counts_by_option:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "014"
+        voting_visibility:
+          type: string
+          x-stream-index: "006"
+      required:
+      - id
+      - name
+      - description
+      - enforce_unique_vote
+      - allow_user_suggested_options
+      - allow_answers
+      - vote_count
+      - options
+      - vote_counts_by_option
+      - answers_count
+      - latest_votes_by_option
+      - latest_answers
+      - own_votes
+      - created_by_id
+      - created_at
+      - updated_at
+      - Custom
+      type: object
+    PollOption:
+      nullable: true
+      properties:
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "003"
+        id:
+          maxLength: 255
+          type: string
+          x-stream-index: "001"
+        text:
+          type: string
+          x-stream-index: "002"
+      required:
+      - id
+      - text
+      - custom
+      type: object
+    PollVote:
+      nullable: true
+      properties:
+        answer_text:
+          type: string
+          x-stream-index: "007"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "010"
+        id:
+          type: string
+          x-stream-index: "004"
+        is_answer:
+          type: boolean
+          x-stream-index: "006"
+        option_id:
+          type: string
+          x-stream-index: "005"
+        poll_id:
+          type: string
+          x-stream-index: "003"
+        updated_at:
+          format: date-time
+          type: string
+          x-stream-index: "011"
+        user:
+          $ref: '#/components/schemas/UserObject'
+          x-stream-index: "009"
+        user_id:
+          type: string
+          x-stream-index: "008"
+      required:
+      - poll_id
+      - id
+      - option_id
+      - created_at
+      - updated_at
+      type: object
     PrivacySettings:
+      properties:
+        read_receipts:
+          $ref: '#/components/schemas/ReadReceipts'
+          x-stream-index: "002"
+        typing_indicators:
+          $ref: '#/components/schemas/TypingIndicators'
+          x-stream-index: "001"
+      type: object
+    PrivacySettingsResponse:
       properties:
         read_receipts:
           $ref: '#/components/schemas/ReadReceipts'
@@ -4168,6 +5131,88 @@ components:
       - address
       title: RTMP Ingress
       type: object
+    Reaction:
+      description: Represents user reaction to a message
+      nullable: true
+      properties:
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          readOnly: true
+          title: Created at
+          type: string
+          x-stream-index: "008"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "010"
+        message_id:
+          description: ID of a message user reacted to
+          title: Message ID
+          type: string
+          x-stream-index: "003"
+        score:
+          description: Reaction score. If not specified reaction has score of 1
+          format: int32
+          title: Score
+          type: integer
+          x-stream-index: "007"
+        type:
+          description: The type of reaction (e.g. 'like', 'laugh', 'wow')
+          maxLength: 30
+          title: Type
+          type: string
+          x-stream-index: "006"
+        updated_at:
+          description: Date/time of the last update
+          format: date-time
+          readOnly: true
+          title: Updated at
+          type: string
+          x-stream-index: "009"
+        user:
+          $ref: '#/components/schemas/UserObject'
+          x-stream-index: "005"
+        user_id:
+          description: ID of a user who reacted to a message
+          title: User ID
+          type: string
+          x-stream-index: "004"
+      required:
+      - message_id
+      - type
+      - score
+      - created_at
+      - updated_at
+      - custom
+      title: Reaction
+      type: object
+      x-stream-docs-page-id: send_reaction
+    ReactionGroupResponse:
+      nullable: true
+      properties:
+        count:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+        first_reaction_at:
+          format: date-time
+          type: string
+          x-stream-index: "003"
+        last_reaction_at:
+          format: date-time
+          type: string
+          x-stream-index: "004"
+        sum_scores:
+          format: int32
+          type: integer
+          x-stream-index: "002"
+      required:
+      - count
+      - sum_scores
+      - first_reaction_at
+      - last_reaction_at
+      type: object
     ReactionResponse:
       properties:
         custom:
@@ -4288,6 +5333,113 @@ components:
           x-stream-index: "001"
       required:
       - duration
+      type: object
+    ReviewQueueItem:
+      properties:
+        actions:
+          items:
+            $ref: '#/components/schemas/ActionLog'
+          type: array
+          x-stream-index: "026"
+        assigned_to:
+          $ref: '#/components/schemas/UserObject'
+          x-stream-index: "024"
+        completed_at:
+          $ref: '#/components/schemas/NullTime'
+          x-stream-index: "016"
+        content_changed:
+          type: boolean
+          x-stream-index: "027"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "004"
+        entity_creator:
+          $ref: '#/components/schemas/UserObject'
+          x-stream-index: "023"
+        entity_id:
+          type: string
+          x-stream-index: "007"
+        entity_type:
+          type: string
+          x-stream-index: "006"
+        feeds_v2_activity:
+          $ref: '#/components/schemas/EnrichedActivity'
+          x-stream-index: "028"
+        feeds_v2_reaction:
+          $ref: '#/components/schemas/Reaction'
+          x-stream-index: "029"
+        flags:
+          items:
+            $ref: '#/components/schemas/Flag2'
+          type: array
+          x-stream-index: "025"
+        has_image:
+          type: boolean
+          x-stream-index: "011"
+        has_text:
+          type: boolean
+          x-stream-index: "013"
+        has_video:
+          type: boolean
+          x-stream-index: "012"
+        id:
+          type: string
+          x-stream-index: "003"
+        languages:
+          items:
+            type: string
+          type: array
+          x-stream-index: "017"
+        message:
+          $ref: '#/components/schemas/Message'
+          x-stream-index: "022"
+        moderation_payload:
+          $ref: '#/components/schemas/ModerationPayload'
+          x-stream-index: "009"
+        moderation_payload_hash:
+          type: string
+          x-stream-index: "010"
+        recommended_action:
+          type: string
+          x-stream-index: "015"
+        reviewed_at:
+          $ref: '#/components/schemas/NullTime'
+          x-stream-index: "019"
+        reviewed_by:
+          type: string
+          x-stream-index: "020"
+        severity:
+          format: int32
+          type: integer
+          x-stream-index: "018"
+        status:
+          type: string
+          x-stream-index: "014"
+        updated_at:
+          format: date-time
+          type: string
+          x-stream-index: "005"
+      required:
+      - id
+      - created_at
+      - updated_at
+      - entity_type
+      - entity_id
+      - moderation_payload_hash
+      - has_image
+      - has_video
+      - has_text
+      - status
+      - recommended_action
+      - completed_at
+      - languages
+      - severity
+      - reviewed_at
+      - reviewed_by
+      - flags
+      - actions
+      - content_changed
       type: object
     RingSettingsRequest:
       properties:
@@ -4675,6 +5827,8 @@ components:
       required:
       - enabled
       type: object
+    Time:
+      type: object
     TimeStats:
       properties:
         average_seconds:
@@ -4762,8 +5916,9 @@ components:
       - duration
       type: object
     UnblockedUserEvent:
-      description: "This event is sent when a user is unblocked on a call, \nthis
-        can be useful to notify the user that they can now join the call again"
+      description: |-
+        This event is sent when a user is unblocked on a call,
+        this can be useful to notify the user that they can now join the call again
       properties:
         call_cid:
           type: string
@@ -4797,9 +5952,13 @@ components:
       nullable: true
       properties:
         session_id:
+          description: the session ID of the user who pinned the message
+          title: SessionID
           type: string
           x-stream-index: "003"
         user_id:
+          description: the user ID of the user who pinned the message
+          title: UserID
           type: string
           x-stream-index: "002"
       required:
@@ -5085,6 +6244,85 @@ components:
       x-stream-event-client-type: true
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    UserEventPayload:
+      properties:
+        banned:
+          type: boolean
+          x-stream-index: "001.011"
+        blocked_user_ids:
+          items:
+            type: string
+          type: array
+          x-stream-index: "001.016"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.008"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "001.004"
+        deactivated_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.015"
+        deleted_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.010"
+        id:
+          type: string
+          x-stream-index: "001.001"
+        image:
+          type: string
+          x-stream-index: "001.003"
+        invisible:
+          type: boolean
+          x-stream-index: "002"
+        language:
+          type: string
+          x-stream-index: "001.005"
+        last_active:
+          format: date-time
+          type: string
+          x-stream-index: "001.013"
+        name:
+          type: string
+          x-stream-index: "001.002"
+        online:
+          type: boolean
+          x-stream-index: "001.012"
+        privacy_settings:
+          $ref: '#/components/schemas/PrivacySettingsResponse'
+          x-stream-index: "003"
+        revoke_tokens_issued_before:
+          format: date-time
+          type: string
+          x-stream-index: "001.014"
+        role:
+          type: string
+          x-stream-index: "001.006"
+        teams:
+          items:
+            type: string
+          type: array
+          x-stream-index: "001.007"
+        updated_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.009"
+      required:
+      - id
+      - custom
+      - language
+      - role
+      - teams
+      - created_at
+      - updated_at
+      - banned
+      - online
+      - blocked_user_ids
+      type: object
     UserFlaggedEvent:
       properties:
         created_at:
@@ -5750,26 +6988,28 @@ components:
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
     UserUpdatedEvent:
+      nullable: true
       properties:
         created_at:
           format: date-time
           type: string
-          x-stream-index: "002.002"
+          x-stream-index: "002.003"
+        received_at:
+          format: date-time
+          type: string
+          x-stream-index: "002.004"
         type:
           default: user.updated
           type: string
-          x-stream-index: "002.001"
+          x-stream-index: "002.002"
         user:
-          $ref: '#/components/schemas/UserObject'
+          $ref: '#/components/schemas/UserEventPayload'
           x-stream-index: "001"
       required:
+      - user
       - type
       - created_at
-      title: UserUpdatedEvent
       type: object
-      x-stream-event-client-type: true
-      x-stream-is-event: true
-      x-stream-ws-base-event-name: VideoEvent
     VideoQuality:
       properties:
         resolution:
@@ -5862,6 +7102,15 @@ components:
       - user_details
       - token
       type: object
+    WSClientEvent:
+      description: The discriminator object for all websocket client events, it maps
+        events' payload to the final type
+      discriminator:
+        mapping:
+          user.updated: '#/components/schemas/UserUpdatedEvent'
+        propertyName: type
+      oneOf:
+      - $ref: '#/components/schemas/UserUpdatedEvent'
     WSEvent:
       description: The discriminator object for all websocket events, it maps events'
         payload to the final type
@@ -5909,6 +7158,9 @@ components:
           connection.ok: '#/components/schemas/ConnectedEvent'
           custom: '#/components/schemas/CustomVideoEvent'
           health.check: '#/components/schemas/HealthCheckEvent'
+          moderation.custom_action: '#/components/schemas/ModerationCustomActionEvent'
+          moderation.flagged: '#/components/schemas/ModerationFlaggedEvent'
+          moderation.mark_safe: '#/components/schemas/ModerationMarkSafeEvent'
           user.banned: '#/components/schemas/UserBannedEvent'
           user.deactivated: '#/components/schemas/UserDeactivatedEvent'
           user.deleted: '#/components/schemas/UserDeletedEvent'
@@ -5916,7 +7168,6 @@ components:
           user.presence.changed: '#/components/schemas/UserPresenceChangedEvent'
           user.reactivated: '#/components/schemas/UserReactivatedEvent'
           user.unbanned: '#/components/schemas/UserUnbannedEvent'
-          user.updated: '#/components/schemas/UserUpdatedEvent'
         propertyName: type
       oneOf:
       - $ref: '#/components/schemas/BlockedUserEvent'
@@ -5958,6 +7209,9 @@ components:
       - $ref: '#/components/schemas/ConnectionErrorEvent'
       - $ref: '#/components/schemas/CustomVideoEvent'
       - $ref: '#/components/schemas/HealthCheckEvent'
+      - $ref: '#/components/schemas/ModerationCustomActionEvent'
+      - $ref: '#/components/schemas/ModerationFlaggedEvent'
+      - $ref: '#/components/schemas/ModerationMarkSafeEvent'
       - $ref: '#/components/schemas/PermissionRequestEvent'
       - $ref: '#/components/schemas/UnblockedUserEvent'
       - $ref: '#/components/schemas/UpdatedCallPermissionsEvent'
@@ -5968,7 +7222,6 @@ components:
       - $ref: '#/components/schemas/UserPresenceChangedEvent'
       - $ref: '#/components/schemas/UserReactivatedEvent'
       - $ref: '#/components/schemas/UserUnbannedEvent'
-      - $ref: '#/components/schemas/UserUpdatedEvent'
     WebhookEvent:
       description: The discriminator object for all webhook events, it maps events'
         payload to the final type
@@ -6013,6 +7266,9 @@ components:
           call.updated: '#/components/schemas/CallUpdatedEvent'
           call.user_muted: '#/components/schemas/CallUserMutedEvent'
           custom: '#/components/schemas/CustomVideoEvent'
+          moderation.custom_action: '#/components/schemas/ModerationCustomActionEvent'
+          moderation.flagged: '#/components/schemas/ModerationFlaggedEvent'
+          moderation.mark_safe: '#/components/schemas/ModerationMarkSafeEvent'
           user.banned: '#/components/schemas/UserBannedEvent'
           user.deactivated: '#/components/schemas/UserDeactivatedEvent'
           user.deleted: '#/components/schemas/UserDeletedEvent'
@@ -6060,6 +7316,9 @@ components:
       - $ref: '#/components/schemas/CallUserMutedEvent'
       - $ref: '#/components/schemas/ClosedCaptionEvent'
       - $ref: '#/components/schemas/CustomVideoEvent'
+      - $ref: '#/components/schemas/ModerationCustomActionEvent'
+      - $ref: '#/components/schemas/ModerationFlaggedEvent'
+      - $ref: '#/components/schemas/ModerationMarkSafeEvent'
       - $ref: '#/components/schemas/PermissionRequestEvent'
       - $ref: '#/components/schemas/UnblockedUserEvent'
       - $ref: '#/components/schemas/UpdatedCallPermissionsEvent'
@@ -6113,7 +7372,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v122.3.0
+  version: v125.4.0
 openapi: 3.0.3
 paths:
   /video/call/{type}/{id}:
@@ -6172,6 +7431,12 @@ paths:
           type: boolean
           writeOnly: true
           x-stream-index: "006"
+      - in: query
+        name: video
+        schema:
+          type: boolean
+          writeOnly: true
+          x-stream-index: "007"
       responses:
         "200":
           content:
@@ -6293,7 +7558,7 @@ paths:
         schema:
           type: string
           writeOnly: true
-          x-stream-index: "007"
+          x-stream-index: "008"
       requestBody:
         content:
           application/json:
@@ -6845,7 +8110,7 @@ paths:
           title: ConnectionID
           type: string
           writeOnly: true
-          x-stream-index: "007"
+          x-stream-index: "008"
       requestBody:
         content:
           application/json:
