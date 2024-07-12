@@ -1,5 +1,6 @@
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import AsyncTasks from '../_common_/async-tasks.mdx';
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
@@ -18,11 +19,6 @@ client.reactivateUsers({
 const deactivateResponse = client.deactivateUsers({
   user_ids: ['<id1>', '<id2>'...],
 });
-
-// you need to poll this endpoint
-const taskResponse = await client.getTaskStatus({id: deactivateResponse.task_id})
-
-console.log(taskResponse.status === 'completed');
 ```
 
 </TabItem>
@@ -37,14 +33,6 @@ client.reactivate_user(user_id=alice.id)
 
 # deactivates users in bulk, this is an async operation
 response = client.deactivate_users(user_ids=[alice.id, bob.id])
-task_id = response.data.task_id
-
-# get information about the task
-task_status = client.get_task(task_id)
-
-# just an example, in reality it can take a few seconds for a task to be processed
-if task_status.data.status == "completed":
-    print(task_status.data.result)
 ```
 
 </TabItem>
@@ -62,20 +50,20 @@ curl -X POST https://video.stream-io-api.com/api/v2/users/deactivate?api_key=${A
   }'
 
 # Reactivate users
-curl -X POST https://video.stream-io-api.com/api/v2/users/deactivate?api_key=${API_KEY} \
+curl -X POST https://video.stream-io-api.com/api/v2/users/reactivate?api_key=${API_KEY} \
   -H "Authorization: ${TOKEN}" \
   -H "stream-auth-type: jwt" \
   -H "Content-Type: application/json" \
   -d '{
     "user_ids": ["sara"]
   }'
-
-# Reactivate users in bulk can take some time, you can poll task status using the task id from the response
-# When finished, task status will be completed
-curl -X GET https://video.stream-io-api.com/api/v2/tasks/${TASK_ID}?api_key=${API_KEY} \
-    -H "Authorization: ${TOKEN}" \
-    -H "stream-auth-type: jwt"
 ```
 
 </TabItem>
 </Tabs>
+
+Deactivating users in bulk can take some time, this is how you can check the progress:
+
+<AsyncTasks />
+
+For more informiation, please refer to the [async operations guide](/api/misc/async)
