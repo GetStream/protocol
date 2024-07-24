@@ -106,6 +106,9 @@ components:
           x-stream-index: "008"
         review_queue_item_id:
           type: string
+          x-stream-index: "011"
+        target_user_id:
+          type: string
           x-stream-index: "010"
         type:
           type: string
@@ -119,6 +122,7 @@ components:
       - type
       - reason
       - custom
+      - target_user_id
       - review_queue_item_id
       type: object
     AggregatedStats:
@@ -157,30 +161,31 @@ components:
       properties:
         async_url_enrich_enabled:
           type: boolean
-          x-stream-index: "016"
+          x-stream-index: "017"
         auto_translation_enabled:
           type: boolean
-          x-stream-index: "019"
+          x-stream-index: "020"
         file_upload_config:
           $ref: '#/components/schemas/FileUploadConfig'
-          x-stream-index: "029"
+          x-stream-index: "030"
         image_upload_config:
           $ref: '#/components/schemas/FileUploadConfig'
-          x-stream-index: "030"
+          x-stream-index: "031"
         moderation_enabled:
           type: boolean
-          x-stream-index: "043"
+          x-stream-index: "044"
         name:
           type: string
           x-stream-index: "001"
         video_provider:
           type: string
-          x-stream-index: "038"
+          x-stream-index: "039"
       required:
       - name
       - organization
       - push_notifications
       - webhook_url
+      - moderation_webhook_url
       - channel_configs
       - call_types
       - policies
@@ -3270,6 +3275,101 @@ components:
       - notifications_muted
       title: Channel member
       type: object
+    ChannelMemberResponse:
+      nullable: true
+      properties:
+        ban_expires:
+          description: Expiration date of the ban
+          format: date-time
+          title: Ban expires
+          type: number
+          x-stream-index: "012"
+        banned:
+          description: Whether member is banned this channel or not
+          title: Banned
+          type: boolean
+          x-stream-index: "011"
+        channel_role:
+          description: Role of the member in the channel
+          title: Channel Role
+          type: string
+          x-stream-index: "015"
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: number
+          x-stream-index: "008"
+        deleted_at:
+          format: date-time
+          type: number
+          x-stream-index: "010"
+        invite_accepted_at:
+          description: Date when invite was accepted
+          format: date-time
+          title: Invited accepted at
+          type: number
+          x-stream-index: "005"
+        invite_rejected_at:
+          description: Date when invite was rejected
+          format: date-time
+          title: Invited rejected at
+          type: number
+          x-stream-index: "006"
+        invited:
+          description: Whether member was invited or not
+          title: Invited
+          type: boolean
+          x-stream-index: "004"
+        is_moderator:
+          description: Whether member is channel moderator or not
+          title: Is moderator
+          type: boolean
+          x-stream-index: "003"
+        notifications_muted:
+          type: boolean
+          x-stream-index: "016"
+        role:
+          description: 'Permission level of the member in the channel (DEPRECATED:
+            use channel_role instead)'
+          enum:
+          - member
+          - moderator
+          - admin
+          - owner
+          title: Role
+          type: string
+          x-stream-index: "014"
+        shadow_banned:
+          description: Whether member is shadow banned in this channel or not
+          title: Shadow banned
+          type: boolean
+          x-stream-index: "013"
+        status:
+          type: string
+          x-stream-index: "007"
+        updated_at:
+          description: Date/time of the last update
+          format: date-time
+          title: Updated at
+          type: number
+          x-stream-index: "009"
+        user:
+          $ref: '#/components/schemas/UserObject'
+          x-stream-index: "002"
+        user_id:
+          title: User ID
+          type: string
+          x-stream-index: "001"
+      required:
+      - created_at
+      - updated_at
+      - banned
+      - shadow_banned
+      - channel_role
+      - notifications_muted
+      title: Channel member
+      type: object
     ChannelMessages:
       nullable: true
       properties:
@@ -4306,7 +4406,7 @@ components:
           $ref: '#/components/schemas/ChannelResponse'
           x-stream-index: "002"
         duration:
-          description: Duration of the request in human-readable format
+          description: Duration of the request in milliseconds
           title: Duration
           type: string
           x-stream-index: "001.001"
@@ -4708,17 +4808,6 @@ components:
       - value
       - short
       type: object
-    FileDeleteResponse:
-      nullable: true
-      properties:
-        duration:
-          description: Duration of the request in human-readable format
-          title: Duration
-          type: string
-          x-stream-index: "001.001"
-      required:
-      - duration
-      type: object
     FileUploadConfig:
       properties:
         allowed_file_extensions:
@@ -4772,20 +4861,22 @@ components:
       nullable: true
       properties:
         duration:
+          description: Duration of the request in milliseconds
+          title: Duration
           type: string
-          x-stream-index: "001.001"
+          x-stream-index: "003.001"
         file:
           description: URL to the uploaded asset. Should be used to put to `asset_url`
             attachment field
           title: File
           type: string
-          x-stream-index: "002"
+          x-stream-index: "001"
         thumb_url:
           description: URL of the file thumbnail for supported file formats. Should
             be put to `thumb_url` attachment field
           title: Thumbnail URL
           type: string
-          x-stream-index: "003"
+          x-stream-index: "002"
       required:
       - duration
       type: object
@@ -4999,7 +5090,7 @@ components:
       nullable: true
       properties:
         duration:
-          description: Duration of the request in human-readable format
+          description: Duration of the request in milliseconds
           title: Duration
           type: string
           x-stream-index: "003.001"
@@ -5238,7 +5329,7 @@ components:
           $ref: '#/components/schemas/AppResponseFields'
           x-stream-index: "001"
         duration:
-          description: Duration of the request in human-readable format
+          description: Duration of the request in milliseconds
           title: Duration
           type: string
           x-stream-index: "002.001"
@@ -5856,23 +5947,21 @@ components:
       nullable: true
       properties:
         duration:
+          description: Duration of the request in milliseconds
+          title: Duration
           type: string
-          x-stream-index: 001.001.001
+          x-stream-index: 001.003.001
         file:
-          description: URL to the uploaded asset. Should be used to put to `asset_url`
-            attachment field
-          title: File
+          type: string
+          x-stream-index: "001.001"
+        thumb_url:
           type: string
           x-stream-index: "001.002"
-        thumb_url:
-          description: URL of the file thumbnail for supported file formats. Should
-            be put to `thumb_url` attachment field
-          title: Thumbnail URL
-          type: string
-          x-stream-index: "001.003"
         upload_sizes:
+          description: Array of image size configurations
           items:
             $ref: '#/components/schemas/ImageSize'
+          title: Upload sizes
           type: array
           x-stream-index: "002"
       required:
@@ -6151,7 +6240,9 @@ components:
         read_by_channel:
           additionalProperties:
             type: string
+          description: Map of channel ID to last read message ID
           maximum: 30
+          title: Read by channel
           type: object
           x-stream-index: "001"
       type: object
@@ -6400,6 +6491,8 @@ components:
       nullable: true
       properties:
         duration:
+          description: Duration of the request in milliseconds
+          title: Duration
           type: string
           x-stream-index: "002.001"
         members:
@@ -6782,7 +6875,7 @@ components:
       x-stream-event-client-type: true
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
-    MessageFlag:
+    MessageFlagResponse:
       nullable: true
       properties:
         approved_at:
@@ -6947,7 +7040,7 @@ components:
           type: array
           x-stream-index: "001.002"
         type:
-          default: notification.thread_message_new
+          default: message.new
           type: string
           x-stream-index: "004.001"
         user:
@@ -9406,6 +9499,8 @@ components:
     QueryBannedUsersRequest:
       properties:
         exclude_expired_bans:
+          description: Whether to exclude expired bans or not
+          title: Exclude expired bans
           type: boolean
           x-stream-index: "006"
         filter_conditions:
@@ -9413,19 +9508,25 @@ components:
           type: object
           x-stream-index: "001"
         limit:
+          description: Number of records to return
           format: int32
           maximum: 300
+          title: Limit
           type: integer
           x-stream-index: "004"
         offset:
+          description: Number of records to offset
           format: int32
           maximum: 10000
+          title: Offset
           type: integer
           x-stream-index: "005"
         sort:
+          description: Array of sort parameters
           items:
-            $ref: '#/components/schemas/SortParam'
+            $ref: '#/components/schemas/SortParamRequest'
           maximum: 1
+          title: Sort
           type: array
           x-stream-index: "002"
       required:
@@ -9435,12 +9536,14 @@ components:
       nullable: true
       properties:
         bans:
+          description: List of found bans
           items:
             $ref: '#/components/schemas/BanResponse'
+          title: BanResponse
           type: array
           x-stream-index: "001"
         duration:
-          description: Duration of the request in human-readable format
+          description: Duration of the request in milliseconds
           title: Duration
           type: string
           x-stream-index: "002.001"
@@ -9473,7 +9576,7 @@ components:
           x-stream-index: "004.003"
         sort:
           items:
-            $ref: '#/components/schemas/SortParam'
+            $ref: '#/components/schemas/SortParamRequest'
           maximum: 1
           type: array
           x-stream-index: "003"
@@ -9529,7 +9632,7 @@ components:
           x-stream-index: "004.003"
         sort:
           items:
-            $ref: '#/components/schemas/SortParam'
+            $ref: '#/components/schemas/SortParamRequest'
           maximum: 2
           type: array
           x-stream-index: "002"
@@ -9578,7 +9681,7 @@ components:
           x-stream-index: "006.003"
         sort:
           items:
-            $ref: '#/components/schemas/SortParam'
+            $ref: '#/components/schemas/SortParamRequest'
           maximum: 2
           type: array
           x-stream-index: "004"
@@ -9596,6 +9699,8 @@ components:
           type: array
           x-stream-index: "001"
         duration:
+          description: Duration of the request in milliseconds
+          title: Duration
           type: string
           x-stream-index: "003.001"
         next:
@@ -9726,7 +9831,7 @@ components:
         sort:
           description: Array of sort parameters
           items:
-            $ref: '#/components/schemas/SortParam'
+            $ref: '#/components/schemas/SortParamRequest'
           maximum: 1
           title: Sort
           type: array
@@ -9759,6 +9864,8 @@ components:
           type: integer
           x-stream-index: "003.004"
         show_deleted_messages:
+          description: Whether to include deleted messages in the results
+          title: ShowDeletedMessages
           type: boolean
           x-stream-index: "002"
         sort:
@@ -9772,13 +9879,15 @@ components:
       nullable: true
       properties:
         duration:
-          description: Duration of the request in human-readable format
+          description: Duration of the request in milliseconds
           title: Duration
           type: string
           x-stream-index: "002.001"
         flags:
+          description: The flags that match the query
           items:
-            $ref: '#/components/schemas/MessageFlag'
+            $ref: '#/components/schemas/MessageFlagResponse'
+          title: MessageFlagResponseList
           type: array
           x-stream-index: "001"
       required:
@@ -9890,7 +9999,7 @@ components:
           x-stream-index: "006.003"
         sort:
           items:
-            $ref: '#/components/schemas/SortParam'
+            $ref: '#/components/schemas/SortParamRequest'
           maximum: 2
           type: array
           x-stream-index: "003"
@@ -9964,6 +10073,8 @@ components:
       nullable: true
       properties:
         duration:
+          description: Duration of the request in milliseconds
+          title: Duration
           type: string
           x-stream-index: "003.001"
         next:
@@ -10224,7 +10335,7 @@ components:
       nullable: true
       properties:
         duration:
-          description: Duration of the request in human-readable format
+          description: Duration of the request in milliseconds
           title: Duration
           type: string
           x-stream-index: "003.001"
@@ -10265,31 +10376,47 @@ components:
     ReactionResponse:
       properties:
         created_at:
+          description: Date/time of creation
           format: date-time
+          title: Created at
           type: number
           x-stream-index: "006"
         custom:
           additionalProperties: {}
+          description: Custom data for this object
+          title: Custom data
           type: object
           x-stream-index: "008"
         message_id:
+          description: Message ID
+          title: Message ID
           type: string
           x-stream-index: "001"
         score:
+          description: Score of the reaction
           format: int32
+          title: Score
           type: integer
           x-stream-index: "005"
         type:
+          description: Type of reaction
+          title: Type
           type: string
           x-stream-index: "004"
         updated_at:
+          description: Date/time of the last update
           format: date-time
+          title: Updated at
           type: number
           x-stream-index: "007"
         user:
           $ref: '#/components/schemas/UserResponse'
+          description: User
+          title: UserResponse
           x-stream-index: "003"
         user_id:
+          description: User ID
+          title: User ID
           type: string
           x-stream-index: "002"
       required:
@@ -11127,10 +11254,14 @@ components:
           x-stream-index: "003.001"
         message:
           $ref: '#/components/schemas/MessageResponse'
+          description: Message response
+          title: Message
           x-stream-index: "001"
         pending_message_metadata:
           additionalProperties:
             type: string
+          description: Pending message metadata
+          title: Pending message metadata
           type: object
           x-stream-index: "002"
       required:
@@ -11333,17 +11464,6 @@ components:
       properties:
         duration:
           description: Duration of the request in milliseconds
-          title: Duration
-          type: string
-          x-stream-index: "001.001"
-      required:
-      - duration
-      type: object
-    StopWatchingResponse:
-      nullable: true
-      properties:
-        duration:
-          description: Duration of the request in human-readable format
           title: Duration
           type: string
           x-stream-index: "001.001"
@@ -11606,56 +11726,86 @@ components:
       properties:
         channel:
           $ref: '#/components/schemas/ChannelResponse'
+          description: Channel
+          title: ChannelResponse
           x-stream-index: "002"
         channel_cid:
+          description: Channel CID
+          title: Channel CID
           type: string
           x-stream-index: "001"
         created_at:
+          description: Date/time of creation
           format: date-time
+          title: Created at
           type: number
           x-stream-index: "011"
         created_by:
           $ref: '#/components/schemas/UserObject'
+          description: Created By User
+          title: User
           x-stream-index: "006"
         created_by_user_id:
+          description: Created By User ID
+          title: Created By User ID
           type: string
           x-stream-index: "005"
         custom:
           additionalProperties: {}
+          description: Custom data for this object
+          title: Custom data
           type: object
           x-stream-index: "015"
         deleted_at:
+          description: Deleted At
           format: date-time
+          title: Deleted At
           type: number
           x-stream-index: "013"
         last_message_at:
+          description: Last Message At
           format: date-time
+          title: Last Message At
           type: number
           x-stream-index: "010"
         parent_message:
           $ref: '#/components/schemas/Message'
+          description: Parent Message
+          title: Message
           x-stream-index: "004"
         parent_message_id:
+          description: Parent Message ID
+          title: Parent Message ID
           type: string
           x-stream-index: "003"
         participant_count:
+          description: Participant Count
           format: int32
+          title: Participant Count
           type: integer
           x-stream-index: "008"
         reply_count:
+          description: Reply Count
           format: int32
+          title: Reply Count
           type: integer
           x-stream-index: "007"
         thread_participants:
+          description: Thread Participants
           items:
             $ref: '#/components/schemas/ThreadParticipant'
+          title: ThreadParticipants
           type: array
           x-stream-index: "009"
         title:
+          description: Title
+          title: Title
           type: string
           x-stream-index: "014"
         updated_at:
+          description: Date/time of the last update
           format: date-time
+          title: Updated at
           type: number
           x-stream-index: "012"
       required:
@@ -11774,30 +11924,46 @@ components:
       properties:
         channel:
           $ref: '#/components/schemas/ChannelResponse'
+          description: Channel
+          title: ChannelResponse
           x-stream-index: "001.002"
         channel_cid:
+          description: Channel CID
+          title: Channel CID
           type: string
           x-stream-index: "001.001"
         created_at:
+          description: Date/time of creation
           format: date-time
+          title: Created at
           type: number
           x-stream-index: "001.011"
         created_by:
           $ref: '#/components/schemas/UserObject'
+          description: Created By User
+          title: User
           x-stream-index: "001.006"
         created_by_user_id:
+          description: Created By User ID
+          title: Created By User ID
           type: string
           x-stream-index: "001.005"
         custom:
           additionalProperties: {}
+          description: Custom data for this object
+          title: Custom data
           type: object
           x-stream-index: "001.015"
         deleted_at:
+          description: Deleted At
           format: date-time
+          title: Deleted At
           type: number
           x-stream-index: "001.013"
         last_message_at:
+          description: Last Message At
           format: date-time
+          title: Last Message At
           type: number
           x-stream-index: "001.010"
         latest_replies:
@@ -11807,12 +11973,18 @@ components:
           x-stream-index: "002"
         parent_message:
           $ref: '#/components/schemas/Message'
+          description: Parent Message
+          title: Message
           x-stream-index: "001.004"
         parent_message_id:
+          description: Parent Message ID
+          title: Parent Message ID
           type: string
           x-stream-index: "001.003"
         participant_count:
+          description: Participant Count
           format: int32
+          title: Participant Count
           type: integer
           x-stream-index: "001.008"
         read:
@@ -11821,19 +11993,27 @@ components:
           type: array
           x-stream-index: "003"
         reply_count:
+          description: Reply Count
           format: int32
+          title: Reply Count
           type: integer
           x-stream-index: "001.007"
         thread_participants:
+          description: Thread Participants
           items:
             $ref: '#/components/schemas/ThreadParticipant'
+          title: ThreadParticipants
           type: array
           x-stream-index: "001.009"
         title:
+          description: Title
+          title: Title
           type: string
           x-stream-index: "001.014"
         updated_at:
+          description: Date/time of the last update
           format: date-time
+          title: Updated at
           type: number
           x-stream-index: "001.012"
       required:
@@ -12080,14 +12260,18 @@ components:
       properties:
         channel:
           $ref: '#/components/schemas/ChannelResponse'
+          description: Truncated channel object
+          title: Channel
           x-stream-index: "002"
         duration:
-          description: Duration of the request in human-readable format
+          description: Duration of the request in milliseconds
           title: Duration
           type: string
           x-stream-index: "001.001"
         message:
           $ref: '#/components/schemas/Message'
+          description: Truncated message object
+          title: Message
           x-stream-index: "003"
       required:
       - duration
@@ -12276,7 +12460,7 @@ components:
       nullable: true
       properties:
         duration:
-          description: Duration of the request in human-readable format
+          description: Duration of the request in milliseconds
           title: Duration
           type: string
           x-stream-index: "002.001"
@@ -12501,15 +12685,19 @@ components:
       properties:
         channel:
           $ref: '#/components/schemas/ChannelResponse'
+          description: Updated channel object
+          title: Channel
           x-stream-index: "001"
         duration:
-          description: Duration of the request in human-readable format
+          description: Duration of the request in milliseconds
           title: Duration
           type: string
           x-stream-index: "003.001"
         members:
+          description: List of updated members
           items:
-            $ref: '#/components/schemas/ChannelMember'
+            $ref: '#/components/schemas/ChannelMemberResponse'
+          title: ChannelMemberResponse
           type: array
           x-stream-index: "002"
       required:
@@ -12612,6 +12800,8 @@ components:
       properties:
         channel:
           $ref: '#/components/schemas/ChannelResponse'
+          description: Updated channel
+          title: Channel
           x-stream-index: "001"
         duration:
           description: Duration of the request in milliseconds
@@ -12619,12 +12809,16 @@ components:
           type: string
           x-stream-index: "004.001"
         members:
+          description: List of channel members
           items:
             $ref: '#/components/schemas/ChannelMember'
+          title: Members
           type: array
           x-stream-index: "003"
         message:
           $ref: '#/components/schemas/Message'
+          description: Message sent to the chat
+          title: Message
           x-stream-index: "002"
       required:
       - members
@@ -12829,6 +13023,8 @@ components:
       nullable: true
       properties:
         duration:
+          description: Duration of the request in milliseconds
+          title: Duration
           type: string
           x-stream-index: "002.001"
         thread:
@@ -14555,7 +14751,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v126.1.0
+  version: v126.6.2
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -14705,6 +14901,8 @@ paths:
         name: type
         required: true
         schema:
+          description: Channel type to interact with
+          title: Channel type
           type: string
           writeOnly: true
           x-stream-index: "001.001"
@@ -14712,6 +14910,8 @@ paths:
         name: id
         required: true
         schema:
+          description: Channel ID to interact with
+          title: Channel ID
           type: string
           writeOnly: true
           x-stream-index: "001.002"
@@ -14901,7 +15101,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FileDeleteResponse'
+                $ref: '#/components/schemas/Response'
           description: Successful response
         "400":
           content:
@@ -15062,7 +15262,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FileDeleteResponse'
+                $ref: '#/components/schemas/Response'
           description: Successful response
         "400":
           content:
@@ -15467,7 +15667,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StopWatchingResponse'
+                $ref: '#/components/schemas/Response'
           description: Successful response
         "400":
           content:
@@ -15834,6 +16034,8 @@ paths:
         name: id
         required: true
         schema:
+          description: ID of the message
+          title: ID
           type: string
           writeOnly: true
           x-stream-index: "001"
@@ -16407,7 +16609,7 @@ paths:
         name: sort
         schema:
           items:
-            $ref: '#/components/schemas/SortParam'
+            $ref: '#/components/schemas/SortParamRequest'
           maximum: 1
           type: array
           writeOnly: true
