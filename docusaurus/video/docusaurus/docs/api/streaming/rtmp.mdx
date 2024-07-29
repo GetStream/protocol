@@ -7,13 +7,21 @@ title: RTMP input
 
 import RTMP from '../_common_/rtmp.mdx';
 
-## RTMP input overview
+## RTMP input service overview
 
 RTMP input is a service designed to bridge the gap between RTMP (Real-Time Messaging Protocol) and WebRTC (Web Real-Time Communication). 
 It enables users to stream content using an RTMP client, such as OBS (Open Broadcaster Software), and have that content published to participants in a [Call](../basics/calls.mdx). 
 The service will transcode the received media to ensure compatibility with WebRTC. It will also publish multiple qualities of it with [Simulcast](https://getstream.io/resources/projects/webrtc/architectures/simulcast/).
 
 _Please note that this page is about publishing video/audio using RTMP, **NOT** watching livestreams using RTMP._
+
+### About RTMP
+
+[RTMP](https://rtmp.veriskope.com/docs/spec/) is a real-time streaming protocol created by Adobe, as media container format it uses Flash Video [FLV](https://rtmp.veriskope.com/pdf/video_file_format_spec_v10.pdf)
+also developed by Adobe.
+
+There's also an enhanced RTMP protocol, created to support a [wider range of newer video codecs](https://veovera.org/docs/enhanced/enhanced-rtmp-v2)
+like AV1, HEVC and VP8. OBS for example supports AV1 and HEVC. **RTMP input service doesn’t support them**.
 
 ## RTMP publishing
 
@@ -74,6 +82,19 @@ _The example is for OBS, but any other RTMP client should support adding the sam
   src={require('../assets/rtmp_restream_settings.png').default}
   style={{ width: '50%' }}
 />
+
+
+### Streaming a file into a call with FFmpeg
+
+With your call's RTMP url `$CALL_RTMP_URL` and your token streamKey `$STREAM_KEY` from [publishing](#rtmp-publishing). 
+Run:
+
+```bash
+ffmpeg -re -stream_loop 400 -i YourVideoFile1080p30fps.mp4 \
+  -c:v libx264 -preset veryfast -tune zerolatency \
+  -pix_fmt yuv420p -g 50 -c:a aac -b:a 160k \
+  -ac 2 -f flv "$CALL_RTMP_URL/$STREAM_KEY"
+```
 
 ### FAQ
 
