@@ -7,11 +7,13 @@ title: RTMP input
 
 import RTMP from '../_common_/rtmp.mdx';
 
-## RTMP input support overview
+## RTMP input overview
 
-Almost all livestream software and hardware supports RTMP. Our API supports using third-party software for streaming using RTMP.
+RTMP input is a service designed to bridge the gap between RTMP (Real-Time Messaging Protocol) and WebRTC (Web Real-Time Communication). 
+It enables users to stream content using an RTMP client, such as OBS (Open Broadcaster Software), and have that content delivered to participants in a Stream WebRTC session. 
+The service will transcode the received media to ensure compatibility with WebRTC. It will also publish multiple qualities of it with [Simulcast](https://getstream.io/resources/projects/webrtc/architectures/simulcast/).
 
-_Please not that this page is about publishing video/audio using RTMP, **NOT** watching livestreams using RTMP._
+_Please note that this page is about publishing video/audio using RTMP, **NOT** watching livestreams using RTMP._
 
 ## RTMP publishing
 
@@ -35,6 +37,30 @@ You can see an example in the [Quickstart](../../streaming/overview/#test-sendin
   style={{ width: '100%' }}
 />
 
+#### Optimal OBS Video Encoding Settings
+
+To ensure optimal quality and performance when transcoding media from RTMP, follow these recommended H.264 encoding settings:
+
+Go to `Settings`:
+
+- **Video**:
+  - Base Resolution: 1920x1080
+  - Output Resolution: 1920x1080 (Same as input resolution)
+
+- **Output**:
+  - Encoder: `x264`
+  - Rate Control: `CBR` (Constant Bit Rate)
+  - Bitrate: 3,000-6,000 kbps (adjust based on your network and type of media being streamed, higher movement will require higher bitrate)
+  - Keyframe Interval: 2 seconds
+  - CPU Usage Preset: `veryfast` (balance between quality and encoding speed)
+  - Tune: `zerolatency`
+
+
+<img
+  src={require('../assets/rtmp_in_obs_output_settings.png').default}
+  style={{ width: '50%' }}
+/>
+
 ### Streaming into a call with restream.io
 
 1. Go to [restream.io](https://restream.io/) and create an account.
@@ -47,3 +73,24 @@ You can see an example in the [Quickstart](../../streaming/overview/#test-sendin
   src={require('../assets/rtmp_restream_settings.png').default}
   style={{ width: '50%' }}
 />
+
+### FAQ
+
+#### What is the typical latency introduced by RTMP?
+
+RTMP input typically introduces a latency of 2-5 seconds. This can vary based on the network conditions, encoder settings (as the stream will be transcoded), and the performance of the RTMP server. 
+Optimizing [encoding settings](#optimal-obs-video-encoding-settings) and ensuring a stable network connection can help minimize this latency.
+
+####  What are the best practices for setting up OBS for RTMP streaming?
+
+Refer to [Optimal OBS Video Encoding Settings](#optimal-obs-video-encoding-settings).
+
+#### Do we support both RTMP and RTMPS?
+
+No, our service supports exclusively RTMPS. RTMPS is the recommended for secure streaming as it uses SSL/TLS to encrypt the data, providing an additional layer of security over RTMP.
+
+#### What are the recommended internet connection settings for optimal streaming performance?
+
+- **Upload Speed**: At least double the target bitrate of your stream. For example, if streaming at 5,000 kbps, ensure an upload speed of at least 10 Mbps.
+- **Connection Type**: Wired Ethernet connection is preferred over Wi-Fi for stability.
+- **Network Quality**: Ensure low packet loss (<1%) and low jitter (<30ms).
