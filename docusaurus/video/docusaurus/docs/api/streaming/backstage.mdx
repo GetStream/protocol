@@ -13,10 +13,84 @@ import GoLive from '../_common_/go_live.mdx';
 
 By default, livestreams are created in backstage mode, while in backstage mode, streams can only be accessed by admin-like users.
 This is necessary because it makes it possible to create the setup in advance and to notify and grant access to viewers when the event starts.
+To allow regular users to join a call ahead of time, even if the call is still in backstage mode you can create the call and set the join ahead time backstage setting.
+The default value of `join_ahead_time_seconds` is 0, which means that users can only join the call when the call starts.
 
 ## Configuration
 
-You change the backstage mode settings on the call type or on the call level.
+To create a call in backstage mode and allow users to join ahead of the scheduled time you can use the join_ahead_time_seconds settings option.
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+startsAt = new Date(Date.now() + 30 * 60 * 1000);
+client.call('livestream', 'test-outgoing-call').getOrCreate({
+    data: {
+        starts_at: startsAt.toISOString(),
+        created_by_id: 'john',
+        settings_override: {
+            backstage: {
+                enabled: true,
+                join_ahead_time_seconds: 300,
+            },
+        },
+    },
+});
+```
+
+</TabItem>
+<TabItem value="py" label="Python">
+
+```py
+# create a call with backstage enabled, starts_at set
+# and join_ahead_of_time_seconds set to 5 minutes
+from datetime import datetime, timedelta, timezone
+starts_at = datetime.now(timezone.utc) + timedelta(minutes=30)
+
+call = client.video.call("livestream", uuid.uuid4())
+response = call.get_or_create(
+    data=CallRequest(
+        starts_at=starts_at,
+        created_by_id=user_id,
+        settings_override=CallSettingsRequest(
+            backstage=BackstageSettingsRequest(
+                enabled=True,
+                join_ahead_time_seconds=300,
+            ),
+        ),
+    )
+)
+```
+
+</TabItem>
+
+<TabItem value="curl" label="cURL">
+
+```bash
+# create a call with backstage mode and join ahead time settings
+curl -X POST "https://video.stream-io-api.com/api/v2/video/call/${CALL_TYPE}/${CALL_ID}?api_key=${API_KEY}" \
+  -H "Authorization: ${TOKEN}" \
+  -H "Content-Type: application/json" \
+  -H "stream-auth-type: jwt" \
+  -d '{
+    "data": {
+      "starts_at": "2022-01-01T00:00:00Z",
+      "created_by_id": "john",
+      "settings_override": {
+        "backstage": {
+            "enabled": true,
+            "join_ahead_time_seconds": 300
+          }
+         },
+      }
+    }'
+```
+
+</TabItem>
+</Tabs>
+
+You can change the backstage mode and join ahead time settings on the call type or on the call level. Allowing the users to join a call in backstage is optional.
 
 <Tabs groupId="examples">
 <TabItem value="js" label="JavaScript">
@@ -27,6 +101,7 @@ call.update({
   settings_override: {
     backstage: {
       enabled: true,
+      join_ahead_time_seconds: 300,
     },
   },
 });
@@ -36,6 +111,7 @@ client.video.updateCallType('<call type name>', {
   settings: {
     backstage: {
       enabled: true,
+      join_ahead_time_seconds: 300,
     },
   },
 });
@@ -50,6 +126,7 @@ call.update(
     settings_override=CallSettingsRequest(
         backstage=BackstageSettingsRequest(
             enabled=True,
+            join_ahead_time_seconds=300,
         ),
     ),
 )
@@ -60,6 +137,7 @@ client.video.update_call_type(
     settings=CallSettingsRequest(
         backstage=BackstageSettingsRequest(
             enabled=True,
+            join_ahead_time_seconds=300,
         ),
     ),
 )
@@ -77,7 +155,8 @@ curl -X PATCH "https://video.stream-io-api.com/api/v2/video/call/${CALL_TYPE_NAM
   -d '{
   "settings_override": {
       "backstage": {
-        "enabled": true
+        "enabled": true,
+        "join_ahead_time_seconds": 300
       }
     }
   }'
@@ -90,7 +169,8 @@ curl -X PUT "https://video.stream-io-api.com/api/v2/video/calltypes/${CALL_TYPE_
   -d '{
     "settings": {
       "backstage": {
-        "enabled": true
+        "enabled": true,
+        "join_ahead_time_seconds": 300
       }
     }
   }'
@@ -145,6 +225,7 @@ curl -X PUT "https://video.stream-io-api.com/api/v2/video/calltypes/${CALL_TYPE_
 </Tabs>
 
 With this approach you can add multiple members that have the `join-backstage` capability, which allows you to have multiple hosts.
+Or, you can bypass this check and allow users to join by creating time with specifying the join_ahead_time_seconds backstage option.
 
 ## Go Live
 
@@ -158,7 +239,7 @@ It's also possible to send push notifications to call members on this event, for
 
 ## Stop Live
 
-When the stream ends the `StopLive` endpoint will remove the viewers that are still in the call, and prevent from new viewers to join.
+When the stream ends the `StopLive` endpoint will remove the viewers that are still in the call, and prevent from new viewers to join.
 
 A call can enter and leave backstage mode multiple times.
 
@@ -183,6 +264,11 @@ call.stop_live()
 curl -X POST "https://video.stream-io-api.com/api/v2/video/call/${CALL_TYPE_NAME}/${CALL_ID}/stop_live?api_key=${API_KEY}" \
   -H "Authorization: ${TOKEN}" \
   -H "stream-auth-type: jwt"
+
+# call stopLive with starts_at update
+curl -X POST "https://video.stream-io-api.com/api/v2/video/call/${CALL_TYPE_NAME}/${CALL_ID}/stop_live?api_key=${API_KEY}" \
+  -H "Authorization: ${TOKEN}" \
+  -H " stream-auth-type: jwt" \
 ```
 
 </TabItem>
