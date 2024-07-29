@@ -1,0 +1,71 @@
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import AsyncTasks from '../_common_/async-tasks.mdx';
+
+Deleting a user means:
+
+- the user can't connect to Stream API
+- their data won't appear in user queries
+
+Delete has the following opitions:
+
+| Name                   | Type                       | Description                                                                                                                                                                                                                                                                                                   | Optional |
+| ---------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `user`                 | Enum (soft, pruning, hard) | - Soft: marks user as deleted and retains all user data. <br /> - Pruning: marks user as deleted and nullifies user information. <br /> - Hard: deletes user completely - this requires hard option for messages and conversation as well.                                                                    | Yes      |
+| `conversations`        | Enum (soft, hard)          | - Soft: marks all conversation channels as deleted (same effect as Delete Channels with 'hard' option disabled). <br /> - Hard: deletes channel and all its data completely including messages (same effect as Delete Channels with 'hard' option enabled).                                                   | Yes      |
+| `messages`             | Enum (soft, pruning, hard) | - Soft: marks all user messages as deleted without removing any related message data. <br /> - Pruning: marks all user messages as deleted, nullifies message information and removes some message data such as reactions and flags. <br /> - Hard: deletes messages completely with all related information. | Yes      |
+| `new_channel_owner_id` | string                     | Channels owned by hard-deleted users will be transferred to this userID. If you doesn't provide a value, the channel owner will have a system generated ID like `delete-user-8219f6578a7395g`                                                                                                                 | Yes      |
+| `calls`                | Enum (soft, hard)          | - Soft: marks calls and related data as deleted. <br /> - Hard: deletes calls and related data completely <br /> Note that this applies only to 1:1 calls, not group calls                                                                                                                                    | Yes      |
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+client.deleteUsers({ user_ids: ['<id>'] });
+
+//restore
+client.restoreUsers({ user_ids: ['<id>'] });
+```
+
+</TabItem>
+
+<TabItem value="py" label="Python">
+
+```py
+client.delete_users(user_ids=["<id>"])
+
+# restore
+client.restore_users(user_ids=["<id>"])
+```
+
+</TabItem>
+<TabItem value="curl" label="cURL">
+
+```bash
+# Delete users
+curl -X POST https://video.stream-io-api.com/api/v2/users/delete?api_key=${API_KEY} \
+  -H "Authorization: ${TOKEN}" \
+  -H "stream-auth-type: jwt" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_ids": ["sara"]
+  }'
+
+# Restore users
+curl -X POST https://video.stream-io-api.com/api/v2/users/restore?api_key=${API_KEY} \
+  -H "Authorization: ${TOKEN}" \
+  -H "stream-auth-type: jwt" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_ids": ["sara"]
+  }'
+```
+
+</TabItem>
+</Tabs>
+
+Deleting and restoring users in bulk can take some time, this is how you can check the progress:
+
+<AsyncTasks />
+
+For more informiation, please refer to the [async operations guide](/api/misc/async)
