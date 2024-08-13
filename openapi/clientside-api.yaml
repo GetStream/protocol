@@ -104,9 +104,15 @@ components:
         reason:
           type: string
           x-stream-index: "008"
+        review_queue_item:
+          $ref: '#/components/schemas/ReviewQueueItem'
+          x-stream-index: "013"
         review_queue_item_id:
           type: string
           x-stream-index: "011"
+        target_user:
+          $ref: '#/components/schemas/UserObject'
+          x-stream-index: "012"
         target_user_id:
           type: string
           x-stream-index: "010"
@@ -441,43 +447,27 @@ components:
       properties:
         banned_by:
           $ref: '#/components/schemas/UserRequest'
-          description: User who issued a ban
-          title: Banned by
-          x-stream-index: "010"
-        banned_by_id:
-          description: User ID who issued a ban
-          title: Banned by ID
-          type: string
-          x-stream-index: "009"
-        channel_cid:
-          description: Channel CID to ban user in eg. messaging:123
-          title: Channel CID
-          type: string
-          x-stream-index: "006"
-        ip_ban:
-          description: Whether to perform IP ban or not
-          title: IP ban
-          type: boolean
           x-stream-index: "008"
+        banned_by_id:
+          type: string
+          x-stream-index: "007"
+        channel_cid:
+          type: string
+          x-stream-index: "004"
+        ip_ban:
+          type: boolean
+          x-stream-index: "006"
         reason:
-          description: Ban reason
-          title: Reason
           type: string
           x-stream-index: "003"
         shadow:
-          description: Whether to perform shadow ban or not
-          title: Shadow
           type: boolean
-          x-stream-index: "007"
+          x-stream-index: "005"
         target_user_id:
-          description: ID of user to ban
-          title: Target user ID
           type: string
           x-stream-index: "001"
         timeout:
-          description: Timeout of ban in minutes. User will be unbanned after this
-            period of time
-          title: Timeout
+          minimum: 0
           type: integer
           x-stream-index: "002"
       required:
@@ -672,6 +662,9 @@ components:
         hls:
           $ref: '#/components/schemas/HLSSettingsRequest'
           x-stream-index: "002"
+        rtmp:
+          $ref: '#/components/schemas/RTMPSettingsRequest'
+          x-stream-index: "003"
       type: object
     BroadcastSettingsResponse:
       properties:
@@ -681,9 +674,13 @@ components:
         hls:
           $ref: '#/components/schemas/HLSSettingsResponse'
           x-stream-index: "002"
+        rtmp:
+          $ref: '#/components/schemas/RTMPSettingsResponse'
+          x-stream-index: "003"
       required:
       - enabled
       - hls
+      - rtmp
       type: object
     CallAcceptedEvent:
       description: This event is sent when a user accepts a notification to join a
@@ -2452,7 +2449,7 @@ components:
           type: array
           x-stream-index: "003"
         sender:
-          $ref: '#/components/schemas/UserObject'
+          $ref: '#/components/schemas/User'
           x-stream-index: "005"
         sender_id:
           type: string
@@ -2484,7 +2481,7 @@ components:
           x-stream-index: "015"
         users:
           items:
-            $ref: '#/components/schemas/UserObject'
+            $ref: '#/components/schemas/User'
           type: array
           x-stream-index: "016"
       required:
@@ -4171,22 +4168,30 @@ components:
       nullable: true
       properties:
         id:
+          description: Device ID
           maxLength: 255
           minLength: 1
+          title: ID
           type: string
           x-stream-index: "001"
         push_provider:
+          description: Push provider
           enum:
           - firebase
           - apn
           - huawei
           - xiaomi
+          title: PushProvider
           type: string
           x-stream-index: "002"
         push_provider_name:
+          description: Push provider name
+          title: PushProviderName
           type: string
           x-stream-index: "003"
         voip_token:
+          description: When true the token is for Apple VoIP push notifications
+          title: VoipToken
           type: boolean
           x-stream-index: "004"
       required:
@@ -4198,6 +4203,8 @@ components:
       properties:
         user:
           $ref: '#/components/schemas/UserRequest'
+          description: User object which server acts upon
+          title: User
           x-stream-index: "001"
       required:
       - user
@@ -4217,6 +4224,7 @@ components:
           x-stream-index: "003.001"
         user:
           $ref: '#/components/schemas/UserResponse'
+          description: User object which server acts upon
           title: User
           x-stream-index: "001"
       required:
@@ -4519,15 +4527,23 @@ components:
           type: string
           x-stream-index: "006"
         id:
+          description: Device ID
+          title: ID
           type: string
           x-stream-index: "003"
         push_provider:
+          description: Push provider
+          title: PushProvider
           type: string
           x-stream-index: "001"
         push_provider_name:
+          description: Push provider name
+          title: PushProviderName
           type: string
           x-stream-index: "002"
         user_id:
+          description: User ID
+          title: UserID
           type: string
           x-stream-index: "008"
         voip:
@@ -5070,21 +5086,26 @@ components:
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "004"
-        reason:
-          maxLength: 255
+          x-stream-index: "006"
+        entity_creator_id:
           type: string
           x-stream-index: "003"
-        target_message_id:
-          description: ID of the message when reporting a message
-          title: Target Message ID
-          type: string
-          x-stream-index: "001"
-        target_user_id:
-          description: ID of the user when reporting a user
-          title: Target User ID
+        entity_id:
           type: string
           x-stream-index: "002"
+        entity_type:
+          type: string
+          x-stream-index: "001"
+        moderation_payload:
+          $ref: '#/components/schemas/ModerationPayload'
+          x-stream-index: "005"
+        reason:
+          type: string
+          x-stream-index: "004"
+      required:
+      - entity_type
+      - entity_id
+      - reason
       type: object
     FlagResponse:
       nullable: true
@@ -5093,15 +5114,12 @@ components:
           description: Duration of the request in milliseconds
           title: Duration
           type: string
-          x-stream-index: "003.001"
-        flag:
-          $ref: '#/components/schemas/Flag'
-          x-stream-index: "001"
-        review_queue_item_id:
+          x-stream-index: "002.001"
+        item_id:
           type: string
-          x-stream-index: "002"
+          x-stream-index: "001"
       required:
-      - review_queue_item_id
+      - item_id
       - duration
       type: object
     FlagUpdatedEvent:
@@ -6917,7 +6935,7 @@ components:
           type: number
           x-stream-index: "011"
         reviewed_by:
-          $ref: '#/components/schemas/UserObject'
+          $ref: '#/components/schemas/User'
           x-stream-index: "012"
         updated_at:
           format: date-time
@@ -7086,7 +7104,7 @@ components:
           type: string
           x-stream-index: "004.001"
         thread:
-          $ref: '#/components/schemas/Thread'
+          $ref: '#/components/schemas/ThreadResponse'
           x-stream-index: "003.001"
         type:
           default: message.read
@@ -7744,8 +7762,6 @@ components:
             type: string
           type: array
           x-stream-index: "003"
-      required:
-      - created_at
       type: object
     ModerationResponse:
       properties:
@@ -7814,54 +7830,51 @@ components:
       required:
       - duration
       type: object
-    MuteUserRequest:
+    MuteRequest:
       nullable: true
       properties:
         target_ids:
           description: User IDs to mute (if multiple users)
           items:
             type: string
-          maximum: 1000
           title: Target IDs
           type: array
-          x-stream-index: "002"
+          x-stream-index: "001"
         timeout:
           description: Duration of mute in minutes
           minimum: 0
           title: Timeout
           type: integer
-          x-stream-index: "003"
+          x-stream-index: "002"
       required:
-      - timeout
+      - target_ids
       type: object
-    MuteUserResponse:
+    MuteResponse:
       nullable: true
       properties:
         duration:
           type: string
-          x-stream-index: "005.001"
-        mute:
-          $ref: '#/components/schemas/UserMute'
-          description: Object with user mute (if one user was muted)
-          title: Mute
-          x-stream-index: "001"
+          x-stream-index: "004.001"
         mutes:
           description: Object with mutes (if multiple users were muted)
           items:
             $ref: '#/components/schemas/UserMute'
           title: Mutes
           type: array
-          x-stream-index: "002"
+          x-stream-index: "001"
         non_existing_users:
+          description: A list of users that can't be found. Common cause for this
+            is deleted users
           items:
             type: string
+          title: Non Existing Users
           type: array
-          x-stream-index: "004"
+          x-stream-index: "003"
         own_user:
           $ref: '#/components/schemas/OwnUser'
           description: Authorized user object with fresh mutes information
-          title: Own user
-          x-stream-index: "003"
+          title: Own User
+          x-stream-index: "002"
       required:
       - duration
       type: object
@@ -8962,7 +8975,7 @@ components:
           type: number
           x-stream-index: 002.003.003
         poll:
-          $ref: '#/components/schemas/PollResponseData'
+          $ref: '#/components/schemas/PollPayloadData'
           x-stream-index: "001"
         received_at:
           format: date-time
@@ -8989,7 +9002,7 @@ components:
           type: number
           x-stream-index: 002.003.003
         poll:
-          $ref: '#/components/schemas/PollResponseData'
+          $ref: '#/components/schemas/PollPayloadData'
           x-stream-index: "001"
         received_at:
           format: date-time
@@ -9087,6 +9100,99 @@ components:
       - text
       - custom
       type: object
+    PollPayloadData:
+      properties:
+        Custom:
+          additionalProperties: {}
+          type: object
+          writeOnly: true
+          x-stream-index: "019"
+        allow_answers:
+          type: boolean
+          x-stream-index: "008"
+        allow_user_suggested_options:
+          type: boolean
+          x-stream-index: "007"
+        answers_count:
+          format: int32
+          type: integer
+          x-stream-index: "012"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "017"
+        created_by:
+          $ref: '#/components/schemas/UserResponse'
+          x-stream-index: "016"
+        created_by_id:
+          type: string
+          x-stream-index: "015"
+        description:
+          type: string
+          x-stream-index: "003"
+        enforce_unique_vote:
+          type: boolean
+          x-stream-index: "005"
+        id:
+          type: string
+          x-stream-index: "001"
+        is_closed:
+          type: boolean
+          x-stream-index: "009"
+        latest_votes_by_option:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/PollVoteResponseData'
+            type: array
+          type: object
+          x-stream-index: "014"
+        max_votes_allowed:
+          format: int32
+          type: integer
+          x-stream-index: "006"
+        name:
+          type: string
+          x-stream-index: "002"
+        options:
+          items:
+            $ref: '#/components/schemas/PollOptionResponseData'
+          type: array
+          x-stream-index: "011"
+        updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "018"
+        vote_count:
+          format: int32
+          type: integer
+          x-stream-index: "010"
+        vote_counts_by_option:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "013"
+        voting_visibility:
+          type: string
+          x-stream-index: "004"
+      required:
+      - id
+      - name
+      - description
+      - voting_visibility
+      - enforce_unique_vote
+      - allow_user_suggested_options
+      - allow_answers
+      - vote_count
+      - options
+      - answers_count
+      - vote_counts_by_option
+      - latest_votes_by_option
+      - created_by_id
+      - created_at
+      - updated_at
+      - Custom
+      type: object
     PollResponse:
       nullable: true
       properties:
@@ -9126,7 +9232,7 @@ components:
           type: number
           x-stream-index: "018"
         created_by:
-          $ref: '#/components/schemas/UserObject'
+          $ref: '#/components/schemas/User'
           x-stream-index: "017"
         created_by_id:
           type: string
@@ -9214,7 +9320,7 @@ components:
           type: number
           x-stream-index: 002.003.003
         poll:
-          $ref: '#/components/schemas/PollResponseData'
+          $ref: '#/components/schemas/PollPayloadData'
           x-stream-index: "001"
         received_at:
           format: date-time
@@ -9280,7 +9386,7 @@ components:
           type: number
           x-stream-index: 003.003.003
         poll:
-          $ref: '#/components/schemas/PollResponseData'
+          $ref: '#/components/schemas/PollPayloadData'
           x-stream-index: "001"
         poll_vote:
           $ref: '#/components/schemas/PollVoteResponseData'
@@ -9311,7 +9417,7 @@ components:
           type: number
           x-stream-index: 003.003.003
         poll:
-          $ref: '#/components/schemas/PollResponseData'
+          $ref: '#/components/schemas/PollPayloadData'
           x-stream-index: "001"
         poll_vote:
           $ref: '#/components/schemas/PollVoteResponseData'
@@ -9342,7 +9448,7 @@ components:
           type: number
           x-stream-index: 003.003.003
         poll:
-          $ref: '#/components/schemas/PollResponseData'
+          $ref: '#/components/schemas/PollPayloadData'
           x-stream-index: "001"
         poll_vote:
           $ref: '#/components/schemas/PollVoteResponseData'
@@ -10171,6 +10277,50 @@ components:
       required:
       - address
       title: RTMP Ingress
+      type: object
+    RTMPSettingsRequest:
+      properties:
+        enabled:
+          type: boolean
+          x-stream-index: "001"
+        max_duration_minutes:
+          format: int32
+          maximum: 480
+          minimum: 1
+          type: integer
+          x-stream-index: "004"
+        quality:
+          enum:
+          - 360p
+          - 480p
+          - 720p
+          - 1080p
+          - 1440p
+          - portrait-360x640
+          - portrait-480x854
+          - portrait-720x1280
+          - portrait-1080x1920
+          - portrait-1440x2560
+          type: string
+          x-stream-index: "002"
+      type: object
+    RTMPSettingsResponse:
+      properties:
+        enabled:
+          type: boolean
+          x-stream-index: "001"
+        max_duration_minutes:
+          format: int32
+          type: integer
+          x-stream-index: "004"
+        quality:
+          type: string
+          x-stream-index: "002"
+      required:
+      - enabled
+      - quality
+      - layout
+      - max_duration_minutes
       type: object
     Reaction:
       description: Represents user reaction to a message
@@ -11589,97 +11739,6 @@ components:
       - width
       - height
       type: object
-    Thread:
-      description: Represents a conversation thread linked to a specific message in
-        a channel.
-      properties:
-        channel:
-          $ref: '#/components/schemas/Channel'
-          description: Channel is the channel the thread belongs to
-          title: Channel
-          x-stream-index: "004"
-        channel_cid:
-          description: Channel CID is unique string identifier of the channel
-          title: Channel CID
-          type: string
-          x-stream-index: "003"
-        created_at:
-          description: Date/time of creation
-          format: date-time
-          title: Created at
-          type: number
-          x-stream-index: "013"
-        created_by:
-          $ref: '#/components/schemas/UserObject'
-          description: Created By is the user who created the thread
-          title: Created By
-          x-stream-index: "008"
-        custom:
-          additionalProperties: {}
-          description: Custom is the custom data of the thread
-          title: Custom
-          type: object
-          x-stream-index: "017"
-        deleted_at:
-          description: Date/time of deletion
-          format: date-time
-          title: Deleted at
-          type: number
-          x-stream-index: "015"
-        last_message_at:
-          description: Last Message At is the time of the last message in the thread
-          format: date-time
-          title: Last Message At
-          type: number
-          x-stream-index: "012"
-        parent_message:
-          $ref: '#/components/schemas/Message'
-          description: Parent Message is the message the thread is replying to
-          title: Parent Message
-          x-stream-index: "006"
-        parent_message_id:
-          description: Parent Message ID is unique string identifier of the parent
-            message
-          title: Parent Message ID
-          type: string
-          x-stream-index: "005"
-        participant_count:
-          description: The number of participants in the thread
-          format: int32
-          title: Participant Count
-          type: integer
-          x-stream-index: "010"
-        reply_count:
-          description: The number of replies in the thread
-          format: int32
-          title: Reply Count
-          type: integer
-          x-stream-index: "009"
-        thread_participants:
-          items:
-            $ref: '#/components/schemas/ThreadParticipant'
-          type: array
-          x-stream-index: "011"
-        title:
-          description: Title is the title of the thread
-          title: Title
-          type: string
-          x-stream-index: "016"
-        updated_at:
-          description: Date/time of the last update
-          format: date-time
-          title: Updated at
-          type: number
-          x-stream-index: "014"
-      required:
-      - channel_cid
-      - parent_message_id
-      - created_at
-      - updated_at
-      - title
-      - custom
-      title: Thread
-      type: object
     ThreadParticipant:
       description: Represents a user that is participating in a thread.
       nullable: true
@@ -11741,6 +11800,12 @@ components:
       type: object
     ThreadResponse:
       properties:
+        active_participant_count:
+          description: Active Participant Count
+          format: int32
+          title: Active Participant Count
+          type: integer
+          x-stream-index: "009"
         channel:
           $ref: '#/components/schemas/ChannelResponse'
           description: Channel
@@ -11756,7 +11821,7 @@ components:
           format: date-time
           title: Created at
           type: number
-          x-stream-index: "011"
+          x-stream-index: "012"
         created_by:
           $ref: '#/components/schemas/UserObject'
           description: Created By User
@@ -11772,19 +11837,19 @@ components:
           description: Custom data for this object
           title: Custom data
           type: object
-          x-stream-index: "015"
+          x-stream-index: "016"
         deleted_at:
           description: Deleted At
           format: date-time
           title: Deleted At
           type: number
-          x-stream-index: "013"
+          x-stream-index: "014"
         last_message_at:
           description: Last Message At
           format: date-time
           title: Last Message At
           type: number
-          x-stream-index: "010"
+          x-stream-index: "011"
         parent_message:
           $ref: '#/components/schemas/Message'
           description: Parent Message
@@ -11813,18 +11878,18 @@ components:
             $ref: '#/components/schemas/ThreadParticipant'
           title: ThreadParticipants
           type: array
-          x-stream-index: "009"
+          x-stream-index: "010"
         title:
           description: Title
           title: Title
           type: string
-          x-stream-index: "014"
+          x-stream-index: "015"
         updated_at:
           description: Date/time of the last update
           format: date-time
           title: Updated at
           type: number
-          x-stream-index: "012"
+          x-stream-index: "013"
       required:
       - channel_cid
       - parent_message_id
@@ -11839,6 +11904,10 @@ components:
         a channel.
       nullable: true
       properties:
+        active_participant_count:
+          format: int32
+          type: integer
+          x-stream-index: "001.011"
         channel:
           $ref: '#/components/schemas/Channel'
           description: Channel is the channel the thread belongs to
@@ -11854,7 +11923,7 @@ components:
           format: date-time
           title: Created at
           type: number
-          x-stream-index: "001.013"
+          x-stream-index: "001.014"
         created_by:
           $ref: '#/components/schemas/UserObject'
           description: Created By is the user who created the thread
@@ -11865,19 +11934,19 @@ components:
           description: Custom is the custom data of the thread
           title: Custom
           type: object
-          x-stream-index: "001.017"
+          x-stream-index: "001.018"
         deleted_at:
           description: Date/time of deletion
           format: date-time
           title: Deleted at
           type: number
-          x-stream-index: "001.015"
+          x-stream-index: "001.016"
         last_message_at:
           description: Last Message At is the time of the last message in the thread
           format: date-time
           title: Last Message At
           type: number
-          x-stream-index: "001.012"
+          x-stream-index: "001.013"
         latest_replies:
           items:
             $ref: '#/components/schemas/Message'
@@ -11915,18 +11984,18 @@ components:
           items:
             $ref: '#/components/schemas/ThreadParticipant'
           type: array
-          x-stream-index: "001.011"
+          x-stream-index: "001.012"
         title:
           description: Title is the title of the thread
           title: Title
           type: string
-          x-stream-index: "001.016"
+          x-stream-index: "001.017"
         updated_at:
           description: Date/time of the last update
           format: date-time
           title: Updated at
           type: number
-          x-stream-index: "001.014"
+          x-stream-index: "001.015"
       required:
       - channel_cid
       - parent_message_id
@@ -11939,6 +12008,12 @@ components:
       type: object
     ThreadStateResponse:
       properties:
+        active_participant_count:
+          description: Active Participant Count
+          format: int32
+          title: Active Participant Count
+          type: integer
+          x-stream-index: "001.009"
         channel:
           $ref: '#/components/schemas/ChannelResponse'
           description: Channel
@@ -11954,9 +12029,9 @@ components:
           format: date-time
           title: Created at
           type: number
-          x-stream-index: "001.011"
+          x-stream-index: "001.012"
         created_by:
-          $ref: '#/components/schemas/UserObject'
+          $ref: '#/components/schemas/User'
           description: Created By User
           title: User
           x-stream-index: "001.006"
@@ -11970,19 +12045,19 @@ components:
           description: Custom data for this object
           title: Custom data
           type: object
-          x-stream-index: "001.015"
+          x-stream-index: "001.016"
         deleted_at:
           description: Deleted At
           format: date-time
           title: Deleted At
           type: number
-          x-stream-index: "001.013"
+          x-stream-index: "001.014"
         last_message_at:
           description: Last Message At
           format: date-time
           title: Last Message At
           type: number
-          x-stream-index: "001.010"
+          x-stream-index: "001.011"
         latest_replies:
           items:
             $ref: '#/components/schemas/Message'
@@ -12021,18 +12096,18 @@ components:
             $ref: '#/components/schemas/ThreadParticipant'
           title: ThreadParticipants
           type: array
-          x-stream-index: "001.009"
+          x-stream-index: "001.010"
         title:
           description: Title
           title: Title
           type: string
-          x-stream-index: "001.014"
+          x-stream-index: "001.015"
         updated_at:
           description: Date/time of the last update
           format: date-time
           title: Updated at
           type: number
-          x-stream-index: "001.012"
+          x-stream-index: "001.013"
       required:
       - channel_cid
       - parent_message_id
@@ -12059,7 +12134,7 @@ components:
           type: number
           x-stream-index: "004.002"
         thread:
-          $ref: '#/components/schemas/Thread'
+          $ref: '#/components/schemas/ThreadResponse'
           x-stream-index: "003.001"
         type:
           default: thread.updated
@@ -12488,26 +12563,6 @@ components:
           x-stream-index: "001"
       required:
       - duration
-      type: object
-    UnmuteUserRequest:
-      nullable: true
-      properties:
-        target_ids:
-          description: User IDs to mute (if multiple users)
-          items:
-            type: string
-          maximum: 1000
-          title: Target IDs
-          type: array
-          x-stream-index: "001.002"
-        timeout:
-          description: Duration of mute in minutes
-          minimum: 0
-          title: Timeout
-          type: integer
-          x-stream-index: "001.003"
-      required:
-      - timeout
       type: object
     UnpinRequest:
       nullable: true
@@ -13220,6 +13275,84 @@ components:
       x-stream-event-call-type: true
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    User:
+      properties:
+        ban_expires:
+          format: date-time
+          type: number
+          x-stream-index: "016"
+        banned:
+          type: boolean
+          x-stream-index: "011"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "008"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "004"
+        deactivated_at:
+          format: date-time
+          type: number
+          x-stream-index: "015"
+        deleted_at:
+          format: date-time
+          type: number
+          x-stream-index: "010"
+        id:
+          type: string
+          x-stream-index: "001"
+        image:
+          type: string
+          x-stream-index: "003"
+        invisible:
+          type: boolean
+          x-stream-index: "017"
+        language:
+          type: string
+          x-stream-index: "005"
+        last_active:
+          format: date-time
+          type: number
+          x-stream-index: "013"
+        name:
+          type: string
+          x-stream-index: "002"
+        online:
+          type: boolean
+          x-stream-index: "012"
+        privacy_settings:
+          $ref: '#/components/schemas/PrivacySettings'
+          x-stream-index: "019"
+        push_notifications:
+          $ref: '#/components/schemas/PushNotificationSettings'
+          x-stream-index: "018"
+        revoke_tokens_issued_before:
+          format: date-time
+          type: number
+          x-stream-index: "014"
+        role:
+          type: string
+          x-stream-index: "006"
+        teams:
+          items:
+            type: string
+          type: array
+          x-stream-index: "007"
+        updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "009"
+      required:
+      - id
+      - custom
+      - role
+      - created_at
+      - updated_at
+      - banned
+      - online
+      type: object
     UserBannedEvent:
       properties:
         channel_id:
@@ -13461,6 +13594,7 @@ components:
       - roles
       type: object
     UserMute:
+      nullable: true
       properties:
         created_at:
           description: Date/time of creation
@@ -13506,14 +13640,14 @@ components:
           type: number
           x-stream-index: "003"
         target:
-          $ref: '#/components/schemas/UserObject'
+          $ref: '#/components/schemas/User'
           x-stream-index: "002"
         updated_at:
           format: date-time
           type: number
           x-stream-index: "005"
         user:
-          $ref: '#/components/schemas/UserObject'
+          $ref: '#/components/schemas/User'
           x-stream-index: "001"
       required:
       - created_at
@@ -13733,6 +13867,8 @@ components:
     UserResponse:
       properties:
         banned:
+          description: Whether a user is banned or not
+          title: Banned
           type: boolean
           x-stream-index: "001.011"
         blocked_user_ids:
@@ -13748,10 +13884,14 @@ components:
           x-stream-index: "001.008"
         custom:
           additionalProperties: {}
+          description: Custom data for this object
+          title: Custom data
           type: object
           x-stream-index: "001.004"
         deactivated_at:
+          description: Date of deactivation
           format: date-time
+          title: Deactivated at
           type: number
           x-stream-index: "001.015"
         deleted_at:
@@ -13761,34 +13901,51 @@ components:
           type: number
           x-stream-index: "001.010"
         id:
+          description: Unique user identifier
+          title: ID
           type: string
           x-stream-index: "001.001"
         image:
+          title: Image
           type: string
           x-stream-index: "001.003"
         language:
+          description: Preferred language of a user
+          title: Language
           type: string
           x-stream-index: "001.005"
         last_active:
+          description: Date of last activity
           format: date-time
+          title: Last active
           type: number
           x-stream-index: "001.013"
         name:
+          description: Optional name of user
+          title: Name
           type: string
           x-stream-index: "001.002"
         online:
+          description: Whether a user online or not
+          title: Online
           type: boolean
           x-stream-index: "001.012"
         revoke_tokens_issued_before:
+          description: Revocation date for tokens
           format: date-time
+          title: Revoke tokens issued before
           type: number
           x-stream-index: "001.014"
         role:
+          description: Determines the set of user permissions
+          title: Role
           type: string
           x-stream-index: "001.006"
         teams:
+          description: List of teams user is a part of
           items:
             type: string
+          title: Teams
           type: array
           x-stream-index: "001.007"
         updated_at:
@@ -14794,7 +14951,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v126.7.0
+  version: v128.2.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -17881,70 +18038,10 @@ paths:
       tags:
       - product:common
   /api/v2/moderation/ban:
-    delete:
-      description: |
-        Removes previously applied ban
-
-        Sends events:
-        - user.unbanned
-
-        Required permissions:
-        - BanChannelMember
-        - BanUser
-      operationId: Unban
-      parameters:
-      - in: query
-        name: target_user_id
-        required: true
-        schema:
-          type: string
-          writeOnly: true
-          x-stream-index: "001"
-      - in: query
-        name: channel_cid
-        schema:
-          type: string
-          writeOnly: true
-          x-stream-index: "002"
-      - in: query
-        name: created_by
-        schema:
-          type: string
-          writeOnly: true
-          x-stream-index: "005"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Response'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Unban user
-      tags:
-      - product:common
     post:
       description: |
-        Restricts user activity either in specific channel or globally
-
-        Sends events:
-        - user.banned
-
-        Required permissions:
-        - BanChannelMember
-        - BanUser
-      operationId: Ban
+        Moderation v2 ban
+      operationId: ban
       requestBody:
         content:
           application/json:
@@ -17956,7 +18053,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Response'
+                $ref: '#/components/schemas/BanResponse'
           description: Successful response
         "400":
           content:
@@ -17970,22 +18067,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
-      summary: Ban user
+      summary: Moderation v2 ban
       tags:
-      - product:common
+      - product:moderation
   /api/v2/moderation/flag:
     post:
       description: |
-        Reports message or user for review by moderators
-
-        Sends events:
-        - message.flagged
-        - user.flagged
-
-        Required permissions:
-        - FlagMessage
-        - FlagUser
-      operationId: Flag
+        Moderation v2 flag
+      operationId: flag
       requestBody:
         content:
           application/json:
@@ -18011,32 +18100,26 @@ paths:
               schema:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
-      summary: Flag
+      summary: Moderation v2 flag
       tags:
-      - product:common
+      - product:moderation
   /api/v2/moderation/mute:
     post:
       description: |
-        Mutes one or several users
-
-        Sends events:
-        - user.muted
-
-        Required permissions:
-        - MuteUser
-      operationId: MuteUser
+        Moderation v2 mute
+      operationId: mute
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/MuteUserRequest'
+              $ref: '#/components/schemas/MuteRequest'
         required: true
       responses:
         "201":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MuteUserResponse'
+                $ref: '#/components/schemas/MuteResponse'
           description: Successful response
         "400":
           content:
@@ -18050,48 +18133,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
-      summary: Mute user
+      summary: Moderation v2 mute
       tags:
-      - product:common
-  /api/v2/moderation/unmute:
-    post:
-      description: |
-        Unmutes previously muted user
-
-        Sends events:
-        - user.unmuted
-
-        Required permissions:
-        - MuteUser
-      operationId: UnmuteUser
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UnmuteUserRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UnmuteResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Unmute user
-      tags:
-      - product:common
+      - product:moderation
   /api/v2/og:
     get:
       description: |
