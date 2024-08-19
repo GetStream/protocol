@@ -1,0 +1,115 @@
+---
+id: streaming_rtmp_out
+sidebar_position: 2
+slug: /streaming/rtmp_broadcast
+title: RTMP broadcasts
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import RtmpBroadcastStart from '../_common_/rtmp-broadcast-start.mdx';
+import CallTypeRtmpSettings from '../_common_/call-type-rtmp-settings.mdx';
+import RtmpBroadcastStop from '../_common_/rtmp-broadcast-stop.mdx';
+
+
+**RTMP broadcasting** allows you to forward a call to any external streaming service that supports RTMP(s) as input. All major platforms like Twitch, Youtube, Facebook, … support it.
+Multiple streams can be added for the same call, allowing it to send a live call to multiple providers at the same time.
+
+## Understanding RTMP broadcasting
+[RTMP](https://en.wikipedia.org/wiki/Real-Time_Messaging_Protocol) is a protocol initially developed by Adobe for streaming audio, video, and data over the internet. Although RTMP is no longer the dominant streaming protocol, it's still widely used for live streaming because of its low latency and compatibility with platforms.
+RTMP broadcast refers to the process of sending a live video stream from a source (like Stream server) to an external streaming platform (like YouTube).
+
+### How It Works
+When you stream your call via RTMP, here's what happens: (We'll use Youtube as an example service)
+
+- Stream API composes your call's streams into a single stream and encodes and packages it into RTMP.
+- YouTube takes this RTMP stream, re-encodes it (if necessary), and then distributes it to viewers in various formats and resolutions, typically using protocols like HLS or DASH.
+
+## Pre-requisites
+
+### Getting a stream url and key
+
+Platforms that support RTMP ingestion provide a stream url (the server where the stream will be sent) and a stream key (unique identifier for your stream).
+
+Using youtube as example: You'll find these in [Livestreaming Dashboard](https://youtube.com/livestreaming/dashboard)
+
+### Configuring layout for your rtmp stream
+
+As previously mentioned, the call will be composed into a layout:
+- You can choose from one of our [pre-defined layouts](./../../recording/calls/#recording-layouts).
+- Theming/branding is possible by changing layout parameters (colors, logos, positioning or elements, …)
+- For more advanced / complex theming customization, you can build your own webapp and use it as the layout of the call.
+
+<CallTypeRtmpSettings />
+
+## Starting an RTMP broadcast on a call
+
+TODO describe input params here (requires Openapi update)
+
+<RtmpBroadcastStart />
+
+## Stopping an RTMP broadcast
+
+<RtmpBroadcastStop />
+
+## User permissions
+
+To perform these operations, users need the following capabilities:
+
+- `start-broadcast-call`
+- `stop-broadcast-call`
+
+## RTMP broadcast state
+
+You can check if the call is being broadcasted like this:
+
+<Tabs groupId="examples">
+<TabItem value="js" label="JavaScript">
+
+```js
+const resp = await call.getOrCreate();
+const isBroadcasting = resp.call.egress.broadcasting;
+```
+
+</TabItem>
+<TabItem value="py" label="Python">
+
+```py
+response = call.get()
+print(f"broadcasting: {response.data.call.egress.broadcasting}")
+```
+
+</TabItem>
+<TabItem value="curl" label="cURL">
+
+```bash
+# Broadcasting state: resp.call.egress.broadcasting
+curl -X GET "https://video.stream-io-api.com/api/v2/video/call/livestream/${CALL_ID}?api_key=${API_KEY}" \
+  -H "Authorization: ${TOKEN}" \
+  -H "stream-auth-type: jwt"
+```
+
+</TabItem>
+</Tabs>
+
+## Events
+
+These events are sent to users connected to the call and your webhook/SQS:
+
+- `call.rtmp_broadcast_started`
+- `call.rtmp_broadcast_stopped`
+- `call.rtmp_broadcast_failed`
+
+TODO 'openapi' ref
+
+## Consuming the broadcast
+
+The consuming part depends on the service being used, but a mapping can be done on your app's server-side
+between the name of the broadcast and the specifics of the platform.
+
+## FAQ
+
+### How much latency does RTMP broadcast add?
+
+- RTMP itself doesn't add much latency, as it is a 1-1 protocol. For example, in the case of Youtube the consumer latency is
+increased when the livestream content is redistributed through HLS/DASH protocol.
