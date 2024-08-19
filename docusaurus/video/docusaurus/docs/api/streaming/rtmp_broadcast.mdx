@@ -10,6 +10,7 @@ import TabItem from '@theme/TabItem';
 import RtmpBroadcastStart from '../_common_/rtmp-broadcast-start.mdx';
 import CallTypeRtmpSettings from '../_common_/call-type-rtmp-settings.mdx';
 import RtmpBroadcastStop from '../_common_/rtmp-broadcast-stop.mdx';
+import OpenApiModels from '../_common_/OpenApiModels';
 
 
 **RTMP broadcasting** allows you to forward a call to any external streaming service that supports RTMP(s) as input. All major platforms like Twitch, Youtube, Facebook, … support it.
@@ -33,7 +34,7 @@ Platforms that support RTMP ingestion provide a stream url (the server where the
 
 Using youtube as example: You'll find these in [Livestreaming Dashboard](https://youtube.com/livestreaming/dashboard)
 
-### Configuring layout for your rtmp stream
+### Configuring layout for your rtmp broadcast
 
 As previously mentioned, the call will be composed into a layout:
 - You can choose from one of our [pre-defined layouts](./../../recording/calls/#recording-layouts).
@@ -44,9 +45,10 @@ As previously mentioned, the call will be composed into a layout:
 
 ## Starting an RTMP broadcast on a call
 
-TODO describe input params here (requires Openapi update)
-
 <RtmpBroadcastStart />
+
+### Model
+<OpenApiModels modelName={'StartRTMPBroadcastsRequest'}></OpenApiModels>
 
 ## Stopping an RTMP broadcast
 
@@ -68,7 +70,13 @@ You can check if the call is being broadcasted like this:
 
 ```js
 const resp = await call.getOrCreate();
+
+// If HLS or any RTMP active
 const isBroadcasting = resp.call.egress.broadcasting;
+
+// Only check for RTMP
+const rtmpBroadcasts = resp.call.egress.rtmps
+const isRtmpBroadcasting = rtmpBroadcasts.length > 0
 ```
 
 </TabItem>
@@ -76,14 +84,21 @@ const isBroadcasting = resp.call.egress.broadcasting;
 
 ```py
 response = call.get()
+
+# If HLS or any RTMP active
 print(f"broadcasting: {response.data.call.egress.broadcasting}")
+
+# Only check for RTMP
+rtmp_broadcasts = response.data.call.egress.rtmps
+is_rtmp_broadcasting = len(rtmp_broadcasts) > 0
+print(f"rtmp broadcasting: {is_rtmp_broadcasting}")
 ```
 
 </TabItem>
 <TabItem value="curl" label="cURL">
 
 ```bash
-# Broadcasting state: resp.call.egress.broadcasting
+# Check RTMP state: resp.call.egress.rtmps
 curl -X GET "https://video.stream-io-api.com/api/v2/video/call/livestream/${CALL_ID}?api_key=${API_KEY}" \
   -H "Authorization: ${TOKEN}" \
   -H "stream-auth-type: jwt"
@@ -96,11 +111,9 @@ curl -X GET "https://video.stream-io-api.com/api/v2/video/call/livestream/${CALL
 
 These events are sent to users connected to the call and your webhook/SQS:
 
-- `call.rtmp_broadcast_started`
-- `call.rtmp_broadcast_stopped`
-- `call.rtmp_broadcast_failed`
-
-TODO 'openapi' ref
+- [`call.rtmp_broadcast_started`](./../../streaming/events/#CallRtmpBroadcastStartedEvent)
+- [`call.rtmp_broadcast_stopped`](./../../streaming/events/#CallRtmpBroadcastStoppedEvent)
+- [`call.rtmp_broadcast_failed`](./../../streaming/events/#CallRtmpBroadcastFailedEvent)
 
 ## Consuming the broadcast
 
