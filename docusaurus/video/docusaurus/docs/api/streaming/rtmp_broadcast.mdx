@@ -10,21 +10,26 @@ import TabItem from '@theme/TabItem';
 import RtmpBroadcastStart from '../_common_/rtmp-broadcast-start.mdx';
 import CallTypeRtmpSettings from '../_common_/call-type-rtmp-settings.mdx';
 import RtmpBroadcastStop from '../_common_/rtmp-broadcast-stop.mdx';
+import RtmpBroadcastStopAll from '../_common_/rtmp-broadcast-stop-all.mdx';
 import OpenApiModels from '../_common_/OpenApiModels';
 
 
 **RTMP broadcasting** allows you to forward a call to any external streaming service that supports RTMP(s) as input. All major platforms like Twitch, Youtube, Facebook, … support it.
-Multiple streams can be added for the same call, allowing it to send a live call to multiple providers at the same time.
+Multiple broadcasts can be added for the same call, allowing it to send a live call to multiple providers at the same time.
 
 ## Understanding RTMP broadcasting
-[RTMP](https://en.wikipedia.org/wiki/Real-Time_Messaging_Protocol) is a protocol initially developed by Adobe for streaming audio, video, and data over the internet. Although RTMP is no longer the dominant streaming protocol, it's still widely used for live streaming because of its low latency and compatibility with platforms.
-RTMP broadcast refers to the process of sending a live video stream from a source (like Stream server) to an external streaming platform (like YouTube).
+[RTMP](https://en.wikipedia.org/wiki/Real-Time_Messaging_Protocol) is a protocol initially developed by Adobe for streaming audio, video, and data over
+the internet. Although RTMP is no longer the dominant streaming protocol, it's still widely used for live streaming because of its low latency and
+compatibility with platforms.
 
-### How It Works
-When you stream your call via RTMP, here's what happens: (We'll use Youtube as an example service)
+**RTMP broadcast** refers to the process of sending a live video stream from a source (like Stream server) to an external streaming platform (like Youtube).
 
-- Stream API composes your call's streams into a single stream and encodes and packages it into RTMP.
-- YouTube takes this RTMP stream, re-encodes it (if necessary), and then distributes it to viewers in various formats and resolutions, typically using protocols like HLS or DASH.
+#### How It Works
+- Stream API gets the media streams from your call and [composes them into a single stream.](#configuring-the-layout-for-your-rtmp-broadcast)
+- Stream API encodes and packages the stream into RTMP with settings suitable for live streaming.
+- The target platform takes this RTMP stream, and processes it. Typically, services like Youtube
+re-encode it (if necessary) and broadcast the stream to viewers in various formats and resolutions,
+using protocols like HLS or DASH.
 
 ## Pre-requisites
 
@@ -34,32 +39,36 @@ Platforms that support RTMP ingestion provide a stream url (the server where the
 
 Using youtube as example: You'll find these in [Livestreaming Dashboard](https://youtube.com/livestreaming/dashboard)
 
-### Configuring layout for your rtmp broadcast
+### Configuring the layout for your rtmp broadcast
 
-As previously mentioned, the call will be composed into a layout:
+As previously mentioned, the call will be composed into a single stream following a layout:
 - You can choose from one of our [pre-defined layouts](./../../recording/calls/#recording-layouts).
 - Theming/branding is possible by changing layout parameters (colors, logos, positioning or elements, …)
 - For more advanced / complex theming customization, you can build your own webapp and use it as the layout of the call.
 
 <CallTypeRtmpSettings />
 
-## Starting an RTMP broadcast on a call
+### User permissions
+
+To start and stop an RTMP broadcast, users need the following capabilities:
+
+- `start-broadcast-call`
+- `stop-broadcast-call`
+
+## Starting an RTMP broadcast
 
 <RtmpBroadcastStart />
 
 ### Model
 <OpenApiModels modelName={'StartRTMPBroadcastsRequest'}></OpenApiModels>
 
-## Stopping an RTMP broadcast
+## Stopping an RTMP broadcast by name
 
 <RtmpBroadcastStop />
 
-## User permissions
+## Stopping all RTMP broadcasts for a call
 
-To perform these operations, users need the following capabilities:
-
-- `start-broadcast-call`
-- `stop-broadcast-call`
+<RtmpBroadcastStopAll />
 
 ## RTMP broadcast state
 
@@ -71,10 +80,10 @@ You can check if the call is being broadcasted like this:
 ```js
 const resp = await call.getOrCreate();
 
-// If HLS or any RTMP active
+// If HLS or any RTMP broadcast active
 const isBroadcasting = resp.call.egress.broadcasting;
 
-// Only check for RTMP
+// Only check for RTMP broadcasts
 const rtmpBroadcasts = resp.call.egress.rtmps
 const isRtmpBroadcasting = rtmpBroadcasts.length > 0
 ```
@@ -85,11 +94,11 @@ const isRtmpBroadcasting = rtmpBroadcasts.length > 0
 ```py
 response = call.get()
 
-# If HLS or any RTMP active
+# If HLS or any RTMP broadcast active
 print(f"broadcasting: {response.data.call.egress.broadcasting}")
 
-# Only check for RTMP
-rtmp_broadcasts = response.data.call.egress.rtmps
+# Only check for RTMP broadcasts
+rtmp_broadcasts = response.data.call.egress.rtmp_s
 is_rtmp_broadcasting = len(rtmp_broadcasts) > 0
 print(f"rtmp broadcasting: {is_rtmp_broadcasting}")
 ```
@@ -124,5 +133,6 @@ between the name of the broadcast and the specifics of the platform.
 
 ### How much latency does RTMP broadcast add?
 
-- RTMP itself doesn't add much latency, as it is a 1-1 protocol. For example, in the case of Youtube the consumer latency is
-increased when the livestream content is redistributed through HLS/DASH protocol.
+- RTMP itself doesn't add much latency, as it is a 1-1 protocol. Another thing then is how is the livestream content
+processed, for example, in the case of platforms like Youtube the latency is increased when the content is
+broadcasted through HLS/DASH protocol. [Check Youtube's options](https://support.google.com/youtube/answer/7444635?sjid=10230171077221482676-EU)
