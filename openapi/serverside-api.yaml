@@ -286,7 +286,7 @@ components:
       properties:
         agora_options:
           $ref: '#/components/schemas/Config'
-          x-stream-index: "040"
+          x-stream-index: "039"
         allowed_flag_reasons:
           items:
             type: string
@@ -312,7 +312,7 @@ components:
         cdn_expiration_seconds:
           format: int32
           type: integer
-          x-stream-index: "038"
+          x-stream-index: "037"
         channel_configs:
           additionalProperties:
             $ref: '#/components/schemas/ChannelConfig'
@@ -323,7 +323,7 @@ components:
           x-stream-index: "022"
         datadog_info:
           $ref: '#/components/schemas/DataDogInfo'
-          x-stream-index: "043"
+          x-stream-index: "042"
         disable_auth_checks:
           type: boolean
           x-stream-index: "011"
@@ -340,7 +340,7 @@ components:
           items:
             $ref: '#/components/schemas/GeofenceResponse'
           type: array
-          x-stream-index: "042"
+          x-stream-index: "041"
         grants:
           additionalProperties:
             items:
@@ -350,7 +350,7 @@ components:
           x-stream-index: "033"
         hms_options:
           $ref: '#/components/schemas/Config'
-          x-stream-index: "041"
+          x-stream-index: "040"
         image_moderation_enabled:
           type: boolean
           x-stream-index: "016"
@@ -364,7 +364,7 @@ components:
           x-stream-index: "031"
         moderation_enabled:
           type: boolean
-          x-stream-index: "044"
+          x-stream-index: "043"
         moderation_webhook_url:
           type: string
           x-stream-index: "005"
@@ -387,16 +387,13 @@ components:
             type: array
           type: object
           x-stream-index: "008"
-        polls_enabled:
-          type: boolean
-          x-stream-index: "035"
         push_notifications:
           $ref: '#/components/schemas/PushNotificationFields'
           x-stream-index: "003"
         reminders_interval:
           format: int32
           type: integer
-          x-stream-index: "037"
+          x-stream-index: "036"
         revoke_tokens_issued_before:
           format: date-time
           type: number
@@ -432,12 +429,12 @@ components:
           x-stream-index: "014"
         video_provider:
           type: string
-          x-stream-index: "039"
+          x-stream-index: "038"
         webhook_events:
           items:
             type: string
           type: array
-          x-stream-index: "036"
+          x-stream-index: "035"
         webhook_url:
           type: string
           x-stream-index: "004"
@@ -472,7 +469,6 @@ components:
       - image_upload_config
       - grants
       - campaign_enabled
-      - polls_enabled
       - webhook_events
       - reminders_interval
       - cdn_expiration_seconds
@@ -4543,6 +4539,17 @@ components:
           x-stream-index: "001"
       required:
       - message
+      - duration
+      type: object
+    DeleteModerationTemplateResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
       - duration
       type: object
     DeleteReactionRequest:
@@ -10225,6 +10232,44 @@ components:
       - duration
       title: Channels list
       type: object
+    QueryFeedModerationTemplate:
+      properties:
+        config:
+          $ref: '#/components/schemas/FeedsModerationTemplateConfig'
+          x-stream-index: "002"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "003"
+        name:
+          type: string
+          x-stream-index: "001"
+        updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "004"
+      required:
+      - name
+      - created_at
+      - updated_at
+      type: object
+    QueryFeedModerationTemplatesResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        templates:
+          items:
+            $ref: '#/components/schemas/QueryFeedModerationTemplate'
+          type: array
+          x-stream-index: "001"
+      required:
+      - templates
+      - duration
+      type: object
     QueryMembersRequest:
       properties:
         filter_conditions:
@@ -10885,24 +10930,16 @@ components:
         name:
           type: string
           x-stream-index: "001"
-        password:
-          type: string
-          x-stream-index: "005"
         stream_key:
           type: string
           x-stream-index: "003"
         stream_url:
           type: string
           x-stream-index: "002"
-        username:
-          type: string
-          x-stream-index: "004"
       required:
       - name
       - stream_url
       - stream_key
-      - username
-      - password
       type: object
     RTMPSettings:
       properties:
@@ -10928,15 +10965,11 @@ components:
           x-stream-index: "001"
         layout:
           $ref: '#/components/schemas/LayoutSettingsRequest'
+          description: Layout for the composed RTMP stream
           title: LayoutSettings
           x-stream-index: "003"
-        max_duration_minutes:
-          format: int32
-          maximum: 480
-          minimum: 1
-          type: integer
-          x-stream-index: "004"
         quality:
+          description: Resolution to set for the RTMP stream
           enum:
           - 360p
           - 480p
@@ -10948,6 +10981,7 @@ components:
           - portrait-720x1280
           - portrait-1080x1920
           - portrait-1440x2560
+          title: Quality
           type: string
           x-stream-index: "002"
       type: object
@@ -12182,28 +12216,43 @@ components:
       nullable: true
       properties:
         layout:
-          $ref: '#/components/schemas/LayoutSettings'
-          x-stream-index: "008"
+          $ref: '#/components/schemas/LayoutSettingsRequest'
+          description: If provided, will override the call's RTMP settings layout
+          title: Layout
+          x-stream-index: "006"
         name:
+          description: Name identifier for RTMP broadcast, must be unique in call
           maxLength: 255
+          title: Name
           type: string
           x-stream-index: "002"
-        password:
-          type: string
-          x-stream-index: "006"
         quality:
+          description: If provided, will override the call's RTMP settings quality
+          enum:
+          - 360p
+          - 480p
+          - 720p
+          - 1080p
+          - 1440p
+          - portrait-360x640
+          - portrait-480x854
+          - portrait-720x1280
+          - portrait-1080x1920
+          - portrait-1440x2560
+          title: Quality
           type: string
-          x-stream-index: "007"
+          x-stream-index: "005"
         stream_key:
+          description: If provided, will be appended at the end of stream_url
+          title: Stream Key
           type: string
           x-stream-index: "004"
         stream_url:
+          description: URL for the RTMP server to send the call to
           maxLength: 255
+          title: Stream URL
           type: string
           x-stream-index: "003"
-        username:
-          type: string
-          x-stream-index: "005"
       required:
       - name
       - stream_url
@@ -15669,7 +15718,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v129.0.0
+  version: v130.1.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -20003,10 +20052,62 @@ paths:
       tags:
       - product:moderation
   /api/v2/moderation/feeds_moderation_template:
+    delete:
+      description: |
+        Delete a specific moderation template by its name
+      operationId: V2DeleteTemplate
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteModerationTemplateResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Delete a moderation template
+      tags:
+      - product:moderation
+    get:
+      description: |
+        Retrieve a list of feed moderation templates (hard limit of 100 templates)
+      operationId: V2QueryTemplates
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryFeedModerationTemplatesResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Moderation v2 query feed templates
+      tags:
+      - product:moderation
     post:
       description: |
         Moderation v2 upsert feeds template
-      operationId: upsert_feeds_moderation_template
+      operationId: V2UpsertTemplate
       requestBody:
         content:
           application/json:
