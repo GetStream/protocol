@@ -3392,7 +3392,7 @@ func (m *TrackSubscriptionDetails) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Quality |= models.VideoQuality(b&0x7F) << shift
+				m.Quality |= SubscriptionQuality(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
