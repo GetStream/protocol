@@ -79,6 +79,35 @@ client.video.update_call_type(name='allhands', external_storage='my-s3')
 ```
 
 </TabItem>
+<TabItem value="go" label="Golang">
+
+```go
+// 1. create a new storage with all the required parameters
+
+client.CreateExternalStorage(ctx, &CreateExternalStorageRequest{
+	Name:        "my-s3",
+	StorageType: "s3",
+	Bucket:      "my-bucket",
+	Path:        PtrTo("directory_name/"),
+	AwsS3: &S3Request{
+		S3Region: "us-east-1",
+		S3ApiKey: PtrTo("my-access"),
+		S3Secret: PtrTo("my-secret"),
+	},
+})
+        
+
+// 2. (Optional) Check storage configuration for correctness
+// In case of any errors, this will throw a StreamAPIException.
+response, err := client.CheckExternalStorage(ctx, "my-s3")
+
+// 3. update the call type to use the new storage
+client.Video().UpdateCallType(ctx, "allhands", &UpdateCallTypeRequest{
+  ExternalStorage: PtrTo("my-s3"),
+})
+```
+
+</TabItem>
 <TabItem value="curl" label="cURL">
 
 ```bash
@@ -187,6 +216,27 @@ call.start_transcription(transcription_external_storage="my-storage")
 
 # specify my-storage storage for recording
 call.start_recording(recording_external_storage="my-storage")
+```
+
+</TabItem>
+
+<TabItem value="go" label="Golang">
+
+```go
+// update the call type to use Stream S3 storage for recordings
+client.Video().UpdateCallType(ctx, "my-call-type", &UpdateCallTypeRequest{
+  ExternalStorage: PtrTo("stream-s3"),
+})
+
+// specify my-storage storage when starting call transcribing
+call.StartTranscription(ctx, &StartTranscriptionRequest{
+	TranscriptionExternalStorage: PtrTo("my-storage"),
+})
+
+// specify my-storage storage for recording
+call.StartRecording(ctx, &StartRecordingRequest{
+  RecordingExternalStorage: PtrTo("my-storage"),
+})
 ```
 
 </TabItem>
@@ -315,6 +365,30 @@ client.create_external_storage(
 
 </TabItem>
 
+<TabItem value="go" label="Golang">
+
+```go
+file, err := os.Open("/path/to/your/service-account-file.json")
+if err != nil {
+	log.Fatal(err)
+}
+defer file.Close()
+creds, err := io.ReadAll(file)
+if err != nil {
+	log.Fatal(err)
+}
+
+client.CreateExternalStorage(ctx, &CreateExternalStorageRequest{
+	Name:           "my-gcs",
+	StorageType:    "gcs",
+	Bucket:         "my-bucket",
+	Path:           PtrTo("directory_name/"),
+	GcsCredentials: PtrTo(string(creds)),
+})
+```
+
+</TabItem>
+
 <TabItem value="curl" label="cURL">
 
 ```bash
@@ -406,6 +480,26 @@ client.create_external_storage(
         abs_client_secret="...",
         abs_tenant_id="...",
     ),
+)
+```
+
+</TabItem>
+
+<TabItem value="go" label="Golang">
+
+```go
+client.CreateExternalStorage(ctx, &CreateExternalStorageRequest{
+	Name:        "my-abs",
+	StorageType: "abs",
+	Bucket:      "my-bucket",
+	Path:        PtrTo("directory_name/"),
+	AzureBlob: &AzureRequest{
+		AbsAccountName:  "...",
+		AbsClientID:     "...",
+		AbsClientSecret: "...",
+		AbsTenantID:     "...",
+	},
+},
 )
 ```
 
