@@ -40,6 +40,31 @@ print(rtmp_url, stream_key)
 ```
 
 </TabItem>
+<TabItem value="go" label="Golang">
+
+```go
+call := client.Video().Call("default", uuid.New().String())
+// create the call where the RTMP will be sent to
+response, err := call.GetOrCreate(ctx, nil)
+
+// ensure we have a user for the host to send video via RTMP
+client.UpdateUsers(ctx, &UpdateUsersRequest{
+	Users: map[string]UserRequest{
+		"tommaso-the-host": {
+		  ID: "tommaso-the-host",
+	  },
+  },
+})
+
+// create a token for the user sending video, this can be used as the stream key
+expiration := time.Now().Add(1 * time.Hour)
+streamKey, err := client.CreateToken("tommaso-the-host", &StreamJWTClaims{Expire: &expiration})
+
+rtmpURL := response.Data.Call.Ingress.Rtmp.Address
+fmt.Println("RTMP URL:", rtmpURL, "Stream Key:", streamKey)
+```
+
+</TabItem>
 <TabItem value="curl" label="cURL">
 
 ```bash
