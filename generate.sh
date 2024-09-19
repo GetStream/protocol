@@ -111,6 +111,7 @@ EOF
       --ts_opt client_generic
       --ts_opt server_none
       --ts_opt eslint_disable
+      --ts_opt optimize_code_size
 EOF
     )
 
