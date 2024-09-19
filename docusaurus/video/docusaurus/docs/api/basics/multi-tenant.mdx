@@ -48,6 +48,19 @@ client.update_app(multi_tenant_enabled=True)
 ```
 
 </TabItem>
+<TabItem value="go" label="Golang">
+
+```go
+res, _ := client.GetApp(ctx)
+fmt.Println(res.Data.App.MultiTenantEnabled)
+
+// enables teams
+client.UpdateApp(ctx, &UpdateAppRequest{
+  MultiTenantEnabled: PtrTo(true),
+})
+```
+
+</TabItem>
 <TabItem value="curl" label="cURL">
 
 ```bash
@@ -109,6 +122,23 @@ client.upsertUsers([
 client.upsert_users(
     UserRequest(id=user_id, teams=["red", "blue"])
 )
+```
+
+</TabItem>
+<TabItem value="go" label="Golang">
+
+```go
+client.UpdateUsers(ctx, &UpdateUsersRequest{
+  Users: map[string]UserRequest{
+    "john": {
+      ID: "john",
+      Teams: &[]string{
+        "red",
+        "blue",
+      },
+    },
+  },
+})
 ```
 
 </TabItem>
@@ -175,6 +205,19 @@ response = call.create(
         team="blue",
     )
 )
+```
+
+</TabItem>
+<TabItem value="go" label="Golang">
+
+```go
+call = client.Video().Call("default", "callID")
+response, err := call.GetOrCreate(ctx, &GetOrCreateCallRequest{
+  Data: &CallRequest{
+    Team:        PtrTo("blue"),
+    CreatedByID: PtrTo("<user_id>"),
+  },
+})
 ```
 
 </TabItem>
@@ -254,6 +297,29 @@ response = client.query_users(
         }
     )
 )
+```
+
+</TabItem>
+<TabItem value="go" label="Golang">
+
+```go
+response, err := client.QueryUsers(ctx, &QueryUsersRequest{
+  Payload: &QueryUsersPayload{
+    FilterConditions: map[string]interface{}{
+      "name":  "Nick",
+      "teams": map[string]interface{}{"$in": []string{"red", "blue"}},
+    },
+  },
+	})
+
+// search for users that are not part of any team
+response, err = client.QueryUsers(ctx, &QueryUsersRequest{
+  Payload: &QueryUsersPayload{
+    FilterConditions: map[string]interface{}{
+      "teams": nil,
+    },
+  },
+})
 ```
 
 </TabItem>
@@ -344,6 +410,27 @@ response = client.video.query_calls(
 response = client.video.query_calls(
     filter_conditions={"id": call_id, "team": {"$eq": "blue"}}
 )
+```
+
+</TabItem>
+
+<TabItem value="go" label="Golang">
+
+```go
+response, err := client.Video().QueryCalls(ctx, &QueryCallsRequest{
+  FilterConditions: &map[string]interface{}{
+    "id":   call_id,
+    "team": map[string]interface{}{"$eq": "blue"},
+  },
+})
+
+// retrieve calls without a team
+response, err := client.Video().QueryCalls(ctx, &QueryCallsRequest{
+  FilterConditions: &map[string]interface{}{
+    "id":   call_id,
+    "team": &map[string]interface{}{"$eq": nil},
+  },
+})
 ```
 
 </TabItem>
