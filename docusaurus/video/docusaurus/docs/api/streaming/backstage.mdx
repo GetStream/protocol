@@ -64,7 +64,29 @@ response = call.get_or_create(
 ```
 
 </TabItem>
+<TabItem value="go" label="Golang">
 
+```go
+// create a call with backstage enabled, starts_at set
+// and join_ahead_of_time_seconds set to 5 minutes
+starts_at := time.Now().Add(30 * time.Minute)
+
+call := client.Video().Call("livestream", uuid.New().String())
+response, err := call.GetOrCreate(ctx, &GetOrCreateCallRequest{
+  Data: &CallRequest{
+    StartsAt:    &Timestamp{Time: starts_at},
+    CreatedByID: PtrTo("john"),
+    SettingsOverride: &CallSettingsRequest{
+      Backstage: &BackstageSettingsRequest{
+        Enabled:              PtrTo(true),
+        JoinAheadTimeSeconds: PtrTo(300),
+      },
+    },
+  },
+})
+```
+
+</TabItem>
 <TabItem value="curl" label="cURL">
 
 ```bash
@@ -164,6 +186,33 @@ client.video.update_call_type(
 ```
 
 </TabItem>
+
+<TabItem value="go" label="Golang">
+
+```go
+// call level update
+call.Update(ctx, &UpdateCallRequest{
+  SettingsOverride: &CallSettingsRequest{
+    Backstage: &BackstageSettingsRequest{
+      Enabled:              PtrTo(true),
+      JoinAheadTimeSeconds: PtrTo(300),
+    },
+  },
+})
+
+// call type level update
+call_type_name := "<call type name>"
+client.Video().UpdateCallType(ctx, call_type_name, &UpdateCallTypeRequest{
+  Settings: &CallSettingsRequest{
+    Backstage: &BackstageSettingsRequest{
+      Enabled:              PtrTo(true),
+      JoinAheadTimeSeconds: PtrTo(300),
+    },
+  },
+})
+```
+
+</TabItem>
 <TabItem value="curl" label="cURL">
 
 ```bash
@@ -253,6 +302,19 @@ client.video.update_call_type(
 ```
 
 </TabItem>
+
+<TabItem value="go" label="Golang">
+
+```go
+callTypeName := "<call type name>"
+client.Video().UpdateCallType(ctx, callTypeName, &UpdateCallTypeRequest{
+  Grants: &map[string][]string{
+    "host": []string{JOIN_BACKSTAGE.String()},
+  },
+})
+```
+
+</TabItem>
 <TabItem value="curl" label="cURL">
 
 ```bash
@@ -312,6 +374,14 @@ call.stopLive();
 
 ```py
 call.stop_live()
+```
+
+</TabItem>
+
+<TabItem value="go" label="Golang">
+
+```go
+call.StopLive(ctx)
 ```
 
 </TabItem>
