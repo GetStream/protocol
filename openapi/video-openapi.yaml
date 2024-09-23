@@ -44,6 +44,13 @@ components:
           title: More info
           type: string
           x-stream-index: "006"
+        unrecoverable:
+          description: Flag that indicates if the error is unrecoverable, requests
+            that return unrecoverable errors should not be retried, this error only
+            applies to the request that caused it
+          title: Unrecoverable
+          type: boolean
+          x-stream-index: "008"
       required:
       - code
       - message
@@ -474,7 +481,11 @@ components:
             format: date-time
             type: string
           type: object
-          x-stream-index: "007"
+          x-stream-index: "008"
+        anonymous_participant_count:
+          format: int32
+          type: integer
+          x-stream-index: "006"
         ended_at:
           format: date-time
           type: string
@@ -485,17 +496,17 @@ components:
         live_ended_at:
           format: date-time
           type: string
-          x-stream-index: "010"
+          x-stream-index: "011"
         live_started_at:
           format: date-time
           type: string
-          x-stream-index: "009"
+          x-stream-index: "010"
         missed_by:
           additionalProperties:
             format: date-time
             type: string
           type: object
-          x-stream-index: "008"
+          x-stream-index: "009"
         participants:
           items:
             $ref: '#/components/schemas/CallParticipantResponse'
@@ -512,7 +523,7 @@ components:
             format: date-time
             type: string
           type: object
-          x-stream-index: "006"
+          x-stream-index: "007"
         started_at:
           format: date-time
           type: string
@@ -520,11 +531,12 @@ components:
         timer_ends_at:
           format: date-time
           type: string
-          x-stream-index: "011"
+          x-stream-index: "012"
       required:
       - id
       - participants
       - participants_count_by_role
+      - anonymous_participant_count
       - rejected_by
       - accepted_by
       - missed_by
@@ -2305,6 +2317,50 @@ components:
       - calls
       - duration
       type: object
+    RTMPBroadcastRequest:
+      properties:
+        layout:
+          $ref: '#/components/schemas/LayoutSettingsRequest'
+          description: If provided, will override the call's RTMP settings layout
+          title: Layout
+          x-stream-index: "005"
+        name:
+          description: Name identifier for RTMP broadcast, must be unique in call
+          maxLength: 255
+          title: Name
+          type: string
+          x-stream-index: "001"
+        quality:
+          description: If provided, will override the call's RTMP settings quality
+          enum:
+          - 360p
+          - 480p
+          - 720p
+          - 1080p
+          - 1440p
+          - portrait-360x640
+          - portrait-480x854
+          - portrait-720x1280
+          - portrait-1080x1920
+          - portrait-1440x2560
+          title: Quality
+          type: string
+          x-stream-index: "004"
+        stream_key:
+          description: If provided, will be appended at the end of stream_url
+          title: Stream Key
+          type: string
+          x-stream-index: "003"
+        stream_url:
+          description: URL for the RTMP server to send the call to
+          maxLength: 255
+          title: Stream URL
+          type: string
+          x-stream-index: "002"
+      required:
+      - name
+      - stream_url
+      type: object
     RTMPIngress:
       description: RTMP input settings
       properties:
@@ -2603,47 +2659,17 @@ components:
     StartRTMPBroadcastsRequest:
       nullable: true
       properties:
-        layout:
-          $ref: '#/components/schemas/LayoutSettingsRequest'
-          description: If provided, will override the call's RTMP settings layout
-          title: Layout
-          x-stream-index: "006"
-        name:
-          description: Name identifier for RTMP broadcast, must be unique in call
-          maxLength: 255
-          title: Name
-          type: string
+        broadcasts:
+          description: List of broadcasts to start
+          items:
+            $ref: '#/components/schemas/RTMPBroadcastRequest'
+          maximum: 1
+          minimum: 1
+          title: Broadcasts
+          type: array
           x-stream-index: "002"
-        quality:
-          description: If provided, will override the call's RTMP settings quality
-          enum:
-          - 360p
-          - 480p
-          - 720p
-          - 1080p
-          - 1440p
-          - portrait-360x640
-          - portrait-480x854
-          - portrait-720x1280
-          - portrait-1080x1920
-          - portrait-1440x2560
-          title: Quality
-          type: string
-          x-stream-index: "005"
-        stream_key:
-          description: If provided, will be appended at the end of stream_url
-          title: Stream Key
-          type: string
-          x-stream-index: "004"
-        stream_url:
-          description: URL for the RTMP server to send the call to
-          maxLength: 255
-          title: Stream URL
-          type: string
-          x-stream-index: "003"
       required:
-      - name
-      - stream_url
+      - broadcasts
       type: object
     StartRTMPBroadcastsResponse:
       nullable: true
@@ -3744,7 +3770,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v130.1.0
+  version: v130.6.4
 openapi: 3.0.3
 paths:
   /video/call/{type}/{id}:
@@ -4662,7 +4688,7 @@ paths:
 
         Required permissions:
         - StartBroadcasting
-      operationId: StartRTMPBroadcast
+      operationId: StartRTMPBroadcasts
       parameters:
       - in: path
         name: type

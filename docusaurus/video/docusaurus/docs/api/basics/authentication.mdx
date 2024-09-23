@@ -31,11 +31,7 @@ const newUser: UserRequest = {
   name: 'This is a test user',
   image: 'link/to/profile/image',
 };
-await client.upsertUsers({
-  users: {
-    [newUser.id]: newUser,
-  },
-});
+await client.upsertUsers([newUser]);
 ```
 
 </TabItem>
@@ -79,6 +75,27 @@ curl -X POST https://video.stream-io-api.com/api/v2/users?api_key=${API_KEY} \
 ```
 
 </TabItem>
+<TabItem value="js-deprecated" label="JavaScript@0.3 (deprecated)">
+
+```js
+const userId = 'john';
+const newUser: UserRequest = {
+  id: userId,
+  role: 'user',
+  custom: {
+    color: 'red',
+  },
+  name: 'John',
+  image: 'link/to/profile/image',
+};
+await client.upsertUsers({
+  users: {
+    [newUser.id]: newUser,
+  },
+});
+```
+
+</TabItem>
 </Tabs>
 
 ## Updating users
@@ -101,11 +118,7 @@ const user: UserRequest = {
   name: 'This is a test user',
   image: 'link/to/profile/image',
 };
-client.upsertUsers({
-  users: {
-    [user.id]: user,
-  },
-});
+client.upsertUsers([user]);
 
 // or
 client.updateUsersPartial({
@@ -191,6 +204,39 @@ curl -X PATCH https://video.stream-io-api.com/api/v2/users?api_key=${API_KEY} \
 ```
 
 </TabItem>
+<TabItem value="js-deprecated" label="JavaScript@0.3 (deprecated)">
+
+```js
+const user: UserRequest = {
+  id: 'userid',
+  role: 'user',
+  custom: {
+    color: 'red',
+  },
+  name: 'This is a test user',
+  image: 'link/to/profile/image',
+};
+client.upsertUsers({
+  users: {
+    [user.id]: user,
+  },
+});
+
+// or
+client.updateUsersPartial({
+  users: [
+    {
+      id: user.id,
+      set: {
+        color: 'blue',
+      },
+      unset: ['name'],
+    },
+  ],
+});
+```
+
+</TabItem>
 </Tabs>
 
 ## Anonymous users
@@ -226,9 +272,9 @@ You can optionally provide an expiration time. By default, tokens are valid for 
 
 ```js
 const userId = 'john';
-// exp is optional (by default the token is valid for an hour)
-const exp = Math.round(new Date().getTime() / 1000) + 60 * 60;
-client.createToken(userId, exp);
+// validity is optional (by default the token is valid for an hour)
+const validity = 60 * 60;
+client.generateUserToken({ user_id: userId, validity_in_seconds: validity });
 ```
 
 </TabItem>
@@ -275,6 +321,16 @@ echo "${HEADER}.${PAYLOAD}.${SIGNATURE}"
 ```
 
 </TabItem>
+<TabItem value="js-deprecated" label="JavaScript@0.3 (deprecated)">
+
+```js
+const userId = 'john';
+// exp is optional (by default the token is valid for an hour)
+const exp = Math.round(new Date().getTime() / 1000) + 60 * 60;
+client.createToken(userId, exp);
+```
+
+</TabItem>
 </Tabs>
 
 You need to provide the generated tokens to the client SDKs. Stream SDKs accept a token provider, that can be called to retrieve and renew tokens. You need to implement the token provider in your own application, this is usually an HTTP endpoint.
@@ -289,16 +345,16 @@ Call tokens contain a list of call IDs. When a user utilizes a call token, they 
 <TabItem value="js" label="JavaScript">
 
 ```js
-const userId = 'john';
-// exp is optional (by default the token is valid for an hour)
-const exp = Math.round(new Date().getTime() / 1000) + 60 * 60;
+const user_id = 'john';
+// validity is optional (by default the token is valid for an hour)
+const validity_in_seconds = 60 * 60;
 
 const call_cids = ['default:call1', 'livestream:call2'];
 
-client.createCallToken(userId, call_cids, exp);
+client.generateCallToken({ user_id, call_cids, validity_in_seconds });
 
 // Optionally provide a role for the call(s)
-client.createCallToken({ user_id: userId, role: 'admin' }, call_cids);
+client.generateCallToken({ user_id, call_cids, role: 'admin' });
 ```
 
 </TabItem>
@@ -333,6 +389,22 @@ SECRET='<API secret>';
 SIGNATURE=$(echo -n ${HEADER}.${PAYLOAD} | openssl dgst -sha256 -hmac ${SECRET} -binary | openssl base64 -e -A | tr '+/' '-_' | tr -d '=');
 
 echo "${HEADER}.${PAYLOAD}.${SIGNATURE}"
+```
+
+</TabItem>
+<TabItem value="js-deprecated" label="JavaScript@0.3 (deprecated)">
+
+```js
+const userId = 'john';
+// exp is optional (by default the token is valid for an hour)
+const exp = Math.round(new Date().getTime() / 1000) + 60 * 60;
+
+const call_cids = ['default:call1', 'livestream:call2'];
+
+client.createCallToken(userId, call_cids, exp);
+
+// Optionally provide a role for the call(s)
+client.createCallToken({ user_id: userId, role: 'admin' }, call_cids);
 ```
 
 </TabItem>
