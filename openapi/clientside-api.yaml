@@ -43,6 +43,13 @@ components:
           title: More info
           type: string
           x-stream-index: "006"
+        unrecoverable:
+          description: Flag that indicates if the error is unrecoverable, requests
+            that return unrecoverable errors should not be retried, this error only
+            applies to the request that caused it
+          title: Unrecoverable
+          type: boolean
+          x-stream-index: "008"
       required:
       - code
       - message
@@ -1845,6 +1852,51 @@ components:
       x-stream-event-call-type: true
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    CallSessionParticipantCountsUpdatedEvent:
+      description: This event is sent when the participant counts in a call session
+        are updated
+      properties:
+        anonymous_participant_count:
+          format: int32
+          type: integer
+          x-stream-index: "005"
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "001.002"
+        participants_count_by_role:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "004"
+        session_id:
+          description: Call session ID
+          title: Session ID
+          type: string
+          x-stream-index: "003.001"
+        type:
+          default: call.session_participant_count_updated
+          description: 'The type of event: "call.session_participant_count_updated"
+            in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - session_id
+      - participants_count_by_role
+      - anonymous_participant_count
+      title: CallSessionParticipantCountsUpdatedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     CallSessionParticipantJoinedEvent:
       description: This event is sent when a participant joins a call session
       properties:
@@ -1928,7 +1980,11 @@ components:
             format: date-time
             type: number
           type: object
-          x-stream-index: "007"
+          x-stream-index: "008"
+        anonymous_participant_count:
+          format: int32
+          type: integer
+          x-stream-index: "006"
         ended_at:
           format: date-time
           type: number
@@ -1939,17 +1995,17 @@ components:
         live_ended_at:
           format: date-time
           type: number
-          x-stream-index: "010"
+          x-stream-index: "011"
         live_started_at:
           format: date-time
           type: number
-          x-stream-index: "009"
+          x-stream-index: "010"
         missed_by:
           additionalProperties:
             format: date-time
             type: number
           type: object
-          x-stream-index: "008"
+          x-stream-index: "009"
         participants:
           items:
             $ref: '#/components/schemas/CallParticipantResponse'
@@ -1966,7 +2022,7 @@ components:
             format: date-time
             type: number
           type: object
-          x-stream-index: "006"
+          x-stream-index: "007"
         started_at:
           format: date-time
           type: number
@@ -1974,11 +2030,12 @@ components:
         timer_ends_at:
           format: date-time
           type: number
-          x-stream-index: "011"
+          x-stream-index: "012"
       required:
       - id
       - participants
       - participants_count_by_role
+      - anonymous_participant_count
       - rejected_by
       - accepted_by
       - missed_by
@@ -3162,53 +3219,53 @@ components:
           description: Enable or disable auto translation
           title: Auto translation
           type: boolean
-          x-stream-index: "007"
+          x-stream-index: "005"
         auto_translation_language:
           description: Switch auto translation language
           title: Auto translation language
           type: string
-          x-stream-index: "008"
+          x-stream-index: "006"
         config_overrides:
           $ref: '#/components/schemas/ChannelConfig'
-          x-stream-index: "026"
+          x-stream-index: "024"
         created_by:
-          $ref: '#/components/schemas/UserObject'
-          x-stream-index: "011"
+          $ref: '#/components/schemas/UserRequest'
+          x-stream-index: "009"
         created_by_id:
           type: string
-          x-stream-index: "010"
+          x-stream-index: "008"
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "017"
+          x-stream-index: "015"
         disabled:
           type: boolean
-          x-stream-index: "016"
+          x-stream-index: "014"
         frozen:
           description: Freeze or unfreeze the channel
           title: Frozen
           type: boolean
-          x-stream-index: "015"
+          x-stream-index: "013"
         invites:
           items:
             $ref: '#/components/schemas/ChannelMember'
           maximum: 100
           type: array
-          x-stream-index: "018"
+          x-stream-index: "016"
         members:
           items:
             $ref: '#/components/schemas/ChannelMember'
           maximum: 100
           type: array
-          x-stream-index: "020"
+          x-stream-index: "018"
         team:
           description: Team the channel belongs to (if multi-tenant mode is enabled)
           title: Team
           type: string
-          x-stream-index: "006"
+          x-stream-index: "004"
         truncated_by_id:
           type: string
-          x-stream-index: "012"
+          x-stream-index: "010"
       type: object
     ChannelKickedEvent:
       properties:
@@ -6190,19 +6247,15 @@ components:
     LabelThresholds:
       properties:
         block:
-          description: Threshold for automatic message block
           format: float
           maximum: 1
           minimum: 0
-          title: Block
           type: number
           x-stream-index: "002"
         flag:
-          description: Threshold for automatic message flag
           format: float
           maximum: 1
           minimum: 0
-          title: Flag
           type: number
           x-stream-index: "001"
       type: object
@@ -7076,43 +7129,66 @@ components:
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
     MessageModerationResult:
+      description: Result of the message moderation
       properties:
         action:
+          description: Action taken by automod
+          title: Action
           type: string
-          x-stream-index: "004"
+          x-stream-index: "002"
         ai_moderation_response:
           $ref: '#/components/schemas/ModerationResponse'
-          x-stream-index: "009"
-        blocked_word:
-          type: string
-          x-stream-index: "006"
-        blocklist_name:
-          type: string
+          description: Response from AI moderation
+          title: AI moderation response
           x-stream-index: "007"
-        created_at:
-          format: date-time
-          type: number
-          x-stream-index: "012"
-        message_id:
+        blocked_word:
+          description: Word that was blocked
+          title: Blocked word
           type: string
-          x-stream-index: "003"
-        moderated_by:
+          x-stream-index: "004"
+        blocklist_name:
+          description: Name of the blocklist
+          title: Blocklist name
           type: string
           x-stream-index: "005"
-        moderation_thresholds:
-          $ref: '#/components/schemas/Thresholds'
-          x-stream-index: "008"
-        updated_at:
+        created_at:
+          description: Date/time of creation
           format: date-time
-          type: number
-          x-stream-index: "013"
-        user_bad_karma:
-          type: boolean
-          x-stream-index: "011"
-        user_karma:
-          format: float
+          title: Created at
           type: number
           x-stream-index: "010"
+        message_id:
+          description: ID of the message
+          title: Message ID
+          type: string
+          x-stream-index: "001"
+        moderated_by:
+          description: User who moderated the message
+          title: Moderated by
+          type: string
+          x-stream-index: "003"
+        moderation_thresholds:
+          $ref: '#/components/schemas/Thresholds'
+          description: Thresholds for AI moderation
+          title: Moderation thresholds
+          x-stream-index: "006"
+        updated_at:
+          description: Date/time of the last update
+          format: date-time
+          title: Updated at
+          type: number
+          x-stream-index: "011"
+        user_bad_karma:
+          description: Whether user has bad karma
+          title: User bad karma
+          type: boolean
+          x-stream-index: "009"
+        user_karma:
+          description: Karma of the user
+          format: float
+          title: User karma
+          type: number
+          x-stream-index: "008"
       required:
       - message_id
       - action
@@ -7120,6 +7196,7 @@ components:
       - user_bad_karma
       - created_at
       - updated_at
+      title: Message moderation result
       type: object
     MessageNewEvent:
       properties:
@@ -7773,6 +7850,180 @@ components:
       x-stream-event-client-type: true
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    ModerationEvent:
+      nullable: true
+      properties:
+        action:
+          $ref: '#/components/schemas/ModerationEventActionLog'
+          x-stream-index: "004"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "002.003"
+        flags:
+          items:
+            $ref: '#/components/schemas/ModerationEventFlag'
+          type: array
+          x-stream-index: "003"
+        received_at:
+          format: date-time
+          type: number
+          x-stream-index: "002.004"
+        review_queue_item:
+          $ref: '#/components/schemas/ModerationEventReviewQueueItem'
+          x-stream-index: "001"
+        type:
+          default: review_queue_item.new
+          type: string
+          x-stream-index: "002.002"
+      required:
+      - type
+      - created_at
+      type: object
+    ModerationEventActionLog:
+      properties:
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "002"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "006"
+        id:
+          type: string
+          x-stream-index: "001"
+        reason:
+          type: string
+          x-stream-index: "005"
+        target_user_id:
+          type: string
+          x-stream-index: "007"
+        type:
+          type: string
+          x-stream-index: "003"
+        user_id:
+          type: string
+          x-stream-index: "004"
+      required:
+      - id
+      - created_at
+      - type
+      - user_id
+      - reason
+      - custom
+      - target_user_id
+      type: object
+    ModerationEventFlag:
+      nullable: true
+      properties:
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "007"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "004"
+        labels:
+          items:
+            type: string
+          type: array
+          x-stream-index: "005"
+        reason:
+          type: string
+          x-stream-index: "003"
+        result:
+          items:
+            additionalProperties: {}
+            type: object
+          type: array
+          x-stream-index: "006"
+        type:
+          type: string
+          x-stream-index: "001"
+        updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "008"
+        user_id:
+          type: string
+          x-stream-index: "002"
+      required:
+      - user_id
+      - result
+      - created_at
+      - updated_at
+      type: object
+    ModerationEventReviewQueueItem:
+      properties:
+        assigned_to:
+          $ref: '#/components/schemas/UserResponse'
+          x-stream-index: "018"
+        completed_at:
+          $ref: '#/components/schemas/NullTime'
+          x-stream-index: "010"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "002"
+        entity_creator:
+          $ref: '#/components/schemas/UserResponse'
+          x-stream-index: "017"
+        entity_id:
+          type: string
+          x-stream-index: "005"
+        entity_type:
+          type: string
+          x-stream-index: "004"
+        id:
+          type: string
+          x-stream-index: "001"
+        languages:
+          items:
+            type: string
+          type: array
+          x-stream-index: "011"
+        message:
+          $ref: '#/components/schemas/MessageResponse'
+          x-stream-index: "016"
+        moderation_payload:
+          $ref: '#/components/schemas/ModerationPayload'
+          x-stream-index: "007"
+        recommended_action:
+          type: string
+          x-stream-index: "009"
+        reviewed_at:
+          $ref: '#/components/schemas/NullTime'
+          x-stream-index: "013"
+        reviewed_by:
+          type: string
+          x-stream-index: "014"
+        severity:
+          format: int32
+          type: integer
+          x-stream-index: "012"
+        status:
+          type: string
+          x-stream-index: "008"
+        updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "003"
+      required:
+      - id
+      - created_at
+      - updated_at
+      - entity_type
+      - entity_id
+      - status
+      - recommended_action
+      - completed_at
+      - languages
+      - severity
+      - reviewed_at
+      - reviewed_by
+      type: object
     ModerationFlaggedEvent:
       properties:
         created_at:
@@ -7829,10 +8080,6 @@ components:
       x-stream-ws-base-event-name: VideoEvent
     ModerationPayload:
       properties:
-        created_at:
-          format: date-time
-          type: number
-          x-stream-index: "005"
         custom:
           additionalProperties: {}
           type: object
@@ -10265,6 +10512,50 @@ components:
       - users
       - duration
       type: object
+    RTMPBroadcastRequest:
+      properties:
+        layout:
+          $ref: '#/components/schemas/LayoutSettingsRequest'
+          description: If provided, will override the call's RTMP settings layout
+          title: Layout
+          x-stream-index: "005"
+        name:
+          description: Name identifier for RTMP broadcast, must be unique in call
+          maxLength: 255
+          title: Name
+          type: string
+          x-stream-index: "001"
+        quality:
+          description: If provided, will override the call's RTMP settings quality
+          enum:
+          - 360p
+          - 480p
+          - 720p
+          - 1080p
+          - 1440p
+          - portrait-360x640
+          - portrait-480x854
+          - portrait-720x1280
+          - portrait-1080x1920
+          - portrait-1440x2560
+          title: Quality
+          type: string
+          x-stream-index: "004"
+        stream_key:
+          description: If provided, will be appended at the end of stream_url
+          title: Stream Key
+          type: string
+          x-stream-index: "003"
+        stream_url:
+          description: URL for the RTMP server to send the call to
+          maxLength: 255
+          title: Stream URL
+          type: string
+          x-stream-index: "002"
+      required:
+      - name
+      - stream_url
+      type: object
     RTMPIngress:
       description: RTMP input settings
       properties:
@@ -11526,47 +11817,17 @@ components:
     StartRTMPBroadcastsRequest:
       nullable: true
       properties:
-        layout:
-          $ref: '#/components/schemas/LayoutSettingsRequest'
-          description: If provided, will override the call's RTMP settings layout
-          title: Layout
-          x-stream-index: "006"
-        name:
-          description: Name identifier for RTMP broadcast, must be unique in call
-          maxLength: 255
-          title: Name
-          type: string
+        broadcasts:
+          description: List of broadcasts to start
+          items:
+            $ref: '#/components/schemas/RTMPBroadcastRequest'
+          maximum: 1
+          minimum: 1
+          title: Broadcasts
+          type: array
           x-stream-index: "002"
-        quality:
-          description: If provided, will override the call's RTMP settings quality
-          enum:
-          - 360p
-          - 480p
-          - 720p
-          - 1080p
-          - 1440p
-          - portrait-360x640
-          - portrait-480x854
-          - portrait-720x1280
-          - portrait-1080x1920
-          - portrait-1440x2560
-          title: Quality
-          type: string
-          x-stream-index: "005"
-        stream_key:
-          description: If provided, will be appended at the end of stream_url
-          title: Stream Key
-          type: string
-          x-stream-index: "004"
-        stream_url:
-          description: URL for the RTMP server to send the call to
-          maxLength: 255
-          title: Stream URL
-          type: string
-          x-stream-index: "003"
       required:
-      - name
-      - stream_url
+      - broadcasts
       type: object
     StartRTMPBroadcastsResponse:
       nullable: true
@@ -12226,24 +12487,16 @@ components:
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
     Thresholds:
-      description: Sets thresholds for AI moderation
       properties:
         explicit:
           $ref: '#/components/schemas/LabelThresholds'
-          description: Thresholds for explicit messages
-          title: Explicit
           x-stream-index: "001"
         spam:
           $ref: '#/components/schemas/LabelThresholds'
-          description: Thresholds for spam
-          title: Spam
           x-stream-index: "002"
         toxic:
           $ref: '#/components/schemas/LabelThresholds'
-          description: Thresholds for toxic messages
-          title: Toxic
           x-stream-index: "003"
-      title: Auto moderation thresholds
       type: object
     ThumbnailResponse:
       properties:
@@ -14541,6 +14794,7 @@ components:
           call.rtmp_broadcast_started: '#/components/schemas/CallRtmpBroadcastStartedEvent'
           call.rtmp_broadcast_stopped: '#/components/schemas/CallRtmpBroadcastStoppedEvent'
           call.session_ended: '#/components/schemas/CallSessionEndedEvent'
+          call.session_participant_count_updated: '#/components/schemas/CallSessionParticipantCountsUpdatedEvent'
           call.session_participant_joined: '#/components/schemas/CallSessionParticipantJoinedEvent'
           call.session_participant_left: '#/components/schemas/CallSessionParticipantLeftEvent'
           call.session_started: '#/components/schemas/CallSessionStartedEvent'
@@ -14632,6 +14886,7 @@ components:
       - $ref: '#/components/schemas/CallRtmpBroadcastStartedEvent'
       - $ref: '#/components/schemas/CallRtmpBroadcastStoppedEvent'
       - $ref: '#/components/schemas/CallSessionEndedEvent'
+      - $ref: '#/components/schemas/CallSessionParticipantCountsUpdatedEvent'
       - $ref: '#/components/schemas/CallSessionParticipantJoinedEvent'
       - $ref: '#/components/schemas/CallSessionParticipantLeftEvent'
       - $ref: '#/components/schemas/CallSessionStartedEvent'
@@ -14773,6 +15028,8 @@ components:
           reaction.deleted: '#/components/schemas/ReactionDeletedEvent'
           reaction.new: '#/components/schemas/ReactionNewEvent'
           reaction.updated: '#/components/schemas/ReactionUpdatedEvent'
+          review_queue_item.new: '#/components/schemas/ModerationEvent'
+          review_queue_item.updated: '#/components/schemas/ModerationEvent'
           thread.updated: '#/components/schemas/ThreadUpdatedEvent'
           user.banned: '#/components/schemas/UserBannedEvent'
           user.deactivated: '#/components/schemas/UserDeactivatedEvent'
@@ -14849,6 +15106,8 @@ components:
       - $ref: '#/components/schemas/MessageUndeletedEvent'
       - $ref: '#/components/schemas/MessageUpdatedEvent'
       - $ref: '#/components/schemas/ModerationCustomActionEvent'
+      - $ref: '#/components/schemas/ModerationEvent'
+      - $ref: '#/components/schemas/ModerationEvent'
       - $ref: '#/components/schemas/ModerationFlaggedEvent'
       - $ref: '#/components/schemas/ModerationMarkSafeEvent'
       - $ref: '#/components/schemas/PermissionRequestEvent'
@@ -14948,7 +15207,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v130.1.0
+  version: v130.6.4
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -19590,7 +19849,7 @@ paths:
 
         Required permissions:
         - StartBroadcasting
-      operationId: StartRTMPBroadcast
+      operationId: StartRTMPBroadcasts
       parameters:
       - in: path
         name: type
