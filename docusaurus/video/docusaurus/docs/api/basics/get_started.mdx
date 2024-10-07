@@ -27,6 +27,13 @@ You can reference our [development roadmap](https://github.com/GetStream/protoco
 All official SDKs are available on package managers, full source code is available on the GetStream Github organization.
 
 <Tabs groupId="examples">
+<TabItem value="py" label="Python">
+
+```bash
+pip install getstream
+```
+
+</TabItem>
 <TabItem value="js" label="JavaScript">
 
 ```bash
@@ -36,14 +43,6 @@ yarn add @stream-io/node-sdk
 ```
 
 </TabItem>
-<TabItem value="py" label="Python">
-
-```bash
-pip install getstream
-```
-
-</TabItem>
-
 <TabItem value="go" label="Golang">
 
 ```bash
@@ -53,10 +52,11 @@ go get github.com/GetStream/getstream-go
 </TabItem>
 </Tabs>
 
-Something doesn't work? You can open a GitHub issue:
+The source code of our SDKs is available on Github. If you find issues with any SDK you can also create an issue on Github directly:
 
 - [Python SDK](https://github.com/GetStream/stream-py)
 - [Node SDK](https://github.com/GetStream/stream-node)
+- [Golang SDK](https://github.com/GetStream/getstream-go)
 
 ## Creating client
 
@@ -65,6 +65,15 @@ To create a server-side client, you'll need your **API key** and **secret**. Bot
 You can optionally pass a timeout for the API requests, the default timeout is 3000ms.
 
 <Tabs groupId="examples">
+<TabItem value="py" label="Python">
+
+```py
+from getstream import Stream
+
+client = Stream(api_key="your_api_key", api_secret="your_api_secret", timeout=3.0)
+```
+
+</TabItem>
 <TabItem value="js" label="JavaScript">
 
 ```js
@@ -82,12 +91,16 @@ client = new StreamClient(apiKey, secret, { timeout: 3000 });
 ```
 
 </TabItem>
-<TabItem value="py" label="Python">
+<TabItem value="go" label="Golang">
 
-```py
-from getstream import Stream
+```go
+import "github.com/GetStream/getstream-go"
 
-client = Stream(api_key="your_api_key", api_secret="your_api_secret", timeout=3.0)
+client, err := getstream.NewClient(
+    apiKey,
+    apiSecret,
+    getstream.WithTimeout(10_000*time.Millisecond),
+)
 ```
 
 </TabItem>
@@ -107,17 +120,6 @@ API_KEY='<API key>';
 curl -X GET "https://video.stream-io-api.com/api/v2/app?api_key=${API_KEY}" \
   -H "Authorization: ${TOKEN}" \
   -H "stream-auth-type: jwt"
-```
-
-</TabItem>
-<TabItem value="go" label="Golang">
-
-```go
-client, err := stream.NewClient(apiKey, apiSecret)
-if err != nil {
-	fmt.Printf("Error initializing client: %v\n", err)
-	return
-}
 ```
 
 </TabItem>
@@ -173,21 +175,20 @@ client.create_token(user_id="tommaso-id", expiration=3600)
 <TabItem value="go" label="Golang">
 
 ```go
-_, err := client.UpdateUsers(ctx, &UpdateUsersRequest{
-		Users: map[string]UserRequest{
-			userID: {
-				ID:     "tommaso-id",
-				Teams:  &[]string{"red", "blue"},
-				Name:   PtrTo("tommaso"),
-				Role:  PtrTo("admin"),
-				Custom: &map[string]any{"country": "NL"},
-			},
-		},
-	})
-  
-// the token will be valid for 1 hour
-oneHourTime := time.Now().Add(1 * time.Hour)
-client.CreateToken("tommaso-id", &StreamJWTClaims{Expire: &oneHourTime})
+// optional values are passed as pointers, you can use `getstream.PtrTo`
+// to get pointers from literals of any type
+response, err := client.UpdateUsers(ctx, &getstream.UpdateUsersRequest{
+    Users: map[string]getstream.UserRequest{
+        "user-id": {
+            ID:     "user-id",
+            Name:   getstream.PtrTo("tommaso"),
+            Custom: map[string]any{"country": "NL"},
+        },
+    },
+})
+
+// create a user token valid for 24 hours
+token, err := client.CreateToken("tommaso-id", getstream.WithExpiration(24*time.Hour))
 ```
 
 </TabItem>
@@ -212,32 +213,6 @@ curl -X POST https://video.stream-io-api.com/api/v2/users?api_key=${API_KEY} \
     }
   }
 }'
-```
-
-</TabItem>
-<TabItem value="js-deprecated" label="JavaScript@0.3 (deprecated)">
-
-```js
-const userId = 'john';
-const newUser: UserRequest = {
-  id: userId,
-  role: 'user',
-  custom: {
-    color: 'red',
-  },
-  name: 'John',
-  image: 'link/to/profile/image',
-};
-await client.upsertUsers({
-  users: {
-    [newUser.id]: newUser,
-  },
-});
-
-// exp is optional (by default the token is valid for an hour)
-const exp = Math.round(new Date().getTime() / 1000) + 60 * 60;
-
-client.createToken(userId, exp);
 ```
 
 </TabItem>

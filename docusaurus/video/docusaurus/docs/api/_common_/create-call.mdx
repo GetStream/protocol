@@ -4,7 +4,7 @@ import TabItem from '@theme/TabItem';
 You can create a call by providing the call type and an ID:
 
 - The [call type](/api/call_types/builtin) controls which features are enabled and sets up permissions. Call type settings and permissions can be set from API, or using the [Stream Dashboard](https://dashboard.getstream.io/).
-- Calls IDs can be reused, which means they can be joined multiple times, so it's possible to set up recurring calls.
+- Calls can be used once or multiple times depending on your app. Unless you want to re-use the same call multiple times, the recommended way to pick a call ID is to use a uuid v4 so that each call gets a unique random ID.
 
 You can specify call members who can receive push notification about the call.
 
@@ -69,20 +69,30 @@ call.create(
 <TabItem value="go" label="Golang">
 
 ```go
-members := []MemberRequest{
-			{UserID: "john", Role: PtrTo("admin")},
-			{UserID: "jack"},
-		}
-		callRequest := GetOrCreateCallRequest{
-			Data: &CallRequest{
-				CreatedByID: PtrTo("sacha"),
-				Members:     &members,
-        Custom: &map[string]any{
-					"color": "blue",
-				},
-			},
-		}
-_, err := call.GetOrCreate(ctx, &callRequest)
+
+import (
+    "github.com/GetStream/getstream-go"
+    "github.com/google/uuid"
+)
+
+call := client.Video().Call("default", uuid.NewString())
+
+members := []getstream.MemberRequest{
+    {UserID: "john", Role: getstream.PtrTo("admin")},
+    {UserID: "jack"},
+}
+
+callRequest := getstream.GetOrCreateCallRequest{
+    Data: &getstream.CallRequest{
+        CreatedByID: getstream.PtrTo("sacha"),
+        Members:     members,
+        Custom: map[string]any{
+            "color": "blue",
+        },
+    },
+}
+
+response, err := call.GetOrCreate(ctx, &callRequest)
 ```
 
 </TabItem>
