@@ -22,58 +22,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type VideoLayerSetting_Priority int32
-
-const (
-	VideoLayerSetting_PRIORITY_HIGH_UNSPECIFIED VideoLayerSetting_Priority = 0
-	VideoLayerSetting_PRIORITY_LOW              VideoLayerSetting_Priority = 1
-	VideoLayerSetting_PRIORITY_MEDIUM           VideoLayerSetting_Priority = 2
-	VideoLayerSetting_PRIORITY_VERY_LOW         VideoLayerSetting_Priority = 3
-)
-
-// Enum value maps for VideoLayerSetting_Priority.
-var (
-	VideoLayerSetting_Priority_name = map[int32]string{
-		0: "PRIORITY_HIGH_UNSPECIFIED",
-		1: "PRIORITY_LOW",
-		2: "PRIORITY_MEDIUM",
-		3: "PRIORITY_VERY_LOW",
-	}
-	VideoLayerSetting_Priority_value = map[string]int32{
-		"PRIORITY_HIGH_UNSPECIFIED": 0,
-		"PRIORITY_LOW":              1,
-		"PRIORITY_MEDIUM":           2,
-		"PRIORITY_VERY_LOW":         3,
-	}
-)
-
-func (x VideoLayerSetting_Priority) Enum() *VideoLayerSetting_Priority {
-	p := new(VideoLayerSetting_Priority)
-	*p = x
-	return p
-}
-
-func (x VideoLayerSetting_Priority) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (VideoLayerSetting_Priority) Descriptor() protoreflect.EnumDescriptor {
-	return file_video_sfu_event_events_proto_enumTypes[0].Descriptor()
-}
-
-func (VideoLayerSetting_Priority) Type() protoreflect.EnumType {
-	return &file_video_sfu_event_events_proto_enumTypes[0]
-}
-
-func (x VideoLayerSetting_Priority) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use VideoLayerSetting_Priority.Descriptor instead.
-func (VideoLayerSetting_Priority) EnumDescriptor() ([]byte, []int) {
-	return file_video_sfu_event_events_proto_rawDescGZIP(), []int{29, 0}
-}
-
 // SFUEvent is a message that is sent from the SFU to the client.
 type SfuEvent struct {
 	state         protoimpl.MessageState
@@ -1991,66 +1939,18 @@ func (x *AudioLevelChanged) GetAudioLevels() []*AudioLevel {
 	return nil
 }
 
-type AudioMediaRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	ChannelCount int32 `protobuf:"varint,1,opt,name=channel_count,json=channelCount,proto3" json:"channel_count,omitempty"`
-}
-
-func (x *AudioMediaRequest) Reset() {
-	*x = AudioMediaRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_video_sfu_event_events_proto_msgTypes[26]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *AudioMediaRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*AudioMediaRequest) ProtoMessage() {}
-
-func (x *AudioMediaRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_video_sfu_event_events_proto_msgTypes[26]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use AudioMediaRequest.ProtoReflect.Descriptor instead.
-func (*AudioMediaRequest) Descriptor() ([]byte, []int) {
-	return file_video_sfu_event_events_proto_rawDescGZIP(), []int{26}
-}
-
-func (x *AudioMediaRequest) GetChannelCount() int32 {
-	if x != nil {
-		return x.ChannelCount
-	}
-	return 0
-}
-
 type AudioSender struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	MediaRequest *AudioMediaRequest `protobuf:"bytes,1,opt,name=media_request,json=mediaRequest,proto3" json:"media_request,omitempty"`
-	Codec        *models.Codec      `protobuf:"bytes,2,opt,name=codec,proto3" json:"codec,omitempty"`
+	Codec *models.Codec `protobuf:"bytes,2,opt,name=codec,proto3" json:"codec,omitempty"`
 }
 
 func (x *AudioSender) Reset() {
 	*x = AudioSender{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_video_sfu_event_events_proto_msgTypes[27]
+		mi := &file_video_sfu_event_events_proto_msgTypes[26]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2063,7 +1963,7 @@ func (x *AudioSender) String() string {
 func (*AudioSender) ProtoMessage() {}
 
 func (x *AudioSender) ProtoReflect() protoreflect.Message {
-	mi := &file_video_sfu_event_events_proto_msgTypes[27]
+	mi := &file_video_sfu_event_events_proto_msgTypes[26]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2076,14 +1976,7 @@ func (x *AudioSender) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AudioSender.ProtoReflect.Descriptor instead.
 func (*AudioSender) Descriptor() ([]byte, []int) {
-	return file_video_sfu_event_events_proto_rawDescGZIP(), []int{27}
-}
-
-func (x *AudioSender) GetMediaRequest() *AudioMediaRequest {
-	if x != nil {
-		return x.MediaRequest
-	}
-	return nil
+	return file_video_sfu_event_events_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *AudioSender) GetCodec() *models.Codec {
@@ -2091,69 +1984,6 @@ func (x *AudioSender) GetCodec() *models.Codec {
 		return x.Codec
 	}
 	return nil
-}
-
-type VideoMediaRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	IdealHeight    int32 `protobuf:"varint,1,opt,name=ideal_height,json=idealHeight,proto3" json:"ideal_height,omitempty"`
-	IdealWidth     int32 `protobuf:"varint,2,opt,name=ideal_width,json=idealWidth,proto3" json:"ideal_width,omitempty"`
-	IdealFrameRate int32 `protobuf:"varint,3,opt,name=ideal_frame_rate,json=idealFrameRate,proto3" json:"ideal_frame_rate,omitempty"`
-}
-
-func (x *VideoMediaRequest) Reset() {
-	*x = VideoMediaRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_video_sfu_event_events_proto_msgTypes[28]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *VideoMediaRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*VideoMediaRequest) ProtoMessage() {}
-
-func (x *VideoMediaRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_video_sfu_event_events_proto_msgTypes[28]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use VideoMediaRequest.ProtoReflect.Descriptor instead.
-func (*VideoMediaRequest) Descriptor() ([]byte, []int) {
-	return file_video_sfu_event_events_proto_rawDescGZIP(), []int{28}
-}
-
-func (x *VideoMediaRequest) GetIdealHeight() int32 {
-	if x != nil {
-		return x.IdealHeight
-	}
-	return 0
-}
-
-func (x *VideoMediaRequest) GetIdealWidth() int32 {
-	if x != nil {
-		return x.IdealWidth
-	}
-	return 0
-}
-
-func (x *VideoMediaRequest) GetIdealFrameRate() int32 {
-	if x != nil {
-		return x.IdealFrameRate
-	}
-	return 0
 }
 
 // VideoLayerSetting is used to specify various parameters of a particular encoding in simulcast.
@@ -2164,19 +1994,19 @@ type VideoLayerSetting struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Name                  string                     `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Active                bool                       `protobuf:"varint,2,opt,name=active,proto3" json:"active,omitempty"`
-	MaxBitrate            int32                      `protobuf:"varint,3,opt,name=max_bitrate,json=maxBitrate,proto3" json:"max_bitrate,omitempty"`
-	ScaleResolutionDownBy float32                    `protobuf:"fixed32,4,opt,name=scale_resolution_down_by,json=scaleResolutionDownBy,proto3" json:"scale_resolution_down_by,omitempty"`
-	Priority              VideoLayerSetting_Priority `protobuf:"varint,5,opt,name=priority,proto3,enum=stream.video.sfu.event.VideoLayerSetting_Priority" json:"priority,omitempty"`
-	Codec                 *models.Codec              `protobuf:"bytes,6,opt,name=codec,proto3" json:"codec,omitempty"`
-	MaxFramerate          uint32                     `protobuf:"varint,7,opt,name=max_framerate,json=maxFramerate,proto3" json:"max_framerate,omitempty"`
+	Name                  string        `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Active                bool          `protobuf:"varint,2,opt,name=active,proto3" json:"active,omitempty"`
+	MaxBitrate            int32         `protobuf:"varint,3,opt,name=max_bitrate,json=maxBitrate,proto3" json:"max_bitrate,omitempty"`
+	ScaleResolutionDownBy float32       `protobuf:"fixed32,4,opt,name=scale_resolution_down_by,json=scaleResolutionDownBy,proto3" json:"scale_resolution_down_by,omitempty"`
+	Codec                 *models.Codec `protobuf:"bytes,6,opt,name=codec,proto3" json:"codec,omitempty"`
+	MaxFramerate          uint32        `protobuf:"varint,7,opt,name=max_framerate,json=maxFramerate,proto3" json:"max_framerate,omitempty"`
+	ScalabilityMode       string        `protobuf:"bytes,8,opt,name=scalability_mode,json=scalabilityMode,proto3" json:"scalability_mode,omitempty"`
 }
 
 func (x *VideoLayerSetting) Reset() {
 	*x = VideoLayerSetting{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_video_sfu_event_events_proto_msgTypes[29]
+		mi := &file_video_sfu_event_events_proto_msgTypes[27]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2189,7 +2019,7 @@ func (x *VideoLayerSetting) String() string {
 func (*VideoLayerSetting) ProtoMessage() {}
 
 func (x *VideoLayerSetting) ProtoReflect() protoreflect.Message {
-	mi := &file_video_sfu_event_events_proto_msgTypes[29]
+	mi := &file_video_sfu_event_events_proto_msgTypes[27]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2202,7 +2032,7 @@ func (x *VideoLayerSetting) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VideoLayerSetting.ProtoReflect.Descriptor instead.
 func (*VideoLayerSetting) Descriptor() ([]byte, []int) {
-	return file_video_sfu_event_events_proto_rawDescGZIP(), []int{29}
+	return file_video_sfu_event_events_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *VideoLayerSetting) GetName() string {
@@ -2233,13 +2063,6 @@ func (x *VideoLayerSetting) GetScaleResolutionDownBy() float32 {
 	return 0
 }
 
-func (x *VideoLayerSetting) GetPriority() VideoLayerSetting_Priority {
-	if x != nil {
-		return x.Priority
-	}
-	return VideoLayerSetting_PRIORITY_HIGH_UNSPECIFIED
-}
-
 func (x *VideoLayerSetting) GetCodec() *models.Codec {
 	if x != nil {
 		return x.Codec
@@ -2254,20 +2077,26 @@ func (x *VideoLayerSetting) GetMaxFramerate() uint32 {
 	return 0
 }
 
+func (x *VideoLayerSetting) GetScalabilityMode() string {
+	if x != nil {
+		return x.ScalabilityMode
+	}
+	return ""
+}
+
 type VideoSender struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	MediaRequest *VideoMediaRequest   `protobuf:"bytes,1,opt,name=media_request,json=mediaRequest,proto3" json:"media_request,omitempty"`
-	Codec        *models.Codec        `protobuf:"bytes,2,opt,name=codec,proto3" json:"codec,omitempty"`
-	Layers       []*VideoLayerSetting `protobuf:"bytes,3,rep,name=layers,proto3" json:"layers,omitempty"`
+	Codec  *models.Codec        `protobuf:"bytes,2,opt,name=codec,proto3" json:"codec,omitempty"`
+	Layers []*VideoLayerSetting `protobuf:"bytes,3,rep,name=layers,proto3" json:"layers,omitempty"`
 }
 
 func (x *VideoSender) Reset() {
 	*x = VideoSender{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_video_sfu_event_events_proto_msgTypes[30]
+		mi := &file_video_sfu_event_events_proto_msgTypes[28]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2280,7 +2109,7 @@ func (x *VideoSender) String() string {
 func (*VideoSender) ProtoMessage() {}
 
 func (x *VideoSender) ProtoReflect() protoreflect.Message {
-	mi := &file_video_sfu_event_events_proto_msgTypes[30]
+	mi := &file_video_sfu_event_events_proto_msgTypes[28]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2293,14 +2122,7 @@ func (x *VideoSender) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VideoSender.ProtoReflect.Descriptor instead.
 func (*VideoSender) Descriptor() ([]byte, []int) {
-	return file_video_sfu_event_events_proto_rawDescGZIP(), []int{30}
-}
-
-func (x *VideoSender) GetMediaRequest() *VideoMediaRequest {
-	if x != nil {
-		return x.MediaRequest
-	}
-	return nil
+	return file_video_sfu_event_events_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *VideoSender) GetCodec() *models.Codec {
@@ -2330,7 +2152,7 @@ type ChangePublishQuality struct {
 func (x *ChangePublishQuality) Reset() {
 	*x = ChangePublishQuality{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_video_sfu_event_events_proto_msgTypes[31]
+		mi := &file_video_sfu_event_events_proto_msgTypes[29]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2343,7 +2165,7 @@ func (x *ChangePublishQuality) String() string {
 func (*ChangePublishQuality) ProtoMessage() {}
 
 func (x *ChangePublishQuality) ProtoReflect() protoreflect.Message {
-	mi := &file_video_sfu_event_events_proto_msgTypes[31]
+	mi := &file_video_sfu_event_events_proto_msgTypes[29]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2356,7 +2178,7 @@ func (x *ChangePublishQuality) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChangePublishQuality.ProtoReflect.Descriptor instead.
 func (*ChangePublishQuality) Descriptor() ([]byte, []int) {
-	return file_video_sfu_event_events_proto_rawDescGZIP(), []int{31}
+	return file_video_sfu_event_events_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *ChangePublishQuality) GetAudioSenders() []*AudioSender {
@@ -2401,7 +2223,7 @@ type CallGrantsUpdated struct {
 func (x *CallGrantsUpdated) Reset() {
 	*x = CallGrantsUpdated{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_video_sfu_event_events_proto_msgTypes[32]
+		mi := &file_video_sfu_event_events_proto_msgTypes[30]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2414,7 +2236,7 @@ func (x *CallGrantsUpdated) String() string {
 func (*CallGrantsUpdated) ProtoMessage() {}
 
 func (x *CallGrantsUpdated) ProtoReflect() protoreflect.Message {
-	mi := &file_video_sfu_event_events_proto_msgTypes[32]
+	mi := &file_video_sfu_event_events_proto_msgTypes[30]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2427,7 +2249,7 @@ func (x *CallGrantsUpdated) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CallGrantsUpdated.ProtoReflect.Descriptor instead.
 func (*CallGrantsUpdated) Descriptor() ([]byte, []int) {
-	return file_video_sfu_event_events_proto_rawDescGZIP(), []int{32}
+	return file_video_sfu_event_events_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *CallGrantsUpdated) GetCurrentGrants() *models.CallGrants {
@@ -2457,7 +2279,7 @@ type GoAway struct {
 func (x *GoAway) Reset() {
 	*x = GoAway{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_video_sfu_event_events_proto_msgTypes[33]
+		mi := &file_video_sfu_event_events_proto_msgTypes[31]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2470,7 +2292,7 @@ func (x *GoAway) String() string {
 func (*GoAway) ProtoMessage() {}
 
 func (x *GoAway) ProtoReflect() protoreflect.Message {
-	mi := &file_video_sfu_event_events_proto_msgTypes[33]
+	mi := &file_video_sfu_event_events_proto_msgTypes[31]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2483,7 +2305,7 @@ func (x *GoAway) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GoAway.ProtoReflect.Descriptor instead.
 func (*GoAway) Descriptor() ([]byte, []int) {
-	return file_video_sfu_event_events_proto_rawDescGZIP(), []int{33}
+	return file_video_sfu_event_events_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *GoAway) GetReason() models.GoAwayReason {
@@ -2506,7 +2328,7 @@ type CallEnded struct {
 func (x *CallEnded) Reset() {
 	*x = CallEnded{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_video_sfu_event_events_proto_msgTypes[34]
+		mi := &file_video_sfu_event_events_proto_msgTypes[32]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2519,7 +2341,7 @@ func (x *CallEnded) String() string {
 func (*CallEnded) ProtoMessage() {}
 
 func (x *CallEnded) ProtoReflect() protoreflect.Message {
-	mi := &file_video_sfu_event_events_proto_msgTypes[34]
+	mi := &file_video_sfu_event_events_proto_msgTypes[32]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2532,7 +2354,7 @@ func (x *CallEnded) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CallEnded.ProtoReflect.Descriptor instead.
 func (*CallEnded) Descriptor() ([]byte, []int) {
-	return file_video_sfu_event_events_proto_rawDescGZIP(), []int{34}
+	return file_video_sfu_event_events_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *CallEnded) GetReason() models.CallEndedReason {
@@ -2899,104 +2721,73 @@ var file_video_sfu_event_events_proto_rawDesc = []byte{
 	0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x22, 0x2e, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x2e,
 	0x76, 0x69, 0x64, 0x65, 0x6f, 0x2e, 0x73, 0x66, 0x75, 0x2e, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x2e,
 	0x41, 0x75, 0x64, 0x69, 0x6f, 0x4c, 0x65, 0x76, 0x65, 0x6c, 0x52, 0x0b, 0x61, 0x75, 0x64, 0x69,
-	0x6f, 0x4c, 0x65, 0x76, 0x65, 0x6c, 0x73, 0x22, 0x38, 0x0a, 0x11, 0x41, 0x75, 0x64, 0x69, 0x6f,
-	0x4d, 0x65, 0x64, 0x69, 0x61, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x23, 0x0a, 0x0d,
-	0x63, 0x68, 0x61, 0x6e, 0x6e, 0x65, 0x6c, 0x5f, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x05, 0x52, 0x0c, 0x63, 0x68, 0x61, 0x6e, 0x6e, 0x65, 0x6c, 0x43, 0x6f, 0x75, 0x6e,
-	0x74, 0x22, 0x93, 0x01, 0x0a, 0x0b, 0x41, 0x75, 0x64, 0x69, 0x6f, 0x53, 0x65, 0x6e, 0x64, 0x65,
-	0x72, 0x12, 0x4e, 0x0a, 0x0d, 0x6d, 0x65, 0x64, 0x69, 0x61, 0x5f, 0x72, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x29, 0x2e, 0x73, 0x74, 0x72, 0x65, 0x61,
-	0x6d, 0x2e, 0x76, 0x69, 0x64, 0x65, 0x6f, 0x2e, 0x73, 0x66, 0x75, 0x2e, 0x65, 0x76, 0x65, 0x6e,
-	0x74, 0x2e, 0x41, 0x75, 0x64, 0x69, 0x6f, 0x4d, 0x65, 0x64, 0x69, 0x61, 0x52, 0x65, 0x71, 0x75,
-	0x65, 0x73, 0x74, 0x52, 0x0c, 0x6d, 0x65, 0x64, 0x69, 0x61, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
-	0x74, 0x12, 0x34, 0x0a, 0x05, 0x63, 0x6f, 0x64, 0x65, 0x63, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b,
-	0x32, 0x1e, 0x2e, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x2e, 0x76, 0x69, 0x64, 0x65, 0x6f, 0x2e,
-	0x73, 0x66, 0x75, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x43, 0x6f, 0x64, 0x65, 0x63,
-	0x52, 0x05, 0x63, 0x6f, 0x64, 0x65, 0x63, 0x22, 0x81, 0x01, 0x0a, 0x11, 0x56, 0x69, 0x64, 0x65,
-	0x6f, 0x4d, 0x65, 0x64, 0x69, 0x61, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x21, 0x0a,
-	0x0c, 0x69, 0x64, 0x65, 0x61, 0x6c, 0x5f, 0x68, 0x65, 0x69, 0x67, 0x68, 0x74, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x05, 0x52, 0x0b, 0x69, 0x64, 0x65, 0x61, 0x6c, 0x48, 0x65, 0x69, 0x67, 0x68, 0x74,
-	0x12, 0x1f, 0x0a, 0x0b, 0x69, 0x64, 0x65, 0x61, 0x6c, 0x5f, 0x77, 0x69, 0x64, 0x74, 0x68, 0x18,
-	0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0a, 0x69, 0x64, 0x65, 0x61, 0x6c, 0x57, 0x69, 0x64, 0x74,
-	0x68, 0x12, 0x28, 0x0a, 0x10, 0x69, 0x64, 0x65, 0x61, 0x6c, 0x5f, 0x66, 0x72, 0x61, 0x6d, 0x65,
-	0x5f, 0x72, 0x61, 0x74, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0e, 0x69, 0x64, 0x65,
-	0x61, 0x6c, 0x46, 0x72, 0x61, 0x6d, 0x65, 0x52, 0x61, 0x74, 0x65, 0x22, 0xad, 0x03, 0x0a, 0x11,
-	0x56, 0x69, 0x64, 0x65, 0x6f, 0x4c, 0x61, 0x79, 0x65, 0x72, 0x53, 0x65, 0x74, 0x74, 0x69, 0x6e,
-	0x67, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x61, 0x63, 0x74, 0x69, 0x76, 0x65, 0x18,
-	0x02, 0x20, 0x01, 0x28, 0x08, 0x52, 0x06, 0x61, 0x63, 0x74, 0x69, 0x76, 0x65, 0x12, 0x1f, 0x0a,
-	0x0b, 0x6d, 0x61, 0x78, 0x5f, 0x62, 0x69, 0x74, 0x72, 0x61, 0x74, 0x65, 0x18, 0x03, 0x20, 0x01,
-	0x28, 0x05, 0x52, 0x0a, 0x6d, 0x61, 0x78, 0x42, 0x69, 0x74, 0x72, 0x61, 0x74, 0x65, 0x12, 0x37,
-	0x0a, 0x18, 0x73, 0x63, 0x61, 0x6c, 0x65, 0x5f, 0x72, 0x65, 0x73, 0x6f, 0x6c, 0x75, 0x74, 0x69,
-	0x6f, 0x6e, 0x5f, 0x64, 0x6f, 0x77, 0x6e, 0x5f, 0x62, 0x79, 0x18, 0x04, 0x20, 0x01, 0x28, 0x02,
-	0x52, 0x15, 0x73, 0x63, 0x61, 0x6c, 0x65, 0x52, 0x65, 0x73, 0x6f, 0x6c, 0x75, 0x74, 0x69, 0x6f,
-	0x6e, 0x44, 0x6f, 0x77, 0x6e, 0x42, 0x79, 0x12, 0x4e, 0x0a, 0x08, 0x70, 0x72, 0x69, 0x6f, 0x72,
-	0x69, 0x74, 0x79, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x32, 0x2e, 0x73, 0x74, 0x72, 0x65,
-	0x61, 0x6d, 0x2e, 0x76, 0x69, 0x64, 0x65, 0x6f, 0x2e, 0x73, 0x66, 0x75, 0x2e, 0x65, 0x76, 0x65,
-	0x6e, 0x74, 0x2e, 0x56, 0x69, 0x64, 0x65, 0x6f, 0x4c, 0x61, 0x79, 0x65, 0x72, 0x53, 0x65, 0x74,
-	0x74, 0x69, 0x6e, 0x67, 0x2e, 0x50, 0x72, 0x69, 0x6f, 0x72, 0x69, 0x74, 0x79, 0x52, 0x08, 0x70,
-	0x72, 0x69, 0x6f, 0x72, 0x69, 0x74, 0x79, 0x12, 0x34, 0x0a, 0x05, 0x63, 0x6f, 0x64, 0x65, 0x63,
-	0x18, 0x06, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1e, 0x2e, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x2e,
-	0x76, 0x69, 0x64, 0x65, 0x6f, 0x2e, 0x73, 0x66, 0x75, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73,
-	0x2e, 0x43, 0x6f, 0x64, 0x65, 0x63, 0x52, 0x05, 0x63, 0x6f, 0x64, 0x65, 0x63, 0x12, 0x23, 0x0a,
-	0x0d, 0x6d, 0x61, 0x78, 0x5f, 0x66, 0x72, 0x61, 0x6d, 0x65, 0x72, 0x61, 0x74, 0x65, 0x18, 0x07,
-	0x20, 0x01, 0x28, 0x0d, 0x52, 0x0c, 0x6d, 0x61, 0x78, 0x46, 0x72, 0x61, 0x6d, 0x65, 0x72, 0x61,
-	0x74, 0x65, 0x22, 0x67, 0x0a, 0x08, 0x50, 0x72, 0x69, 0x6f, 0x72, 0x69, 0x74, 0x79, 0x12, 0x1d,
-	0x0a, 0x19, 0x50, 0x52, 0x49, 0x4f, 0x52, 0x49, 0x54, 0x59, 0x5f, 0x48, 0x49, 0x47, 0x48, 0x5f,
-	0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x10, 0x0a,
-	0x0c, 0x50, 0x52, 0x49, 0x4f, 0x52, 0x49, 0x54, 0x59, 0x5f, 0x4c, 0x4f, 0x57, 0x10, 0x01, 0x12,
-	0x13, 0x0a, 0x0f, 0x50, 0x52, 0x49, 0x4f, 0x52, 0x49, 0x54, 0x59, 0x5f, 0x4d, 0x45, 0x44, 0x49,
-	0x55, 0x4d, 0x10, 0x02, 0x12, 0x15, 0x0a, 0x11, 0x50, 0x52, 0x49, 0x4f, 0x52, 0x49, 0x54, 0x59,
-	0x5f, 0x56, 0x45, 0x52, 0x59, 0x5f, 0x4c, 0x4f, 0x57, 0x10, 0x03, 0x22, 0xd6, 0x01, 0x0a, 0x0b,
-	0x56, 0x69, 0x64, 0x65, 0x6f, 0x53, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x12, 0x4e, 0x0a, 0x0d, 0x6d,
-	0x65, 0x64, 0x69, 0x61, 0x5f, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x0b, 0x32, 0x29, 0x2e, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x2e, 0x76, 0x69, 0x64, 0x65,
-	0x6f, 0x2e, 0x73, 0x66, 0x75, 0x2e, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x2e, 0x56, 0x69, 0x64, 0x65,
-	0x6f, 0x4d, 0x65, 0x64, 0x69, 0x61, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x52, 0x0c, 0x6d,
-	0x65, 0x64, 0x69, 0x61, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x34, 0x0a, 0x05, 0x63,
-	0x6f, 0x64, 0x65, 0x63, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1e, 0x2e, 0x73, 0x74, 0x72,
-	0x65, 0x61, 0x6d, 0x2e, 0x76, 0x69, 0x64, 0x65, 0x6f, 0x2e, 0x73, 0x66, 0x75, 0x2e, 0x6d, 0x6f,
-	0x64, 0x65, 0x6c, 0x73, 0x2e, 0x43, 0x6f, 0x64, 0x65, 0x63, 0x52, 0x05, 0x63, 0x6f, 0x64, 0x65,
-	0x63, 0x12, 0x41, 0x0a, 0x06, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x73, 0x18, 0x03, 0x20, 0x03, 0x28,
-	0x0b, 0x32, 0x29, 0x2e, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x2e, 0x76, 0x69, 0x64, 0x65, 0x6f,
+	0x6f, 0x4c, 0x65, 0x76, 0x65, 0x6c, 0x73, 0x22, 0x43, 0x0a, 0x0b, 0x41, 0x75, 0x64, 0x69, 0x6f,
+	0x53, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x12, 0x34, 0x0a, 0x05, 0x63, 0x6f, 0x64, 0x65, 0x63, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1e, 0x2e, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x2e, 0x76,
+	0x69, 0x64, 0x65, 0x6f, 0x2e, 0x73, 0x66, 0x75, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e,
+	0x43, 0x6f, 0x64, 0x65, 0x63, 0x52, 0x05, 0x63, 0x6f, 0x64, 0x65, 0x63, 0x22, 0x9f, 0x02, 0x0a,
+	0x11, 0x56, 0x69, 0x64, 0x65, 0x6f, 0x4c, 0x61, 0x79, 0x65, 0x72, 0x53, 0x65, 0x74, 0x74, 0x69,
+	0x6e, 0x67, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x61, 0x63, 0x74, 0x69, 0x76, 0x65,
+	0x18, 0x02, 0x20, 0x01, 0x28, 0x08, 0x52, 0x06, 0x61, 0x63, 0x74, 0x69, 0x76, 0x65, 0x12, 0x1f,
+	0x0a, 0x0b, 0x6d, 0x61, 0x78, 0x5f, 0x62, 0x69, 0x74, 0x72, 0x61, 0x74, 0x65, 0x18, 0x03, 0x20,
+	0x01, 0x28, 0x05, 0x52, 0x0a, 0x6d, 0x61, 0x78, 0x42, 0x69, 0x74, 0x72, 0x61, 0x74, 0x65, 0x12,
+	0x37, 0x0a, 0x18, 0x73, 0x63, 0x61, 0x6c, 0x65, 0x5f, 0x72, 0x65, 0x73, 0x6f, 0x6c, 0x75, 0x74,
+	0x69, 0x6f, 0x6e, 0x5f, 0x64, 0x6f, 0x77, 0x6e, 0x5f, 0x62, 0x79, 0x18, 0x04, 0x20, 0x01, 0x28,
+	0x02, 0x52, 0x15, 0x73, 0x63, 0x61, 0x6c, 0x65, 0x52, 0x65, 0x73, 0x6f, 0x6c, 0x75, 0x74, 0x69,
+	0x6f, 0x6e, 0x44, 0x6f, 0x77, 0x6e, 0x42, 0x79, 0x12, 0x34, 0x0a, 0x05, 0x63, 0x6f, 0x64, 0x65,
+	0x63, 0x18, 0x06, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1e, 0x2e, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d,
+	0x2e, 0x76, 0x69, 0x64, 0x65, 0x6f, 0x2e, 0x73, 0x66, 0x75, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c,
+	0x73, 0x2e, 0x43, 0x6f, 0x64, 0x65, 0x63, 0x52, 0x05, 0x63, 0x6f, 0x64, 0x65, 0x63, 0x12, 0x23,
+	0x0a, 0x0d, 0x6d, 0x61, 0x78, 0x5f, 0x66, 0x72, 0x61, 0x6d, 0x65, 0x72, 0x61, 0x74, 0x65, 0x18,
+	0x07, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x0c, 0x6d, 0x61, 0x78, 0x46, 0x72, 0x61, 0x6d, 0x65, 0x72,
+	0x61, 0x74, 0x65, 0x12, 0x29, 0x0a, 0x10, 0x73, 0x63, 0x61, 0x6c, 0x61, 0x62, 0x69, 0x6c, 0x69,
+	0x74, 0x79, 0x5f, 0x6d, 0x6f, 0x64, 0x65, 0x18, 0x08, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0f, 0x73,
+	0x63, 0x61, 0x6c, 0x61, 0x62, 0x69, 0x6c, 0x69, 0x74, 0x79, 0x4d, 0x6f, 0x64, 0x65, 0x22, 0x86,
+	0x01, 0x0a, 0x0b, 0x56, 0x69, 0x64, 0x65, 0x6f, 0x53, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x12, 0x34,
+	0x0a, 0x05, 0x63, 0x6f, 0x64, 0x65, 0x63, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1e, 0x2e,
+	0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x2e, 0x76, 0x69, 0x64, 0x65, 0x6f, 0x2e, 0x73, 0x66, 0x75,
+	0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x43, 0x6f, 0x64, 0x65, 0x63, 0x52, 0x05, 0x63,
+	0x6f, 0x64, 0x65, 0x63, 0x12, 0x41, 0x0a, 0x06, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x73, 0x18, 0x03,
+	0x20, 0x03, 0x28, 0x0b, 0x32, 0x29, 0x2e, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x2e, 0x76, 0x69,
+	0x64, 0x65, 0x6f, 0x2e, 0x73, 0x66, 0x75, 0x2e, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x2e, 0x56, 0x69,
+	0x64, 0x65, 0x6f, 0x4c, 0x61, 0x79, 0x65, 0x72, 0x53, 0x65, 0x74, 0x74, 0x69, 0x6e, 0x67, 0x52,
+	0x06, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x73, 0x22, 0xaa, 0x01, 0x0a, 0x14, 0x43, 0x68, 0x61, 0x6e,
+	0x67, 0x65, 0x50, 0x75, 0x62, 0x6c, 0x69, 0x73, 0x68, 0x51, 0x75, 0x61, 0x6c, 0x69, 0x74, 0x79,
+	0x12, 0x48, 0x0a, 0x0d, 0x61, 0x75, 0x64, 0x69, 0x6f, 0x5f, 0x73, 0x65, 0x6e, 0x64, 0x65, 0x72,
+	0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x23, 0x2e, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d,
+	0x2e, 0x76, 0x69, 0x64, 0x65, 0x6f, 0x2e, 0x73, 0x66, 0x75, 0x2e, 0x65, 0x76, 0x65, 0x6e, 0x74,
+	0x2e, 0x41, 0x75, 0x64, 0x69, 0x6f, 0x53, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x52, 0x0c, 0x61, 0x75,
+	0x64, 0x69, 0x6f, 0x53, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x73, 0x12, 0x48, 0x0a, 0x0d, 0x76, 0x69,
+	0x64, 0x65, 0x6f, 0x5f, 0x73, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28,
+	0x0b, 0x32, 0x23, 0x2e, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x2e, 0x76, 0x69, 0x64, 0x65, 0x6f,
 	0x2e, 0x73, 0x66, 0x75, 0x2e, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x2e, 0x56, 0x69, 0x64, 0x65, 0x6f,
-	0x4c, 0x61, 0x79, 0x65, 0x72, 0x53, 0x65, 0x74, 0x74, 0x69, 0x6e, 0x67, 0x52, 0x06, 0x6c, 0x61,
-	0x79, 0x65, 0x72, 0x73, 0x22, 0xaa, 0x01, 0x0a, 0x14, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x50,
-	0x75, 0x62, 0x6c, 0x69, 0x73, 0x68, 0x51, 0x75, 0x61, 0x6c, 0x69, 0x74, 0x79, 0x12, 0x48, 0x0a,
-	0x0d, 0x61, 0x75, 0x64, 0x69, 0x6f, 0x5f, 0x73, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x73, 0x18, 0x01,
-	0x20, 0x03, 0x28, 0x0b, 0x32, 0x23, 0x2e, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x2e, 0x76, 0x69,
-	0x64, 0x65, 0x6f, 0x2e, 0x73, 0x66, 0x75, 0x2e, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x2e, 0x41, 0x75,
-	0x64, 0x69, 0x6f, 0x53, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x52, 0x0c, 0x61, 0x75, 0x64, 0x69, 0x6f,
-	0x53, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x73, 0x12, 0x48, 0x0a, 0x0d, 0x76, 0x69, 0x64, 0x65, 0x6f,
-	0x5f, 0x73, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x23,
-	0x2e, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x2e, 0x76, 0x69, 0x64, 0x65, 0x6f, 0x2e, 0x73, 0x66,
-	0x75, 0x2e, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x2e, 0x56, 0x69, 0x64, 0x65, 0x6f, 0x53, 0x65, 0x6e,
-	0x64, 0x65, 0x72, 0x52, 0x0c, 0x76, 0x69, 0x64, 0x65, 0x6f, 0x53, 0x65, 0x6e, 0x64, 0x65, 0x72,
-	0x73, 0x22, 0x79, 0x0a, 0x11, 0x43, 0x61, 0x6c, 0x6c, 0x47, 0x72, 0x61, 0x6e, 0x74, 0x73, 0x55,
-	0x70, 0x64, 0x61, 0x74, 0x65, 0x64, 0x12, 0x4a, 0x0a, 0x0e, 0x63, 0x75, 0x72, 0x72, 0x65, 0x6e,
-	0x74, 0x5f, 0x67, 0x72, 0x61, 0x6e, 0x74, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x23,
-	0x2e, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x2e, 0x76, 0x69, 0x64, 0x65, 0x6f, 0x2e, 0x73, 0x66,
-	0x75, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x43, 0x61, 0x6c, 0x6c, 0x47, 0x72, 0x61,
-	0x6e, 0x74, 0x73, 0x52, 0x0d, 0x63, 0x75, 0x72, 0x72, 0x65, 0x6e, 0x74, 0x47, 0x72, 0x61, 0x6e,
-	0x74, 0x73, 0x12, 0x18, 0x0a, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x18, 0x02, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x22, 0x47, 0x0a, 0x06,
-	0x47, 0x6f, 0x41, 0x77, 0x61, 0x79, 0x12, 0x3d, 0x0a, 0x06, 0x72, 0x65, 0x61, 0x73, 0x6f, 0x6e,
-	0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x25, 0x2e, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x2e,
-	0x76, 0x69, 0x64, 0x65, 0x6f, 0x2e, 0x73, 0x66, 0x75, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73,
-	0x2e, 0x47, 0x6f, 0x41, 0x77, 0x61, 0x79, 0x52, 0x65, 0x61, 0x73, 0x6f, 0x6e, 0x52, 0x06, 0x72,
-	0x65, 0x61, 0x73, 0x6f, 0x6e, 0x22, 0x4d, 0x0a, 0x09, 0x43, 0x61, 0x6c, 0x6c, 0x45, 0x6e, 0x64,
-	0x65, 0x64, 0x12, 0x40, 0x0a, 0x06, 0x72, 0x65, 0x61, 0x73, 0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x0e, 0x32, 0x28, 0x2e, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x2e, 0x76, 0x69, 0x64, 0x65,
-	0x6f, 0x2e, 0x73, 0x66, 0x75, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x43, 0x61, 0x6c,
-	0x6c, 0x45, 0x6e, 0x64, 0x65, 0x64, 0x52, 0x65, 0x61, 0x73, 0x6f, 0x6e, 0x52, 0x06, 0x72, 0x65,
-	0x61, 0x73, 0x6f, 0x6e, 0x42, 0x64, 0x42, 0x0b, 0x53, 0x66, 0x75, 0x45, 0x76, 0x65, 0x6e, 0x74,
-	0x73, 0x56, 0x31, 0x50, 0x01, 0x5a, 0x36, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f,
-	0x6d, 0x2f, 0x47, 0x65, 0x74, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x2f, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x63, 0x6f, 0x6c, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2f, 0x76, 0x69,
-	0x64, 0x65, 0x6f, 0x2f, 0x73, 0x66, 0x75, 0x2f, 0x65, 0x76, 0x65, 0x6e, 0x74, 0xaa, 0x02, 0x1a,
-	0x53, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x2e, 0x56, 0x69, 0x64, 0x65, 0x6f, 0x2e, 0x76, 0x31, 0x2e,
-	0x53, 0x66, 0x75, 0x2e, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x33,
+	0x53, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x52, 0x0c, 0x76, 0x69, 0x64, 0x65, 0x6f, 0x53, 0x65, 0x6e,
+	0x64, 0x65, 0x72, 0x73, 0x22, 0x79, 0x0a, 0x11, 0x43, 0x61, 0x6c, 0x6c, 0x47, 0x72, 0x61, 0x6e,
+	0x74, 0x73, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x64, 0x12, 0x4a, 0x0a, 0x0e, 0x63, 0x75, 0x72,
+	0x72, 0x65, 0x6e, 0x74, 0x5f, 0x67, 0x72, 0x61, 0x6e, 0x74, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x0b, 0x32, 0x23, 0x2e, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x2e, 0x76, 0x69, 0x64, 0x65, 0x6f,
+	0x2e, 0x73, 0x66, 0x75, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x43, 0x61, 0x6c, 0x6c,
+	0x47, 0x72, 0x61, 0x6e, 0x74, 0x73, 0x52, 0x0d, 0x63, 0x75, 0x72, 0x72, 0x65, 0x6e, 0x74, 0x47,
+	0x72, 0x61, 0x6e, 0x74, 0x73, 0x12, 0x18, 0x0a, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65,
+	0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x22,
+	0x47, 0x0a, 0x06, 0x47, 0x6f, 0x41, 0x77, 0x61, 0x79, 0x12, 0x3d, 0x0a, 0x06, 0x72, 0x65, 0x61,
+	0x73, 0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x25, 0x2e, 0x73, 0x74, 0x72, 0x65,
+	0x61, 0x6d, 0x2e, 0x76, 0x69, 0x64, 0x65, 0x6f, 0x2e, 0x73, 0x66, 0x75, 0x2e, 0x6d, 0x6f, 0x64,
+	0x65, 0x6c, 0x73, 0x2e, 0x47, 0x6f, 0x41, 0x77, 0x61, 0x79, 0x52, 0x65, 0x61, 0x73, 0x6f, 0x6e,
+	0x52, 0x06, 0x72, 0x65, 0x61, 0x73, 0x6f, 0x6e, 0x22, 0x4d, 0x0a, 0x09, 0x43, 0x61, 0x6c, 0x6c,
+	0x45, 0x6e, 0x64, 0x65, 0x64, 0x12, 0x40, 0x0a, 0x06, 0x72, 0x65, 0x61, 0x73, 0x6f, 0x6e, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x28, 0x2e, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x2e, 0x76,
+	0x69, 0x64, 0x65, 0x6f, 0x2e, 0x73, 0x66, 0x75, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e,
+	0x43, 0x61, 0x6c, 0x6c, 0x45, 0x6e, 0x64, 0x65, 0x64, 0x52, 0x65, 0x61, 0x73, 0x6f, 0x6e, 0x52,
+	0x06, 0x72, 0x65, 0x61, 0x73, 0x6f, 0x6e, 0x42, 0x64, 0x42, 0x0b, 0x53, 0x66, 0x75, 0x45, 0x76,
+	0x65, 0x6e, 0x74, 0x73, 0x56, 0x31, 0x50, 0x01, 0x5a, 0x36, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62,
+	0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x47, 0x65, 0x74, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x2f, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66,
+	0x2f, 0x76, 0x69, 0x64, 0x65, 0x6f, 0x2f, 0x73, 0x66, 0x75, 0x2f, 0x65, 0x76, 0x65, 0x6e, 0x74,
+	0xaa, 0x02, 0x1a, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x2e, 0x56, 0x69, 0x64, 0x65, 0x6f, 0x2e,
+	0x76, 0x31, 0x2e, 0x53, 0x66, 0x75, 0x2e, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x73, 0x62, 0x06, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -3011,132 +2802,125 @@ func file_video_sfu_event_events_proto_rawDescGZIP() []byte {
 	return file_video_sfu_event_events_proto_rawDescData
 }
 
-var file_video_sfu_event_events_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_video_sfu_event_events_proto_msgTypes = make([]protoimpl.MessageInfo, 35)
+var file_video_sfu_event_events_proto_msgTypes = make([]protoimpl.MessageInfo, 33)
 var file_video_sfu_event_events_proto_goTypes = []interface{}{
-	(VideoLayerSetting_Priority)(0),             // 0: stream.video.sfu.event.VideoLayerSetting.Priority
-	(*SfuEvent)(nil),                            // 1: stream.video.sfu.event.SfuEvent
-	(*ParticipantMigrationComplete)(nil),        // 2: stream.video.sfu.event.ParticipantMigrationComplete
-	(*PinsChanged)(nil),                         // 3: stream.video.sfu.event.PinsChanged
-	(*Error)(nil),                               // 4: stream.video.sfu.event.Error
-	(*ICETrickle)(nil),                          // 5: stream.video.sfu.event.ICETrickle
-	(*ICERestart)(nil),                          // 6: stream.video.sfu.event.ICERestart
-	(*SfuRequest)(nil),                          // 7: stream.video.sfu.event.SfuRequest
-	(*LeaveCallRequest)(nil),                    // 8: stream.video.sfu.event.LeaveCallRequest
-	(*HealthCheckRequest)(nil),                  // 9: stream.video.sfu.event.HealthCheckRequest
-	(*HealthCheckResponse)(nil),                 // 10: stream.video.sfu.event.HealthCheckResponse
-	(*TrackPublished)(nil),                      // 11: stream.video.sfu.event.TrackPublished
-	(*TrackUnpublished)(nil),                    // 12: stream.video.sfu.event.TrackUnpublished
-	(*JoinRequest)(nil),                         // 13: stream.video.sfu.event.JoinRequest
-	(*ReconnectDetails)(nil),                    // 14: stream.video.sfu.event.ReconnectDetails
-	(*Migration)(nil),                           // 15: stream.video.sfu.event.Migration
-	(*JoinResponse)(nil),                        // 16: stream.video.sfu.event.JoinResponse
-	(*ParticipantJoined)(nil),                   // 17: stream.video.sfu.event.ParticipantJoined
-	(*ParticipantLeft)(nil),                     // 18: stream.video.sfu.event.ParticipantLeft
-	(*ParticipantUpdated)(nil),                  // 19: stream.video.sfu.event.ParticipantUpdated
-	(*SubscriberOffer)(nil),                     // 20: stream.video.sfu.event.SubscriberOffer
-	(*PublisherAnswer)(nil),                     // 21: stream.video.sfu.event.PublisherAnswer
-	(*ConnectionQualityChanged)(nil),            // 22: stream.video.sfu.event.ConnectionQualityChanged
-	(*ConnectionQualityInfo)(nil),               // 23: stream.video.sfu.event.ConnectionQualityInfo
-	(*DominantSpeakerChanged)(nil),              // 24: stream.video.sfu.event.DominantSpeakerChanged
-	(*AudioLevel)(nil),                          // 25: stream.video.sfu.event.AudioLevel
-	(*AudioLevelChanged)(nil),                   // 26: stream.video.sfu.event.AudioLevelChanged
-	(*AudioMediaRequest)(nil),                   // 27: stream.video.sfu.event.AudioMediaRequest
-	(*AudioSender)(nil),                         // 28: stream.video.sfu.event.AudioSender
-	(*VideoMediaRequest)(nil),                   // 29: stream.video.sfu.event.VideoMediaRequest
-	(*VideoLayerSetting)(nil),                   // 30: stream.video.sfu.event.VideoLayerSetting
-	(*VideoSender)(nil),                         // 31: stream.video.sfu.event.VideoSender
-	(*ChangePublishQuality)(nil),                // 32: stream.video.sfu.event.ChangePublishQuality
-	(*CallGrantsUpdated)(nil),                   // 33: stream.video.sfu.event.CallGrantsUpdated
-	(*GoAway)(nil),                              // 34: stream.video.sfu.event.GoAway
-	(*CallEnded)(nil),                           // 35: stream.video.sfu.event.CallEnded
-	(*models.ICETrickle)(nil),                   // 36: stream.video.sfu.models.ICETrickle
-	(*models.Pin)(nil),                          // 37: stream.video.sfu.models.Pin
-	(*models.Error)(nil),                        // 38: stream.video.sfu.models.Error
-	(models.WebsocketReconnectStrategy)(0),      // 39: stream.video.sfu.models.WebsocketReconnectStrategy
-	(models.PeerType)(0),                        // 40: stream.video.sfu.models.PeerType
-	(*models.ParticipantCount)(nil),             // 41: stream.video.sfu.models.ParticipantCount
-	(models.TrackType)(0),                       // 42: stream.video.sfu.models.TrackType
-	(*models.Participant)(nil),                  // 43: stream.video.sfu.models.Participant
-	(models.TrackUnpublishReason)(0),            // 44: stream.video.sfu.models.TrackUnpublishReason
-	(*models.ClientDetails)(nil),                // 45: stream.video.sfu.models.ClientDetails
-	(*models.TrackInfo)(nil),                    // 46: stream.video.sfu.models.TrackInfo
-	(*signal_rpc.TrackSubscriptionDetails)(nil), // 47: stream.video.sfu.signal.TrackSubscriptionDetails
-	(*models.CallState)(nil),                    // 48: stream.video.sfu.models.CallState
-	(models.ConnectionQuality)(0),               // 49: stream.video.sfu.models.ConnectionQuality
-	(*models.Codec)(nil),                        // 50: stream.video.sfu.models.Codec
-	(*models.CallGrants)(nil),                   // 51: stream.video.sfu.models.CallGrants
-	(models.GoAwayReason)(0),                    // 52: stream.video.sfu.models.GoAwayReason
-	(models.CallEndedReason)(0),                 // 53: stream.video.sfu.models.CallEndedReason
+	(*SfuEvent)(nil),                            // 0: stream.video.sfu.event.SfuEvent
+	(*ParticipantMigrationComplete)(nil),        // 1: stream.video.sfu.event.ParticipantMigrationComplete
+	(*PinsChanged)(nil),                         // 2: stream.video.sfu.event.PinsChanged
+	(*Error)(nil),                               // 3: stream.video.sfu.event.Error
+	(*ICETrickle)(nil),                          // 4: stream.video.sfu.event.ICETrickle
+	(*ICERestart)(nil),                          // 5: stream.video.sfu.event.ICERestart
+	(*SfuRequest)(nil),                          // 6: stream.video.sfu.event.SfuRequest
+	(*LeaveCallRequest)(nil),                    // 7: stream.video.sfu.event.LeaveCallRequest
+	(*HealthCheckRequest)(nil),                  // 8: stream.video.sfu.event.HealthCheckRequest
+	(*HealthCheckResponse)(nil),                 // 9: stream.video.sfu.event.HealthCheckResponse
+	(*TrackPublished)(nil),                      // 10: stream.video.sfu.event.TrackPublished
+	(*TrackUnpublished)(nil),                    // 11: stream.video.sfu.event.TrackUnpublished
+	(*JoinRequest)(nil),                         // 12: stream.video.sfu.event.JoinRequest
+	(*ReconnectDetails)(nil),                    // 13: stream.video.sfu.event.ReconnectDetails
+	(*Migration)(nil),                           // 14: stream.video.sfu.event.Migration
+	(*JoinResponse)(nil),                        // 15: stream.video.sfu.event.JoinResponse
+	(*ParticipantJoined)(nil),                   // 16: stream.video.sfu.event.ParticipantJoined
+	(*ParticipantLeft)(nil),                     // 17: stream.video.sfu.event.ParticipantLeft
+	(*ParticipantUpdated)(nil),                  // 18: stream.video.sfu.event.ParticipantUpdated
+	(*SubscriberOffer)(nil),                     // 19: stream.video.sfu.event.SubscriberOffer
+	(*PublisherAnswer)(nil),                     // 20: stream.video.sfu.event.PublisherAnswer
+	(*ConnectionQualityChanged)(nil),            // 21: stream.video.sfu.event.ConnectionQualityChanged
+	(*ConnectionQualityInfo)(nil),               // 22: stream.video.sfu.event.ConnectionQualityInfo
+	(*DominantSpeakerChanged)(nil),              // 23: stream.video.sfu.event.DominantSpeakerChanged
+	(*AudioLevel)(nil),                          // 24: stream.video.sfu.event.AudioLevel
+	(*AudioLevelChanged)(nil),                   // 25: stream.video.sfu.event.AudioLevelChanged
+	(*AudioSender)(nil),                         // 26: stream.video.sfu.event.AudioSender
+	(*VideoLayerSetting)(nil),                   // 27: stream.video.sfu.event.VideoLayerSetting
+	(*VideoSender)(nil),                         // 28: stream.video.sfu.event.VideoSender
+	(*ChangePublishQuality)(nil),                // 29: stream.video.sfu.event.ChangePublishQuality
+	(*CallGrantsUpdated)(nil),                   // 30: stream.video.sfu.event.CallGrantsUpdated
+	(*GoAway)(nil),                              // 31: stream.video.sfu.event.GoAway
+	(*CallEnded)(nil),                           // 32: stream.video.sfu.event.CallEnded
+	(*models.ICETrickle)(nil),                   // 33: stream.video.sfu.models.ICETrickle
+	(*models.Pin)(nil),                          // 34: stream.video.sfu.models.Pin
+	(*models.Error)(nil),                        // 35: stream.video.sfu.models.Error
+	(models.WebsocketReconnectStrategy)(0),      // 36: stream.video.sfu.models.WebsocketReconnectStrategy
+	(models.PeerType)(0),                        // 37: stream.video.sfu.models.PeerType
+	(*models.ParticipantCount)(nil),             // 38: stream.video.sfu.models.ParticipantCount
+	(models.TrackType)(0),                       // 39: stream.video.sfu.models.TrackType
+	(*models.Participant)(nil),                  // 40: stream.video.sfu.models.Participant
+	(models.TrackUnpublishReason)(0),            // 41: stream.video.sfu.models.TrackUnpublishReason
+	(*models.ClientDetails)(nil),                // 42: stream.video.sfu.models.ClientDetails
+	(*models.TrackInfo)(nil),                    // 43: stream.video.sfu.models.TrackInfo
+	(*signal_rpc.TrackSubscriptionDetails)(nil), // 44: stream.video.sfu.signal.TrackSubscriptionDetails
+	(*models.CallState)(nil),                    // 45: stream.video.sfu.models.CallState
+	(models.ConnectionQuality)(0),               // 46: stream.video.sfu.models.ConnectionQuality
+	(*models.Codec)(nil),                        // 47: stream.video.sfu.models.Codec
+	(*models.CallGrants)(nil),                   // 48: stream.video.sfu.models.CallGrants
+	(models.GoAwayReason)(0),                    // 49: stream.video.sfu.models.GoAwayReason
+	(models.CallEndedReason)(0),                 // 50: stream.video.sfu.models.CallEndedReason
 }
 var file_video_sfu_event_events_proto_depIdxs = []int32{
-	20, // 0: stream.video.sfu.event.SfuEvent.subscriber_offer:type_name -> stream.video.sfu.event.SubscriberOffer
-	21, // 1: stream.video.sfu.event.SfuEvent.publisher_answer:type_name -> stream.video.sfu.event.PublisherAnswer
-	22, // 2: stream.video.sfu.event.SfuEvent.connection_quality_changed:type_name -> stream.video.sfu.event.ConnectionQualityChanged
-	26, // 3: stream.video.sfu.event.SfuEvent.audio_level_changed:type_name -> stream.video.sfu.event.AudioLevelChanged
-	36, // 4: stream.video.sfu.event.SfuEvent.ice_trickle:type_name -> stream.video.sfu.models.ICETrickle
-	32, // 5: stream.video.sfu.event.SfuEvent.change_publish_quality:type_name -> stream.video.sfu.event.ChangePublishQuality
-	17, // 6: stream.video.sfu.event.SfuEvent.participant_joined:type_name -> stream.video.sfu.event.ParticipantJoined
-	18, // 7: stream.video.sfu.event.SfuEvent.participant_left:type_name -> stream.video.sfu.event.ParticipantLeft
-	24, // 8: stream.video.sfu.event.SfuEvent.dominant_speaker_changed:type_name -> stream.video.sfu.event.DominantSpeakerChanged
-	16, // 9: stream.video.sfu.event.SfuEvent.join_response:type_name -> stream.video.sfu.event.JoinResponse
-	10, // 10: stream.video.sfu.event.SfuEvent.health_check_response:type_name -> stream.video.sfu.event.HealthCheckResponse
-	11, // 11: stream.video.sfu.event.SfuEvent.track_published:type_name -> stream.video.sfu.event.TrackPublished
-	12, // 12: stream.video.sfu.event.SfuEvent.track_unpublished:type_name -> stream.video.sfu.event.TrackUnpublished
-	4,  // 13: stream.video.sfu.event.SfuEvent.error:type_name -> stream.video.sfu.event.Error
-	33, // 14: stream.video.sfu.event.SfuEvent.call_grants_updated:type_name -> stream.video.sfu.event.CallGrantsUpdated
-	34, // 15: stream.video.sfu.event.SfuEvent.go_away:type_name -> stream.video.sfu.event.GoAway
-	6,  // 16: stream.video.sfu.event.SfuEvent.ice_restart:type_name -> stream.video.sfu.event.ICERestart
-	3,  // 17: stream.video.sfu.event.SfuEvent.pins_updated:type_name -> stream.video.sfu.event.PinsChanged
-	35, // 18: stream.video.sfu.event.SfuEvent.call_ended:type_name -> stream.video.sfu.event.CallEnded
-	19, // 19: stream.video.sfu.event.SfuEvent.participant_updated:type_name -> stream.video.sfu.event.ParticipantUpdated
-	2,  // 20: stream.video.sfu.event.SfuEvent.participant_migration_complete:type_name -> stream.video.sfu.event.ParticipantMigrationComplete
-	37, // 21: stream.video.sfu.event.PinsChanged.pins:type_name -> stream.video.sfu.models.Pin
-	38, // 22: stream.video.sfu.event.Error.error:type_name -> stream.video.sfu.models.Error
-	39, // 23: stream.video.sfu.event.Error.reconnect_strategy:type_name -> stream.video.sfu.models.WebsocketReconnectStrategy
-	40, // 24: stream.video.sfu.event.ICETrickle.peer_type:type_name -> stream.video.sfu.models.PeerType
-	40, // 25: stream.video.sfu.event.ICERestart.peer_type:type_name -> stream.video.sfu.models.PeerType
-	13, // 26: stream.video.sfu.event.SfuRequest.join_request:type_name -> stream.video.sfu.event.JoinRequest
-	9,  // 27: stream.video.sfu.event.SfuRequest.health_check_request:type_name -> stream.video.sfu.event.HealthCheckRequest
-	8,  // 28: stream.video.sfu.event.SfuRequest.leave_call_request:type_name -> stream.video.sfu.event.LeaveCallRequest
-	41, // 29: stream.video.sfu.event.HealthCheckResponse.participant_count:type_name -> stream.video.sfu.models.ParticipantCount
-	42, // 30: stream.video.sfu.event.TrackPublished.type:type_name -> stream.video.sfu.models.TrackType
-	43, // 31: stream.video.sfu.event.TrackPublished.participant:type_name -> stream.video.sfu.models.Participant
-	42, // 32: stream.video.sfu.event.TrackUnpublished.type:type_name -> stream.video.sfu.models.TrackType
-	44, // 33: stream.video.sfu.event.TrackUnpublished.cause:type_name -> stream.video.sfu.models.TrackUnpublishReason
-	43, // 34: stream.video.sfu.event.TrackUnpublished.participant:type_name -> stream.video.sfu.models.Participant
-	45, // 35: stream.video.sfu.event.JoinRequest.client_details:type_name -> stream.video.sfu.models.ClientDetails
-	15, // 36: stream.video.sfu.event.JoinRequest.migration:type_name -> stream.video.sfu.event.Migration
-	14, // 37: stream.video.sfu.event.JoinRequest.reconnect_details:type_name -> stream.video.sfu.event.ReconnectDetails
-	39, // 38: stream.video.sfu.event.ReconnectDetails.strategy:type_name -> stream.video.sfu.models.WebsocketReconnectStrategy
-	46, // 39: stream.video.sfu.event.ReconnectDetails.announced_tracks:type_name -> stream.video.sfu.models.TrackInfo
-	47, // 40: stream.video.sfu.event.ReconnectDetails.subscriptions:type_name -> stream.video.sfu.signal.TrackSubscriptionDetails
-	46, // 41: stream.video.sfu.event.Migration.announced_tracks:type_name -> stream.video.sfu.models.TrackInfo
-	47, // 42: stream.video.sfu.event.Migration.subscriptions:type_name -> stream.video.sfu.signal.TrackSubscriptionDetails
-	48, // 43: stream.video.sfu.event.JoinResponse.call_state:type_name -> stream.video.sfu.models.CallState
-	43, // 44: stream.video.sfu.event.ParticipantJoined.participant:type_name -> stream.video.sfu.models.Participant
-	43, // 45: stream.video.sfu.event.ParticipantLeft.participant:type_name -> stream.video.sfu.models.Participant
-	43, // 46: stream.video.sfu.event.ParticipantUpdated.participant:type_name -> stream.video.sfu.models.Participant
-	23, // 47: stream.video.sfu.event.ConnectionQualityChanged.connection_quality_updates:type_name -> stream.video.sfu.event.ConnectionQualityInfo
-	49, // 48: stream.video.sfu.event.ConnectionQualityInfo.connection_quality:type_name -> stream.video.sfu.models.ConnectionQuality
-	25, // 49: stream.video.sfu.event.AudioLevelChanged.audio_levels:type_name -> stream.video.sfu.event.AudioLevel
-	27, // 50: stream.video.sfu.event.AudioSender.media_request:type_name -> stream.video.sfu.event.AudioMediaRequest
-	50, // 51: stream.video.sfu.event.AudioSender.codec:type_name -> stream.video.sfu.models.Codec
-	0,  // 52: stream.video.sfu.event.VideoLayerSetting.priority:type_name -> stream.video.sfu.event.VideoLayerSetting.Priority
-	50, // 53: stream.video.sfu.event.VideoLayerSetting.codec:type_name -> stream.video.sfu.models.Codec
-	29, // 54: stream.video.sfu.event.VideoSender.media_request:type_name -> stream.video.sfu.event.VideoMediaRequest
-	50, // 55: stream.video.sfu.event.VideoSender.codec:type_name -> stream.video.sfu.models.Codec
-	30, // 56: stream.video.sfu.event.VideoSender.layers:type_name -> stream.video.sfu.event.VideoLayerSetting
-	28, // 57: stream.video.sfu.event.ChangePublishQuality.audio_senders:type_name -> stream.video.sfu.event.AudioSender
-	31, // 58: stream.video.sfu.event.ChangePublishQuality.video_senders:type_name -> stream.video.sfu.event.VideoSender
-	51, // 59: stream.video.sfu.event.CallGrantsUpdated.current_grants:type_name -> stream.video.sfu.models.CallGrants
-	52, // 60: stream.video.sfu.event.GoAway.reason:type_name -> stream.video.sfu.models.GoAwayReason
-	53, // 61: stream.video.sfu.event.CallEnded.reason:type_name -> stream.video.sfu.models.CallEndedReason
-	62, // [62:62] is the sub-list for method output_type
-	62, // [62:62] is the sub-list for method input_type
-	62, // [62:62] is the sub-list for extension type_name
-	62, // [62:62] is the sub-list for extension extendee
-	0,  // [0:62] is the sub-list for field type_name
+	19, // 0: stream.video.sfu.event.SfuEvent.subscriber_offer:type_name -> stream.video.sfu.event.SubscriberOffer
+	20, // 1: stream.video.sfu.event.SfuEvent.publisher_answer:type_name -> stream.video.sfu.event.PublisherAnswer
+	21, // 2: stream.video.sfu.event.SfuEvent.connection_quality_changed:type_name -> stream.video.sfu.event.ConnectionQualityChanged
+	25, // 3: stream.video.sfu.event.SfuEvent.audio_level_changed:type_name -> stream.video.sfu.event.AudioLevelChanged
+	33, // 4: stream.video.sfu.event.SfuEvent.ice_trickle:type_name -> stream.video.sfu.models.ICETrickle
+	29, // 5: stream.video.sfu.event.SfuEvent.change_publish_quality:type_name -> stream.video.sfu.event.ChangePublishQuality
+	16, // 6: stream.video.sfu.event.SfuEvent.participant_joined:type_name -> stream.video.sfu.event.ParticipantJoined
+	17, // 7: stream.video.sfu.event.SfuEvent.participant_left:type_name -> stream.video.sfu.event.ParticipantLeft
+	23, // 8: stream.video.sfu.event.SfuEvent.dominant_speaker_changed:type_name -> stream.video.sfu.event.DominantSpeakerChanged
+	15, // 9: stream.video.sfu.event.SfuEvent.join_response:type_name -> stream.video.sfu.event.JoinResponse
+	9,  // 10: stream.video.sfu.event.SfuEvent.health_check_response:type_name -> stream.video.sfu.event.HealthCheckResponse
+	10, // 11: stream.video.sfu.event.SfuEvent.track_published:type_name -> stream.video.sfu.event.TrackPublished
+	11, // 12: stream.video.sfu.event.SfuEvent.track_unpublished:type_name -> stream.video.sfu.event.TrackUnpublished
+	3,  // 13: stream.video.sfu.event.SfuEvent.error:type_name -> stream.video.sfu.event.Error
+	30, // 14: stream.video.sfu.event.SfuEvent.call_grants_updated:type_name -> stream.video.sfu.event.CallGrantsUpdated
+	31, // 15: stream.video.sfu.event.SfuEvent.go_away:type_name -> stream.video.sfu.event.GoAway
+	5,  // 16: stream.video.sfu.event.SfuEvent.ice_restart:type_name -> stream.video.sfu.event.ICERestart
+	2,  // 17: stream.video.sfu.event.SfuEvent.pins_updated:type_name -> stream.video.sfu.event.PinsChanged
+	32, // 18: stream.video.sfu.event.SfuEvent.call_ended:type_name -> stream.video.sfu.event.CallEnded
+	18, // 19: stream.video.sfu.event.SfuEvent.participant_updated:type_name -> stream.video.sfu.event.ParticipantUpdated
+	1,  // 20: stream.video.sfu.event.SfuEvent.participant_migration_complete:type_name -> stream.video.sfu.event.ParticipantMigrationComplete
+	34, // 21: stream.video.sfu.event.PinsChanged.pins:type_name -> stream.video.sfu.models.Pin
+	35, // 22: stream.video.sfu.event.Error.error:type_name -> stream.video.sfu.models.Error
+	36, // 23: stream.video.sfu.event.Error.reconnect_strategy:type_name -> stream.video.sfu.models.WebsocketReconnectStrategy
+	37, // 24: stream.video.sfu.event.ICETrickle.peer_type:type_name -> stream.video.sfu.models.PeerType
+	37, // 25: stream.video.sfu.event.ICERestart.peer_type:type_name -> stream.video.sfu.models.PeerType
+	12, // 26: stream.video.sfu.event.SfuRequest.join_request:type_name -> stream.video.sfu.event.JoinRequest
+	8,  // 27: stream.video.sfu.event.SfuRequest.health_check_request:type_name -> stream.video.sfu.event.HealthCheckRequest
+	7,  // 28: stream.video.sfu.event.SfuRequest.leave_call_request:type_name -> stream.video.sfu.event.LeaveCallRequest
+	38, // 29: stream.video.sfu.event.HealthCheckResponse.participant_count:type_name -> stream.video.sfu.models.ParticipantCount
+	39, // 30: stream.video.sfu.event.TrackPublished.type:type_name -> stream.video.sfu.models.TrackType
+	40, // 31: stream.video.sfu.event.TrackPublished.participant:type_name -> stream.video.sfu.models.Participant
+	39, // 32: stream.video.sfu.event.TrackUnpublished.type:type_name -> stream.video.sfu.models.TrackType
+	41, // 33: stream.video.sfu.event.TrackUnpublished.cause:type_name -> stream.video.sfu.models.TrackUnpublishReason
+	40, // 34: stream.video.sfu.event.TrackUnpublished.participant:type_name -> stream.video.sfu.models.Participant
+	42, // 35: stream.video.sfu.event.JoinRequest.client_details:type_name -> stream.video.sfu.models.ClientDetails
+	14, // 36: stream.video.sfu.event.JoinRequest.migration:type_name -> stream.video.sfu.event.Migration
+	13, // 37: stream.video.sfu.event.JoinRequest.reconnect_details:type_name -> stream.video.sfu.event.ReconnectDetails
+	36, // 38: stream.video.sfu.event.ReconnectDetails.strategy:type_name -> stream.video.sfu.models.WebsocketReconnectStrategy
+	43, // 39: stream.video.sfu.event.ReconnectDetails.announced_tracks:type_name -> stream.video.sfu.models.TrackInfo
+	44, // 40: stream.video.sfu.event.ReconnectDetails.subscriptions:type_name -> stream.video.sfu.signal.TrackSubscriptionDetails
+	43, // 41: stream.video.sfu.event.Migration.announced_tracks:type_name -> stream.video.sfu.models.TrackInfo
+	44, // 42: stream.video.sfu.event.Migration.subscriptions:type_name -> stream.video.sfu.signal.TrackSubscriptionDetails
+	45, // 43: stream.video.sfu.event.JoinResponse.call_state:type_name -> stream.video.sfu.models.CallState
+	40, // 44: stream.video.sfu.event.ParticipantJoined.participant:type_name -> stream.video.sfu.models.Participant
+	40, // 45: stream.video.sfu.event.ParticipantLeft.participant:type_name -> stream.video.sfu.models.Participant
+	40, // 46: stream.video.sfu.event.ParticipantUpdated.participant:type_name -> stream.video.sfu.models.Participant
+	22, // 47: stream.video.sfu.event.ConnectionQualityChanged.connection_quality_updates:type_name -> stream.video.sfu.event.ConnectionQualityInfo
+	46, // 48: stream.video.sfu.event.ConnectionQualityInfo.connection_quality:type_name -> stream.video.sfu.models.ConnectionQuality
+	24, // 49: stream.video.sfu.event.AudioLevelChanged.audio_levels:type_name -> stream.video.sfu.event.AudioLevel
+	47, // 50: stream.video.sfu.event.AudioSender.codec:type_name -> stream.video.sfu.models.Codec
+	47, // 51: stream.video.sfu.event.VideoLayerSetting.codec:type_name -> stream.video.sfu.models.Codec
+	47, // 52: stream.video.sfu.event.VideoSender.codec:type_name -> stream.video.sfu.models.Codec
+	27, // 53: stream.video.sfu.event.VideoSender.layers:type_name -> stream.video.sfu.event.VideoLayerSetting
+	26, // 54: stream.video.sfu.event.ChangePublishQuality.audio_senders:type_name -> stream.video.sfu.event.AudioSender
+	28, // 55: stream.video.sfu.event.ChangePublishQuality.video_senders:type_name -> stream.video.sfu.event.VideoSender
+	48, // 56: stream.video.sfu.event.CallGrantsUpdated.current_grants:type_name -> stream.video.sfu.models.CallGrants
+	49, // 57: stream.video.sfu.event.GoAway.reason:type_name -> stream.video.sfu.models.GoAwayReason
+	50, // 58: stream.video.sfu.event.CallEnded.reason:type_name -> stream.video.sfu.models.CallEndedReason
+	59, // [59:59] is the sub-list for method output_type
+	59, // [59:59] is the sub-list for method input_type
+	59, // [59:59] is the sub-list for extension type_name
+	59, // [59:59] is the sub-list for extension extendee
+	0,  // [0:59] is the sub-list for field type_name
 }
 
 func init() { file_video_sfu_event_events_proto_init() }
@@ -3458,18 +3242,6 @@ func file_video_sfu_event_events_proto_init() {
 			}
 		}
 		file_video_sfu_event_events_proto_msgTypes[26].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AudioMediaRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_video_sfu_event_events_proto_msgTypes[27].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*AudioSender); i {
 			case 0:
 				return &v.state
@@ -3481,19 +3253,7 @@ func file_video_sfu_event_events_proto_init() {
 				return nil
 			}
 		}
-		file_video_sfu_event_events_proto_msgTypes[28].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*VideoMediaRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_video_sfu_event_events_proto_msgTypes[29].Exporter = func(v interface{}, i int) interface{} {
+		file_video_sfu_event_events_proto_msgTypes[27].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*VideoLayerSetting); i {
 			case 0:
 				return &v.state
@@ -3505,7 +3265,7 @@ func file_video_sfu_event_events_proto_init() {
 				return nil
 			}
 		}
-		file_video_sfu_event_events_proto_msgTypes[30].Exporter = func(v interface{}, i int) interface{} {
+		file_video_sfu_event_events_proto_msgTypes[28].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*VideoSender); i {
 			case 0:
 				return &v.state
@@ -3517,7 +3277,7 @@ func file_video_sfu_event_events_proto_init() {
 				return nil
 			}
 		}
-		file_video_sfu_event_events_proto_msgTypes[31].Exporter = func(v interface{}, i int) interface{} {
+		file_video_sfu_event_events_proto_msgTypes[29].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ChangePublishQuality); i {
 			case 0:
 				return &v.state
@@ -3529,7 +3289,7 @@ func file_video_sfu_event_events_proto_init() {
 				return nil
 			}
 		}
-		file_video_sfu_event_events_proto_msgTypes[32].Exporter = func(v interface{}, i int) interface{} {
+		file_video_sfu_event_events_proto_msgTypes[30].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CallGrantsUpdated); i {
 			case 0:
 				return &v.state
@@ -3541,7 +3301,7 @@ func file_video_sfu_event_events_proto_init() {
 				return nil
 			}
 		}
-		file_video_sfu_event_events_proto_msgTypes[33].Exporter = func(v interface{}, i int) interface{} {
+		file_video_sfu_event_events_proto_msgTypes[31].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GoAway); i {
 			case 0:
 				return &v.state
@@ -3553,7 +3313,7 @@ func file_video_sfu_event_events_proto_init() {
 				return nil
 			}
 		}
-		file_video_sfu_event_events_proto_msgTypes[34].Exporter = func(v interface{}, i int) interface{} {
+		file_video_sfu_event_events_proto_msgTypes[32].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CallEnded); i {
 			case 0:
 				return &v.state
@@ -3599,14 +3359,13 @@ func file_video_sfu_event_events_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_video_sfu_event_events_proto_rawDesc,
-			NumEnums:      1,
-			NumMessages:   35,
+			NumEnums:      0,
+			NumMessages:   33,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
 		GoTypes:           file_video_sfu_event_events_proto_goTypes,
 		DependencyIndexes: file_video_sfu_event_events_proto_depIdxs,
-		EnumInfos:         file_video_sfu_event_events_proto_enumTypes,
 		MessageInfos:      file_video_sfu_event_events_proto_msgTypes,
 	}.Build()
 	File_video_sfu_event_events_proto = out.File
