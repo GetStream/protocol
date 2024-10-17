@@ -5,19 +5,18 @@ slug: /webhooks/overview
 title: Overview
 ---
 
-import CustomEvents from '../_common_/custom-events.mdx';
-
-## Custom events
-
-You can send custom events to all users watching a call, events can be send client-side or server-side. It is not necessary for users to be part the call, you call objects can be "watched" before joining as well.
-Client-side you can observe calls and receive events by passing the `watch:true` parameter to any of these endpoints: `GetCall`, `QueryCalls`, `JoinCall`.
-
-<CustomEvents />
-
-You can configure your Stream app to send events to your HTTP/webhook and/or to your AWS SQS queue. Webhooks are usually
+You can configure your Stream app to receive webhook events as well as AWS SNS and AWS SQS. Webhooks are usually
 the simplest way to receive events from your app and to perform additional action based on what happens to your application.
 
-Both SQS and Webhook can be configured from the Stream Dashboard.
+The configuration can be done using the API or from the Dashboard. By default, all events are sent to your webhook/sqs/sns endpoint, you can also configure the events you want to receive in the dashboard.
+
+Some important points to consider:
+
+- The selection of events you want to receive applies to all the endpoints you have configured.
+- You can configure multiple endpoints for the same app (eg. AWS SNS and HTTP Webhook).
+- If your app is configured to receive all events, you can still filter the events you want to receive in your webhook handler.
+- If your app is configured to receive all events, newly introduced event types will be sent to your webhook handler by default.
+- If you pick specific events, newly introduced event types will not be sent to your webhook handler by default (you can still manually add them later on).
 
 ## How to implement a webhook handler
 
@@ -32,21 +31,22 @@ Your webhook handler can use the `type` field to handle events based correctly b
 All webhook requests contain these headers:
 
 | Name              | Description                                                                                                          |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------- |
+|-------------------|----------------------------------------------------------------------------------------------------------------------|
 | X-WEBHOOK-ID      | Unique ID of the webhook call. This value is consistent between retries and could be used to deduplicate retry calls |
 | X-WEBHOOK-ATTEMPT | Number of webhook request attempt starting from 1                                                                    |
 | X-API-KEY         | Your application’s API key. Should be used to validate request signature                                             |
 | X-SIGNATURE       | HMAC signature of the request body. See Signature section                                                            |
 
-## Security and Performance
+## Best Practices
 
 We highly recommend following common security guidelines to make your webhook integration safe and fast:
 
 - Use HTTPS with a certificate from a trusted authority
-- Verify the "X-Signature" header
+- Verify the "X-Signature" header to ensure the request is coming from Stream
 - Support HTTP Keep-Alive
-- Be highly available
+- Use a highly available infrastructure such as AWS Elastic Load Balancer, Google Cloud Load Balancer, or similar
 - Offload the processing of the message if possible (read, store, and forget)
+- When decoding JSON into objects, ensure that your webhook can handle new fields being added to the JSON payload as well as new event types (eg. log unknown fields and event types instead of failing)
 
 ## Error Handling
 
