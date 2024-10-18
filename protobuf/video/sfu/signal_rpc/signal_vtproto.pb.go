@@ -1172,19 +1172,29 @@ func (m *SetPublisherRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.CodecScalabilityMode) > 0 {
-		i -= len(m.CodecScalabilityMode)
-		copy(dAtA[i:], m.CodecScalabilityMode)
-		i = encodeVarint(dAtA, i, uint64(len(m.CodecScalabilityMode)))
-		i--
-		dAtA[i] = 0x2a
-	}
-	if len(m.CodecMimeType) > 0 {
-		i -= len(m.CodecMimeType)
-		copy(dAtA[i:], m.CodecMimeType)
-		i = encodeVarint(dAtA, i, uint64(len(m.CodecMimeType)))
-		i--
-		dAtA[i] = 0x22
+	if len(m.PreferredCodecs) > 0 {
+		for iNdEx := len(m.PreferredCodecs) - 1; iNdEx >= 0; iNdEx-- {
+			if marshalto, ok := interface{}(m.PreferredCodecs[iNdEx]).(interface {
+				MarshalToSizedBufferVT([]byte) (int, error)
+			}); ok {
+				size, err := marshalto.MarshalToSizedBufferVT(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarint(dAtA, i, uint64(size))
+			} else {
+				encoded, err := proto.Marshal(m.PreferredCodecs[iNdEx])
+				if err != nil {
+					return 0, err
+				}
+				i -= len(encoded)
+				copy(dAtA[i:], encoded)
+				i = encodeVarint(dAtA, i, uint64(len(encoded)))
+			}
+			i--
+			dAtA[i] = 0x22
+		}
 	}
 	if len(m.Tracks) > 0 {
 		for iNdEx := len(m.Tracks) - 1; iNdEx >= 0; iNdEx-- {
@@ -1813,13 +1823,17 @@ func (m *SetPublisherRequest) SizeVT() (n int) {
 			n += 1 + l + sov(uint64(l))
 		}
 	}
-	l = len(m.CodecMimeType)
-	if l > 0 {
-		n += 1 + l + sov(uint64(l))
-	}
-	l = len(m.CodecScalabilityMode)
-	if l > 0 {
-		n += 1 + l + sov(uint64(l))
+	if len(m.PreferredCodecs) > 0 {
+		for _, e := range m.PreferredCodecs {
+			if size, ok := interface{}(e).(interface {
+				SizeVT() int
+			}); ok {
+				l = size.SizeVT()
+			} else {
+				l = proto.Size(e)
+			}
+			n += 1 + l + sov(uint64(l))
+		}
 	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
@@ -4254,9 +4268,9 @@ func (m *SetPublisherRequest) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field CodecMimeType", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field PreferredCodecs", wireType)
 			}
-			var stringLen uint64
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflow
@@ -4266,55 +4280,33 @@ func (m *SetPublisherRequest) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
+			if msglen < 0 {
 				return ErrInvalidLength
 			}
-			postIndex := iNdEx + intStringLen
+			postIndex := iNdEx + msglen
 			if postIndex < 0 {
 				return ErrInvalidLength
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.CodecMimeType = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 5:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field CodecScalabilityMode", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflow
+			m.PreferredCodecs = append(m.PreferredCodecs, &models.Codec{})
+			if unmarshal, ok := interface{}(m.PreferredCodecs[len(m.PreferredCodecs)-1]).(interface {
+				UnmarshalVT([]byte) error
+			}); ok {
+				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
 				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
+			} else {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.PreferredCodecs[len(m.PreferredCodecs)-1]); err != nil {
+					return err
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLength
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.CodecScalabilityMode = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

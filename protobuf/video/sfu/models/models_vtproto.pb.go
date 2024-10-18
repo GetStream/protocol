@@ -558,45 +558,19 @@ func (m *Codec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.Feedbacks) > 0 {
-		for iNdEx := len(m.Feedbacks) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.Feedbacks[iNdEx])
-			copy(dAtA[i:], m.Feedbacks[iNdEx])
-			i = encodeVarint(dAtA, i, uint64(len(m.Feedbacks[iNdEx])))
-			i--
-			dAtA[i] = 0x32
-		}
-	}
-	if len(m.EncodingParameters) > 0 {
-		i -= len(m.EncodingParameters)
-		copy(dAtA[i:], m.EncodingParameters)
-		i = encodeVarint(dAtA, i, uint64(len(m.EncodingParameters)))
-		i--
-		dAtA[i] = 0x2a
-	}
-	if m.ClockRate != 0 {
-		i = encodeVarint(dAtA, i, uint64(m.ClockRate))
-		i--
-		dAtA[i] = 0x20
-	}
-	if len(m.FmtpLine) > 0 {
-		i -= len(m.FmtpLine)
-		copy(dAtA[i:], m.FmtpLine)
-		i = encodeVarint(dAtA, i, uint64(len(m.FmtpLine)))
-		i--
-		dAtA[i] = 0x1a
-	}
-	if len(m.Name) > 0 {
-		i -= len(m.Name)
-		copy(dAtA[i:], m.Name)
-		i = encodeVarint(dAtA, i, uint64(len(m.Name)))
+	if len(m.ScalabilityMode) > 0 {
+		i -= len(m.ScalabilityMode)
+		copy(dAtA[i:], m.ScalabilityMode)
+		i = encodeVarint(dAtA, i, uint64(len(m.ScalabilityMode)))
 		i--
 		dAtA[i] = 0x12
 	}
-	if m.PayloadType != 0 {
-		i = encodeVarint(dAtA, i, uint64(m.PayloadType))
+	if len(m.MimeType) > 0 {
+		i -= len(m.MimeType)
+		copy(dAtA[i:], m.MimeType)
+		i = encodeVarint(dAtA, i, uint64(len(m.MimeType)))
 		i--
-		dAtA[i] = 0x8
+		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
@@ -1673,29 +1647,13 @@ func (m *Codec) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
-	if m.PayloadType != 0 {
-		n += 1 + sov(uint64(m.PayloadType))
-	}
-	l = len(m.Name)
+	l = len(m.MimeType)
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
 	}
-	l = len(m.FmtpLine)
+	l = len(m.ScalabilityMode)
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
-	}
-	if m.ClockRate != 0 {
-		n += 1 + sov(uint64(m.ClockRate))
-	}
-	l = len(m.EncodingParameters)
-	if l > 0 {
-		n += 1 + l + sov(uint64(l))
-	}
-	if len(m.Feedbacks) > 0 {
-		for _, s := range m.Feedbacks {
-			l = len(s)
-			n += 1 + l + sov(uint64(l))
-		}
 	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
@@ -3324,10 +3282,10 @@ func (m *Codec) UnmarshalVT(dAtA []byte) error {
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PayloadType", wireType)
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MimeType", wireType)
 			}
-			m.PayloadType = 0
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflow
@@ -3337,14 +3295,27 @@ func (m *Codec) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.PayloadType |= uint32(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.MimeType = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ScalabilityMode", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -3372,122 +3343,7 @@ func (m *Codec) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Name = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field FmtpLine", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLength
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.FmtpLine = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 4:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ClockRate", wireType)
-			}
-			m.ClockRate = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.ClockRate |= uint32(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 5:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field EncodingParameters", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLength
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.EncodingParameters = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 6:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Feedbacks", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLength
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Feedbacks = append(m.Feedbacks, string(dAtA[iNdEx:postIndex]))
+			m.ScalabilityMode = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
