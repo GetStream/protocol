@@ -563,21 +563,21 @@ func (m *Codec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		copy(dAtA[i:], m.Fmtp)
 		i = encodeVarint(dAtA, i, uint64(len(m.Fmtp)))
 		i--
-		dAtA[i] = 0x1a
+		dAtA[i] = 0x62
 	}
 	if len(m.ScalabilityMode) > 0 {
 		i -= len(m.ScalabilityMode)
 		copy(dAtA[i:], m.ScalabilityMode)
 		i = encodeVarint(dAtA, i, uint64(len(m.ScalabilityMode)))
 		i--
-		dAtA[i] = 0x12
+		dAtA[i] = 0x5a
 	}
 	if len(m.MimeType) > 0 {
 		i -= len(m.MimeType)
 		copy(dAtA[i:], m.MimeType)
 		i = encodeVarint(dAtA, i, uint64(len(m.MimeType)))
 		i--
-		dAtA[i] = 0xa
+		dAtA[i] = 0x52
 	}
 	return len(dAtA) - i, nil
 }
@@ -3310,7 +3310,7 @@ func (m *Codec) UnmarshalVT(dAtA []byte) error {
 			return fmt.Errorf("proto: Codec: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
-		case 1:
+		case 10:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field MimeType", wireType)
 			}
@@ -3342,7 +3342,7 @@ func (m *Codec) UnmarshalVT(dAtA []byte) error {
 			}
 			m.MimeType = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 2:
+		case 11:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field ScalabilityMode", wireType)
 			}
@@ -3374,7 +3374,7 @@ func (m *Codec) UnmarshalVT(dAtA []byte) error {
 			}
 			m.ScalabilityMode = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 3:
+		case 12:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Fmtp", wireType)
 			}
