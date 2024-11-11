@@ -1512,8 +1512,8 @@ func (m *JoinResponse) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.PublishCodec != nil {
-		if marshalto, ok := interface{}(m.PublishCodec).(interface {
+	if m.PublishVideoCodec != nil {
+		if marshalto, ok := interface{}(m.PublishVideoCodec).(interface {
 			MarshalToSizedBufferVT([]byte) (int, error)
 		}); ok {
 			size, err := marshalto.MarshalToSizedBufferVT(dAtA[:i])
@@ -1523,7 +1523,29 @@ func (m *JoinResponse) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 			i -= size
 			i = encodeVarint(dAtA, i, uint64(size))
 		} else {
-			encoded, err := proto.Marshal(m.PublishCodec)
+			encoded, err := proto.Marshal(m.PublishVideoCodec)
+			if err != nil {
+				return 0, err
+			}
+			i -= len(encoded)
+			copy(dAtA[i:], encoded)
+			i = encodeVarint(dAtA, i, uint64(len(encoded)))
+		}
+		i--
+		dAtA[i] = 0x2a
+	}
+	if m.PublishAudioCodec != nil {
+		if marshalto, ok := interface{}(m.PublishAudioCodec).(interface {
+			MarshalToSizedBufferVT([]byte) (int, error)
+		}); ok {
+			size, err := marshalto.MarshalToSizedBufferVT(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarint(dAtA, i, uint64(size))
+		} else {
+			encoded, err := proto.Marshal(m.PublishAudioCodec)
 			if err != nil {
 				return 0, err
 			}
@@ -3252,13 +3274,23 @@ func (m *JoinResponse) SizeVT() (n int) {
 	if m.FastReconnectDeadlineSeconds != 0 {
 		n += 1 + sov(uint64(m.FastReconnectDeadlineSeconds))
 	}
-	if m.PublishCodec != nil {
-		if size, ok := interface{}(m.PublishCodec).(interface {
+	if m.PublishAudioCodec != nil {
+		if size, ok := interface{}(m.PublishAudioCodec).(interface {
 			SizeVT() int
 		}); ok {
 			l = size.SizeVT()
 		} else {
-			l = proto.Size(m.PublishCodec)
+			l = proto.Size(m.PublishAudioCodec)
+		}
+		n += 1 + l + sov(uint64(l))
+	}
+	if m.PublishVideoCodec != nil {
+		if size, ok := interface{}(m.PublishVideoCodec).(interface {
+			SizeVT() int
+		}); ok {
+			l = size.SizeVT()
+		} else {
+			l = proto.Size(m.PublishVideoCodec)
 		}
 		n += 1 + l + sov(uint64(l))
 	}
@@ -6757,7 +6789,7 @@ func (m *JoinResponse) UnmarshalVT(dAtA []byte) error {
 			}
 		case 4:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PublishCodec", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field PublishAudioCodec", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -6784,17 +6816,61 @@ func (m *JoinResponse) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.PublishCodec == nil {
-				m.PublishCodec = &models.Codec{}
+			if m.PublishAudioCodec == nil {
+				m.PublishAudioCodec = &models.Codec{}
 			}
-			if unmarshal, ok := interface{}(m.PublishCodec).(interface {
+			if unmarshal, ok := interface{}(m.PublishAudioCodec).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
 				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
 			} else {
-				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.PublishCodec); err != nil {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.PublishAudioCodec); err != nil {
+					return err
+				}
+			}
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PublishVideoCodec", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.PublishVideoCodec == nil {
+				m.PublishVideoCodec = &models.Codec{}
+			}
+			if unmarshal, ok := interface{}(m.PublishVideoCodec).(interface {
+				UnmarshalVT([]byte) error
+			}); ok {
+				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.PublishVideoCodec); err != nil {
 					return err
 				}
 			}
