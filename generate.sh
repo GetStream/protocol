@@ -7,13 +7,11 @@ PB=$REPO/protobuf
 
 export PATH=/opt/.protoc/bin:$PWD/.protoc/bin:$PATH
 
-# In some systems like Mac OS 13.0.1, the realpath defaults to
-# the system installed one which does not support flags like
-# --relative-path. This results in the scripts erroring out.
-# The coreutils installed with Homebrew (as mentioned in README)
-# installs GNU realpath which could be available as "grealpath"
-# which actually works. Hence, the option to customize REALPATH
-REALPATH=${REALPATH:-realpath}
+REALPATH=${REALPATH:-$(if [[ "$OSTYPE" == "darwin"* ]]; then echo "grealpath"; else echo "realpath"; fi)}
+if ! command -v $REALPATH &> /dev/null; then
+  echo "$REALPATH command not found. Please install it and try again."
+  exit 1
+fi
 
 GEN_PROFILE=${1:-go}
 
