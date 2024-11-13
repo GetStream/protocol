@@ -2445,7 +2445,7 @@ func (m *Reconnection) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Strategy |= ReconnectStrategy(b&0x7F) << shift
+				m.Strategy |= models.WebsocketReconnectStrategy(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
