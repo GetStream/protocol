@@ -242,8 +242,8 @@ func (m *Reconnection) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.Attempts != 0 {
-		i = encodeVarint(dAtA, i, uint64(m.Attempts))
+	if m.Strategy != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.Strategy))
 		i--
 		dAtA[i] = 0x10
 	}
@@ -1521,8 +1521,8 @@ func (m *Reconnection) SizeVT() (n int) {
 	if m.TimeSeconds != 0 {
 		n += 5
 	}
-	if m.Attempts != 0 {
-		n += 1 + sov(uint64(m.Attempts))
+	if m.Strategy != 0 {
+		n += 1 + sov(uint64(m.Strategy))
 	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
@@ -2433,9 +2433,9 @@ func (m *Reconnection) UnmarshalVT(dAtA []byte) error {
 			m.TimeSeconds = float32(math.Float32frombits(v))
 		case 2:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Attempts", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Strategy", wireType)
 			}
-			m.Attempts = 0
+			m.Strategy = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflow
@@ -2445,7 +2445,7 @@ func (m *Reconnection) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Attempts |= int32(b&0x7F) << shift
+				m.Strategy |= ReconnectStrategy(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
