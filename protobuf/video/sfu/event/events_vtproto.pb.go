@@ -1282,27 +1282,29 @@ func (m *JoinRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.PreferredCodec != nil {
-		if marshalto, ok := interface{}(m.PreferredCodec).(interface {
-			MarshalToSizedBufferVT([]byte) (int, error)
-		}); ok {
-			size, err := marshalto.MarshalToSizedBufferVT(dAtA[:i])
-			if err != nil {
-				return 0, err
+	if len(m.PreferredPublishOptions) > 0 {
+		for iNdEx := len(m.PreferredPublishOptions) - 1; iNdEx >= 0; iNdEx-- {
+			if marshalto, ok := interface{}(m.PreferredPublishOptions[iNdEx]).(interface {
+				MarshalToSizedBufferVT([]byte) (int, error)
+			}); ok {
+				size, err := marshalto.MarshalToSizedBufferVT(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarint(dAtA, i, uint64(size))
+			} else {
+				encoded, err := proto.Marshal(m.PreferredPublishOptions[iNdEx])
+				if err != nil {
+					return 0, err
+				}
+				i -= len(encoded)
+				copy(dAtA[i:], encoded)
+				i = encodeVarint(dAtA, i, uint64(len(encoded)))
 			}
-			i -= size
-			i = encodeVarint(dAtA, i, uint64(size))
-		} else {
-			encoded, err := proto.Marshal(m.PreferredCodec)
-			if err != nil {
-				return 0, err
-			}
-			i -= len(encoded)
-			copy(dAtA[i:], encoded)
-			i = encodeVarint(dAtA, i, uint64(len(encoded)))
+			i--
+			dAtA[i] = 0x4a
 		}
-		i--
-		dAtA[i] = 0x4a
 	}
 	if len(m.PublisherSdp) > 0 {
 		i -= len(m.PublisherSdp)
@@ -1610,27 +1612,29 @@ func (m *JoinResponse) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.PublishOptions != nil {
-		if marshalto, ok := interface{}(m.PublishOptions).(interface {
-			MarshalToSizedBufferVT([]byte) (int, error)
-		}); ok {
-			size, err := marshalto.MarshalToSizedBufferVT(dAtA[:i])
-			if err != nil {
-				return 0, err
+	if len(m.PublishOptions) > 0 {
+		for iNdEx := len(m.PublishOptions) - 1; iNdEx >= 0; iNdEx-- {
+			if marshalto, ok := interface{}(m.PublishOptions[iNdEx]).(interface {
+				MarshalToSizedBufferVT([]byte) (int, error)
+			}); ok {
+				size, err := marshalto.MarshalToSizedBufferVT(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarint(dAtA, i, uint64(size))
+			} else {
+				encoded, err := proto.Marshal(m.PublishOptions[iNdEx])
+				if err != nil {
+					return 0, err
+				}
+				i -= len(encoded)
+				copy(dAtA[i:], encoded)
+				i = encodeVarint(dAtA, i, uint64(len(encoded)))
 			}
-			i -= size
-			i = encodeVarint(dAtA, i, uint64(size))
-		} else {
-			encoded, err := proto.Marshal(m.PublishOptions)
-			if err != nil {
-				return 0, err
-			}
-			i -= len(encoded)
-			copy(dAtA[i:], encoded)
-			i = encodeVarint(dAtA, i, uint64(len(encoded)))
+			i--
+			dAtA[i] = 0x22
 		}
-		i--
-		dAtA[i] = 0x22
 	}
 	if m.FastReconnectDeadlineSeconds != 0 {
 		i = encodeVarint(dAtA, i, uint64(m.FastReconnectDeadlineSeconds))
@@ -3266,15 +3270,17 @@ func (m *JoinRequest) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
 	}
-	if m.PreferredCodec != nil {
-		if size, ok := interface{}(m.PreferredCodec).(interface {
-			SizeVT() int
-		}); ok {
-			l = size.SizeVT()
-		} else {
-			l = proto.Size(m.PreferredCodec)
+	if len(m.PreferredPublishOptions) > 0 {
+		for _, e := range m.PreferredPublishOptions {
+			if size, ok := interface{}(e).(interface {
+				SizeVT() int
+			}); ok {
+				l = size.SizeVT()
+			} else {
+				l = proto.Size(e)
+			}
+			n += 1 + l + sov(uint64(l))
 		}
-		n += 1 + l + sov(uint64(l))
 	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
@@ -3394,15 +3400,17 @@ func (m *JoinResponse) SizeVT() (n int) {
 	if m.FastReconnectDeadlineSeconds != 0 {
 		n += 1 + sov(uint64(m.FastReconnectDeadlineSeconds))
 	}
-	if m.PublishOptions != nil {
-		if size, ok := interface{}(m.PublishOptions).(interface {
-			SizeVT() int
-		}); ok {
-			l = size.SizeVT()
-		} else {
-			l = proto.Size(m.PublishOptions)
+	if len(m.PublishOptions) > 0 {
+		for _, e := range m.PublishOptions {
+			if size, ok := interface{}(e).(interface {
+				SizeVT() int
+			}); ok {
+				l = size.SizeVT()
+			} else {
+				l = proto.Size(e)
+			}
+			n += 1 + l + sov(uint64(l))
 		}
-		n += 1 + l + sov(uint64(l))
 	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
@@ -6497,7 +6505,7 @@ func (m *JoinRequest) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 9:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PreferredCodec", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field PreferredPublishOptions", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -6524,17 +6532,15 @@ func (m *JoinRequest) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.PreferredCodec == nil {
-				m.PreferredCodec = &models.Codec{}
-			}
-			if unmarshal, ok := interface{}(m.PreferredCodec).(interface {
+			m.PreferredPublishOptions = append(m.PreferredPublishOptions, &models.PublishOption{})
+			if unmarshal, ok := interface{}(m.PreferredPublishOptions[len(m.PreferredPublishOptions)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
 				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
 			} else {
-				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.PreferredCodec); err != nil {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.PreferredPublishOptions[len(m.PreferredPublishOptions)-1]); err != nil {
 					return err
 				}
 			}
@@ -7106,17 +7112,15 @@ func (m *JoinResponse) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.PublishOptions == nil {
-				m.PublishOptions = &models.PublishOptions{}
-			}
-			if unmarshal, ok := interface{}(m.PublishOptions).(interface {
+			m.PublishOptions = append(m.PublishOptions, &models.PublishOption{})
+			if unmarshal, ok := interface{}(m.PublishOptions[len(m.PublishOptions)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
 				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
 			} else {
-				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.PublishOptions); err != nil {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.PublishOptions[len(m.PublishOptions)-1]); err != nil {
 					return err
 				}
 			}
