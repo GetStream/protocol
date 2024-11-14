@@ -671,17 +671,22 @@ func (m *Codec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.ClockRate != 0 {
-		i = encodeVarint(dAtA, i, uint64(m.ClockRate))
-		i--
-		dAtA[i] = 0x70
-	}
 	if len(m.EncodingParameters) > 0 {
 		i -= len(m.EncodingParameters)
 		copy(dAtA[i:], m.EncodingParameters)
 		i = encodeVarint(dAtA, i, uint64(len(m.EncodingParameters)))
 		i--
-		dAtA[i] = 0x6a
+		dAtA[i] = 0x7a
+	}
+	if m.ClockRate != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.ClockRate))
+		i--
+		dAtA[i] = 0x70
+	}
+	if m.PayloadType != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.PayloadType))
+		i--
+		dAtA[i] = 0x68
 	}
 	if len(m.Fmtp) > 0 {
 		i -= len(m.Fmtp)
@@ -689,11 +694,6 @@ func (m *Codec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i = encodeVarint(dAtA, i, uint64(len(m.Fmtp)))
 		i--
 		dAtA[i] = 0x62
-	}
-	if m.PayloadType != 0 {
-		i = encodeVarint(dAtA, i, uint64(m.PayloadType))
-		i--
-		dAtA[i] = 0x58
 	}
 	if len(m.Name) > 0 {
 		i -= len(m.Name)
@@ -1830,19 +1830,19 @@ func (m *Codec) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
 	}
-	if m.PayloadType != 0 {
-		n += 1 + sov(uint64(m.PayloadType))
-	}
 	l = len(m.Fmtp)
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
 	}
-	l = len(m.EncodingParameters)
-	if l > 0 {
-		n += 1 + l + sov(uint64(l))
+	if m.PayloadType != 0 {
+		n += 1 + sov(uint64(m.PayloadType))
 	}
 	if m.ClockRate != 0 {
 		n += 1 + sov(uint64(m.ClockRate))
+	}
+	l = len(m.EncodingParameters)
+	if l > 0 {
+		n += 1 + l + sov(uint64(l))
 	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
@@ -3769,25 +3769,6 @@ func (m *Codec) UnmarshalVT(dAtA []byte) error {
 			}
 			m.Name = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 11:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PayloadType", wireType)
-			}
-			m.PayloadType = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.PayloadType |= uint32(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
 		case 12:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Fmtp", wireType)
@@ -3821,6 +3802,44 @@ func (m *Codec) UnmarshalVT(dAtA []byte) error {
 			m.Fmtp = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 13:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PayloadType", wireType)
+			}
+			m.PayloadType = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.PayloadType |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 14:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ClockRate", wireType)
+			}
+			m.ClockRate = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.ClockRate |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 15:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field EncodingParameters", wireType)
 			}
@@ -3852,25 +3871,6 @@ func (m *Codec) UnmarshalVT(dAtA []byte) error {
 			}
 			m.EncodingParameters = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 14:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ClockRate", wireType)
-			}
-			m.ClockRate = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.ClockRate |= uint32(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])
