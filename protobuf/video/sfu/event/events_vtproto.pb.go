@@ -499,15 +499,15 @@ func (m *SfuEvent_ParticipantMigrationComplete) MarshalToSizedBufferVT(dAtA []by
 	}
 	return len(dAtA) - i, nil
 }
-func (m *SfuEvent_CodecNegotiationComplete) MarshalToVT(dAtA []byte) (int, error) {
+func (m *SfuEvent_ChangePublishOptionsComplete) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *SfuEvent_CodecNegotiationComplete) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *SfuEvent_ChangePublishOptionsComplete) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	i := len(dAtA)
-	if m.CodecNegotiationComplete != nil {
-		size, err := m.CodecNegotiationComplete.MarshalToSizedBufferVT(dAtA[:i])
+	if m.ChangePublishOptionsComplete != nil {
+		size, err := m.ChangePublishOptionsComplete.MarshalToSizedBufferVT(dAtA[:i])
 		if err != nil {
 			return 0, err
 		}
@@ -596,7 +596,7 @@ func (m *ChangePublishOptions) MarshalToSizedBufferVT(dAtA []byte) (int, error) 
 	return len(dAtA) - i, nil
 }
 
-func (m *CodecNegotiationComplete) MarshalVT() (dAtA []byte, err error) {
+func (m *ChangePublishOptionsComplete) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -609,12 +609,12 @@ func (m *CodecNegotiationComplete) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *CodecNegotiationComplete) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ChangePublishOptionsComplete) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *CodecNegotiationComplete) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ChangePublishOptionsComplete) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -2900,14 +2900,14 @@ func (m *SfuEvent_ParticipantMigrationComplete) SizeVT() (n int) {
 	}
 	return n
 }
-func (m *SfuEvent_CodecNegotiationComplete) SizeVT() (n int) {
+func (m *SfuEvent_ChangePublishOptionsComplete) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.CodecNegotiationComplete != nil {
-		l = m.CodecNegotiationComplete.SizeVT()
+	if m.ChangePublishOptionsComplete != nil {
+		l = m.ChangePublishOptionsComplete.SizeVT()
 		n += 2 + l + sov(uint64(l))
 	}
 	return n
@@ -2946,7 +2946,7 @@ func (m *ChangePublishOptions) SizeVT() (n int) {
 	return n
 }
 
-func (m *CodecNegotiationComplete) SizeVT() (n int) {
+func (m *ChangePublishOptionsComplete) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -4722,7 +4722,7 @@ func (m *SfuEvent) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 26:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field CodecNegotiationComplete", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ChangePublishOptionsComplete", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -4749,16 +4749,16 @@ func (m *SfuEvent) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if oneof, ok := m.EventPayload.(*SfuEvent_CodecNegotiationComplete); ok {
-				if err := oneof.CodecNegotiationComplete.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+			if oneof, ok := m.EventPayload.(*SfuEvent_ChangePublishOptionsComplete); ok {
+				if err := oneof.ChangePublishOptionsComplete.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
 			} else {
-				v := &CodecNegotiationComplete{}
+				v := &ChangePublishOptionsComplete{}
 				if err := v.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
-				m.EventPayload = &SfuEvent_CodecNegotiationComplete{v}
+				m.EventPayload = &SfuEvent_ChangePublishOptionsComplete{v}
 			}
 			iNdEx = postIndex
 		case 27:
@@ -4919,7 +4919,7 @@ func (m *ChangePublishOptions) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *CodecNegotiationComplete) UnmarshalVT(dAtA []byte) error {
+func (m *ChangePublishOptionsComplete) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -4942,10 +4942,10 @@ func (m *CodecNegotiationComplete) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: CodecNegotiationComplete: wiretype end group for non-group")
+			return fmt.Errorf("proto: ChangePublishOptionsComplete: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: CodecNegotiationComplete: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ChangePublishOptionsComplete: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:
