@@ -1293,7 +1293,7 @@ type PublishOption struct {
 
 	// The codec to be used for encoding the track (e.g., VP8, VP9, H264).
 	Codec *Codec `protobuf:"bytes,2,opt,name=codec,proto3" json:"codec,omitempty"`
-	// The target bitrate for the published track, in kilobits per second.
+	// The target bitrate for the published track, in bits per second.
 	Bitrate int32 `protobuf:"varint,3,opt,name=bitrate,proto3" json:"bitrate,omitempty"`
 	// The target frames per second (FPS) for video encoding.
 	Fps int32 `protobuf:"varint,4,opt,name=fps,proto3" json:"fps,omitempty"`
