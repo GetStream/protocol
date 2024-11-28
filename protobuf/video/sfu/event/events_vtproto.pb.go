@@ -596,7 +596,7 @@ func (m *ChangePublishOptions) MarshalToSizedBufferVT(dAtA []byte) (int, error) 
 	return len(dAtA) - i, nil
 }
 
-func (m *CodecNegotiationComplete) MarshalVT() (dAtA []byte, err error) {
+func (m *ChangePublishOptionsComplete) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -609,12 +609,12 @@ func (m *CodecNegotiationComplete) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *CodecNegotiationComplete) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ChangePublishOptionsComplete) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *CodecNegotiationComplete) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ChangePublishOptionsComplete) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -2946,7 +2946,7 @@ func (m *ChangePublishOptions) SizeVT() (n int) {
 	return n
 }
 
-func (m *CodecNegotiationComplete) SizeVT() (n int) {
+func (m *ChangePublishOptionsComplete) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -4754,7 +4754,7 @@ func (m *SfuEvent) UnmarshalVT(dAtA []byte) error {
 					return err
 				}
 			} else {
-				v := &CodecNegotiationComplete{}
+				v := &ChangePublishOptionsComplete{}
 				if err := v.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
@@ -4919,7 +4919,7 @@ func (m *ChangePublishOptions) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *CodecNegotiationComplete) UnmarshalVT(dAtA []byte) error {
+func (m *ChangePublishOptionsComplete) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -4942,10 +4942,10 @@ func (m *CodecNegotiationComplete) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: CodecNegotiationComplete: wiretype end group for non-group")
+			return fmt.Errorf("proto: ChangePublishOptionsComplete: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: CodecNegotiationComplete: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ChangePublishOptionsComplete: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:
