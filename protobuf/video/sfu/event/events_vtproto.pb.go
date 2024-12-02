@@ -499,27 +499,6 @@ func (m *SfuEvent_ParticipantMigrationComplete) MarshalToSizedBufferVT(dAtA []by
 	}
 	return len(dAtA) - i, nil
 }
-func (m *SfuEvent_ChangePublishOptionsComplete) MarshalToVT(dAtA []byte) (int, error) {
-	size := m.SizeVT()
-	return m.MarshalToSizedBufferVT(dAtA[:size])
-}
-
-func (m *SfuEvent_ChangePublishOptionsComplete) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	if m.ChangePublishOptionsComplete != nil {
-		size, err := m.ChangePublishOptionsComplete.MarshalToSizedBufferVT(dAtA[:i])
-		if err != nil {
-			return 0, err
-		}
-		i -= size
-		i = encodeVarint(dAtA, i, uint64(size))
-		i--
-		dAtA[i] = 0x1
-		i--
-		dAtA[i] = 0xd2
-	}
-	return len(dAtA) - i, nil
-}
 func (m *SfuEvent_ChangePublishOptions) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
@@ -571,27 +550,36 @@ func (m *ChangePublishOptions) MarshalToSizedBufferVT(dAtA []byte) (int, error) 
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.PublishOption != nil {
-		if marshalto, ok := interface{}(m.PublishOption).(interface {
-			MarshalToSizedBufferVT([]byte) (int, error)
-		}); ok {
-			size, err := marshalto.MarshalToSizedBufferVT(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarint(dAtA, i, uint64(size))
-		} else {
-			encoded, err := proto.Marshal(m.PublishOption)
-			if err != nil {
-				return 0, err
-			}
-			i -= len(encoded)
-			copy(dAtA[i:], encoded)
-			i = encodeVarint(dAtA, i, uint64(len(encoded)))
-		}
+	if len(m.Reason) > 0 {
+		i -= len(m.Reason)
+		copy(dAtA[i:], m.Reason)
+		i = encodeVarint(dAtA, i, uint64(len(m.Reason)))
 		i--
-		dAtA[i] = 0xa
+		dAtA[i] = 0x12
+	}
+	if len(m.PublishOption) > 0 {
+		for iNdEx := len(m.PublishOption) - 1; iNdEx >= 0; iNdEx-- {
+			if marshalto, ok := interface{}(m.PublishOption[iNdEx]).(interface {
+				MarshalToSizedBufferVT([]byte) (int, error)
+			}); ok {
+				size, err := marshalto.MarshalToSizedBufferVT(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarint(dAtA, i, uint64(size))
+			} else {
+				encoded, err := proto.Marshal(m.PublishOption[iNdEx])
+				if err != nil {
+					return 0, err
+				}
+				i -= len(encoded)
+				copy(dAtA[i:], encoded)
+				i = encodeVarint(dAtA, i, uint64(len(encoded)))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
 	}
 	return len(dAtA) - i, nil
 }
@@ -2900,18 +2888,6 @@ func (m *SfuEvent_ParticipantMigrationComplete) SizeVT() (n int) {
 	}
 	return n
 }
-func (m *SfuEvent_ChangePublishOptionsComplete) SizeVT() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.ChangePublishOptionsComplete != nil {
-		l = m.ChangePublishOptionsComplete.SizeVT()
-		n += 2 + l + sov(uint64(l))
-	}
-	return n
-}
 func (m *SfuEvent_ChangePublishOptions) SizeVT() (n int) {
 	if m == nil {
 		return 0
@@ -2930,14 +2906,20 @@ func (m *ChangePublishOptions) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
-	if m.PublishOption != nil {
-		if size, ok := interface{}(m.PublishOption).(interface {
-			SizeVT() int
-		}); ok {
-			l = size.SizeVT()
-		} else {
-			l = proto.Size(m.PublishOption)
+	if len(m.PublishOption) > 0 {
+		for _, e := range m.PublishOption {
+			if size, ok := interface{}(e).(interface {
+				SizeVT() int
+			}); ok {
+				l = size.SizeVT()
+			} else {
+				l = proto.Size(e)
+			}
+			n += 1 + l + sov(uint64(l))
 		}
+	}
+	l = len(m.Reason)
+	if l > 0 {
 		n += 1 + l + sov(uint64(l))
 	}
 	if m.unknownFields != nil {
@@ -4720,47 +4702,6 @@ func (m *SfuEvent) UnmarshalVT(dAtA []byte) error {
 				m.EventPayload = &SfuEvent_ParticipantMigrationComplete{v}
 			}
 			iNdEx = postIndex
-		case 26:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ChangePublishOptionsComplete", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLength
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if oneof, ok := m.EventPayload.(*SfuEvent_ChangePublishOptionsComplete); ok {
-				if err := oneof.ChangePublishOptionsComplete.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
-					return err
-				}
-			} else {
-				v := &ChangePublishOptionsComplete{}
-				if err := v.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
-					return err
-				}
-				m.EventPayload = &SfuEvent_ChangePublishOptionsComplete{v}
-			}
-			iNdEx = postIndex
 		case 27:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field ChangePublishOptions", wireType)
@@ -4882,20 +4823,50 @@ func (m *ChangePublishOptions) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.PublishOption == nil {
-				m.PublishOption = &models.PublishOption{}
-			}
-			if unmarshal, ok := interface{}(m.PublishOption).(interface {
+			m.PublishOption = append(m.PublishOption, &models.PublishOption{})
+			if unmarshal, ok := interface{}(m.PublishOption[len(m.PublishOption)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
 				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
 			} else {
-				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.PublishOption); err != nil {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.PublishOption[len(m.PublishOption)-1]); err != nil {
 					return err
 				}
 			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Reason", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Reason = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
