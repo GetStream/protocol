@@ -1,0 +1,34 @@
+name: Publish API specs to docs
+
+on:
+  push:
+    paths:
+      - 'openapi/video-openapi.json'
+      - 'openapi/video-openapi-clientside.json'
+      - '.github/workflows/update-docs.yml'
+    branches:
+      - automatic-docs-update
+
+jobs:
+  push_to_docs:
+    name: Push to docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          repository: GetStream/docs-content
+          path: docs-content
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: automatic-api-spec-update
+      - name: push
+        run: |
+          git config --global user.email "ci@stream.io"
+          git config --global user.name "GH Action CI Stream"
+          cd docs-content
+          cp ../openapi/video-openapi-clientside.json shared/assets/video-client-openapi.json
+          cp ../openapi/video-openapi.json shared/assets/video-openapi.json
+          git commit -m "Update video openapi Spec"
+          git push --set-upstream origin $(git rev-parse --abbrev-ref HEAD)
