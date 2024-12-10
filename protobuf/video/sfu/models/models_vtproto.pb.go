@@ -558,9 +558,9 @@ func (m *SubscribeOption) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.Codec) > 0 {
-		for iNdEx := len(m.Codec) - 1; iNdEx >= 0; iNdEx-- {
-			size, err := m.Codec[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
+	if len(m.Codecs) > 0 {
+		for iNdEx := len(m.Codecs) - 1; iNdEx >= 0; iNdEx-- {
+			size, err := m.Codecs[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
 			if err != nil {
 				return 0, err
 			}
@@ -1802,8 +1802,8 @@ func (m *SubscribeOption) SizeVT() (n int) {
 	if m.TrackType != 0 {
 		n += 1 + sov(uint64(m.TrackType))
 	}
-	if len(m.Codec) > 0 {
-		for _, e := range m.Codec {
+	if len(m.Codecs) > 0 {
+		for _, e := range m.Codecs {
 			l = e.SizeVT()
 			n += 1 + l + sov(uint64(l))
 		}
@@ -3523,7 +3523,7 @@ func (m *SubscribeOption) UnmarshalVT(dAtA []byte) error {
 			}
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Codec", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Codecs", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -3550,8 +3550,8 @@ func (m *SubscribeOption) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Codec = append(m.Codec, &Codec{})
-			if err := m.Codec[len(m.Codec)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+			m.Codecs = append(m.Codecs, &Codec{})
+			if err := m.Codecs[len(m.Codecs)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
