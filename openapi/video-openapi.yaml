@@ -147,17 +147,26 @@ components:
       - default_device
       type: object
     AzureRequest:
+      description: Config for creating Azure Blob Storage storage
       properties:
         abs_account_name:
+          description: The account name
+          title: AccountName
           type: string
           x-stream-index: "001"
         abs_client_id:
+          description: The client id
+          title: ClientID
           type: string
           x-stream-index: "003"
         abs_client_secret:
+          description: The client secret
+          title: ClientSecret
           type: string
           x-stream-index: "004"
         abs_tenant_id:
+          description: The tenant id
+          title: TenantID
           type: string
           x-stream-index: "002"
       required:
@@ -165,6 +174,7 @@ components:
       - abs_tenant_id
       - abs_client_id
       - abs_client_secret
+      title: AzureRequest
       type: object
     BackstageSettingsRequest:
       properties:
@@ -214,6 +224,59 @@ components:
       - duration
       title: BlockUserResponse
       type: object
+    BlockedUserEvent:
+      description: |-
+        This event is sent to call participants to notify when a user is blocked on a call, clients can use this event to show a notification.
+        If the user is the current user, the client should leave the call screen as well
+      properties:
+        blocked_by_user:
+          $ref: '#/components/schemas/UserResponse'
+          description: The user that blocked the user, null if the user was blocked
+            by server-side
+          title: Blocked by
+          x-stream-index: "004"
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        type:
+          default: call.blocked_user
+          description: 'The type of event: "call.blocked_user" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          description: The user that was blocked
+          title: User
+          x-stream-index: "003"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - user
+      title: BlockedUserEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: call
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    Bound:
+      properties:
+        inclusive:
+          type: boolean
+          x-stream-index: "002"
+        value:
+          format: float
+          type: number
+          x-stream-index: "001"
+      required:
+      - value
+      - inclusive
+      type: object
     BroadcastSettingsRequest:
       properties:
         enabled:
@@ -247,6 +310,287 @@ components:
       - rtmp
       title: BroadcastSettingsResponse
       type: object
+    CallAcceptedEvent:
+      description: This event is sent when a user accepts a notification to join a
+        call.
+      properties:
+        call:
+          $ref: '#/components/schemas/CallResponse'
+          x-stream-index: "003"
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        type:
+          default: call.accepted
+          description: 'The type of event: "call.accepted" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          description: The user who accepted the call
+          title: User
+          x-stream-index: "004"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - call
+      - user
+      title: CallAcceptedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: ring
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallClosedCaption:
+      description: CallClosedCaption represents a closed caption of a call.
+      properties:
+        end_time:
+          format: date-time
+          title: The end time of the closed caption.
+          type: string
+          x-stream-index: "003"
+        speaker_id:
+          title: The speaker ID of the closed caption.
+          type: string
+          x-stream-index: "004"
+        start_time:
+          format: date-time
+          title: The start time of the closed caption.
+          type: string
+          x-stream-index: "002"
+        text:
+          title: The text of the closed caption.
+          type: string
+          x-stream-index: "001"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          title: The full user for the closed caption.
+          x-stream-index: "005"
+      required:
+      - text
+      - start_time
+      - end_time
+      - speaker_id
+      - user
+      title: CallClosedCaption
+      type: object
+    CallClosedCaptionsFailedEvent:
+      description: This event is sent when call closed captions has failed
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        type:
+          default: call.closed_captions_failed
+          description: 'The type of event: "call.closed_captions_failed" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      title: CallClosedCaptionsFailedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: transcription
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallClosedCaptionsStartedEvent:
+      description: This event is sent when call closed caption has started
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        type:
+          default: call.closed_captions_started
+          description: 'The type of event: "call.closed_captions_started" in this
+            case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      title: CallClosedCaptionsStartedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: transcription
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallClosedCaptionsStoppedEvent:
+      description: This event is sent when call closed captions has stopped
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        type:
+          default: call.closed_captions_stopped
+          description: 'The type of event: "call.transcription_stopped" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      title: CallClosedCaptionsStoppedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: transcription
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallCreatedEvent:
+      description: |-
+        This event is sent when a call is created. Clients receiving this event should check if the ringing
+        field is set to true and if so, show the call screen
+      properties:
+        call:
+          $ref: '#/components/schemas/CallResponse'
+          description: Call object
+          title: Call
+          x-stream-index: "003"
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        members:
+          description: the members added to this call
+          items:
+            $ref: '#/components/schemas/MemberResponse'
+          title: Members
+          type: array
+          x-stream-index: "004"
+        type:
+          default: call.created
+          description: 'The type of event: "call.created" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - call
+      - members
+      title: CallCreatedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: call
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallDeletedEvent:
+      description: This event is sent when a call is deleted. Clients receiving this
+        event should leave the call screen
+      properties:
+        call:
+          $ref: '#/components/schemas/CallResponse'
+          description: Call object
+          title: Call
+          x-stream-index: "003"
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        type:
+          default: call.deleted
+          description: 'The type of event: "call.deleted" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - call
+      title: CallDeletedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: call
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallDurationReport:
+      properties:
+        histogram:
+          items:
+            $ref: '#/components/schemas/ReportByHistogramBucket'
+          type: array
+          x-stream-index: "001"
+      required:
+      - histogram
+      type: object
+    CallDurationReportResponse:
+      properties:
+        daily:
+          items:
+            $ref: '#/components/schemas/DailyAggregateCallDurationReportResponse'
+          type: array
+          x-stream-index: "001"
+      required:
+      - daily
+      type: object
+    CallEndedEvent:
+      description: This event is sent when a call is mark as ended for all its participants.
+        Clients receiving this event should leave the call screen
+      properties:
+        call:
+          $ref: '#/components/schemas/CallResponse'
+          x-stream-index: "003"
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        type:
+          default: call.ended
+          description: 'The type of event: "call.ended" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          description: The user who ended the call, null if the call was ended by
+            the server
+          title: User
+          x-stream-index: "004"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - call
+      title: CallEndedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: call
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     CallEvent:
       nullable: true
       properties:
@@ -294,6 +638,91 @@ components:
       - internal
       - kind
       type: object
+    CallHLSBroadcastingFailedEvent:
+      description: This event is sent when HLS broadcasting has failed
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        type:
+          default: call.hls_broadcasting_failed
+          description: 'The type of event: "call.hls_broadcasting_failed" in this
+            case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      title: CallHLSBroadcastingFailedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: streaming
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallHLSBroadcastingStartedEvent:
+      description: This event is sent when HLS broadcasting has started
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        hls_playlist_url:
+          type: string
+          x-stream-index: "003"
+        type:
+          default: call.hls_broadcasting_started
+          description: 'The type of event: "call.hls_broadcasting_started" in this
+            case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - hls_playlist_url
+      title: CallHLSBroadcastingStartedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: streaming
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallHLSBroadcastingStoppedEvent:
+      description: This event is sent when HLS broadcasting has stopped
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        type:
+          default: call.hls_broadcasting_stopped
+          description: 'The type of event: "call.hls_broadcasting_stopped" in this
+            case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      title: CallHLSBroadcastingStoppedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: streaming
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     CallIngressResponse:
       description: CallIngressResponse is the payload for ingress settings
       properties:
@@ -304,6 +733,340 @@ components:
       required:
       - rtmp
       title: CallIngressResponse
+      type: object
+    CallLiveStartedEvent:
+      description: This event is sent when a call is started. Clients receiving this
+        event should start the call.
+      properties:
+        call:
+          $ref: '#/components/schemas/CallResponse'
+          description: Call object
+          title: Call
+          x-stream-index: "003"
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        type:
+          default: call.live_started
+          description: 'The type of event: "call.live_started" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - call
+      title: CallLiveStartedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: streaming
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallMemberAddedEvent:
+      description: This event is sent when one or more members are added to a call
+      properties:
+        call:
+          $ref: '#/components/schemas/CallResponse'
+          description: Call object
+          title: Call
+          x-stream-index: "003"
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        members:
+          description: the members added to this call
+          items:
+            $ref: '#/components/schemas/MemberResponse'
+          title: Members
+          type: array
+          x-stream-index: "004"
+        type:
+          default: call.member_added
+          description: 'The type of event: "call.member_added" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - call
+      - members
+      title: CallMemberAddedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: call
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallMemberRemovedEvent:
+      description: This event is sent when one or more members are removed from a
+        call
+      properties:
+        call:
+          $ref: '#/components/schemas/CallResponse'
+          description: Call object
+          title: Call
+          x-stream-index: "003"
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        members:
+          description: the list of member IDs removed from the call
+          items:
+            type: string
+          title: Members
+          type: array
+          x-stream-index: "004"
+        type:
+          default: call.member_removed
+          description: 'The type of event: "call.member_removed" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - call
+      - members
+      title: CallMemberRemovedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: call
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallMemberUpdatedEvent:
+      description: This event is sent when one or more members are updated
+      properties:
+        call:
+          $ref: '#/components/schemas/CallResponse'
+          description: Call object
+          title: Call
+          x-stream-index: "003"
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        members:
+          description: The list of members that were updated
+          items:
+            $ref: '#/components/schemas/MemberResponse'
+          title: Members
+          type: array
+          x-stream-index: "004"
+        type:
+          default: call.member_updated
+          description: 'The type of event: "call.member_updated" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - call
+      - members
+      title: CallMemberUpdatedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: call
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallMemberUpdatedPermissionEvent:
+      description: This event is sent when one or more members get its role updated
+      properties:
+        call:
+          $ref: '#/components/schemas/CallResponse'
+          description: Call object
+          title: Call
+          x-stream-index: "003"
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        capabilities_by_role:
+          additionalProperties:
+            items:
+              type: string
+            type: array
+          description: The capabilities by role for this call
+          title: CapabilitiesByRole
+          type: object
+          x-stream-index: "004"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        members:
+          description: The list of members that were updated
+          items:
+            $ref: '#/components/schemas/MemberResponse'
+          title: Members
+          type: array
+          x-stream-index: "005"
+        type:
+          default: call.member_updated_permission
+          description: 'The type of event: "call.member_added" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - call
+      - capabilities_by_role
+      - members
+      title: CallMemberUpdatedPermissionEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: call
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallMissedEvent:
+      description: This event is sent to call members who did not accept/reject/join
+        the call to notify they missed the call
+      properties:
+        call:
+          $ref: '#/components/schemas/CallResponse'
+          description: Call object
+          title: Call
+          x-stream-index: "004"
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        members:
+          description: List of members who missed the call
+          items:
+            $ref: '#/components/schemas/MemberResponse'
+          title: Members
+          type: array
+          x-stream-index: "005"
+        notify_user:
+          type: boolean
+          x-stream-index: "007"
+        session_id:
+          description: Call session ID
+          title: Session ID
+          type: string
+          x-stream-index: "003.001"
+        type:
+          default: call.missed
+          description: 'The type of event: "call.notification" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          description: The caller from whom the call was missed
+          title: User
+          x-stream-index: "006"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - session_id
+      - call
+      - members
+      - user
+      - notify_user
+      title: CallMissedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: ring
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallNotificationEvent:
+      description: This event is sent to all call members to notify they are getting
+        called
+      properties:
+        call:
+          $ref: '#/components/schemas/CallResponse'
+          description: Call object
+          title: Call
+          x-stream-index: "004"
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        members:
+          description: Call members
+          items:
+            $ref: '#/components/schemas/MemberResponse'
+          title: Members
+          type: array
+          x-stream-index: "005"
+        session_id:
+          description: Call session ID
+          title: Session ID
+          type: string
+          x-stream-index: "003.001"
+        type:
+          default: call.notification
+          description: 'The type of event: "call.notification" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          description: The user that sent the call notification
+          title: User
+          x-stream-index: "006"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - session_id
+      - call
+      - members
+      - user
+      title: CallNotificationEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: ring
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallParticipantCountReport:
+      properties:
+        histogram:
+          items:
+            $ref: '#/components/schemas/ReportByHistogramBucket'
+          type: array
+          x-stream-index: "001"
+      required:
+      - histogram
+      type: object
+    CallParticipantCountReportResponse:
+      properties:
+        daily:
+          items:
+            $ref: '#/components/schemas/DailyAggregateCallParticipantCountReportResponse'
+          type: array
+          x-stream-index: "001"
+      required:
+      - daily
       type: object
     CallParticipantResponse:
       properties:
@@ -326,6 +1089,39 @@ components:
       - role
       - joined_at
       type: object
+    CallReactionEvent:
+      description: This event is sent when a reaction is sent in a call, clients should
+        use this to show the reaction in the call screen
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        reaction:
+          $ref: '#/components/schemas/ReactionResponse'
+          description: the reaction object sent by the user on the call
+          title: reaction
+          x-stream-index: "003"
+        type:
+          default: call.reaction_new
+          description: 'The type of event: "call.reaction_new" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - reaction
+      title: CallReactionEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: call
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     CallRecording:
       description: CallRecording represents a recording of a call.
       properties:
@@ -354,6 +1150,156 @@ components:
       - end_time
       title: CallRecording
       type: object
+    CallRecordingFailedEvent:
+      description: This event is sent when call recording has failed
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        type:
+          default: call.recording_failed
+          description: 'The type of event: "call.recording_failed" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      title: CallRecordingFailedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: recording
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallRecordingReadyEvent:
+      description: This event is sent when call recording is ready
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        call_recording:
+          $ref: '#/components/schemas/CallRecording'
+          description: The call recording object
+          title: CallRecording
+          x-stream-index: "003"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        type:
+          default: call.recording_ready
+          description: 'The type of event: "call.recording_ready" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - call_recording
+      title: CallRecordingReadyEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: recording
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallRecordingStartedEvent:
+      description: This event is sent when call recording has started
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        type:
+          default: call.recording_started
+          description: 'The type of event: "call.recording_started" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      title: CallRecordingStartedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: recording
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallRecordingStoppedEvent:
+      description: This event is sent when call recording has stopped
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        type:
+          default: call.recording_stopped
+          description: 'The type of event: "call.recording_stopped" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      title: CallRecordingStoppedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: recording
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallRejectedEvent:
+      description: This event is sent when a user rejects a notification to join a
+        call.
+      properties:
+        call:
+          $ref: '#/components/schemas/CallResponse'
+          x-stream-index: "003"
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        reason:
+          type: string
+          x-stream-index: "005"
+        type:
+          default: call.rejected
+          description: 'The type of event: "call.rejected" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          description: The user who rejected the call
+          title: User
+          x-stream-index: "004"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - call
+      - user
+      title: CallRejectedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: ring
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     CallRequest:
       description: CallRequest is the payload for creating a call.
       properties:
@@ -504,6 +1450,294 @@ components:
       - egress
       title: CallResponse
       type: object
+    CallRingEvent:
+      description: This event is sent to all call members to notify they are getting
+        called
+      properties:
+        call:
+          $ref: '#/components/schemas/CallResponse'
+          description: Call object
+          title: Call
+          x-stream-index: "005"
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        members:
+          description: Call members
+          items:
+            $ref: '#/components/schemas/MemberResponse'
+          title: Members
+          type: array
+          x-stream-index: "006"
+        session_id:
+          description: Call session ID
+          title: Session ID
+          type: string
+          x-stream-index: "003.001"
+        type:
+          default: call.ring
+          description: 'The type of event: "call.notification" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          description: The user that sent the call notification
+          title: User
+          x-stream-index: "007"
+        video:
+          type: boolean
+          x-stream-index: "008"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - session_id
+      - call
+      - members
+      - user
+      - video
+      title: CallRingEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: ring
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallRtmpBroadcastFailedEvent:
+      description: This event is sent when a call RTMP broadcast has failed
+      properties:
+        call_cid:
+          description: The unique identifier for a call (<type>:<id>)
+          title: CID
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: "001.002"
+        name:
+          description: Name of the given RTMP broadcast
+          title: Name
+          type: string
+          x-stream-index: "003"
+        type:
+          default: call.rtmp_broadcast_failed
+          description: 'The type of event: "call.rtmp_broadcast_failed" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - name
+      title: CallRtmpBroadcastFailedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: streaming
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallRtmpBroadcastStartedEvent:
+      description: This event is sent when RTMP broadcast has started
+      properties:
+        call_cid:
+          description: The unique identifier for a call (<type>:<id>)
+          title: CID
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: "001.002"
+        name:
+          description: Name of the given RTMP broadcast
+          title: Name
+          type: string
+          x-stream-index: "003"
+        type:
+          default: call.rtmp_broadcast_started
+          description: 'The type of event: "call.rtmp_broadcast_started" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - name
+      title: CallRtmpBroadcastStartedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: streaming
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallRtmpBroadcastStoppedEvent:
+      description: This event is sent when RTMP broadcast has stopped
+      properties:
+        call_cid:
+          description: The unique identifier for a call (<type>:<id>)
+          title: CID
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: "001.002"
+        name:
+          description: Name of the given RTMP broadcast
+          title: Name
+          type: string
+          x-stream-index: "003"
+        type:
+          default: call.rtmp_broadcast_stopped
+          description: 'The type of event: "call.rtmp_broadcast_stopped" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - name
+      title: CallRtmpBroadcastStoppedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: streaming
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallSessionEndedEvent:
+      description: This event is sent when a call session ends
+      properties:
+        call:
+          $ref: '#/components/schemas/CallResponse'
+          description: Call object
+          title: Call
+          x-stream-index: "004"
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        session_id:
+          description: Call session ID
+          title: Session ID
+          type: string
+          x-stream-index: "003.001"
+        type:
+          default: call.session_ended
+          description: 'The type of event: "call.session_ended" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - session_id
+      - call
+      title: CallSessionEndedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: session
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallSessionParticipantJoinedEvent:
+      description: This event is sent when a participant joins a call session
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        participant:
+          $ref: '#/components/schemas/CallParticipantResponse'
+          description: The participant that joined the session
+          title: Participant
+          x-stream-index: "004"
+        session_id:
+          description: Call session ID
+          title: Session ID
+          type: string
+          x-stream-index: "003.001"
+        type:
+          default: call.session_participant_joined
+          description: 'The type of event: "call.session_participant_joined" in this
+            case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - session_id
+      - participant
+      title: CallSessionParticipantJoinedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: session
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallSessionParticipantLeftEvent:
+      description: This event is sent when a participant leaves a call session
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        duration_seconds:
+          description: The duration participant was in the session in seconds
+          format: int32
+          title: Duration
+          type: integer
+          x-stream-index: "005"
+        participant:
+          $ref: '#/components/schemas/CallParticipantResponse'
+          description: The participant that left the session
+          title: Participant
+          x-stream-index: "004"
+        session_id:
+          description: Call session ID
+          title: Session ID
+          type: string
+          x-stream-index: "003.001"
+        type:
+          default: call.session_participant_left
+          description: 'The type of event: "call.session_participant_left" in this
+            case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - session_id
+      - participant
+      - duration_seconds
+      title: CallSessionParticipantLeftEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: session
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     CallSessionResponse:
       properties:
         accepted_by:
@@ -571,6 +1805,44 @@ components:
       - accepted_by
       - missed_by
       type: object
+    CallSessionStartedEvent:
+      description: This event is sent when a call session starts
+      properties:
+        call:
+          $ref: '#/components/schemas/CallResponse'
+          description: Call object
+          title: Call
+          x-stream-index: "004"
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        session_id:
+          description: Call session ID
+          title: Session ID
+          type: string
+          x-stream-index: "003.001"
+        type:
+          default: call.session_started
+          description: 'The type of event: "call.session_started" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - session_id
+      - call
+      title: CallSessionStartedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: session
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     CallSettingsRequest:
       properties:
         audio:
@@ -688,7 +1960,7 @@ components:
         call_duration_seconds:
           format: int32
           type: integer
-          x-stream-index: "007"
+          x-stream-index: "008"
         call_session_id:
           type: string
           x-stream-index: "002"
@@ -698,11 +1970,15 @@ components:
         created_at:
           format: date-time
           type: string
-          x-stream-index: "006"
+          x-stream-index: "007"
         first_stats_time:
           format: date-time
           type: string
           x-stream-index: "003"
+        min_user_rating:
+          format: int32
+          type: integer
+          x-stream-index: "006"
         quality_score:
           format: int32
           type: integer
@@ -752,6 +2028,116 @@ components:
       - end_time
       title: CallTranscription
       type: object
+    CallTranscriptionFailedEvent:
+      description: This event is sent when call transcription has failed
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        type:
+          default: call.transcription_failed
+          description: 'The type of event: "call.transcription_failed" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      title: CallTranscriptionFailedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: transcription
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallTranscriptionReadyEvent:
+      description: This event is sent when call transcription is ready
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        call_transcription:
+          $ref: '#/components/schemas/CallTranscription'
+          description: The call transcription object
+          title: CallTranscription
+          x-stream-index: "003"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        type:
+          default: call.transcription_ready
+          description: 'The type of event: "call.transcription_ready" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - call_transcription
+      title: CallTranscriptionReadyEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: transcription
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallTranscriptionStartedEvent:
+      description: This event is sent when call transcription has started
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        type:
+          default: call.transcription_started
+          description: 'The type of event: "call.transcription_started" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      title: CallTranscriptionStartedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: transcription
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallTranscriptionStoppedEvent:
+      description: This event is sent when call transcription has stopped
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        type:
+          default: call.transcription_stopped
+          description: 'The type of event: "call.transcription_stopped" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      title: CallTranscriptionStoppedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: transcription
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     CallTypeResponse:
       description: CallTypeResponse is the payload for a call type.
       properties:
@@ -805,6 +2191,105 @@ components:
       - updated_at
       title: CallTypeResponse
       type: object
+    CallUpdatedEvent:
+      description: |-
+        This event is sent when a call is updated, clients should use this update the local state of the call.
+        This event also contains the capabilities by role for the call, clients should update the own_capability for the current.
+      properties:
+        call:
+          $ref: '#/components/schemas/CallResponse'
+          description: Call object
+          title: Call
+          x-stream-index: "003"
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        capabilities_by_role:
+          additionalProperties:
+            items:
+              type: string
+            type: array
+          description: The capabilities by role for this call
+          title: CapabilitiesByRole
+          type: object
+          x-stream-index: "004"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        type:
+          default: call.updated
+          description: 'The type of event: "call.ended" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - call
+      - capabilities_by_role
+      title: CallUpdatedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: call
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallUserMutedEvent:
+      description: This event is sent when a call member is muted
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        from_user_id:
+          type: string
+          x-stream-index: "003"
+        muted_user_ids:
+          items:
+            type: string
+          type: array
+          x-stream-index: "004"
+        type:
+          default: call.user_muted
+          description: 'The type of event: "call.user_muted" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - from_user_id
+      - muted_user_ids
+      title: CallUserMutedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: call
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallsPerDayReport:
+      properties:
+        count:
+          format: int64
+          type: integer
+          x-stream-index: "001"
+      required:
+      - count
+      type: object
+    CallsPerDayReportResponse:
+      properties:
+        daily:
+          items:
+            $ref: '#/components/schemas/DailyAggregateCallsPerDayReportResponse'
+          type: array
+          x-stream-index: "001"
+      required:
+      - daily
+      type: object
     CheckExternalStorageResponse:
       description: Basic response information
       nullable: true
@@ -822,6 +2307,39 @@ components:
       - file_url
       title: Response
       type: object
+    ClosedCaptionEvent:
+      description: This event is sent when closed captions are being sent in a call,
+        clients should use this to show the closed captions in the call screen
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        closed_caption:
+          $ref: '#/components/schemas/CallClosedCaption'
+          description: The closed caption object
+          title: CallClosedCaption
+          x-stream-index: "003"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        type:
+          default: call.closed_caption
+          description: 'The type of event: "call.closed_caption" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - closed_caption
+      title: ClosedCaptionEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: transcription
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     CollectUserFeedbackRequest:
       nullable: true
       properties:
@@ -1054,37 +2572,51 @@ components:
       title: CreateDeviceRequest
       type: object
     CreateExternalStorageRequest:
+      description: Create external storage
       nullable: true
       properties:
         aws_s3:
           $ref: '#/components/schemas/S3Request'
+          description: Only required if you want to create an Amazon S3 storage
+          title: AwsS3
           x-stream-index: "003.004"
         azure_blob:
           $ref: '#/components/schemas/AzureRequest'
+          description: Only required if you want to create an Azure Blob Storage
+          title: AzureBlob
           x-stream-index: "003.006"
         bucket:
+          description: The name of the bucket on the service provider
+          title: Bucket
           type: string
           x-stream-index: "003.002"
         gcs_credentials:
           type: string
           x-stream-index: "003.005"
         name:
+          description: The name of the provider, this must be unique
+          title: Name
           type: string
           x-stream-index: "001"
         path:
+          description: The path prefix to use for storing files
+          title: Path
           type: string
           x-stream-index: "003.003"
         storage_type:
+          description: The type of storage to use
           enum:
           - s3
           - gcs
           - abs
+          title: StorageType
           type: string
           x-stream-index: "003.001"
       required:
       - name
       - storage_type
       - bucket
+      title: CreateExternalStorageRequest
       type: object
     CreateExternalStorageResponse:
       description: Basic response information
@@ -1132,6 +2664,116 @@ components:
       - user
       - access_token
       - duration
+      type: object
+    CustomVideoEvent:
+      description: A custom event, this event is used to send custom events to other
+        participants in the call.
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        custom:
+          additionalProperties: {}
+          description: Custom data for this object
+          title: Custom data
+          type: object
+          x-stream-index: "003"
+        type:
+          default: custom
+          description: The type of event, "custom" in this case
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          x-stream-index: "004"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - custom
+      - user
+      title: CustomVideoEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    DailyAggregateCallDurationReportResponse:
+      properties:
+        date:
+          type: string
+          x-stream-index: "001"
+        report:
+          $ref: '#/components/schemas/CallDurationReport'
+          x-stream-index: "002"
+      required:
+      - date
+      - report
+      type: object
+    DailyAggregateCallParticipantCountReportResponse:
+      properties:
+        date:
+          type: string
+          x-stream-index: "001"
+        report:
+          $ref: '#/components/schemas/CallParticipantCountReport'
+          x-stream-index: "002"
+      required:
+      - date
+      - report
+      type: object
+    DailyAggregateCallsPerDayReportResponse:
+      properties:
+        date:
+          type: string
+          x-stream-index: "001"
+        report:
+          $ref: '#/components/schemas/CallsPerDayReport'
+          x-stream-index: "002"
+      required:
+      - date
+      - report
+      type: object
+    DailyAggregateQualityScoreReportResponse:
+      properties:
+        date:
+          type: string
+          x-stream-index: "001"
+        report:
+          $ref: '#/components/schemas/QualityScoreReport'
+          x-stream-index: "002"
+      required:
+      - date
+      - report
+      type: object
+    DailyAggregateSDKUsageReportResponse:
+      properties:
+        date:
+          type: string
+          x-stream-index: "001"
+        report:
+          $ref: '#/components/schemas/SDKUsageReport'
+          x-stream-index: "002"
+      required:
+      - date
+      - report
+      type: object
+    DailyAggregateUserFeedbackReportResponse:
+      properties:
+        date:
+          type: string
+          x-stream-index: "001"
+        report:
+          $ref: '#/components/schemas/UserFeedbackReport'
+          x-stream-index: "002"
+      required:
+      - date
+      - report
       type: object
     DeleteCallRequest:
       description: DeleteCallRequest is the payload for deleting a call.
@@ -1499,6 +3141,10 @@ components:
         aggregated:
           $ref: '#/components/schemas/AggregatedStats'
           x-stream-index: "005"
+        average_connection_time:
+          format: float
+          type: number
+          x-stream-index: "011"
         call_duration_seconds:
           format: int32
           type: integer
@@ -1508,7 +3154,7 @@ components:
           x-stream-index: "002"
         call_timeline:
           $ref: '#/components/schemas/CallTimeline'
-          x-stream-index: "014"
+          x-stream-index: "015"
         duration:
           description: Duration of the request in milliseconds
           title: Duration
@@ -1523,7 +3169,7 @@ components:
         max_freezes_duration_seconds:
           format: int32
           type: integer
-          x-stream-index: "012"
+          x-stream-index: "013"
         max_participants:
           format: int32
           type: integer
@@ -1531,12 +3177,12 @@ components:
         max_total_quality_limitation_duration_seconds:
           format: int32
           type: integer
-          x-stream-index: "011"
+          x-stream-index: "012"
         participant_report:
           items:
             $ref: '#/components/schemas/UserStats'
           type: array
-          x-stream-index: "015"
+          x-stream-index: "016"
         publishing_participants:
           format: int32
           type: integer
@@ -1553,7 +3199,7 @@ components:
           items:
             $ref: '#/components/schemas/SFULocationResponse'
           type: array
-          x-stream-index: "013"
+          x-stream-index: "014"
       required:
       - duration
       - call_status
@@ -2102,6 +3748,25 @@ components:
       - duration
       title: MuteUsersResponse
       type: object
+    NetworkMetricsReportResponse:
+      properties:
+        average_connection_time:
+          format: float
+          type: number
+          x-stream-index: "003"
+        average_jitter:
+          format: float
+          type: number
+          x-stream-index: "002"
+        average_latency:
+          format: float
+          type: number
+          x-stream-index: "001"
+        average_time_to_reconnect:
+          format: float
+          type: number
+          x-stream-index: "004"
+      type: object
     NoiseCancellationSettings:
       properties:
         mode:
@@ -2134,29 +3799,6 @@ components:
         session_started:
           $ref: '#/components/schemas/EventNotificationSettings'
           x-stream-index: "003"
-      type: object
-    NullBool:
-      properties:
-        HasValue:
-          type: boolean
-          writeOnly: true
-          x-stream-index: "002"
-        Value:
-          type: boolean
-          writeOnly: true
-          x-stream-index: "001"
-      type: object
-    NullTime:
-      properties:
-        HasValue:
-          type: boolean
-          writeOnly: true
-          x-stream-index: "002"
-        Value:
-          format: date-time
-          type: string
-          writeOnly: true
-          x-stream-index: "001"
       type: object
     OwnCapability:
       description: All possibility of string to use
@@ -2191,6 +3833,65 @@ components:
       - update-call-settings
       title: OwnCapability
       type: string
+    PerSDKUsageReport:
+      nullable: true
+      properties:
+        by_version:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "002"
+        total:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+      required:
+      - total
+      - by_version
+      type: object
+    PermissionRequestEvent:
+      description: |-
+        This event is sent when a user requests access to a feature on a call,
+        clients receiving this event should display a permission request to the user
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        permissions:
+          description: The list of permissions requested by the user
+          items:
+            type: string
+          title: Permissions
+          type: array
+          x-stream-index: "004"
+        type:
+          default: call.permission_request
+          description: 'The type of event: "call.permission_request" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          description: The user who sent the permission request
+          title: User
+          x-stream-index: "003"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - user
+      - permissions
+      title: PermissionRequestEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: call
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     PinRequest:
       description: PinRequest is the payload for pinning a message.
       nullable: true
@@ -2224,13 +3925,6 @@ components:
       title: Response
       type: object
     PrivacySettingsResponse:
-      properties:
-        read_receipts:
-          $ref: '#/components/schemas/ReadReceiptsResponse'
-          x-stream-index: "002"
-        typing_indicators:
-          $ref: '#/components/schemas/TypingIndicatorsResponse'
-          x-stream-index: "001"
       type: object
     PublishedTrackInfo:
       properties:
@@ -2256,15 +3950,6 @@ components:
           $ref: '#/components/schemas/Count'
           x-stream-index: "001"
       type: object
-    PushNotificationSettingsInput:
-      properties:
-        disabled:
-          $ref: '#/components/schemas/NullBool'
-          x-stream-index: "001"
-        disabled_until:
-          $ref: '#/components/schemas/NullTime'
-          x-stream-index: "002"
-      type: object
     PushNotificationSettingsResponse:
       properties:
         disabled:
@@ -2274,6 +3959,75 @@ components:
           format: date-time
           type: string
           x-stream-index: "002"
+      type: object
+    QualityScoreReport:
+      properties:
+        histogram:
+          items:
+            $ref: '#/components/schemas/ReportByHistogramBucket'
+          type: array
+          x-stream-index: "001"
+      required:
+      - histogram
+      type: object
+    QualityScoreReportResponse:
+      properties:
+        daily:
+          items:
+            $ref: '#/components/schemas/DailyAggregateQualityScoreReportResponse'
+          type: array
+          x-stream-index: "001"
+      required:
+      - daily
+      type: object
+    QueryAggregateCallStatsRequest:
+      nullable: true
+      properties:
+        from:
+          type: string
+          x-stream-index: "002"
+        report_types:
+          items:
+            type: string
+          type: array
+          x-stream-index: "004"
+        to:
+          type: string
+          x-stream-index: "003"
+      type: object
+    QueryAggregateCallStatsResponse:
+      description: Basic response information
+      nullable: true
+      properties:
+        call_duration_report:
+          $ref: '#/components/schemas/CallDurationReportResponse'
+          x-stream-index: "002"
+        call_participant_count_report:
+          $ref: '#/components/schemas/CallParticipantCountReportResponse'
+          x-stream-index: "004"
+        calls_per_day_report:
+          $ref: '#/components/schemas/CallsPerDayReportResponse'
+          x-stream-index: "003"
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+        network_metrics_report:
+          $ref: '#/components/schemas/NetworkMetricsReportResponse'
+          x-stream-index: "008"
+        quality_score_report:
+          $ref: '#/components/schemas/QualityScoreReportResponse'
+          x-stream-index: "005"
+        sdk_usage_report:
+          $ref: '#/components/schemas/SDKUsageReportResponse'
+          x-stream-index: "006"
+        user_feedback_report:
+          $ref: '#/components/schemas/UserFeedbackReportResponse'
+          x-stream-index: "007"
+      required:
+      - duration
+      title: Response
       type: object
     QueryCallMembersRequest:
       nullable: true
@@ -2549,11 +4303,24 @@ components:
       - layout
       title: RTMPSettingsResponse
       type: object
-    ReadReceiptsResponse:
+    ReactionResponse:
       properties:
-        enabled:
-          type: boolean
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "004"
+        emoji_code:
+          type: string
+          x-stream-index: "003"
+        type:
+          type: string
+          x-stream-index: "002"
+        user:
+          $ref: '#/components/schemas/UserResponse'
           x-stream-index: "001"
+      required:
+      - user
+      - type
       type: object
     RecordSettingsRequest:
       properties:
@@ -2616,6 +4383,35 @@ components:
       - layout
       title: RecordSettingsResponse
       type: object
+    ReportByHistogramBucket:
+      properties:
+        category:
+          type: string
+          x-stream-index: "001"
+        count:
+          format: int32
+          type: integer
+          x-stream-index: "005"
+        lower_bound:
+          $ref: '#/components/schemas/Bound'
+          x-stream-index: "002"
+        mean:
+          format: float
+          type: number
+          x-stream-index: "006"
+        sum:
+          format: float
+          type: number
+          x-stream-index: "004"
+        upper_bound:
+          $ref: '#/components/schemas/Bound'
+          x-stream-index: "003"
+      required:
+      - category
+      - sum
+      - count
+      - mean
+      type: object
     Response:
       description: Basic response information
       nullable: true
@@ -2673,18 +4469,50 @@ components:
       - missed_call_timeout_ms
       type: object
     S3Request:
+      description: Config for creating Amazon S3 storage.
       properties:
         s3_api_key:
+          description: 'The AWS API key. To use Amazon S3 as your storage provider,
+            you have two authentication options: IAM role or API key. If you do not
+            specify the `s3_api_key` parameter, Stream will use IAM role authentication.
+            In that case make sure to have the correct IAM role configured for your
+            application.'
+          title: S3ApiKey
           type: string
           x-stream-index: "002"
         s3_region:
+          description: The AWS region where the bucket is hosted
+          title: S3Region
           type: string
           x-stream-index: "001"
         s3_secret:
+          description: The AWS API Secret
+          title: S3Secret
           type: string
           x-stream-index: "003"
       required:
       - s3_region
+      title: S3Request
+      type: object
+    SDKUsageReport:
+      properties:
+        per_sdk_usage:
+          additionalProperties:
+            $ref: '#/components/schemas/PerSDKUsageReport'
+          type: object
+          x-stream-index: "001"
+      required:
+      - per_sdk_usage
+      type: object
+    SDKUsageReportResponse:
+      properties:
+        daily:
+          items:
+            $ref: '#/components/schemas/DailyAggregateSDKUsageReportResponse'
+          type: array
+          x-stream-index: "001"
+      required:
+      - daily
       type: object
     SFULocationResponse:
       properties:
@@ -3160,12 +4988,6 @@ components:
       - closed_caption_mode
       - languages
       type: object
-    TypingIndicatorsResponse:
-      properties:
-        enabled:
-          type: boolean
-          x-stream-index: "001"
-      type: object
     UnblockUserRequest:
       description: UnblockUserRequest is the payload for unblocking a user.
       nullable: true
@@ -3192,6 +5014,40 @@ components:
       - duration
       title: UnblockUserResponse
       type: object
+    UnblockedUserEvent:
+      description: |-
+        This event is sent when a user is unblocked on a call,
+        this can be useful to notify the user that they can now join the call again
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        type:
+          default: call.unblocked_user
+          description: 'The type of event: "call.unblocked_user" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          description: The user that was unblocked
+          title: User
+          x-stream-index: "003"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - user
+      title: UnblockedUserEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: call
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     UnpinRequest:
       description: UnpinRequest is the payload for unpinning a message.
       nullable: true
@@ -3397,33 +5253,45 @@ components:
       title: UpdateCallTypeResponse
       type: object
     UpdateExternalStorageRequest:
+      description: External storage
       nullable: true
       properties:
         aws_s3:
           $ref: '#/components/schemas/S3Request'
+          description: Only required if you want to create an Amazon S3 storage
+          title: AwsS3
           x-stream-index: "003.004"
         azure_blob:
           $ref: '#/components/schemas/AzureRequest'
+          description: Only required if you want to create an Azure Blob Storage
+          title: AzureBlob
           x-stream-index: "003.006"
         bucket:
+          description: The name of the bucket on the service provider
+          title: Bucket
           type: string
           x-stream-index: "003.002"
         gcs_credentials:
           type: string
           x-stream-index: "003.005"
         path:
+          description: The path prefix to use for storing files
+          title: Path
           type: string
           x-stream-index: "003.003"
         storage_type:
+          description: The type of storage to use
           enum:
           - s3
           - gcs
           - abs
+          title: StorageType
           type: string
           x-stream-index: "003.001"
       required:
       - storage_type
       - bucket
+      title: ExternalStorageRequest
       type: object
     UpdateExternalStorageResponse:
       description: Basic response information
@@ -3490,6 +5358,146 @@ components:
       - duration
       title: Response
       type: object
+    UpdatedCallPermissionsEvent:
+      description: This event is sent to notify about permission changes for a user,
+        clients receiving this event should update their UI accordingly
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        own_capabilities:
+          description: The capabilities of the current user
+          items:
+            $ref: '#/components/schemas/OwnCapability'
+          title: Own capabilities
+          type: array
+          x-stream-index: "004"
+        type:
+          default: call.permissions_updated
+          description: 'The type of event: "call.permissions_updated" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          description: The user who received the new permissions
+          title: User
+          x-stream-index: "003"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - user
+      - own_capabilities
+      title: UpdatedCallPermissionsEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: call
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    UserEventPayload:
+      properties:
+        blocked_user_ids:
+          items:
+            type: string
+          type: array
+          x-stream-index: "001.016"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.008"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "001.004"
+        deactivated_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.015"
+        deleted_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.010"
+        id:
+          type: string
+          x-stream-index: "001.001"
+        image:
+          type: string
+          x-stream-index: "001.003"
+        invisible:
+          type: boolean
+          x-stream-index: "002"
+        language:
+          type: string
+          x-stream-index: "001.005"
+        last_active:
+          format: date-time
+          type: string
+          x-stream-index: "001.013"
+        name:
+          type: string
+          x-stream-index: "001.002"
+        privacy_settings:
+          $ref: '#/components/schemas/PrivacySettingsResponse'
+          x-stream-index: "003"
+        revoke_tokens_issued_before:
+          format: date-time
+          type: string
+          x-stream-index: "001.014"
+        role:
+          type: string
+          x-stream-index: "001.006"
+        teams:
+          items:
+            type: string
+          type: array
+          x-stream-index: "001.007"
+        updated_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.009"
+      required:
+      - id
+      - custom
+      - language
+      - role
+      - teams
+      - created_at
+      - updated_at
+      - banned
+      - online
+      - blocked_user_ids
+      type: object
+    UserFeedbackReport:
+      properties:
+        count_by_rating:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "001"
+        unreported_count:
+          format: int32
+          type: integer
+          x-stream-index: "002"
+      required:
+      - count_by_rating
+      - unreported_count
+      type: object
+    UserFeedbackReportResponse:
+      properties:
+        daily:
+          items:
+            $ref: '#/components/schemas/DailyAggregateUserFeedbackReportResponse'
+          type: array
+          x-stream-index: "001"
+      required:
+      - daily
+      type: object
     UserInfoResponse:
       properties:
         custom:
@@ -3548,9 +5556,6 @@ components:
         privacy_settings:
           $ref: '#/components/schemas/PrivacySettingsResponse'
           x-stream-index: "007"
-        push_notifications:
-          $ref: '#/components/schemas/PushNotificationSettingsInput'
-          x-stream-index: "010"
         role:
           title: Role
           type: string
@@ -3574,11 +5579,6 @@ components:
           title: Ban expires
           type: string
           x-stream-index: "003"
-        banned:
-          description: Whether a user is banned or not
-          title: Banned
-          type: boolean
-          x-stream-index: "001.011"
         blocked_user_ids:
           items:
             type: string
@@ -3643,11 +5643,6 @@ components:
           title: Name
           type: string
           x-stream-index: "001.002"
-        online:
-          description: Whether a user online or not
-          title: Online
-          type: boolean
-          x-stream-index: "001.012"
         privacy_settings:
           $ref: '#/components/schemas/PrivacySettingsResponse'
           description: User privacy settings
@@ -3705,12 +5700,16 @@ components:
       type: object
     UserSessionStats:
       properties:
+        average_connection_time:
+          format: float
+          type: number
+          x-stream-index: "010"
         browser:
           type: string
-          x-stream-index: "014.008"
+          x-stream-index: "015.008"
         browser_version:
           type: string
-          x-stream-index: "014.009"
+          x-stream-index: "015.009"
         current_ip:
           type: string
           x-stream-index: "006"
@@ -3719,10 +5718,10 @@ components:
           x-stream-index: "007"
         device_model:
           type: string
-          x-stream-index: "014.006"
+          x-stream-index: "015.006"
         device_version:
           type: string
-          x-stream-index: "014.007"
+          x-stream-index: "015.007"
         distance_to_sfu_kilometers:
           format: float
           type: number
@@ -3730,13 +5729,13 @@ components:
         freeze_duration_seconds:
           format: int32
           type: integer
-          x-stream-index: "016.011"
+          x-stream-index: "017.011"
         geolocation:
           $ref: '#/components/schemas/GeolocationResult'
           x-stream-index: "009"
         group:
           type: string
-          x-stream-index: "014.010"
+          x-stream-index: "015.010"
         jitter:
           $ref: '#/components/schemas/TimeStats'
           x-stream-index: "002"
@@ -3746,142 +5745,142 @@ components:
         max_fir_per_second:
           format: float
           type: number
-          x-stream-index: "016.003"
+          x-stream-index: "017.003"
         max_freeze_fraction:
           format: float
           type: number
-          x-stream-index: "016.006"
+          x-stream-index: "017.006"
         max_freezes_duration_seconds:
           format: int32
           type: integer
-          x-stream-index: "016.005"
+          x-stream-index: "017.005"
         max_freezes_per_second:
           format: float
           type: number
-          x-stream-index: "016.004"
+          x-stream-index: "017.004"
         max_nack_per_second:
           format: float
           type: number
-          x-stream-index: "016.002"
+          x-stream-index: "017.002"
         max_pli_per_second:
           format: float
           type: number
-          x-stream-index: "016.001"
+          x-stream-index: "017.001"
         max_publishing_video_quality:
           $ref: '#/components/schemas/VideoQuality'
-          x-stream-index: "015.003"
+          x-stream-index: "016.003"
         max_receiving_video_quality:
           $ref: '#/components/schemas/VideoQuality'
-          x-stream-index: "016.012"
+          x-stream-index: "017.012"
         min_event_ts:
           format: int32
           type: integer
           x-stream-index: "005"
         os:
           type: string
-          x-stream-index: "014.001"
+          x-stream-index: "015.001"
         os_version:
           type: string
-          x-stream-index: "014.002"
+          x-stream-index: "015.002"
         packet_loss_fraction:
           format: float
           type: number
-          x-stream-index: "016.007"
+          x-stream-index: "017.007"
         pub_sub_hints:
           $ref: '#/components/schemas/MediaPubSubHint'
-          x-stream-index: "012"
+          x-stream-index: "013"
         published_tracks:
           items:
             $ref: '#/components/schemas/PublishedTrackInfo'
           type: array
-          x-stream-index: "015.002"
+          x-stream-index: "016.002"
         publisher_jitter:
           $ref: '#/components/schemas/TimeStats'
-          x-stream-index: "015.009"
+          x-stream-index: "016.009"
         publisher_latency:
           $ref: '#/components/schemas/TimeStats'
-          x-stream-index: "015.008"
+          x-stream-index: "016.008"
         publisher_noise_cancellation_seconds:
           format: float
           type: number
-          x-stream-index: "015.012"
+          x-stream-index: "016.012"
         publisher_packet_loss_fraction:
           format: float
           type: number
-          x-stream-index: "015.007"
+          x-stream-index: "016.007"
         publisher_quality_limitation_fraction:
           format: float
           type: number
-          x-stream-index: "015.011"
+          x-stream-index: "016.011"
         publisher_video_quality_limitation_duration_seconds:
           additionalProperties:
             format: float
             type: number
           type: object
-          x-stream-index: "015.010"
+          x-stream-index: "016.010"
         publishing_audio_codec:
           type: string
-          x-stream-index: "015.005"
+          x-stream-index: "016.005"
         publishing_duration_seconds:
           format: int32
           type: integer
-          x-stream-index: "015.001"
+          x-stream-index: "016.001"
         publishing_video_codec:
           type: string
-          x-stream-index: "015.006"
+          x-stream-index: "016.006"
         quality_score:
           format: float
           type: number
           x-stream-index: "004"
         receiving_audio_codec:
           type: string
-          x-stream-index: "016.014"
+          x-stream-index: "017.014"
         receiving_duration_seconds:
           format: int32
           type: integer
-          x-stream-index: "016.010"
+          x-stream-index: "017.010"
         receiving_video_codec:
           type: string
-          x-stream-index: "016.015"
+          x-stream-index: "017.015"
         sdk:
           type: string
-          x-stream-index: "014.004"
+          x-stream-index: "015.004"
         sdk_version:
           type: string
-          x-stream-index: "014.005"
+          x-stream-index: "015.005"
         session_id:
           type: string
-          x-stream-index: "011"
+          x-stream-index: "012"
         subscriber_jitter:
           $ref: '#/components/schemas/TimeStats'
-          x-stream-index: "016.009"
+          x-stream-index: "017.009"
         subscriber_latency:
           $ref: '#/components/schemas/TimeStats'
-          x-stream-index: "016.008"
+          x-stream-index: "017.008"
         subscriber_video_quality_throttled_duration_seconds:
           format: float
           type: number
-          x-stream-index: "016.016"
+          x-stream-index: "017.016"
         subsessions:
           items:
             $ref: '#/components/schemas/Subsession'
           type: array
-          x-stream-index: "010"
+          x-stream-index: "011"
         timeline:
           $ref: '#/components/schemas/CallTimeline'
           x-stream-index: "001"
         total_pixels_in:
           type: integer
-          x-stream-index: "016.013"
+          x-stream-index: "017.013"
         total_pixels_out:
           type: integer
-          x-stream-index: "015.004"
+          x-stream-index: "016.004"
         truncated:
           type: boolean
-          x-stream-index: "013"
+          x-stream-index: "014"
         webrtc_version:
           type: string
-          x-stream-index: "014.003"
+          x-stream-index: "015.003"
       required:
       - quality_score
       - min_event_ts
@@ -3921,6 +5920,34 @@ components:
       - session_stats
       - min_event_ts
       type: object
+    UserUpdatedEvent:
+      nullable: true
+      properties:
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "002.003"
+        received_at:
+          format: date-time
+          type: string
+          x-stream-index: "002.004"
+        type:
+          default: user.updated
+          type: string
+          x-stream-index: "002.002"
+        user:
+          $ref: '#/components/schemas/UserEventPayload'
+          x-stream-index: "001"
+      required:
+      - user
+      - type
+      - created_at
+      title: UserUpdatedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     VideoDimension:
       properties:
         height:
@@ -3992,6 +6019,101 @@ components:
       - camera_default_on
       - camera_facing
       type: object
+    WebhookEvent:
+      description: The discriminator object for all webhook events, it maps events'
+        payload to the final type
+      discriminator:
+        mapping:
+          call.accepted: '#/components/schemas/CallAcceptedEvent'
+          call.blocked_user: '#/components/schemas/BlockedUserEvent'
+          call.closed_caption: '#/components/schemas/ClosedCaptionEvent'
+          call.closed_captions_failed: '#/components/schemas/CallClosedCaptionsFailedEvent'
+          call.closed_captions_started: '#/components/schemas/CallClosedCaptionsStartedEvent'
+          call.closed_captions_stopped: '#/components/schemas/CallClosedCaptionsStoppedEvent'
+          call.created: '#/components/schemas/CallCreatedEvent'
+          call.deleted: '#/components/schemas/CallDeletedEvent'
+          call.ended: '#/components/schemas/CallEndedEvent'
+          call.hls_broadcasting_failed: '#/components/schemas/CallHLSBroadcastingFailedEvent'
+          call.hls_broadcasting_started: '#/components/schemas/CallHLSBroadcastingStartedEvent'
+          call.hls_broadcasting_stopped: '#/components/schemas/CallHLSBroadcastingStoppedEvent'
+          call.live_started: '#/components/schemas/CallLiveStartedEvent'
+          call.member_added: '#/components/schemas/CallMemberAddedEvent'
+          call.member_removed: '#/components/schemas/CallMemberRemovedEvent'
+          call.member_updated: '#/components/schemas/CallMemberUpdatedEvent'
+          call.member_updated_permission: '#/components/schemas/CallMemberUpdatedPermissionEvent'
+          call.missed: '#/components/schemas/CallMissedEvent'
+          call.notification: '#/components/schemas/CallNotificationEvent'
+          call.permission_request: '#/components/schemas/PermissionRequestEvent'
+          call.permissions_updated: '#/components/schemas/UpdatedCallPermissionsEvent'
+          call.reaction_new: '#/components/schemas/CallReactionEvent'
+          call.recording_failed: '#/components/schemas/CallRecordingFailedEvent'
+          call.recording_ready: '#/components/schemas/CallRecordingReadyEvent'
+          call.recording_started: '#/components/schemas/CallRecordingStartedEvent'
+          call.recording_stopped: '#/components/schemas/CallRecordingStoppedEvent'
+          call.rejected: '#/components/schemas/CallRejectedEvent'
+          call.ring: '#/components/schemas/CallRingEvent'
+          call.rtmp_broadcast_failed: '#/components/schemas/CallRtmpBroadcastFailedEvent'
+          call.rtmp_broadcast_started: '#/components/schemas/CallRtmpBroadcastStartedEvent'
+          call.rtmp_broadcast_stopped: '#/components/schemas/CallRtmpBroadcastStoppedEvent'
+          call.session_ended: '#/components/schemas/CallSessionEndedEvent'
+          call.session_participant_joined: '#/components/schemas/CallSessionParticipantJoinedEvent'
+          call.session_participant_left: '#/components/schemas/CallSessionParticipantLeftEvent'
+          call.session_started: '#/components/schemas/CallSessionStartedEvent'
+          call.transcription_failed: '#/components/schemas/CallTranscriptionFailedEvent'
+          call.transcription_ready: '#/components/schemas/CallTranscriptionReadyEvent'
+          call.transcription_started: '#/components/schemas/CallTranscriptionStartedEvent'
+          call.transcription_stopped: '#/components/schemas/CallTranscriptionStoppedEvent'
+          call.unblocked_user: '#/components/schemas/UnblockedUserEvent'
+          call.updated: '#/components/schemas/CallUpdatedEvent'
+          call.user_muted: '#/components/schemas/CallUserMutedEvent'
+          custom: '#/components/schemas/CustomVideoEvent'
+          user.updated: '#/components/schemas/UserUpdatedEvent'
+        propertyName: type
+      oneOf:
+      - $ref: '#/components/schemas/BlockedUserEvent'
+      - $ref: '#/components/schemas/CallAcceptedEvent'
+      - $ref: '#/components/schemas/CallClosedCaptionsFailedEvent'
+      - $ref: '#/components/schemas/CallClosedCaptionsStartedEvent'
+      - $ref: '#/components/schemas/CallClosedCaptionsStoppedEvent'
+      - $ref: '#/components/schemas/CallCreatedEvent'
+      - $ref: '#/components/schemas/CallDeletedEvent'
+      - $ref: '#/components/schemas/CallEndedEvent'
+      - $ref: '#/components/schemas/CallHLSBroadcastingFailedEvent'
+      - $ref: '#/components/schemas/CallHLSBroadcastingStartedEvent'
+      - $ref: '#/components/schemas/CallHLSBroadcastingStoppedEvent'
+      - $ref: '#/components/schemas/CallLiveStartedEvent'
+      - $ref: '#/components/schemas/CallMemberAddedEvent'
+      - $ref: '#/components/schemas/CallMemberRemovedEvent'
+      - $ref: '#/components/schemas/CallMemberUpdatedEvent'
+      - $ref: '#/components/schemas/CallMemberUpdatedPermissionEvent'
+      - $ref: '#/components/schemas/CallMissedEvent'
+      - $ref: '#/components/schemas/CallNotificationEvent'
+      - $ref: '#/components/schemas/CallReactionEvent'
+      - $ref: '#/components/schemas/CallRecordingFailedEvent'
+      - $ref: '#/components/schemas/CallRecordingReadyEvent'
+      - $ref: '#/components/schemas/CallRecordingStartedEvent'
+      - $ref: '#/components/schemas/CallRecordingStoppedEvent'
+      - $ref: '#/components/schemas/CallRejectedEvent'
+      - $ref: '#/components/schemas/CallRingEvent'
+      - $ref: '#/components/schemas/CallRtmpBroadcastFailedEvent'
+      - $ref: '#/components/schemas/CallRtmpBroadcastStartedEvent'
+      - $ref: '#/components/schemas/CallRtmpBroadcastStoppedEvent'
+      - $ref: '#/components/schemas/CallSessionEndedEvent'
+      - $ref: '#/components/schemas/CallSessionParticipantJoinedEvent'
+      - $ref: '#/components/schemas/CallSessionParticipantLeftEvent'
+      - $ref: '#/components/schemas/CallSessionStartedEvent'
+      - $ref: '#/components/schemas/CallTranscriptionFailedEvent'
+      - $ref: '#/components/schemas/CallTranscriptionReadyEvent'
+      - $ref: '#/components/schemas/CallTranscriptionStartedEvent'
+      - $ref: '#/components/schemas/CallTranscriptionStoppedEvent'
+      - $ref: '#/components/schemas/CallUpdatedEvent'
+      - $ref: '#/components/schemas/CallUserMutedEvent'
+      - $ref: '#/components/schemas/ClosedCaptionEvent'
+      - $ref: '#/components/schemas/CustomVideoEvent'
+      - $ref: '#/components/schemas/PermissionRequestEvent'
+      - $ref: '#/components/schemas/UnblockedUserEvent'
+      - $ref: '#/components/schemas/UpdatedCallPermissionsEvent'
+      - $ref: '#/components/schemas/UserUpdatedEvent'
   securitySchemes:
     JWT:
       description: |
@@ -4033,7 +6155,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v138.15.0
+  version: v140.1.0
 openapi: 3.0.3
 paths:
   /video/call/{type}/{id}:
@@ -6336,6 +8458,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateExternalStorageRequest'
+        description: CreateExternalStorageRequest
         required: true
       responses:
         "201":
@@ -6411,6 +8534,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UpdateExternalStorageRequest'
+        description: ExternalStorageRequest
         required: true
       responses:
         "201":
@@ -6502,6 +8626,39 @@ paths:
       summary: Create Guest
       tags:
       - product:video
+  /video/stats:
+    post:
+      description: |2+
+
+      operationId: QueryAggregateCallStats
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryAggregateCallStatsRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryAggregateCallStatsResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Query Aggregate call Stats
+      tags:
+      - product:video
 security:
 - JWT: []
   api_key: []
@@ -6510,4 +8667,4 @@ security:
   stream-auth-type: []
 servers:
 - description: Stream API
-  url: https://stream-io-api.com
+  url: https://chat.stream-io-api.com
