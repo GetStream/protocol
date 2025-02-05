@@ -2359,7 +2359,6 @@ components:
           type: string
           x-stream-index: "004"
       required:
-      - user_session_id
       - sdk
       - sdk_version
       - rating
@@ -3706,10 +3705,12 @@ components:
       - send-video
       - start-broadcast-call
       - start-closed-captions-call
+      - start-frame-record-call
       - start-record-call
       - start-transcription-call
       - stop-broadcast-call
       - stop-closed-captions-call
+      - stop-frame-record-call
       - stop-record-call
       - stop-transcription-call
       - update-call
@@ -4378,10 +4379,6 @@ components:
         lower_bound:
           $ref: '#/components/schemas/Bound'
           x-stream-index: "002"
-        mean:
-          format: float
-          type: number
-          x-stream-index: "006"
         sum:
           format: float
           type: number
@@ -4393,7 +4390,6 @@ components:
       - category
       - sum
       - count
-      - mean
       type: object
     RequestPermissionRequest:
       nullable: true
@@ -4684,6 +4680,28 @@ components:
       required:
       - duration
       type: object
+    StartFrameRecordingRequest:
+      nullable: true
+      properties:
+        recording_external_storage:
+          type: string
+          x-stream-index: "002"
+      title: StartFrameRecordingRequest
+      type: object
+    StartFrameRecordingResponse:
+      description: StartFrameRecordingResponse is the response payload for the start
+        frame recording endpoint.
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      title: StartFrameRecordingResponse
+      type: object
     StartHLSBroadcastingRequest:
       description: StartHLSBroadcastingRequest is the payload for starting an HLS
         broadcasting.
@@ -4826,6 +4844,22 @@ components:
           x-stream-index: "003"
       type: object
     StopClosedCaptionsResponse:
+      description: Basic response information
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      title: Response
+      type: object
+    StopFrameRecordingRequest:
+      nullable: true
+      type: object
+    StopFrameRecordingResponse:
       description: Basic response information
       nullable: true
       properties:
@@ -6165,7 +6199,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v151.0.1
+  version: v153.0.0
 openapi: 3.0.3
 paths:
   /video/call/{type}/{id}:
@@ -6720,6 +6754,56 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Send custom event
+      tags:
+      - product:video
+  /video/call/{type}/{id}/feedback:
+    post:
+      description: |2+
+
+      operationId: CollectUserFeedback
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CollectUserFeedbackRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollectUserFeedbackResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Collect user feedback
       tags:
       - product:video
   /video/call/{type}/{id}/feedback/{session}:
@@ -7597,6 +7681,64 @@ paths:
       summary: Start closed captions
       tags:
       - product:video
+  /video/call/{type}/{id}/start_frame_recording:
+    post:
+      description: |
+        Starts frame by frame recording
+
+        Sends events:
+        - call.frame_recording_started
+      operationId: StartFrameRecording
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          description: The type of call
+          maxLength: 64
+          title: Type
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Call ID
+          maxLength: 64
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartFrameRecordingRequest'
+        description: StartFrameRecordingRequest
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartFrameRecordingResponse'
+          description: StartFrameRecordingResponse
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Start frame recording
+      tags:
+      - product:video
   /video/call/{type}/{id}/start_recording:
     post:
       description: |
@@ -7856,6 +7998,53 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Stop closed captions
+      tags:
+      - product:video
+  /video/call/{type}/{id}/stop_frame_recording:
+    post:
+      description: |
+        Stops frame recording
+
+        Sends events:
+        - call.frame_recording_stopped
+      operationId: StopFrameRecording
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StopFrameRecordingResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Stop frame recording
       tags:
       - product:video
   /video/call/{type}/{id}/stop_live:
