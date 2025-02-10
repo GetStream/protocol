@@ -217,6 +217,9 @@ components:
         file_upload_config:
           $ref: '#/components/schemas/FileUploadConfig'
           x-stream-index: "030"
+        guest_user_creation_disabled:
+          type: boolean
+          x-stream-index: "043"
         image_upload_config:
           $ref: '#/components/schemas/FileUploadConfig'
           x-stream-index: "031"
@@ -266,6 +269,7 @@ components:
       - video_provider
       - moderation_enabled
       - moderation_multitenant_blocklist_enabled
+      - guest_user_creation_disabled
       type: object
     Attachment:
       description: An attachment is a message object that represents a file uploaded
@@ -1381,6 +1385,7 @@ components:
       - send-poll
       - send-reaction
       - send-reply
+      - send-restricted-visibility-message
       - send-typing-events
       - set-channel-cooldown
       - skip-slow-mode
@@ -3475,32 +3480,32 @@ components:
           items:
             $ref: '#/components/schemas/Attachment'
           type: array
-          x-stream-index: "011"
+          x-stream-index: "012"
         before_message_send_failed:
           type: boolean
-          x-stream-index: "045"
+          x-stream-index: "046"
         cid:
           type: string
-          x-stream-index: "027"
+          x-stream-index: "028"
         command:
           type: string
           x-stream-index: "006"
         created_at:
           format: date-time
           type: string
-          x-stream-index: "029"
+          x-stream-index: "030"
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "033"
+          x-stream-index: "034"
         deleted_at:
           format: date-time
           type: string
-          x-stream-index: "032"
+          x-stream-index: "033"
         deleted_reply_count:
           format: int32
           type: integer
-          x-stream-index: "022"
+          x-stream-index: "023"
         html:
           type: string
           x-stream-index: "007"
@@ -3508,7 +3513,7 @@ components:
           additionalProperties:
             type: string
           type: object
-          x-stream-index: "043"
+          x-stream-index: "044"
         id:
           type: string
           x-stream-index: "002"
@@ -3518,91 +3523,96 @@ components:
               type: string
             type: array
           type: object
-          x-stream-index: "039"
+          x-stream-index: "040"
         latest_reactions:
           items:
             $ref: '#/components/schemas/Reaction'
           type: array
-          x-stream-index: "012"
+          x-stream-index: "013"
         mentioned_users:
           items:
             $ref: '#/components/schemas/User'
           type: array
-          x-stream-index: "042"
+          x-stream-index: "043"
         message_text_updated_at:
           format: date-time
           type: string
-          x-stream-index: "051"
+          x-stream-index: "052"
         mml:
           type: string
           x-stream-index: "005"
         moderation:
           $ref: '#/components/schemas/ModerationV2Response'
-          x-stream-index: "054"
+          x-stream-index: "055"
         own_reactions:
           items:
             $ref: '#/components/schemas/Reaction'
           type: array
-          x-stream-index: "013"
+          x-stream-index: "014"
         parent_id:
           type: string
-          x-stream-index: "018"
+          x-stream-index: "019"
         pin_expires:
           format: date-time
           type: string
-          x-stream-index: "050"
+          x-stream-index: "051"
         pinned:
           type: boolean
-          x-stream-index: "046"
+          x-stream-index: "047"
         pinned_at:
           format: date-time
           type: string
-          x-stream-index: "047"
+          x-stream-index: "048"
         pinned_by:
           $ref: '#/components/schemas/User'
-          x-stream-index: "049"
+          x-stream-index: "050"
         poll:
           $ref: '#/components/schemas/Poll'
-          x-stream-index: "053"
+          x-stream-index: "054"
         poll_id:
           type: string
-          x-stream-index: "052"
+          x-stream-index: "053"
         quoted_message:
           $ref: '#/components/schemas/Message'
-          x-stream-index: "024"
+          x-stream-index: "025"
         quoted_message_id:
           type: string
-          x-stream-index: "023"
+          x-stream-index: "024"
         reaction_counts:
           additionalProperties:
             format: int32
             type: integer
           type: object
-          x-stream-index: "014"
+          x-stream-index: "015"
         reaction_groups:
           additionalProperties:
             $ref: '#/components/schemas/ReactionGroupResponse'
           type: object
-          x-stream-index: "016"
+          x-stream-index: "017"
         reaction_scores:
           additionalProperties:
             format: int32
             type: integer
           type: object
-          x-stream-index: "015"
+          x-stream-index: "016"
         reply_count:
           format: int32
           type: integer
-          x-stream-index: "021"
+          x-stream-index: "022"
+        restricted_visibility:
+          items:
+            type: string
+          type: array
+          x-stream-index: "011"
         shadowed:
           type: boolean
-          x-stream-index: "035"
+          x-stream-index: "036"
         show_in_channel:
           type: boolean
-          x-stream-index: "020"
+          x-stream-index: "021"
         silent:
           type: boolean
-          x-stream-index: "044"
+          x-stream-index: "045"
         text:
           type: string
           x-stream-index: "004"
@@ -3610,14 +3620,14 @@ components:
           items:
             $ref: '#/components/schemas/User'
           type: array
-          x-stream-index: "026"
+          x-stream-index: "027"
         type:
           type: string
           x-stream-index: "008"
         updated_at:
           format: date-time
           type: string
-          x-stream-index: "030"
+          x-stream-index: "031"
         user:
           $ref: '#/components/schemas/User'
           x-stream-index: "010"
@@ -3626,6 +3636,7 @@ components:
       - text
       - html
       - type
+      - restricted_visibility
       - attachments
       - latest_reactions
       - own_reactions
@@ -3898,7 +3909,7 @@ components:
           type: array
           x-stream-index: "001.002"
         type:
-          default: notification.thread_message_new
+          default: message.new
           type: string
           x-stream-index: "004.001"
         user:
@@ -4007,10 +4018,16 @@ components:
           x-stream-index: "014"
         poll_id:
           type: string
-          x-stream-index: "038"
+          x-stream-index: "039"
         quoted_message_id:
           type: string
           x-stream-index: "009"
+        restricted_visibility:
+          items:
+            type: string
+          maximum: 10
+          type: array
+          x-stream-index: "016"
         show_in_channel:
           type: boolean
           x-stream-index: "006"
@@ -4213,6 +4230,15 @@ components:
           title: Reply count
           type: integer
           x-stream-index: "017"
+        restricted_visibility:
+          description: A list of user ids that have restricted visibility to the message,
+            if the list is not empty, the message is only visible to the users in
+            the list
+          items:
+            type: string
+          title: Restricted visibility
+          type: array
+          x-stream-index: "040"
         shadowed:
           description: Whether the message was shadowed or not
           title: Shadowed
@@ -4288,6 +4314,7 @@ components:
       - mentioned_users
       - silent
       - pinned
+      - restricted_visibility
       title: Message
       type: object
       x-stream-docs-page-id: send_message
@@ -4581,6 +4608,15 @@ components:
           title: Reply count
           type: integer
           x-stream-index: "001.017"
+        restricted_visibility:
+          description: A list of user ids that have restricted visibility to the message,
+            if the list is not empty, the message is only visible to the users in
+            the list
+          items:
+            type: string
+          title: Restricted visibility
+          type: array
+          x-stream-index: "001.040"
         shadowed:
           description: Whether the message was shadowed or not
           title: Shadowed
@@ -4656,6 +4692,7 @@ components:
       - mentioned_users
       - silent
       - pinned
+      - restricted_visibility
       - channel
       title: Message
       type: object
@@ -7510,6 +7547,11 @@ components:
           format: int32
           type: integer
           x-stream-index: "001.017"
+        restricted_visibility:
+          items:
+            type: string
+          type: array
+          x-stream-index: "001.040"
         shadowed:
           type: boolean
           x-stream-index: "001.027"
@@ -7558,6 +7600,7 @@ components:
       - mentioned_users
       - silent
       - pinned
+      - restricted_visibility
       type: object
     SearchWarning:
       properties:
@@ -10026,7 +10069,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v153.0.0
+  version: v154.1.0
 openapi: 3.0.3
 paths:
   /app:
@@ -12176,69 +12219,105 @@ paths:
       - in: query
         name: limit
         schema:
+          description: 'The maximum number of messages to return (max limit '
           format: int32
           minimum: 0
+          title: Limit
           type: integer
           x-stream-index: "003.001"
       - in: query
         name: offset
         schema:
+          description: The offset to start from
           format: int32
+          title: Offset
           type: integer
           x-stream-index: "003.002"
       - in: query
         name: id_gte
         schema:
+          description: The ID of the message to get messages with a timestamp greater
+            than or equal to
+          title: IDGTE
           type: string
           x-stream-index: "003.003"
       - in: query
         name: id_gt
         schema:
+          description: The ID of the message to get messages with a timestamp greater
+            than
+          title: IDGT
           type: string
           x-stream-index: "003.004"
       - in: query
         name: id_lte
         schema:
+          description: The ID of the message to get messages with a timestamp smaller
+            than or equal to
+          title: IDLTE
           type: string
           x-stream-index: "003.005"
       - in: query
         name: id_lt
         schema:
+          description: The ID of the message to get messages with a timestamp smaller
+            than
+          title: IDLT
           type: string
           x-stream-index: "003.006"
       - in: query
         name: created_at_after_or_equal
         schema:
+          description: The timestamp to get messages with a created_at timestamp greater
+            than or equal to
           format: date-time
+          title: Created_at after or equal
           type: string
           x-stream-index: "003.007"
       - in: query
         name: created_at_after
         schema:
+          description: The timestamp to get messages with a created_at timestamp greater
+            than
           format: date-time
+          title: Created_at after
           type: string
           x-stream-index: "003.008"
       - in: query
         name: created_at_before_or_equal
         schema:
+          description: The timestamp to get messages with a created_at timestamp smaller
+            than or equal to
           format: date-time
+          title: Created_at after before or equal
           type: string
           x-stream-index: "003.009"
       - in: query
         name: created_at_before
         schema:
+          description: The timestamp to get messages with a created_at timestamp smaller
+            than
           format: date-time
+          title: Created_at after before
           type: string
           x-stream-index: "003.010"
       - in: query
         name: id_around
         schema:
+          description: The result will be a set of messages, that are both older and
+            newer than the message with the provided ID, and the message with the
+            ID provided will be in the middle of the set
+          title: Id around
           type: string
           x-stream-index: "003.011"
       - in: query
         name: created_at_around
         schema:
+          description: The result will be a set of messages, that are both older and
+            newer than the created_at timestamp provided, distributed evenly around
+            the timestamp
           format: date-time
+          title: Created_at around
           type: string
           x-stream-index: "003.012"
       responses:
