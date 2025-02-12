@@ -13,6 +13,19 @@ CURRENT_VERSION_BUG = 0
 GIT_DESCRIBE := $(shell git describe)
 GITHUB_HEAD_REF ?= $(shell git branch --show-current)
 
+.PHONY: install-proto-tools
+install-proto-tools:
+	@echo "Installing protobuf tools..."
+	./install.sh
+
+.PHONY: generate-proto
+generate-proto:
+	@echo "Generating protocol buffers..."
+	REALPATH=grealpath ./generate.sh
+
+.PHONY: proto
+proto: install-proto-tools generate-proto
+
 update-main:
 	git checkout main
 	git pull
