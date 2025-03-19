@@ -375,10 +375,17 @@ func (m *SendStatsRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 			}
 		}
 	}
-	if len(m.RtcStats) > 0 {
-		i -= len(m.RtcStats)
-		copy(dAtA[i:], m.RtcStats)
-		i = encodeVarint(dAtA, i, uint64(len(m.RtcStats)))
+	if len(m.PublisherRtcStats) > 0 {
+		i -= len(m.PublisherRtcStats)
+		copy(dAtA[i:], m.PublisherRtcStats)
+		i = encodeVarint(dAtA, i, uint64(len(m.PublisherRtcStats)))
+		i--
+		dAtA[i] = 0x72
+	}
+	if len(m.SubscriberRtcStats) > 0 {
+		i -= len(m.SubscriberRtcStats)
+		copy(dAtA[i:], m.SubscriberRtcStats)
+		i = encodeVarint(dAtA, i, uint64(len(m.SubscriberRtcStats)))
 		i--
 		dAtA[i] = 0x6a
 	}
@@ -1662,7 +1669,11 @@ func (m *SendStatsRequest) SizeVT() (n int) {
 		}
 		n += 1 + l + sov(uint64(l))
 	}
-	l = len(m.RtcStats)
+	l = len(m.SubscriberRtcStats)
+	if l > 0 {
+		n += 1 + l + sov(uint64(l))
+	}
+	l = len(m.PublisherRtcStats)
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
 	}
@@ -3123,7 +3134,7 @@ func (m *SendStatsRequest) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 13:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field RtcStats", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field SubscriberRtcStats", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -3151,7 +3162,39 @@ func (m *SendStatsRequest) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.RtcStats = string(dAtA[iNdEx:postIndex])
+			m.SubscriberRtcStats = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 14:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PublisherRtcStats", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PublisherRtcStats = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
