@@ -1218,6 +1218,7 @@ components:
       title: Channel member
       type: object
     ChannelMemberResponse:
+      nullable: true
       properties:
         archived_at:
           format: date-time
@@ -1570,6 +1571,9 @@ components:
         channel:
           $ref: '#/components/schemas/ChannelResponse'
           x-stream-index: "001.001"
+        draft:
+          $ref: '#/components/schemas/DraftResponse'
+          x-stream-index: "001.014"
         duration:
           type: string
           x-stream-index: "002.001"
@@ -1637,6 +1641,9 @@ components:
         channel:
           $ref: '#/components/schemas/ChannelResponse'
           x-stream-index: "001"
+        draft:
+          $ref: '#/components/schemas/DraftResponse'
+          x-stream-index: "014"
         hidden:
           description: Whether this channel is hidden or not
           title: Hidden
@@ -2016,6 +2023,32 @@ components:
       - push_provider
       title: CreateDeviceRequest
       type: object
+    CreateDraftRequest:
+      nullable: true
+      properties:
+        message:
+          $ref: '#/components/schemas/MessageRequest'
+          x-stream-index: "001"
+      required:
+      - message
+      type: object
+    CreateDraftResponse:
+      description: Basic response information
+      nullable: true
+      properties:
+        draft:
+          $ref: '#/components/schemas/DraftResponse'
+          x-stream-index: "001"
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+      required:
+      - draft
+      - duration
+      title: Response
+      type: object
     CreateGuestRequest:
       nullable: true
       properties:
@@ -2355,6 +2388,182 @@ components:
       - user_id
       title: DeviceResponse
       type: object
+    DraftDeletedEvent:
+      description: Emitted when a Draft is deleted.
+      nullable: true
+      properties:
+        cid:
+          description: The CID of the channel where the draft was created
+          title: Channel CID
+          type: string
+          x-stream-index: 001.001.002
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: 001.001.001.003
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.001.007
+        draft:
+          $ref: '#/components/schemas/DraftResponse'
+          x-stream-index: "001.003"
+        parent_id:
+          description: The ID of the parent message
+          title: Message ID
+          type: string
+          x-stream-index: "001.002"
+        received_at:
+          format: date-time
+          type: string
+          x-stream-index: 001.001.001.004
+        type:
+          default: draft.deleted
+          description: 'The type of event: "draft.deleted" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: 001.001.001.002
+      required:
+      - type
+      - created_at
+      - custom
+      title: DraftDeletedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    DraftPayloadResponse:
+      properties:
+        attachments:
+          items:
+            $ref: '#/components/schemas/Attachment'
+          type: array
+          x-stream-index: "004"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "007"
+        html:
+          type: string
+          x-stream-index: "010"
+        id:
+          type: string
+          x-stream-index: "001"
+        mentioned_users:
+          items:
+            $ref: '#/components/schemas/UserResponse'
+          type: array
+          x-stream-index: "008"
+        mml:
+          type: string
+          x-stream-index: "003"
+        parent_id:
+          type: string
+          x-stream-index: "005"
+        poll_id:
+          type: string
+          x-stream-index: "013"
+        quoted_message_id:
+          type: string
+          x-stream-index: "009"
+        show_in_channel:
+          type: boolean
+          x-stream-index: "006"
+        silent:
+          type: boolean
+          x-stream-index: "012"
+        text:
+          type: string
+          x-stream-index: "002"
+        type:
+          type: string
+          x-stream-index: "011"
+      required:
+      - id
+      - text
+      - custom
+      type: object
+    DraftResponse:
+      properties:
+        channel:
+          $ref: '#/components/schemas/ChannelResponse'
+          x-stream-index: "003"
+        channel_cid:
+          type: string
+          x-stream-index: "002"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "007"
+        message:
+          $ref: '#/components/schemas/DraftPayloadResponse'
+          x-stream-index: "001"
+        parent_id:
+          type: string
+          x-stream-index: "004"
+        parent_message:
+          $ref: '#/components/schemas/MessageResponse'
+          x-stream-index: "005"
+        quoted_message:
+          $ref: '#/components/schemas/MessageResponse'
+          x-stream-index: "006"
+      required:
+      - message
+      - channel_cid
+      - created_at
+      type: object
+    DraftUpdatedEvent:
+      description: Emitted when a Draft is created or updated.
+      nullable: true
+      properties:
+        cid:
+          description: The CID of the channel where the draft was created/updated
+          title: Channel CID
+          type: string
+          x-stream-index: 001.001.002
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: 001.001.001.003
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.001.007
+        draft:
+          $ref: '#/components/schemas/DraftResponse'
+          description: The draft object which was created/updated
+          title: Draft
+          x-stream-index: "001.003"
+        parent_id:
+          description: The ID of the parent message
+          title: Parent ID
+          type: string
+          x-stream-index: "001.002"
+        received_at:
+          format: date-time
+          type: string
+          x-stream-index: 001.001.001.004
+        type:
+          default: draft.updated
+          description: 'The type of event: "draft.updated" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: 001.001.001.002
+      required:
+      - type
+      - created_at
+      - custom
+      title: DraftUpdatedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     EventRequest:
       properties:
         custom:
@@ -2644,6 +2853,10 @@ components:
       type: object
     FullUserResponse:
       properties:
+        ban_expires:
+          format: date-time
+          type: string
+          x-stream-index: "015"
         banned:
           type: boolean
           x-stream-index: "001.011"
@@ -2804,6 +3017,23 @@ components:
       required:
       - blocks
       - duration
+      type: object
+    GetDraftResponse:
+      description: Basic response information
+      nullable: true
+      properties:
+        draft:
+          $ref: '#/components/schemas/DraftResponse'
+          x-stream-index: "001"
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+      required:
+      - draft
+      - duration
+      title: Response
       type: object
     GetManyMessagesResponse:
       nullable: true
@@ -3909,7 +4139,7 @@ components:
           type: array
           x-stream-index: "001.002"
         type:
-          default: message.new
+          default: notification.thread_message_new
           type: string
           x-stream-index: "004.001"
         user:
@@ -4039,7 +4269,8 @@ components:
           x-stream-index: "002"
         type:
           enum:
-          - '''''regular'
+          - ''''''
+          - regular
           - system
           type: string
           x-stream-index: "011"
@@ -4086,6 +4317,9 @@ components:
           format: int32
           type: integer
           x-stream-index: "018"
+        draft:
+          $ref: '#/components/schemas/DraftResponse'
+          x-stream-index: "041"
         html:
           description: Contains HTML markup of the message. Can only be set when using
             server-side API
@@ -4464,6 +4698,9 @@ components:
           format: int32
           type: integer
           x-stream-index: "001.018"
+        draft:
+          $ref: '#/components/schemas/DraftResponse'
+          x-stream-index: "001.041"
         html:
           description: Contains HTML markup of the message. Can only be set when using
             server-side API
@@ -6488,7 +6725,7 @@ components:
           description: Whether to exclude expired bans or not
           title: Exclude expired bans
           type: boolean
-          x-stream-index: "006"
+          x-stream-index: "004"
         filter_conditions:
           additionalProperties: {}
           type: object
@@ -6497,16 +6734,17 @@ components:
           description: Number of records to return
           format: int32
           maximum: 300
+          minimum: 0
           title: Limit
           type: integer
-          x-stream-index: "004"
+          x-stream-index: "003.003"
         offset:
           description: Number of records to offset
           format: int32
           maximum: 10000
           title: Offset
           type: integer
-          x-stream-index: "005"
+          x-stream-index: "003.004"
         sort:
           description: Array of sort parameters
           items:
@@ -6615,6 +6853,62 @@ components:
       - channels
       - duration
       title: Channels list
+      type: object
+    QueryDraftsRequest:
+      nullable: true
+      properties:
+        filter:
+          additionalProperties: {}
+          description: Filter to apply to the query
+          maximum: 3
+          title: Filter
+          type: object
+          x-stream-index: "001"
+        limit:
+          format: int32
+          maximum: 100
+          minimum: 0
+          type: integer
+          x-stream-index: "005.001"
+        next:
+          type: string
+          x-stream-index: "005.002"
+        prev:
+          type: string
+          x-stream-index: "005.003"
+        sort:
+          description: Array of sort parameters
+          items:
+            $ref: '#/components/schemas/SortParamRequest'
+          maximum: 5
+          title: Sort
+          type: array
+          x-stream-index: "002"
+      type: object
+    QueryDraftsResponse:
+      nullable: true
+      properties:
+        drafts:
+          description: Drafts
+          items:
+            $ref: '#/components/schemas/DraftResponse'
+          title: DraftsResponseList
+          type: array
+          x-stream-index: "001"
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "003.001"
+        next:
+          type: string
+          x-stream-index: "002.001"
+        prev:
+          type: string
+          x-stream-index: "002.002"
+      required:
+      - drafts
+      - duration
       type: object
     QueryMembersPayload:
       description: Client request
@@ -7454,6 +7748,9 @@ components:
           format: int32
           type: integer
           x-stream-index: "001.018"
+        draft:
+          $ref: '#/components/schemas/DraftResponse'
+          x-stream-index: "001.041"
         html:
           type: string
           x-stream-index: "001.005"
@@ -8014,6 +8311,9 @@ components:
           title: Deleted At
           type: string
           x-stream-index: "001.014"
+        draft:
+          $ref: '#/components/schemas/DraftResponse'
+          x-stream-index: "004"
         last_message_at:
           description: Last Message At
           format: date-time
@@ -8199,6 +8499,7 @@ components:
           - ur
           - vi
           - lt
+          - ht
           title: Language
           type: string
           x-stream-index: "001"
@@ -9845,6 +10146,8 @@ components:
         events' payload to the final type
       discriminator:
         mapping:
+          draft.deleted: '#/components/schemas/DraftDeletedEvent'
+          draft.updated: '#/components/schemas/DraftUpdatedEvent'
           health.check: '#/components/schemas/HealthCheckEvent'
           poll.closed: '#/components/schemas/PollClosedEvent'
           poll.deleted: '#/components/schemas/PollDeletedEvent'
@@ -9855,6 +10158,8 @@ components:
           user.updated: '#/components/schemas/UserUpdatedEvent'
         propertyName: type
       oneOf:
+      - $ref: '#/components/schemas/DraftDeletedEvent'
+      - $ref: '#/components/schemas/DraftUpdatedEvent'
       - $ref: '#/components/schemas/HealthCheckEvent'
       - $ref: '#/components/schemas/PollClosedEvent'
       - $ref: '#/components/schemas/PollDeletedEvent'
@@ -9881,6 +10186,8 @@ components:
           channel.unfrozen: '#/components/schemas/ChannelUnFrozenEvent'
           channel.updated: '#/components/schemas/ChannelUpdatedEvent'
           channel.visible: '#/components/schemas/ChannelVisibleEvent'
+          draft.deleted: '#/components/schemas/DraftDeletedEvent'
+          draft.updated: '#/components/schemas/DraftUpdatedEvent'
           health.check: '#/components/schemas/HealthCheckEvent'
           member.added: '#/components/schemas/MemberAddedEvent'
           member.removed: '#/components/schemas/MemberRemovedEvent'
@@ -9940,6 +10247,8 @@ components:
       - $ref: '#/components/schemas/ChannelUnFrozenEvent'
       - $ref: '#/components/schemas/ChannelUpdatedEvent'
       - $ref: '#/components/schemas/ChannelVisibleEvent'
+      - $ref: '#/components/schemas/DraftDeletedEvent'
+      - $ref: '#/components/schemas/DraftUpdatedEvent'
       - $ref: '#/components/schemas/HealthCheckEvent'
       - $ref: '#/components/schemas/MemberAddedEvent'
       - $ref: '#/components/schemas/MemberRemovedEvent'
@@ -10069,7 +10378,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v154.1.0
+  version: v163.5.2
 openapi: 3.0.3
 paths:
   /app:
@@ -10461,6 +10770,162 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Update channel
+      tags:
+      - product:chat
+  /channels/{type}/{id}/draft:
+    delete:
+      description: |
+        Deletes a draft
+
+        Sends events:
+        - draft.deleted
+      operationId: DeleteDraft
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "002.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "002.002"
+      - in: query
+        name: parent_id
+        schema:
+          description: Parent message ID
+          title: string
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Delete draft
+      tags:
+      - product:chat
+    get:
+      description: |
+        Get a draft
+      operationId: GetDraft
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "002.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "002.002"
+      - in: query
+        name: parent_id
+        schema:
+          description: Parent message ID
+          title: string
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetDraftResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get draft
+      tags:
+      - product:chat
+    post:
+      description: |
+        Creates a draft
+
+        Sends events:
+        - draft.updated
+      operationId: CreateDraft
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          description: Channel type to interact with
+          title: Channel type
+          type: string
+          writeOnly: true
+          x-stream-index: "002.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Channel ID to interact with
+          title: Channel ID
+          type: string
+          writeOnly: true
+          x-stream-index: "002.002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDraftRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateDraftResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Create a draft
       tags:
       - product:chat
   /channels/{type}/{id}/event:
@@ -11497,6 +11962,39 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Create device
+      tags:
+      - product:chat
+  /drafts/query:
+    post:
+      description: |
+        Queries draft messages for a user
+      operationId: QueryDrafts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryDraftsRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryDraftsResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Query draft messages
       tags:
       - product:chat
   /guest:
