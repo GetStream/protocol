@@ -102,6 +102,4 @@ docker run --platform=linux/amd64 -v $(pwd):/local ghcr.io/getstream/protobuf-ge
 
 ## Video API and server-side SDK documentation
 
-This repository hosts the [API and server-side SDK documentation](https://getstream.io/video/docs/api/) for video.
-
-For more info please see [the nested readme file](./docusaurus/video/docusaurus/README.md)
+Is hosted here: https://github.com/GetStream/docs-content
