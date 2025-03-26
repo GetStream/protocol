@@ -10,8 +10,16 @@ window.onload = function () {
         url: 'https://raw.githubusercontent.com/GetStream/protocol/main/openapi/video-openapi.yaml',
       },
       {
-        name: 'Moderation',
-        url: 'https://raw.githubusercontent.com/GetStream/protocol/main/openapi/moderation-serverside-api.yaml',
+        name: 'Chat v2',
+        url: 'https://raw.githubusercontent.com/GetStream/protocol/main/openapi/v2/chat-serverside-api.yaml',
+      },
+      {
+        name: 'Video v2',
+        url: 'https://raw.githubusercontent.com/GetStream/protocol/main/openapi/v2/video-serverside-api.yaml',
+      },
+      {
+        name: 'Moderation v2',
+        url: 'https://raw.githubusercontent.com/GetStream/protocol/main/openapi/v2/moderation-serverside-api.yaml',
       },
     ],
     dom_id: '#swagger-ui',
