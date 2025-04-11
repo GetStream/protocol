@@ -232,8 +232,8 @@ func (m *Participant) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.ClientType != 0 {
-		i = encodeVarint(dAtA, i, uint64(m.ClientType))
+	if m.Source != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.Source))
 		i--
 		dAtA[i] = 0x70
 	}
@@ -988,8 +988,8 @@ func (m *ClientDetails) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.Type != 0 {
-		i = encodeVarint(dAtA, i, uint64(m.Type))
+	if m.Source != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.Source))
 		i--
 		dAtA[i] = 0x28
 	}
@@ -1823,8 +1823,8 @@ func (m *Participant) SizeVT() (n int) {
 			n += 1 + l + sov(uint64(l))
 		}
 	}
-	if m.ClientType != 0 {
-		n += 1 + sov(uint64(m.ClientType))
+	if m.Source != 0 {
+		n += 1 + sov(uint64(m.Source))
 	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
@@ -2102,8 +2102,8 @@ func (m *ClientDetails) SizeVT() (n int) {
 		l = m.Device.SizeVT()
 		n += 1 + l + sov(uint64(l))
 	}
-	if m.Type != 0 {
-		n += 1 + sov(uint64(m.Type))
+	if m.Source != 0 {
+		n += 1 + sov(uint64(m.Source))
 	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
@@ -3238,9 +3238,9 @@ func (m *Participant) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 14:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ClientType", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Source", wireType)
 			}
-			m.ClientType = 0
+			m.Source = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflow
@@ -3250,7 +3250,7 @@ func (m *Participant) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.ClientType |= ClientType(b&0x7F) << shift
+				m.Source |= ParticipantSource(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -4904,9 +4904,9 @@ func (m *ClientDetails) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 5:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Type", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Source", wireType)
 			}
-			m.Type = 0
+			m.Source = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflow
@@ -4916,7 +4916,7 @@ func (m *ClientDetails) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Type |= ClientType(b&0x7F) << shift
+				m.Source |= ParticipantSource(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
