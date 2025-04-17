@@ -2634,8 +2634,8 @@ type DecodeStats struct {
 
 	TrackType            TrackType       `protobuf:"varint,1,opt,name=track_type,json=trackType,proto3,enum=stream.video.sfu.models.TrackType" json:"track_type,omitempty"`
 	Codec                *Codec          `protobuf:"bytes,2,opt,name=codec,proto3" json:"codec,omitempty"`
-	AvgFrameDecodeTimeMs float32         `protobuf:"fixed32,3,opt,name=avg_frame_decode_time_ms,json=avgFrameDecodeTimeMs,proto3" json:"avg_frame_decode_time_ms,omitempty"`
-	AvgFps               float32         `protobuf:"fixed32,4,opt,name=avg_fps,json=avgFps,proto3" json:"avg_fps,omitempty"`
+	AvgFrameDecodeTimeMs int64           `protobuf:"varint,3,opt,name=avg_frame_decode_time_ms,json=avgFrameDecodeTimeMs,proto3" json:"avg_frame_decode_time_ms,omitempty"`
+	AvgFps               int64           `protobuf:"varint,4,opt,name=avg_fps,json=avgFps,proto3" json:"avg_fps,omitempty"`
 	VideoDimension       *VideoDimension `protobuf:"bytes,5,opt,name=video_dimension,json=videoDimension,proto3" json:"video_dimension,omitempty"`
 }
 
