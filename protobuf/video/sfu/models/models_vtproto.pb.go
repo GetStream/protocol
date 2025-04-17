@@ -1691,9 +1691,10 @@ func (m *EncodeStats) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		dAtA[i] = 0x20
 	}
 	if m.AvgFrameEncodeTimeMs != 0 {
-		i = encodeVarint(dAtA, i, uint64(m.AvgFrameEncodeTimeMs))
+		i -= 4
+		binary.LittleEndian.PutUint32(dAtA[i:], uint32(math.Float32bits(float32(m.AvgFrameEncodeTimeMs))))
 		i--
-		dAtA[i] = 0x18
+		dAtA[i] = 0x1d
 	}
 	if m.Codec != nil {
 		size, err := m.Codec.MarshalToSizedBufferVT(dAtA[:i])
@@ -1754,14 +1755,16 @@ func (m *DecodeStats) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		dAtA[i] = 0x2a
 	}
 	if m.AvgFps != 0 {
-		i = encodeVarint(dAtA, i, uint64(m.AvgFps))
+		i -= 4
+		binary.LittleEndian.PutUint32(dAtA[i:], uint32(math.Float32bits(float32(m.AvgFps))))
 		i--
-		dAtA[i] = 0x20
+		dAtA[i] = 0x25
 	}
 	if m.AvgFrameDecodeTimeMs != 0 {
-		i = encodeVarint(dAtA, i, uint64(m.AvgFrameDecodeTimeMs))
+		i -= 4
+		binary.LittleEndian.PutUint32(dAtA[i:], uint32(math.Float32bits(float32(m.AvgFrameDecodeTimeMs))))
 		i--
-		dAtA[i] = 0x18
+		dAtA[i] = 0x1d
 	}
 	if m.Codec != nil {
 		size, err := m.Codec.MarshalToSizedBufferVT(dAtA[:i])
@@ -2503,7 +2506,7 @@ func (m *EncodeStats) SizeVT() (n int) {
 		n += 1 + l + sov(uint64(l))
 	}
 	if m.AvgFrameEncodeTimeMs != 0 {
-		n += 1 + sov(uint64(m.AvgFrameEncodeTimeMs))
+		n += 5
 	}
 	if m.AvgFps != 0 {
 		n += 1 + sov(uint64(m.AvgFps))
@@ -2528,10 +2531,10 @@ func (m *DecodeStats) SizeVT() (n int) {
 		n += 1 + l + sov(uint64(l))
 	}
 	if m.AvgFrameDecodeTimeMs != 0 {
-		n += 1 + sov(uint64(m.AvgFrameDecodeTimeMs))
+		n += 5
 	}
 	if m.AvgFps != 0 {
-		n += 1 + sov(uint64(m.AvgFps))
+		n += 5
 	}
 	if m.VideoDimension != nil {
 		l = m.VideoDimension.SizeVT()
@@ -6662,24 +6665,16 @@ func (m *EncodeStats) UnmarshalVT(dAtA []byte) error {
 			}
 			iNdEx = postIndex
 		case 3:
-			if wireType != 0 {
+			if wireType != 5 {
 				return fmt.Errorf("proto: wrong wireType = %d for field AvgFrameEncodeTimeMs", wireType)
 			}
-			m.AvgFrameEncodeTimeMs = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.AvgFrameEncodeTimeMs |= int64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
+			var v uint32
+			if (iNdEx + 4) > l {
+				return io.ErrUnexpectedEOF
 			}
+			v = uint32(binary.LittleEndian.Uint32(dAtA[iNdEx:]))
+			iNdEx += 4
+			m.AvgFrameEncodeTimeMs = float32(math.Float32frombits(v))
 		case 4:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field AvgFps", wireType)
@@ -6806,43 +6801,27 @@ func (m *DecodeStats) UnmarshalVT(dAtA []byte) error {
 			}
 			iNdEx = postIndex
 		case 3:
-			if wireType != 0 {
+			if wireType != 5 {
 				return fmt.Errorf("proto: wrong wireType = %d for field AvgFrameDecodeTimeMs", wireType)
 			}
-			m.AvgFrameDecodeTimeMs = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.AvgFrameDecodeTimeMs |= int64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
+			var v uint32
+			if (iNdEx + 4) > l {
+				return io.ErrUnexpectedEOF
 			}
+			v = uint32(binary.LittleEndian.Uint32(dAtA[iNdEx:]))
+			iNdEx += 4
+			m.AvgFrameDecodeTimeMs = float32(math.Float32frombits(v))
 		case 4:
-			if wireType != 0 {
+			if wireType != 5 {
 				return fmt.Errorf("proto: wrong wireType = %d for field AvgFps", wireType)
 			}
-			m.AvgFps = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.AvgFps |= int64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
+			var v uint32
+			if (iNdEx + 4) > l {
+				return io.ErrUnexpectedEOF
 			}
+			v = uint32(binary.LittleEndian.Uint32(dAtA[iNdEx:]))
+			iNdEx += 4
+			m.AvgFps = float32(math.Float32frombits(v))
 		case 5:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field VideoDimension", wireType)
