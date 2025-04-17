@@ -8,6 +8,11 @@ components:
         enabled:
           type: boolean
           x-stream-index: "002"
+        ocr_rules:
+          items:
+            $ref: '#/components/schemas/OCRRule'
+          type: array
+          x-stream-index: "004"
         rules:
           items:
             $ref: '#/components/schemas/AWSRekognitionRule'
@@ -16,6 +21,7 @@ components:
       required:
       - enabled
       - rules
+      - ocr_rules
       type: object
     AIIndicatorClearEvent:
       properties:
@@ -405,6 +411,37 @@ components:
       x-stream-event-doc-group: other
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    AppEventResponse:
+      properties:
+        async_url_enrich_enabled:
+          description: boolean
+          title: Async URL Enrichment Enabled
+          type: boolean
+          x-stream-index: "002"
+        auto_translation_enabled:
+          description: boolean
+          title: Auto Translation Enabled
+          type: boolean
+          x-stream-index: "003"
+        file_upload_config:
+          $ref: '#/components/schemas/FileUploadConfig'
+          description: file upload config
+          title: File Upload Config
+          x-stream-index: "004"
+        image_upload_config:
+          $ref: '#/components/schemas/FileUploadConfig'
+          description: file upload config
+          title: Image Upload Config
+          x-stream-index: "005"
+        name:
+          description: string
+          title: App name
+          type: string
+          x-stream-index: "001"
+      required:
+      - name
+      - auto_translation_enabled
+      type: object
     AppResponseFields:
       properties:
         async_url_enrich_enabled:
@@ -461,6 +498,46 @@ components:
       - moderation_multitenant_blocklist_enabled
       - guest_user_creation_disabled
       type: object
+    AppUpdatedEvent:
+      description: Emitted when app settings are updated
+      nullable: true
+      properties:
+        app:
+          $ref: '#/components/schemas/AppEventResponse'
+          description: application configuration
+          title: App settings
+          x-stream-index: "002"
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: number
+          x-stream-index: "001.003"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "001.007"
+        received_at:
+          format: date-time
+          type: number
+          x-stream-index: "001.004"
+        type:
+          default: app.updated
+          description: 'The type of event: "app.updated" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.002"
+      required:
+      - type
+      - created_at
+      - custom
+      - app
+      title: AppUpdatedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     Attachment:
       description: An attachment is a message object that represents a file uploaded
         by a user.
@@ -2613,6 +2690,7 @@ components:
           enum:
           - regex
           - domain
+          - domain_allowlist
           - email
           - word
           title: Type
@@ -3385,29 +3463,29 @@ components:
         ban_expires:
           format: date-time
           type: number
-          x-stream-index: "001.016"
+          x-stream-index: "001.017"
         banned:
           type: boolean
-          x-stream-index: "001.015"
+          x-stream-index: "001.016"
         created_at:
           format: date-time
           readOnly: true
           type: number
-          x-stream-index: "001.007"
+          x-stream-index: "001.008"
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "001.005"
+          x-stream-index: "001.006"
         deactivated_at:
           format: date-time
           readOnly: true
           type: number
-          x-stream-index: "001.013"
+          x-stream-index: "001.014"
         deleted_at:
           format: date-time
           readOnly: true
           type: number
-          x-stream-index: "001.012"
+          x-stream-index: "001.013"
         deleted_content_count:
           format: int32
           type: integer
@@ -3417,31 +3495,31 @@ components:
           x-stream-index: "001.003"
         invisible:
           type: boolean
-          x-stream-index: "001.022"
+          x-stream-index: "001.023"
         language:
           type: string
-          x-stream-index: "001.033"
+          x-stream-index: "001.034"
         last_active:
           format: date-time
           readOnly: true
           type: number
-          x-stream-index: "001.010"
+          x-stream-index: "001.011"
         last_engaged_at:
           format: date-time
           readOnly: true
           type: number
-          x-stream-index: "001.011"
+          x-stream-index: "001.012"
         online:
           readOnly: true
           type: boolean
-          x-stream-index: "001.021"
+          x-stream-index: "001.022"
         privacy_settings:
           $ref: '#/components/schemas/PrivacySettings'
-          x-stream-index: "001.025"
+          x-stream-index: "001.026"
         revoke_tokens_issued_before:
           format: date-time
           type: number
-          x-stream-index: "001.040"
+          x-stream-index: "001.041"
         role:
           type: string
           x-stream-index: "001.004"
@@ -3449,15 +3527,21 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "001.034"
+          x-stream-index: "001.035"
+        teams_role:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "001.005"
         updated_at:
           format: date-time
           readOnly: true
           type: number
-          x-stream-index: "001.008"
+          x-stream-index: "001.009"
       required:
       - id
       - role
+      - teams_role
       - custom
       - banned
       - online
@@ -3474,16 +3558,16 @@ components:
           x-stream-index: "002"
         banned:
           type: boolean
-          x-stream-index: 001.001.011
+          x-stream-index: 001.001.012
         blocked_user_ids:
           items:
             type: string
           type: array
-          x-stream-index: 001.001.016
+          x-stream-index: 001.001.017
         created_at:
           format: date-time
           type: number
-          x-stream-index: 001.001.008
+          x-stream-index: 001.001.009
         custom:
           additionalProperties: {}
           type: object
@@ -3491,11 +3575,11 @@ components:
         deactivated_at:
           format: date-time
           type: number
-          x-stream-index: 001.001.015
+          x-stream-index: 001.001.016
         deleted_at:
           format: date-time
           type: number
-          x-stream-index: 001.001.010
+          x-stream-index: 001.001.011
         deleted_content_count:
           description: Number of major actions performed on the user
           format: int32
@@ -3520,17 +3604,17 @@ components:
         last_active:
           format: date-time
           type: number
-          x-stream-index: 001.001.013
+          x-stream-index: 001.001.014
         name:
           type: string
           x-stream-index: 001.001.002
         online:
           type: boolean
-          x-stream-index: 001.001.012
+          x-stream-index: 001.001.013
         revoke_tokens_issued_before:
           format: date-time
           type: number
-          x-stream-index: 001.001.014
+          x-stream-index: 001.001.015
         role:
           type: string
           x-stream-index: 001.001.006
@@ -3539,10 +3623,15 @@ components:
             type: string
           type: array
           x-stream-index: 001.001.007
+        teams_role:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: 001.001.008
         updated_at:
           format: date-time
           type: number
-          x-stream-index: 001.001.009
+          x-stream-index: 001.001.010
       required:
       - id
       - custom
@@ -3880,7 +3969,7 @@ components:
           x-stream-index: "015"
         banned:
           type: boolean
-          x-stream-index: "001.011"
+          x-stream-index: "001.012"
         blocked_user_ids:
           items:
             type: string
@@ -3894,7 +3983,7 @@ components:
         created_at:
           format: date-time
           type: number
-          x-stream-index: "001.008"
+          x-stream-index: "001.009"
         custom:
           additionalProperties: {}
           type: object
@@ -3902,11 +3991,11 @@ components:
         deactivated_at:
           format: date-time
           type: number
-          x-stream-index: "001.015"
+          x-stream-index: "001.016"
         deleted_at:
           format: date-time
           type: number
-          x-stream-index: "001.010"
+          x-stream-index: "001.011"
         devices:
           items:
             $ref: '#/components/schemas/DeviceResponse'
@@ -3927,7 +4016,7 @@ components:
         last_active:
           format: date-time
           type: number
-          x-stream-index: "001.013"
+          x-stream-index: "001.014"
         latest_hidden_channels:
           items:
             type: string
@@ -3943,14 +4032,14 @@ components:
           x-stream-index: "001.002"
         online:
           type: boolean
-          x-stream-index: "001.012"
+          x-stream-index: "001.013"
         privacy_settings:
           $ref: '#/components/schemas/PrivacySettingsResponse'
           x-stream-index: "003"
         revoke_tokens_issued_before:
           format: date-time
           type: number
-          x-stream-index: "001.014"
+          x-stream-index: "001.015"
         role:
           type: string
           x-stream-index: "001.006"
@@ -3962,6 +4051,11 @@ components:
             type: string
           type: array
           x-stream-index: "001.007"
+        teams_role:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "001.008"
         total_unread_count:
           format: int32
           type: integer
@@ -3981,7 +4075,7 @@ components:
         updated_at:
           format: date-time
           type: number
-          x-stream-index: "001.009"
+          x-stream-index: "001.010"
       required:
       - id
       - custom
@@ -6825,6 +6919,25 @@ components:
       x-stream-ws-base-event-name: VideoEvent
     NullTime:
       type: object
+    OCRRule:
+      properties:
+        action:
+          enum:
+          - flag
+          - shadow
+          - remove
+          - bounce
+          - bounce_flag
+          - bounce_remove
+          type: string
+          x-stream-index: "002"
+        label:
+          type: string
+          x-stream-index: "001"
+      required:
+      - label
+      - action
+      type: object
     OnlyUserID:
       properties:
         id:
@@ -6837,74 +6950,74 @@ components:
       properties:
         banned:
           type: boolean
-          x-stream-index: "015"
+          x-stream-index: "016"
         blocked_user_ids:
           items:
             type: string
           type: array
-          x-stream-index: "043"
+          x-stream-index: "044"
         channel_mutes:
           items:
             $ref: '#/components/schemas/ChannelMute'
           type: array
-          x-stream-index: "028"
+          x-stream-index: "029"
         created_at:
           format: date-time
           type: number
-          x-stream-index: "007"
+          x-stream-index: "008"
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "005"
+          x-stream-index: "006"
         deactivated_at:
           format: date-time
           type: number
-          x-stream-index: "013"
+          x-stream-index: "014"
         deleted_at:
           format: date-time
           type: number
-          x-stream-index: "012"
+          x-stream-index: "013"
         devices:
           items:
             $ref: '#/components/schemas/Device'
           type: array
-          x-stream-index: "026"
+          x-stream-index: "027"
         id:
           type: string
           x-stream-index: "003"
         invisible:
           type: boolean
-          x-stream-index: "022"
+          x-stream-index: "023"
         language:
           type: string
-          x-stream-index: "033"
+          x-stream-index: "034"
         last_active:
           format: date-time
           type: number
-          x-stream-index: "010"
+          x-stream-index: "011"
         last_engaged_at:
           format: date-time
           type: number
-          x-stream-index: "011"
+          x-stream-index: "012"
         latest_hidden_channels:
           items:
             type: string
           type: array
-          x-stream-index: "035"
+          x-stream-index: "036"
         mutes:
           items:
             $ref: '#/components/schemas/UserMute'
           type: array
-          x-stream-index: "027"
+          x-stream-index: "028"
         online:
           type: boolean
-          x-stream-index: "021"
+          x-stream-index: "022"
         privacy_settings:
           $ref: '#/components/schemas/PrivacySettings'
-          x-stream-index: "025"
+          x-stream-index: "026"
         push_preferences:
           $ref: '#/components/schemas/PushPreferences'
-          x-stream-index: "024"
+          x-stream-index: "025"
         role:
           type: string
           x-stream-index: "004"
@@ -6912,27 +7025,32 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "034"
+          x-stream-index: "035"
+        teams_role:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "005"
         total_unread_count:
           format: int32
           type: integer
-          x-stream-index: "030"
+          x-stream-index: "031"
         unread_channels:
           format: int32
           type: integer
-          x-stream-index: "031"
+          x-stream-index: "032"
         unread_count:
           format: int32
           type: integer
-          x-stream-index: "029"
+          x-stream-index: "030"
         unread_threads:
           format: int32
           type: integer
-          x-stream-index: "032"
+          x-stream-index: "033"
         updated_at:
           format: date-time
           type: number
-          x-stream-index: "008"
+          x-stream-index: "009"
       required:
       - id
       - role
@@ -6954,7 +7072,7 @@ components:
       properties:
         banned:
           type: boolean
-          x-stream-index: "001.011"
+          x-stream-index: "001.012"
         blocked_user_ids:
           items:
             type: string
@@ -6968,7 +7086,7 @@ components:
         created_at:
           format: date-time
           type: number
-          x-stream-index: "001.008"
+          x-stream-index: "001.009"
         custom:
           additionalProperties: {}
           type: object
@@ -6976,11 +7094,11 @@ components:
         deactivated_at:
           format: date-time
           type: number
-          x-stream-index: "001.015"
+          x-stream-index: "001.016"
         deleted_at:
           format: date-time
           type: number
-          x-stream-index: "001.010"
+          x-stream-index: "001.011"
         devices:
           items:
             $ref: '#/components/schemas/DeviceResponse'
@@ -7002,7 +7120,7 @@ components:
         last_active:
           format: date-time
           type: number
-          x-stream-index: "001.013"
+          x-stream-index: "001.014"
         latest_hidden_channels:
           items:
             type: string
@@ -7018,7 +7136,7 @@ components:
           x-stream-index: "001.002"
         online:
           type: boolean
-          x-stream-index: "001.012"
+          x-stream-index: "001.013"
         privacy_settings:
           $ref: '#/components/schemas/PrivacySettingsResponse'
           x-stream-index: "003"
@@ -7028,7 +7146,7 @@ components:
         revoke_tokens_issued_before:
           format: date-time
           type: number
-          x-stream-index: "001.014"
+          x-stream-index: "001.015"
         role:
           type: string
           x-stream-index: "001.006"
@@ -7037,6 +7155,11 @@ components:
             type: string
           type: array
           x-stream-index: "001.007"
+        teams_role:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "001.008"
         total_unread_count:
           format: int32
           type: integer
@@ -7056,7 +7179,7 @@ components:
         updated_at:
           format: date-time
           type: number
-          x-stream-index: "001.009"
+          x-stream-index: "001.010"
       required:
       - id
       - custom
@@ -8481,12 +8604,18 @@ components:
     QueryThreadsRequest:
       nullable: true
       properties:
+        filter:
+          additionalProperties: {}
+          description: Filter conditions to apply to threads
+          title: Filter
+          type: object
+          x-stream-index: "006"
         limit:
           format: int32
           maximum: 100
           minimum: 0
           type: integer
-          x-stream-index: "006.001"
+          x-stream-index: "008.001"
         member_limit:
           format: int32
           maximum: 100
@@ -8495,7 +8624,7 @@ components:
           x-stream-index: "005"
         next:
           type: string
-          x-stream-index: "006.002"
+          x-stream-index: "008.002"
         participant_limit:
           description: Limit the number of participants returned per each thread
           format: int32
@@ -8506,7 +8635,7 @@ components:
           x-stream-index: "004"
         prev:
           type: string
-          x-stream-index: "006.003"
+          x-stream-index: "008.003"
         reply_limit:
           description: Limit the number of replies returned per each thread
           format: int32
@@ -8515,6 +8644,14 @@ components:
           title: Reply limit
           type: integer
           x-stream-index: "003"
+        sort:
+          description: Sort conditions to apply to threads
+          items:
+            $ref: '#/components/schemas/SortParamRequest'
+          maximum: 5
+          title: Sort
+          type: array
+          x-stream-index: "007"
         watch:
           description: Start watching the channel this thread belongs to
           title: Watch
@@ -8972,35 +9109,38 @@ components:
           items:
             $ref: '#/components/schemas/ActionLog'
           type: array
-          x-stream-index: "033"
+          x-stream-index: "034"
         activity:
           $ref: '#/components/schemas/EnrichedActivity'
-          x-stream-index: "027"
+          x-stream-index: "028"
         ai_text_severity:
           type: string
-          x-stream-index: "020"
+          x-stream-index: "021"
         assigned_to:
           $ref: '#/components/schemas/User'
-          x-stream-index: "030"
+          x-stream-index: "031"
         bans:
           items:
             $ref: '#/components/schemas/Ban'
           type: array
-          x-stream-index: "031"
+          x-stream-index: "032"
         bounce_count:
           format: int32
           type: integer
-          x-stream-index: "024"
+          x-stream-index: "025"
+        config_key:
+          type: string
+          x-stream-index: "009"
         content_changed:
           type: boolean
-          x-stream-index: "034"
+          x-stream-index: "035"
         created_at:
           format: date-time
           type: number
           x-stream-index: "004"
         entity_creator:
           $ref: '#/components/schemas/EntityCreator'
-          x-stream-index: "029"
+          x-stream-index: "030"
         entity_id:
           type: string
           x-stream-index: "007"
@@ -9009,28 +9149,28 @@ components:
           x-stream-index: "006"
         feeds_v2_activity:
           $ref: '#/components/schemas/EnrichedActivity'
-          x-stream-index: "039"
+          x-stream-index: "040"
         feeds_v2_reaction:
           $ref: '#/components/schemas/Reaction'
-          x-stream-index: "040"
+          x-stream-index: "041"
         flags:
           items:
             $ref: '#/components/schemas/Flag'
           type: array
-          x-stream-index: "032"
+          x-stream-index: "033"
         flags_count:
           format: int32
           type: integer
-          x-stream-index: "025"
+          x-stream-index: "026"
         has_image:
           type: boolean
-          x-stream-index: "011"
+          x-stream-index: "012"
         has_text:
           type: boolean
-          x-stream-index: "013"
+          x-stream-index: "014"
         has_video:
           type: boolean
-          x-stream-index: "012"
+          x-stream-index: "013"
         id:
           type: string
           x-stream-index: "003"
@@ -9038,40 +9178,40 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "018"
+          x-stream-index: "019"
         message:
           $ref: '#/components/schemas/Message'
-          x-stream-index: "026"
+          x-stream-index: "027"
         moderation_payload:
           $ref: '#/components/schemas/ModerationPayload'
-          x-stream-index: "009"
+          x-stream-index: "010"
         moderation_payload_hash:
           type: string
-          x-stream-index: "010"
+          x-stream-index: "011"
         reaction:
           $ref: '#/components/schemas/Reaction'
-          x-stream-index: "028"
+          x-stream-index: "029"
         recommended_action:
           type: string
-          x-stream-index: "016"
+          x-stream-index: "017"
         reviewed_at:
           $ref: '#/components/schemas/NullTime'
-          x-stream-index: "021"
+          x-stream-index: "022"
         reviewed_by:
           type: string
-          x-stream-index: "022"
+          x-stream-index: "023"
         severity:
           format: int32
           type: integer
-          x-stream-index: "019"
+          x-stream-index: "020"
         status:
           type: string
-          x-stream-index: "015"
+          x-stream-index: "016"
         teams:
           items:
             type: string
           type: array
-          x-stream-index: "014"
+          x-stream-index: "015"
         updated_at:
           format: date-time
           type: number
@@ -9082,6 +9222,7 @@ components:
       - updated_at
       - entity_type
       - entity_id
+      - config_key
       - moderation_payload_hash
       - has_image
       - has_video
@@ -9138,6 +9279,9 @@ components:
           title: Completed At
           type: number
           x-stream-index: "009"
+        config_key:
+          type: string
+          x-stream-index: "027"
         created_at:
           description: When the item was created
           format: date-time
@@ -9184,7 +9328,7 @@ components:
         flags_count:
           format: int32
           type: integer
-          x-stream-index: "027"
+          x-stream-index: "028"
         id:
           description: Unique identifier of the review queue item
           title: ID
@@ -11161,59 +11305,59 @@ components:
         ban_expires:
           format: date-time
           type: number
-          x-stream-index: "016"
+          x-stream-index: "017"
         banned:
           type: boolean
-          x-stream-index: "015"
+          x-stream-index: "016"
         created_at:
           format: date-time
           readOnly: true
           type: number
-          x-stream-index: "007"
+          x-stream-index: "008"
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "005"
+          x-stream-index: "006"
         deactivated_at:
           format: date-time
           readOnly: true
           type: number
-          x-stream-index: "013"
+          x-stream-index: "014"
         deleted_at:
           format: date-time
           readOnly: true
           type: number
-          x-stream-index: "012"
+          x-stream-index: "013"
         id:
           type: string
           x-stream-index: "003"
         invisible:
           type: boolean
-          x-stream-index: "022"
+          x-stream-index: "023"
         language:
           type: string
-          x-stream-index: "033"
+          x-stream-index: "034"
         last_active:
           format: date-time
           readOnly: true
           type: number
-          x-stream-index: "010"
+          x-stream-index: "011"
         last_engaged_at:
           format: date-time
           readOnly: true
           type: number
-          x-stream-index: "011"
+          x-stream-index: "012"
         online:
           readOnly: true
           type: boolean
-          x-stream-index: "021"
+          x-stream-index: "022"
         privacy_settings:
           $ref: '#/components/schemas/PrivacySettings'
-          x-stream-index: "025"
+          x-stream-index: "026"
         revoke_tokens_issued_before:
           format: date-time
           type: number
-          x-stream-index: "040"
+          x-stream-index: "041"
         role:
           type: string
           x-stream-index: "004"
@@ -11221,15 +11365,21 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "034"
+          x-stream-index: "035"
+        teams_role:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "005"
         updated_at:
           format: date-time
           readOnly: true
           type: number
-          x-stream-index: "008"
+          x-stream-index: "009"
       required:
       - id
       - role
+      - teams_role
       - custom
       - banned
       - online
@@ -11485,6 +11635,7 @@ components:
       properties:
         custom:
           additionalProperties: {}
+          description: Custom user data
           title: Custom
           type: object
           x-stream-index: "004"
@@ -11494,6 +11645,7 @@ components:
           type: string
           x-stream-index: "001"
         image:
+          description: User's profile image URL
           title: Image
           type: string
           x-stream-index: "003"
@@ -11522,18 +11674,18 @@ components:
           description: Whether a user is banned or not
           title: Banned
           type: boolean
-          x-stream-index: "001.011"
+          x-stream-index: "001.012"
         blocked_user_ids:
           items:
             type: string
           type: array
-          x-stream-index: "001.016"
+          x-stream-index: "001.017"
         created_at:
           description: Date/time of creation
           format: date-time
           title: Created at
           type: number
-          x-stream-index: "001.008"
+          x-stream-index: "001.009"
         custom:
           additionalProperties: {}
           description: Custom data for this object
@@ -11545,13 +11697,13 @@ components:
           format: date-time
           title: Deactivated at
           type: number
-          x-stream-index: "001.015"
+          x-stream-index: "001.016"
         deleted_at:
           description: Date/time of deletion
           format: date-time
           title: Deleted at
           type: number
-          x-stream-index: "001.010"
+          x-stream-index: "001.011"
         id:
           description: Unique user identifier
           title: ID
@@ -11571,7 +11723,7 @@ components:
           format: date-time
           title: Last active
           type: number
-          x-stream-index: "001.013"
+          x-stream-index: "001.014"
         name:
           description: Optional name of user
           title: Name
@@ -11581,13 +11733,13 @@ components:
           description: Whether a user online or not
           title: Online
           type: boolean
-          x-stream-index: "001.012"
+          x-stream-index: "001.013"
         revoke_tokens_issued_before:
           description: Revocation date for tokens
           format: date-time
           title: Revoke tokens issued before
           type: number
-          x-stream-index: "001.014"
+          x-stream-index: "001.015"
         role:
           description: Determines the set of user permissions
           title: Role
@@ -11600,12 +11752,17 @@ components:
           title: Teams
           type: array
           x-stream-index: "001.007"
+        teams_role:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "001.008"
         updated_at:
           description: Date/time of the last update
           format: date-time
           title: Updated at
           type: number
-          x-stream-index: "001.009"
+          x-stream-index: "001.010"
       required:
       - id
       - custom
@@ -11625,16 +11782,16 @@ components:
       properties:
         banned:
           type: boolean
-          x-stream-index: "011"
+          x-stream-index: "012"
         blocked_user_ids:
           items:
             type: string
           type: array
-          x-stream-index: "016"
+          x-stream-index: "017"
         created_at:
           format: date-time
           type: number
-          x-stream-index: "008"
+          x-stream-index: "009"
         custom:
           additionalProperties: {}
           type: object
@@ -11642,11 +11799,11 @@ components:
         deactivated_at:
           format: date-time
           type: number
-          x-stream-index: "015"
+          x-stream-index: "016"
         deleted_at:
           format: date-time
           type: number
-          x-stream-index: "010"
+          x-stream-index: "011"
         id:
           type: string
           x-stream-index: "001"
@@ -11659,17 +11816,17 @@ components:
         last_active:
           format: date-time
           type: number
-          x-stream-index: "013"
+          x-stream-index: "014"
         name:
           type: string
           x-stream-index: "002"
         online:
           type: boolean
-          x-stream-index: "012"
+          x-stream-index: "013"
         revoke_tokens_issued_before:
           format: date-time
           type: number
-          x-stream-index: "014"
+          x-stream-index: "015"
         role:
           type: string
           x-stream-index: "006"
@@ -11678,10 +11835,15 @@ components:
             type: string
           type: array
           x-stream-index: "007"
+        teams_role:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "008"
         updated_at:
           format: date-time
           type: number
-          x-stream-index: "009"
+          x-stream-index: "010"
       required:
       - id
       - custom
@@ -11698,16 +11860,16 @@ components:
       properties:
         banned:
           type: boolean
-          x-stream-index: "001.011"
+          x-stream-index: "001.012"
         blocked_user_ids:
           items:
             type: string
           type: array
-          x-stream-index: "001.016"
+          x-stream-index: "001.017"
         created_at:
           format: date-time
           type: number
-          x-stream-index: "001.008"
+          x-stream-index: "001.009"
         custom:
           additionalProperties: {}
           type: object
@@ -11715,11 +11877,11 @@ components:
         deactivated_at:
           format: date-time
           type: number
-          x-stream-index: "001.015"
+          x-stream-index: "001.016"
         deleted_at:
           format: date-time
           type: number
-          x-stream-index: "001.010"
+          x-stream-index: "001.011"
         id:
           type: string
           x-stream-index: "001.001"
@@ -11735,20 +11897,20 @@ components:
         last_active:
           format: date-time
           type: number
-          x-stream-index: "001.013"
+          x-stream-index: "001.014"
         name:
           type: string
           x-stream-index: "001.002"
         online:
           type: boolean
-          x-stream-index: "001.012"
+          x-stream-index: "001.013"
         privacy_settings:
           $ref: '#/components/schemas/PrivacySettingsResponse'
           x-stream-index: "002"
         revoke_tokens_issued_before:
           format: date-time
           type: number
-          x-stream-index: "001.014"
+          x-stream-index: "001.015"
         role:
           type: string
           x-stream-index: "001.006"
@@ -11757,10 +11919,15 @@ components:
             type: string
           type: array
           x-stream-index: "001.007"
+        teams_role:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "001.008"
         updated_at:
           format: date-time
           type: number
-          x-stream-index: "001.009"
+          x-stream-index: "001.010"
       required:
       - id
       - custom
@@ -12086,6 +12253,7 @@ components:
         events' payload to the final type
       discriminator:
         mapping:
+          app.updated: '#/components/schemas/AppUpdatedEvent'
           draft.deleted: '#/components/schemas/DraftDeletedEvent'
           draft.updated: '#/components/schemas/DraftUpdatedEvent'
           health.check: '#/components/schemas/HealthCheckEvent'
@@ -12098,6 +12266,7 @@ components:
           user.updated: '#/components/schemas/UserUpdatedEvent'
         propertyName: type
       oneOf:
+      - $ref: '#/components/schemas/AppUpdatedEvent'
       - $ref: '#/components/schemas/DraftDeletedEvent'
       - $ref: '#/components/schemas/DraftUpdatedEvent'
       - $ref: '#/components/schemas/HealthCheckEvent'
@@ -12117,6 +12286,7 @@ components:
           ai_indicator.clear: '#/components/schemas/AIIndicatorClearEvent'
           ai_indicator.stop: '#/components/schemas/AIIndicatorStopEvent'
           ai_indicator.update: '#/components/schemas/AIIndicatorUpdateEvent'
+          app.updated: '#/components/schemas/AppUpdatedEvent'
           channel.created: '#/components/schemas/ChannelCreatedEvent'
           channel.deleted: '#/components/schemas/ChannelDeletedEvent'
           channel.frozen: '#/components/schemas/ChannelFrozenEvent'
@@ -12181,6 +12351,7 @@ components:
       - $ref: '#/components/schemas/AIIndicatorStopEvent'
       - $ref: '#/components/schemas/AIIndicatorUpdateEvent'
       - $ref: '#/components/schemas/AnyEvent'
+      - $ref: '#/components/schemas/AppUpdatedEvent'
       - $ref: '#/components/schemas/ChannelCreatedEvent'
       - $ref: '#/components/schemas/ChannelDeletedEvent'
       - $ref: '#/components/schemas/ChannelFrozenEvent'
@@ -12321,7 +12492,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v167.1.0
+  version: v170.0.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -13177,19 +13348,12 @@ paths:
       summary: Upload image
       tags:
       - product:chat
-  /api/v2/chat/channels/{type}/{id}/member/{user_id}:
+  /api/v2/chat/channels/{type}/{id}/member:
     patch:
       description: |2+
 
       operationId: UpdateMemberPartial
       parameters:
-      - in: path
-        name: user_id
-        required: true
-        schema:
-          type: string
-          writeOnly: true
-          x-stream-index: "001"
       - in: path
         name: type
         required: true
@@ -15741,7 +15905,7 @@ paths:
   /api/v2/moderation/ban:
     post:
       description: |
-        Moderation v2 ban
+        Ban a user from a channel or the entire app
       operationId: ban
       requestBody:
         content:
@@ -15768,7 +15932,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
-      summary: Moderation v2 ban
+      summary: Ban
       tags:
       - product:moderation
   /api/v2/moderation/config:
@@ -15958,7 +16122,7 @@ paths:
   /api/v2/moderation/mute:
     post:
       description: |
-        Moderation v2 mute
+        Mute a user. Mutes are generally not visible to the user you mute, while block is something you notice.
       operationId: mute
       requestBody:
         content:
@@ -15986,7 +16150,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
-      summary: Moderation v2 mute
+      summary: Mute
       tags:
       - product:moderation
   /api/v2/moderation/review_queue:
