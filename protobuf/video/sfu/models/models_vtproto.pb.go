@@ -1655,7 +1655,7 @@ func (m *AppleState) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *EncodeStats) MarshalVT() (dAtA []byte, err error) {
+func (m *PerformanceStats) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -1668,72 +1668,12 @@ func (m *EncodeStats) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *EncodeStats) MarshalToVT(dAtA []byte) (int, error) {
+func (m *PerformanceStats) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *EncodeStats) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
-	if m == nil {
-		return 0, nil
-	}
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.unknownFields != nil {
-		i -= len(m.unknownFields)
-		copy(dAtA[i:], m.unknownFields)
-	}
-	if m.AvgFps != 0 {
-		i -= 4
-		binary.LittleEndian.PutUint32(dAtA[i:], uint32(math.Float32bits(float32(m.AvgFps))))
-		i--
-		dAtA[i] = 0x25
-	}
-	if m.AvgFrameEncodeTimeMs != 0 {
-		i -= 4
-		binary.LittleEndian.PutUint32(dAtA[i:], uint32(math.Float32bits(float32(m.AvgFrameEncodeTimeMs))))
-		i--
-		dAtA[i] = 0x1d
-	}
-	if m.Codec != nil {
-		size, err := m.Codec.MarshalToSizedBufferVT(dAtA[:i])
-		if err != nil {
-			return 0, err
-		}
-		i -= size
-		i = encodeVarint(dAtA, i, uint64(size))
-		i--
-		dAtA[i] = 0x12
-	}
-	if m.TrackType != 0 {
-		i = encodeVarint(dAtA, i, uint64(m.TrackType))
-		i--
-		dAtA[i] = 0x8
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *DecodeStats) MarshalVT() (dAtA []byte, err error) {
-	if m == nil {
-		return nil, nil
-	}
-	size := m.SizeVT()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *DecodeStats) MarshalToVT(dAtA []byte) (int, error) {
-	size := m.SizeVT()
-	return m.MarshalToSizedBufferVT(dAtA[:size])
-}
-
-func (m *DecodeStats) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *PerformanceStats) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -1753,17 +1693,23 @@ func (m *DecodeStats) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= size
 		i = encodeVarint(dAtA, i, uint64(size))
 		i--
-		dAtA[i] = 0x2a
+		dAtA[i] = 0x32
 	}
 	if m.AvgFps != 0 {
 		i -= 4
 		binary.LittleEndian.PutUint32(dAtA[i:], uint32(math.Float32bits(float32(m.AvgFps))))
 		i--
-		dAtA[i] = 0x25
+		dAtA[i] = 0x2d
 	}
 	if m.AvgFrameDecodeTimeMs != 0 {
 		i -= 4
 		binary.LittleEndian.PutUint32(dAtA[i:], uint32(math.Float32bits(float32(m.AvgFrameDecodeTimeMs))))
+		i--
+		dAtA[i] = 0x25
+	}
+	if m.AvgFrameEncodeTimeMs != 0 {
+		i -= 4
+		binary.LittleEndian.PutUint32(dAtA[i:], uint32(math.Float32bits(float32(m.AvgFrameEncodeTimeMs))))
 		i--
 		dAtA[i] = 0x1d
 	}
@@ -2493,7 +2439,7 @@ func (m *AppleState) SizeVT() (n int) {
 	return n
 }
 
-func (m *EncodeStats) SizeVT() (n int) {
+func (m *PerformanceStats) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -2508,28 +2454,6 @@ func (m *EncodeStats) SizeVT() (n int) {
 	}
 	if m.AvgFrameEncodeTimeMs != 0 {
 		n += 5
-	}
-	if m.AvgFps != 0 {
-		n += 5
-	}
-	if m.unknownFields != nil {
-		n += len(m.unknownFields)
-	}
-	return n
-}
-
-func (m *DecodeStats) SizeVT() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.TrackType != 0 {
-		n += 1 + sov(uint64(m.TrackType))
-	}
-	if m.Codec != nil {
-		l = m.Codec.SizeVT()
-		n += 1 + l + sov(uint64(l))
 	}
 	if m.AvgFrameDecodeTimeMs != 0 {
 		n += 5
@@ -6581,7 +6505,7 @@ func (m *AppleState) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *EncodeStats) UnmarshalVT(dAtA []byte) error {
+func (m *PerformanceStats) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -6604,10 +6528,10 @@ func (m *EncodeStats) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: EncodeStats: wiretype end group for non-group")
+			return fmt.Errorf("proto: PerformanceStats: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: EncodeStats: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: PerformanceStats: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -6678,123 +6602,6 @@ func (m *EncodeStats) UnmarshalVT(dAtA []byte) error {
 			m.AvgFrameEncodeTimeMs = float32(math.Float32frombits(v))
 		case 4:
 			if wireType != 5 {
-				return fmt.Errorf("proto: wrong wireType = %d for field AvgFps", wireType)
-			}
-			var v uint32
-			if (iNdEx + 4) > l {
-				return io.ErrUnexpectedEOF
-			}
-			v = uint32(binary.LittleEndian.Uint32(dAtA[iNdEx:]))
-			iNdEx += 4
-			m.AvgFps = float32(math.Float32frombits(v))
-		default:
-			iNdEx = preIndex
-			skippy, err := skip(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLength
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *DecodeStats) UnmarshalVT(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflow
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: DecodeStats: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: DecodeStats: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field TrackType", wireType)
-			}
-			m.TrackType = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.TrackType |= TrackType(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Codec", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLength
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Codec == nil {
-				m.Codec = &Codec{}
-			}
-			if err := m.Codec.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 3:
-			if wireType != 5 {
 				return fmt.Errorf("proto: wrong wireType = %d for field AvgFrameDecodeTimeMs", wireType)
 			}
 			var v uint32
@@ -6804,7 +6611,7 @@ func (m *DecodeStats) UnmarshalVT(dAtA []byte) error {
 			v = uint32(binary.LittleEndian.Uint32(dAtA[iNdEx:]))
 			iNdEx += 4
 			m.AvgFrameDecodeTimeMs = float32(math.Float32frombits(v))
-		case 4:
+		case 5:
 			if wireType != 5 {
 				return fmt.Errorf("proto: wrong wireType = %d for field AvgFps", wireType)
 			}
@@ -6815,7 +6622,7 @@ func (m *DecodeStats) UnmarshalVT(dAtA []byte) error {
 			v = uint32(binary.LittleEndian.Uint32(dAtA[iNdEx:]))
 			iNdEx += 4
 			m.AvgFps = float32(math.Float32frombits(v))
-		case 5:
+		case 6:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field VideoDimension", wireType)
 			}
