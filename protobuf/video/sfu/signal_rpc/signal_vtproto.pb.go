@@ -3344,7 +3344,7 @@ func (m *SendStatsRequest) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.EncodeStats = append(m.EncodeStats, &models.EncodeStats{})
+			m.EncodeStats = append(m.EncodeStats, &models.PerformanceStats{})
 			if unmarshal, ok := interface{}(m.EncodeStats[len(m.EncodeStats)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
@@ -3386,7 +3386,7 @@ func (m *SendStatsRequest) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.DecodeStats = append(m.DecodeStats, &models.DecodeStats{})
+			m.DecodeStats = append(m.DecodeStats, &models.PerformanceStats{})
 			if unmarshal, ok := interface{}(m.DecodeStats[len(m.DecodeStats)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
