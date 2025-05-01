@@ -1685,6 +1685,11 @@ func (m *PerformanceStats) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.TargetBitrate != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.TargetBitrate))
+		i--
+		dAtA[i] = 0x30
+	}
 	if m.VideoDimension != nil {
 		size, err := m.VideoDimension.MarshalToSizedBufferVT(dAtA[:i])
 		if err != nil {
@@ -2455,6 +2460,9 @@ func (m *PerformanceStats) SizeVT() (n int) {
 	if m.VideoDimension != nil {
 		l = m.VideoDimension.SizeVT()
 		n += 1 + l + sov(uint64(l))
+	}
+	if m.TargetBitrate != 0 {
+		n += 1 + sov(uint64(m.TargetBitrate))
 	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
@@ -6638,6 +6646,25 @@ func (m *PerformanceStats) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TargetBitrate", wireType)
+			}
+			m.TargetBitrate = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.TargetBitrate |= int32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])

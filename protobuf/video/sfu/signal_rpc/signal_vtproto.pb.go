@@ -375,6 +375,15 @@ func (m *SendStatsRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 			}
 		}
 	}
+	if len(m.UnifiedSessionId) > 0 {
+		i -= len(m.UnifiedSessionId)
+		copy(dAtA[i:], m.UnifiedSessionId)
+		i = encodeVarint(dAtA, i, uint64(len(m.UnifiedSessionId)))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0x92
+	}
 	if len(m.DecodeStats) > 0 {
 		for iNdEx := len(m.DecodeStats) - 1; iNdEx >= 0; iNdEx-- {
 			if marshalto, ok := interface{}(m.DecodeStats[iNdEx]).(interface {
@@ -1763,6 +1772,10 @@ func (m *SendStatsRequest) SizeVT() (n int) {
 			}
 			n += 2 + l + sov(uint64(l))
 		}
+	}
+	l = len(m.UnifiedSessionId)
+	if l > 0 {
+		n += 2 + l + sov(uint64(l))
 	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
@@ -3398,6 +3411,38 @@ func (m *SendStatsRequest) UnmarshalVT(dAtA []byte) error {
 					return err
 				}
 			}
+			iNdEx = postIndex
+		case 18:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field UnifiedSessionId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.UnifiedSessionId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
