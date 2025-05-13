@@ -139,6 +139,21 @@ components:
         body:
           type: string
           x-stream-index: "002"
+        content-available:
+          format: int32
+          type: integer
+          x-stream-index: "004"
+        data:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "006"
+        mutable-content:
+          format: int32
+          type: integer
+          x-stream-index: "005"
+        sound:
+          type: string
+          x-stream-index: "003"
         title:
           type: string
           x-stream-index: "001"
@@ -438,7 +453,7 @@ components:
           type: string
           x-stream-index: "002.001"
         type:
-          default: export.channels.error
+          default: export.users.error
           type: string
           x-stream-index: "003.002"
       required:
@@ -5470,9 +5485,13 @@ components:
         enabled:
           type: boolean
           x-stream-index: "001"
+        fcm:
+          $ref: '#/components/schemas/FCM'
+          x-stream-index: "003"
       required:
       - enabled
       - apns
+      - fcm
       type: object
     ExportUserResponse:
       nullable: true
@@ -5557,6 +5576,13 @@ components:
       - type
       - bucket
       - path
+      type: object
+    FCM:
+      properties:
+        data:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "001"
       type: object
     Field:
       nullable: true
@@ -6291,6 +6317,25 @@ components:
       - created
       - duration
       title: GetOrCreateCallResponse
+      type: object
+    GetPushTemplatesResponse:
+      description: Basic response information
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+        templates:
+          items:
+            $ref: '#/components/schemas/PushTemplate'
+          type: array
+          x-stream-index: "002"
+      required:
+      - duration
+      - templates
+      title: Response
       type: object
     GetRateLimitsResponse:
       nullable: true
@@ -8049,6 +8094,7 @@ components:
           enum:
           - v1
           - v2
+          - v3
           type: string
           x-stream-index: "001"
       required:
@@ -8172,6 +8218,11 @@ components:
           minLength: 1
           type: string
           x-stream-index: "005"
+        push_templates:
+          items:
+            $ref: '#/components/schemas/PushTemplate'
+          type: array
+          x-stream-index: "031"
         type:
           type: string
           x-stream-index: "006"
@@ -8283,6 +8334,36 @@ components:
       required:
       - name
       - type
+      - created_at
+      - updated_at
+      type: object
+    PushTemplate:
+      nullable: true
+      properties:
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "007"
+        enable_push:
+          type: boolean
+          x-stream-index: "003"
+        event_type:
+          enum:
+          - message.new
+          - message.updated
+          - reaction.new
+          type: string
+          x-stream-index: "005"
+        template:
+          type: string
+          x-stream-index: "006"
+        updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "008"
+      required:
+      - enable_push
+      - event_type
       - created_at
       - updated_at
       type: object
@@ -10872,6 +10953,64 @@ components:
       - duration
       title: Response
       type: object
+    UpsertPushTemplateRequest:
+      nullable: true
+      properties:
+        enable_push:
+          description: Whether to send push notification for this event
+          title: boolean
+          type: boolean
+          x-stream-index: "002"
+        event_type:
+          description: Event type (message.new, message.updated, reaction.new)
+          enum:
+          - message.new
+          - message.updated
+          - reaction.new
+          title: string
+          type: string
+          x-stream-index: "003"
+        push_provider_name:
+          description: Push provider name
+          maxLength: 36
+          minLength: 1
+          title: string
+          type: string
+          x-stream-index: "004"
+        push_provider_type:
+          description: Push provider type (firebase, apn)
+          enum:
+          - firebase
+          - apn
+          title: string
+          type: string
+          x-stream-index: "005"
+        template:
+          description: Push template
+          title: string
+          type: string
+          x-stream-index: "006"
+      required:
+      - event_type
+      - push_provider_name
+      - push_provider_type
+      type: object
+    UpsertPushTemplateResponse:
+      description: Basic response information
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+        template:
+          $ref: '#/components/schemas/PushTemplate'
+          x-stream-index: "002"
+      required:
+      - duration
+      title: Response
+      type: object
     User:
       properties:
         ban_expires:
@@ -11784,7 +11923,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v173.0.0
+  version: v174.9.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -12822,6 +12961,89 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Delete a push provider
+      tags:
+      - product:common
+  /api/v2/push_templates:
+    get:
+      description: |
+        Retrieve push notification templates for Chat.
+      operationId: GetPushTemplates
+      parameters:
+      - in: query
+        name: push_provider_name
+        required: true
+        schema:
+          description: Push provider name to filter templates
+          maxLength: 36
+          minLength: 1
+          title: string
+          type: string
+          writeOnly: true
+          x-stream-index: "002"
+      - in: query
+        name: push_provider_type
+        required: true
+        schema:
+          description: Push provider type (firebase, apn) to filter templates
+          enum:
+          - firebase
+          - apn
+          title: string
+          type: string
+          writeOnly: true
+          x-stream-index: "003"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetPushTemplatesResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get push notification templates
+      tags:
+      - product:common
+    post:
+      description: |
+        Create or update a push notification template for a specific event type and push provider
+      operationId: UpsertPushTemplate
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertPushTemplateRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpsertPushTemplateResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Upsert a push notification template
       tags:
       - product:common
   /api/v2/rate_limits:
