@@ -473,6 +473,13 @@ components:
           title: Channel CID
           type: string
           x-stream-index: "006"
+        delete_messages:
+          enum:
+          - soft
+          - pruning
+          - hard
+          type: string
+          x-stream-index: "011"
         ip_ban:
           description: Whether to perform IP ban or not
           title: IP ban
@@ -4207,7 +4214,7 @@ components:
           type: array
           x-stream-index: "001.002"
         type:
-          default: message.new
+          default: notification.thread_message_new
           type: string
           x-stream-index: "004.001"
         user:
@@ -8615,6 +8622,15 @@ components:
           title: Hard delete
           type: boolean
           x-stream-index: "002"
+        member_ids:
+          description: List of member IDs to hide message history for. If empty, truncates
+            the channel for all members
+          items:
+            type: string
+          maximum: 100
+          title: Member IDs
+          type: array
+          x-stream-index: "007"
         message:
           $ref: '#/components/schemas/MessageRequest'
           x-stream-index: "004"
@@ -9155,6 +9171,9 @@ components:
         skip_enrich_url:
           description: Skip enrich URL
           title: boolean
+          type: boolean
+          x-stream-index: "003"
+        skip_push:
           type: boolean
           x-stream-index: "002"
       required:
@@ -10506,7 +10525,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v173.0.0
+  version: v174.11.0
 openapi: 3.0.3
 paths:
   /app:
@@ -11759,7 +11778,7 @@ paths:
   /channels/{type}/{id}/truncate:
     post:
       description: |
-        Truncates channel
+        Truncates messages from a channel. Can be applied to the entire channel or scoped to specific members.
 
         Sends events:
         - channel.truncated
@@ -12333,7 +12352,7 @@ paths:
           title: ID
           type: string
           writeOnly: true
-          x-stream-index: "003.001"
+          x-stream-index: "004.001"
       requestBody:
         content:
           application/json:
