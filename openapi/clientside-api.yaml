@@ -436,6 +436,41 @@ components:
       - custom
       - target_user_id
       type: object
+    ActionSequence:
+      properties:
+        action:
+          type: string
+          x-stream-index: "001"
+        blur:
+          type: boolean
+          x-stream-index: "005"
+        cooldown_period:
+          format: int32
+          type: integer
+          x-stream-index: "004"
+        threshold:
+          format: int32
+          type: integer
+          x-stream-index: "002"
+        time_window:
+          format: int32
+          type: integer
+          x-stream-index: "003"
+        warning:
+          type: boolean
+          x-stream-index: "006"
+        warning_text:
+          type: string
+          x-stream-index: "007"
+      required:
+      - action
+      - threshold
+      - time_window
+      - cooldown_period
+      - blur
+      - warning
+      - warning_text
+      type: object
     AnyEvent:
       properties:
         created_at:
@@ -541,6 +576,8 @@ components:
       - moderation_enabled
       - moderation_multitenant_blocklist_enabled
       - guest_user_creation_disabled
+      - event_hooks
+      - use_hook_v2
       type: object
     AppUpdatedEvent:
       description: Emitted when app settings are updated
@@ -2489,6 +2526,74 @@ components:
       x-stream-event-doc-group: ring
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    CallModerationBlurEvent:
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "001.002"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "004"
+        type:
+          default: call.moderation_blur
+          type: string
+          x-stream-index: "001.001"
+        user_id:
+          type: string
+          x-stream-index: "003"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - user_id
+      - custom
+      title: CallModerationBlurEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallModerationWarningEvent:
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "001.002"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "005"
+        message:
+          type: string
+          x-stream-index: "004"
+        type:
+          default: call.moderation_warning
+          type: string
+          x-stream-index: "001.001"
+        user_id:
+          type: string
+          x-stream-index: "003"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - user_id
+      - message
+      - custom
+      title: CallModerationWarningEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     CallNotificationEvent:
       description: This event is sent to all call members to notify they are getting
         called
@@ -4074,10 +4179,6 @@ components:
           type: number
           writeOnly: true
           x-stream-index: "005"
-        EnableLiveInsights:
-          type: boolean
-          writeOnly: true
-          x-stream-index: "010"
         ExternalStorage:
           type: string
           writeOnly: true
@@ -4109,7 +4210,6 @@ components:
       - CreatedAt
       - UpdatedAt
       - ExternalStorage
-      - EnableLiveInsights
       type: object
     CallUpdatedEvent:
       description: |-
@@ -5828,6 +5928,9 @@ components:
           description: Configuration for velocity-based filtering
           title: Velocity Filter Config
           x-stream-index: "011"
+        video_call_rule_config:
+          $ref: '#/components/schemas/VideoCallRuleConfig'
+          x-stream-index: "014"
       required:
       - key
       - team
@@ -7949,6 +8052,11 @@ components:
         session_id:
           type: string
           x-stream-index: "002"
+        video_reactions:
+          items:
+            $ref: '#/components/schemas/VideoReactionsResponse'
+          type: array
+          x-stream-index: "005"
       required:
       - duration
       - session_id
@@ -8444,6 +8552,20 @@ components:
       - quality_tracks
       - layout
       title: HLSSettingsResponse
+      type: object
+    HarmConfig:
+      properties:
+        action_sequences:
+          items:
+            $ref: '#/components/schemas/ActionSequence'
+          type: array
+          x-stream-index: "001"
+        severity:
+          type: integer
+          x-stream-index: "002"
+      required:
+      - action_sequences
+      - severity
       type: object
     HealthCheckEvent:
       nullable: true
@@ -9662,7 +9784,7 @@ components:
           type: array
           x-stream-index: "001.002"
         type:
-          default: message.new
+          default: notification.thread_message_new
           type: string
           x-stream-index: "004.001"
         user:
@@ -17885,6 +18007,9 @@ components:
           description: Configuration for velocity-based filtering
           title: Velocity Filter Config
           x-stream-index: "012"
+        video_call_rule_config:
+          $ref: '#/components/schemas/VideoCallRuleConfig'
+          x-stream-index: "016"
       required:
       - key
       type: object
@@ -18899,6 +19024,16 @@ components:
       - url_only
       - probation_period
       type: object
+    VideoCallRuleConfig:
+      properties:
+        rules:
+          additionalProperties:
+            $ref: '#/components/schemas/HarmConfig'
+          type: object
+          x-stream-index: "001"
+      required:
+      - rules
+      type: object
     VideoEndCallRequest:
       type: object
     VideoKickUserRequest:
@@ -18908,6 +19043,26 @@ components:
         orientation:
           type: integer
           x-stream-index: "004"
+      type: object
+    VideoReactionOverTimeResponse:
+      properties:
+        by_minute:
+          items:
+            $ref: '#/components/schemas/CountByMinuteResponse'
+          type: array
+          x-stream-index: "001"
+      type: object
+    VideoReactionsResponse:
+      nullable: true
+      properties:
+        count_over_time:
+          $ref: '#/components/schemas/VideoReactionOverTimeResponse'
+          x-stream-index: "002"
+        reaction:
+          type: string
+          x-stream-index: "001"
+      required:
+      - reaction
       type: object
     VideoSettings:
       properties:
@@ -19082,6 +19237,8 @@ components:
           call.member_updated: '#/components/schemas/CallMemberUpdatedEvent'
           call.member_updated_permission: '#/components/schemas/CallMemberUpdatedPermissionEvent'
           call.missed: '#/components/schemas/CallMissedEvent'
+          call.moderation_blur: '#/components/schemas/CallModerationBlurEvent'
+          call.moderation_warning: '#/components/schemas/CallModerationWarningEvent'
           call.notification: '#/components/schemas/CallNotificationEvent'
           call.permission_request: '#/components/schemas/PermissionRequestEvent'
           call.permissions_updated: '#/components/schemas/UpdatedCallPermissionsEvent'
@@ -19197,6 +19354,8 @@ components:
       - $ref: '#/components/schemas/CallMemberUpdatedEvent'
       - $ref: '#/components/schemas/CallMemberUpdatedPermissionEvent'
       - $ref: '#/components/schemas/CallMissedEvent'
+      - $ref: '#/components/schemas/CallModerationBlurEvent'
+      - $ref: '#/components/schemas/CallModerationWarningEvent'
       - $ref: '#/components/schemas/CallNotificationEvent'
       - $ref: '#/components/schemas/CallReactionEvent'
       - $ref: '#/components/schemas/CallRecordingFailedEvent'
@@ -19367,7 +19526,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v175.6.0
+  version: v178.0.0
 openapi: 3.0.3
 paths:
   /api/v2/app:

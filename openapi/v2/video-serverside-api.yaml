@@ -231,6 +231,11 @@ components:
         enforce_unique_usernames:
           type: string
           x-stream-index: "023"
+        event_hooks:
+          items:
+            $ref: '#/components/schemas/EventHook'
+          type: array
+          x-stream-index: "045"
         file_upload_config:
           $ref: '#/components/schemas/FileUploadConfig'
           x-stream-index: "030"
@@ -326,6 +331,9 @@ components:
         suspended_explanation:
           type: string
           x-stream-index: "010"
+        use_hook_v2:
+          type: boolean
+          x-stream-index: "046"
         user_search_disallowed_roles:
           items:
             type: string
@@ -377,6 +385,8 @@ components:
       - moderation_enabled
       - moderation_multitenant_blocklist_enabled
       - guest_user_creation_disabled
+      - event_hooks
+      - use_hook_v2
       type: object
     AsyncExportChannelsEvent:
       nullable: true
@@ -1900,6 +1910,74 @@ components:
       x-stream-event-doc-group: ring
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    CallModerationBlurEvent:
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "001.002"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "004"
+        type:
+          default: call.moderation_blur
+          type: string
+          x-stream-index: "001.001"
+        user_id:
+          type: string
+          x-stream-index: "003"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - user_id
+      - custom
+      title: CallModerationBlurEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallModerationWarningEvent:
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "001.002"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "005"
+        message:
+          type: string
+          x-stream-index: "004"
+        type:
+          default: call.moderation_warning
+          type: string
+          x-stream-index: "001.001"
+        user_id:
+          type: string
+          x-stream-index: "003"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - user_id
+      - message
+      - custom
+      title: CallModerationWarningEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     CallNotificationEvent:
       description: This event is sent to all call members to notify they are getting
         called
@@ -3208,10 +3286,6 @@ components:
           type: number
           writeOnly: true
           x-stream-index: "005"
-        EnableLiveInsights:
-          type: boolean
-          writeOnly: true
-          x-stream-index: "010"
         ExternalStorage:
           type: string
           writeOnly: true
@@ -3243,7 +3317,6 @@ components:
       - CreatedAt
       - UpdatedAt
       - ExternalStorage
-      - EnableLiveInsights
       type: object
     CallTypeResponse:
       description: CallTypeResponse is the payload for a call type.
@@ -5494,6 +5567,71 @@ components:
       - type
       - description
       type: object
+    EventHook:
+      nullable: true
+      properties:
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "018"
+        enabled:
+          type: boolean
+          x-stream-index: "003"
+        event_types:
+          items:
+            type: string
+          type: array
+          x-stream-index: "004"
+        hook_type:
+          type: string
+          x-stream-index: "002"
+        id:
+          type: string
+          x-stream-index: "001"
+        sns_auth_type:
+          type: string
+          x-stream-index: "014"
+        sns_key:
+          type: string
+          x-stream-index: "015"
+        sns_region:
+          type: string
+          x-stream-index: "013"
+        sns_role_arn:
+          type: string
+          x-stream-index: "017"
+        sns_secret:
+          type: string
+          x-stream-index: "016"
+        sns_topic_arn:
+          type: string
+          x-stream-index: "012"
+        sqs_auth_type:
+          type: string
+          x-stream-index: "008"
+        sqs_key:
+          type: string
+          x-stream-index: "009"
+        sqs_queue_url:
+          type: string
+          x-stream-index: "006"
+        sqs_region:
+          type: string
+          x-stream-index: "007"
+        sqs_role_arn:
+          type: string
+          x-stream-index: "011"
+        sqs_secret:
+          type: string
+          x-stream-index: "010"
+        updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "019"
+        webhook_url:
+          type: string
+          x-stream-index: "005"
+      type: object
     EventNotificationSettings:
       properties:
         apns:
@@ -6029,6 +6167,11 @@ components:
         session_id:
           type: string
           x-stream-index: "002"
+        video_reactions:
+          items:
+            $ref: '#/components/schemas/VideoReactionsResponse'
+          type: array
+          x-stream-index: "005"
       required:
       - duration
       - session_id
@@ -10395,6 +10538,11 @@ components:
           - team
           type: string
           x-stream-index: "001.022"
+        event_hooks:
+          items:
+            $ref: '#/components/schemas/EventHook'
+          type: array
+          x-stream-index: "001.046"
         feeds_moderation_enabled:
           type: boolean
           x-stream-index: "001.042"
@@ -11600,6 +11748,26 @@ components:
       x-stream-event-doc-group: other
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    VideoReactionOverTimeResponse:
+      properties:
+        by_minute:
+          items:
+            $ref: '#/components/schemas/CountByMinuteResponse'
+          type: array
+          x-stream-index: "001"
+      type: object
+    VideoReactionsResponse:
+      nullable: true
+      properties:
+        count_over_time:
+          $ref: '#/components/schemas/VideoReactionOverTimeResponse'
+          x-stream-index: "002"
+        reaction:
+          type: string
+          x-stream-index: "001"
+      required:
+      - reaction
+      type: object
     VideoSettings:
       properties:
         access_request_enabled:
@@ -11705,6 +11873,8 @@ components:
           call.member_updated: '#/components/schemas/CallMemberUpdatedEvent'
           call.member_updated_permission: '#/components/schemas/CallMemberUpdatedPermissionEvent'
           call.missed: '#/components/schemas/CallMissedEvent'
+          call.moderation_blur: '#/components/schemas/CallModerationBlurEvent'
+          call.moderation_warning: '#/components/schemas/CallModerationWarningEvent'
           call.notification: '#/components/schemas/CallNotificationEvent'
           call.permission_request: '#/components/schemas/PermissionRequestEvent'
           call.permissions_updated: '#/components/schemas/UpdatedCallPermissionsEvent'
@@ -11768,6 +11938,8 @@ components:
       - $ref: '#/components/schemas/CallMemberUpdatedEvent'
       - $ref: '#/components/schemas/CallMemberUpdatedPermissionEvent'
       - $ref: '#/components/schemas/CallMissedEvent'
+      - $ref: '#/components/schemas/CallModerationBlurEvent'
+      - $ref: '#/components/schemas/CallModerationWarningEvent'
       - $ref: '#/components/schemas/CallNotificationEvent'
       - $ref: '#/components/schemas/CallReactionEvent'
       - $ref: '#/components/schemas/CallRecordingFailedEvent'
@@ -11869,7 +12041,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v175.6.0
+  version: v178.0.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
