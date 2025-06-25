@@ -2849,39 +2849,39 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: 001.002.024
+          x-stream-index: 001.002.025
         automod:
           enum:
           - disabled
           - simple
           - AI
           type: string
-          x-stream-index: 001.002.019
+          x-stream-index: 001.002.020
         automod_behavior:
           enum:
           - flag
           - block
           - shadow_block
           type: string
-          x-stream-index: 001.002.020
+          x-stream-index: 001.002.021
         automod_thresholds:
           $ref: '#/components/schemas/Thresholds'
-          x-stream-index: 001.002.025
+          x-stream-index: 001.002.026
         blocklist:
           type: string
-          x-stream-index: 001.002.021
+          x-stream-index: 001.002.022
         blocklist_behavior:
           enum:
           - flag
           - block
           - shadow_block
           type: string
-          x-stream-index: 001.002.022
+          x-stream-index: 001.002.023
         blocklists:
           items:
             $ref: '#/components/schemas/BlockListOptions'
           type: array
-          x-stream-index: 001.002.023
+          x-stream-index: 001.002.024
         commands:
           items:
             $ref: '#/components/schemas/Command'
@@ -2911,7 +2911,7 @@ components:
           format: int32
           maximum: 20000
           type: integer
-          x-stream-index: 001.002.018
+          x-stream-index: 001.002.019
         mutes:
           type: boolean
           x-stream-index: 001.002.009
@@ -2921,13 +2921,13 @@ components:
         partition_size:
           format: int32
           type: integer
-          x-stream-index: 001.002.026
+          x-stream-index: 001.002.027
         partition_ttl:
           example: 24h
           format: duration
           nullable: true
           type: string
-          x-stream-index: 001.002.027
+          x-stream-index: 001.002.028
         polls:
           type: boolean
           x-stream-index: 001.002.016
@@ -2954,7 +2954,7 @@ components:
           x-stream-index: 001.002.005
         skip_last_msg_update_for_system_msgs:
           type: boolean
-          x-stream-index: 001.002.028
+          x-stream-index: 001.002.029
         typing_events:
           type: boolean
           x-stream-index: 001.002.002
@@ -2968,6 +2968,9 @@ components:
         url_enrichment:
           type: boolean
           x-stream-index: 001.002.011
+        user_message_reminders:
+          type: boolean
+          x-stream-index: 001.002.017
       required:
       - created_at
       - updated_at
@@ -2987,6 +2990,7 @@ components:
       - reminders
       - mark_messages_pending
       - polls
+      - user_message_reminders
       - message_retention
       - max_message_length
       - automod
@@ -4104,6 +4108,43 @@ components:
       - blocked_mime_types
       - size_limit
       type: object
+    FileUploadRequest:
+      nullable: true
+      properties:
+        file:
+          description: file field
+          title: File
+          type: string
+          x-stream-index: "001"
+        user:
+          $ref: '#/components/schemas/OnlyUserID'
+          description: user for the request **server side only**
+          title: User
+          x-stream-index: "002"
+      type: object
+    FileUploadResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "003.001"
+        file:
+          description: URL to the uploaded asset. Should be used to put to `asset_url`
+            attachment field
+          title: File
+          type: string
+          x-stream-index: "001"
+        thumb_url:
+          description: URL of the file thumbnail for supported file formats. Should
+            be put to `thumb_url` attachment field
+          title: Thumbnail URL
+          type: string
+          x-stream-index: "002"
+      required:
+      - duration
+      type: object
     FrameRecordingResponse:
       properties:
         status:
@@ -4786,6 +4827,84 @@ components:
       - size
       - frames
       type: object
+    ImageSize:
+      properties:
+        crop:
+          description: Crop mode
+          enum:
+          - top
+          - bottom
+          - left
+          - right
+          - center
+          title: Crop
+          type: string
+          x-stream-index: "001"
+        height:
+          description: Target image height
+          format: int32
+          title: Height
+          type: integer
+          x-stream-index: "003"
+        resize:
+          description: Resize method
+          enum:
+          - clip
+          - crop
+          - scale
+          - fill
+          title: Resize
+          type: string
+          x-stream-index: "002"
+        width:
+          description: Target image width
+          format: int32
+          title: Width
+          type: integer
+          x-stream-index: "004"
+      title: Image size configuration
+      type: object
+    ImageUploadRequest:
+      nullable: true
+      properties:
+        file:
+          type: string
+          x-stream-index: "001.001"
+        upload_sizes:
+          description: field with JSON-encoded array of image size configurations
+          items:
+            $ref: '#/components/schemas/ImageSize'
+          title: Upload sizes
+          type: array
+          x-stream-index: "002"
+        user:
+          $ref: '#/components/schemas/OnlyUserID'
+          x-stream-index: "001.002"
+      type: object
+    ImageUploadResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: 001.003.001
+        file:
+          type: string
+          x-stream-index: "001.001"
+        thumb_url:
+          type: string
+          x-stream-index: "001.002"
+        upload_sizes:
+          description: Array of image size configurations
+          items:
+            $ref: '#/components/schemas/ImageSize'
+          title: Upload sizes
+          type: array
+          x-stream-index: "002"
+      required:
+      - duration
+      type: object
     Images:
       properties:
         fixed_height:
@@ -4957,22 +5076,40 @@ components:
           format: int32
           minimum: 0
           type: integer
-          x-stream-index: "002"
+          x-stream-index: "004"
         max_participants:
           format: int32
           type: integer
           x-stream-index: "001"
+        max_participants_exclude_owner:
+          type: boolean
+          x-stream-index: "003"
+        max_participants_exclude_roles:
+          items:
+            type: string
+          type: array
+          x-stream-index: "002"
       type: object
     LimitsSettingsResponse:
       properties:
         max_duration_seconds:
           format: int32
           type: integer
-          x-stream-index: "002"
+          x-stream-index: "004"
         max_participants:
           format: int32
           type: integer
           x-stream-index: "001"
+        max_participants_exclude_owner:
+          type: boolean
+          x-stream-index: "003"
+        max_participants_exclude_roles:
+          items:
+            type: string
+          type: array
+          x-stream-index: "002"
+      required:
+      - max_participants_exclude_roles
       type: object
     ListBlockListResponse:
       description: Basic response information
@@ -5196,6 +5333,14 @@ components:
           x-stream-index: "001"
       required:
       - mode
+      type: object
+    OnlyUserID:
+      properties:
+        id:
+          type: string
+          x-stream-index: "001"
+      required:
+      - id
       type: object
     OwnCapability:
       description: All possibility of string to use
@@ -8280,7 +8425,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v178.0.0
+  version: v180.1.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -8665,6 +8810,146 @@ paths:
       summary: Get OG
       tags:
       - product:common
+  /api/v2/uploads/file:
+    delete:
+      description: |
+        Deletes previously uploaded file
+      operationId: DeleteFileGlobal
+      parameters:
+      - in: query
+        name: url
+        schema:
+          description: File URL to delete
+          title: URL
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Delete file
+      tags:
+      - product:common
+      x-stream-sdk-name: DeleteFile
+    post:
+      description: |
+        Uploads file
+      operationId: UploadFileGlobal
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FileUploadRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileUploadResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Upload file
+      tags:
+      - product:common
+      x-stream-sdk-name: UploadFile
+  /api/v2/uploads/image:
+    delete:
+      description: |
+        Deletes previously uploaded image
+      operationId: DeleteImageGlobal
+      parameters:
+      - in: query
+        name: url
+        schema:
+          description: File URL to delete
+          title: URL
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Delete image
+      tags:
+      - product:common
+      x-stream-sdk-name: DeleteImage
+    post:
+      description: |
+        Uploads image
+      operationId: UploadImageGlobal
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ImageUploadRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImageUploadResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Upload image
+      tags:
+      - product:common
+      x-stream-sdk-name: UploadImage
   /api/v2/users:
     get:
       description: |
