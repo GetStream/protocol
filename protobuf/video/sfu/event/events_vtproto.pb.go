@@ -2706,9 +2706,9 @@ func (m *InboundStateNotification) MarshalToSizedBufferVT(dAtA []byte) (int, err
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.InboundVideoState) > 0 {
-		for iNdEx := len(m.InboundVideoState) - 1; iNdEx >= 0; iNdEx-- {
-			size, err := m.InboundVideoState[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
+	if len(m.InboundVideoStates) > 0 {
+		for iNdEx := len(m.InboundVideoStates) - 1; iNdEx >= 0; iNdEx-- {
+			size, err := m.InboundVideoStates[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
 			if err != nil {
 				return 0, err
 			}
@@ -4015,8 +4015,8 @@ func (m *InboundStateNotification) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
-	if len(m.InboundVideoState) > 0 {
-		for _, e := range m.InboundVideoState {
+	if len(m.InboundVideoStates) > 0 {
+		for _, e := range m.InboundVideoStates {
 			l = e.SizeVT()
 			n += 1 + l + sov(uint64(l))
 		}
@@ -9573,7 +9573,7 @@ func (m *InboundStateNotification) UnmarshalVT(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field InboundVideoState", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field InboundVideoStates", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -9600,8 +9600,8 @@ func (m *InboundStateNotification) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.InboundVideoState = append(m.InboundVideoState, &InboundVideoState{})
-			if err := m.InboundVideoState[len(m.InboundVideoState)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+			m.InboundVideoStates = append(m.InboundVideoStates, &InboundVideoState{})
+			if err := m.InboundVideoStates[len(m.InboundVideoStates)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
