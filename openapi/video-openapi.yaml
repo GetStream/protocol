@@ -84,6 +84,80 @@ components:
           type: string
           x-stream-index: "001"
       type: object
+    ActiveCallsFPSStats:
+      properties:
+        p05:
+          format: float
+          type: number
+          x-stream-index: "001"
+        p10:
+          format: float
+          type: number
+          x-stream-index: "002"
+        p50:
+          format: float
+          type: number
+          x-stream-index: "003"
+        p90:
+          format: float
+          type: number
+          x-stream-index: "004"
+      required:
+      - p05
+      - p10
+      - p50
+      - p90
+      type: object
+    ActiveCallsLatencyStats:
+      properties:
+        p50:
+          format: float
+          type: number
+          x-stream-index: "001"
+        p90:
+          format: float
+          type: number
+          x-stream-index: "002"
+      required:
+      - p50
+      - p90
+      type: object
+    ActiveCallsMetrics:
+      properties:
+        join_call_api:
+          $ref: '#/components/schemas/JoinCallAPIMetrics'
+          x-stream-index: "001"
+        publishers:
+          $ref: '#/components/schemas/PublishersMetrics'
+          x-stream-index: "002"
+        subscribers:
+          $ref: '#/components/schemas/SubscribersMetrics'
+          x-stream-index: "003"
+      type: object
+    ActiveCallsSummary:
+      properties:
+        active_calls:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+        active_publishers:
+          format: int32
+          type: integer
+          x-stream-index: "002"
+        active_subscribers:
+          format: int32
+          type: integer
+          x-stream-index: "003"
+        participants:
+          format: int32
+          type: integer
+          x-stream-index: "004"
+      required:
+      - active_calls
+      - active_publishers
+      - active_subscribers
+      - participants
+      type: object
     AsyncExportChannelsEvent:
       nullable: true
       properties:
@@ -3650,6 +3724,41 @@ components:
       required:
       - names
       type: object
+    GetActiveCallsStatusResponse:
+      description: Response containing active calls status information
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "001.001"
+        end_time:
+          description: End time of the status period
+          format: date-time
+          title: time.Time
+          type: string
+          x-stream-index: "003"
+        metrics:
+          $ref: '#/components/schemas/ActiveCallsMetrics'
+          description: Detailed metrics
+          title: '*ActiveCallsMetrics'
+          x-stream-index: "005"
+        start_time:
+          description: Start time of the status period
+          format: date-time
+          title: time.Time
+          type: string
+          x-stream-index: "002"
+        summary:
+          $ref: '#/components/schemas/ActiveCallsSummary'
+          description: Summary of active calls
+          title: '*ActiveCallsSummary'
+          x-stream-index: "004"
+      required:
+      - duration
+      - start_time
+      - end_time
+      title: GetActiveCallsStatusResponse
+      type: object
     GetCallReportResponse:
       description: Basic response information
       nullable: true
@@ -3932,6 +4041,23 @@ components:
       - layout
       title: HLSSettingsResponse
       type: object
+    JoinCallAPIMetrics:
+      properties:
+        failures:
+          format: float
+          type: number
+          x-stream-index: "002"
+        latency:
+          $ref: '#/components/schemas/ActiveCallsLatencyStats'
+          x-stream-index: "003"
+        total:
+          format: float
+          type: number
+          x-stream-index: "001"
+      required:
+      - total
+      - failures
+      type: object
     LayoutSettingsRequest:
       properties:
         detect_orientation:
@@ -3994,22 +4120,40 @@ components:
           format: int32
           minimum: 0
           type: integer
-          x-stream-index: "002"
+          x-stream-index: "004"
         max_participants:
           format: int32
           type: integer
           x-stream-index: "001"
+        max_participants_exclude_owner:
+          type: boolean
+          x-stream-index: "003"
+        max_participants_exclude_roles:
+          items:
+            type: string
+          type: array
+          x-stream-index: "002"
       type: object
     LimitsSettingsResponse:
       properties:
         max_duration_seconds:
           format: int32
           type: integer
-          x-stream-index: "002"
+          x-stream-index: "004"
         max_participants:
           format: int32
           type: integer
           x-stream-index: "001"
+        max_participants_exclude_owner:
+          type: boolean
+          x-stream-index: "003"
+        max_participants_exclude_roles:
+          items:
+            type: string
+          type: array
+          x-stream-index: "002"
+      required:
+      - max_participants_exclude_roles
       type: object
     ListCallTypeResponse:
       description: Response for ListCallType
@@ -4516,6 +4660,24 @@ components:
       type: object
     PrivacySettingsResponse:
       type: object
+    PublisherAllMetrics:
+      properties:
+        audio:
+          $ref: '#/components/schemas/PublisherAudioMetrics'
+          x-stream-index: "001"
+        rtt_ms:
+          $ref: '#/components/schemas/ActiveCallsLatencyStats'
+          x-stream-index: "003"
+        video:
+          $ref: '#/components/schemas/PublisherVideoMetrics'
+          x-stream-index: "002"
+      type: object
+    PublisherAudioMetrics:
+      properties:
+        jitter_ms:
+          $ref: '#/components/schemas/ActiveCallsLatencyStats'
+          x-stream-index: "001"
+      type: object
     PublisherStatsResponse:
       properties:
         by_track:
@@ -4534,6 +4696,24 @@ components:
       required:
       - total
       - unique
+      type: object
+    PublisherVideoMetrics:
+      properties:
+        fps_30:
+          $ref: '#/components/schemas/ActiveCallsFPSStats'
+          x-stream-index: "002"
+        frame_encoding_time_ms:
+          $ref: '#/components/schemas/ActiveCallsLatencyStats'
+          x-stream-index: "003"
+        jitter_ms:
+          $ref: '#/components/schemas/ActiveCallsLatencyStats'
+          x-stream-index: "001"
+      type: object
+    PublishersMetrics:
+      properties:
+        all:
+          $ref: '#/components/schemas/PublisherAllMetrics'
+          x-stream-index: "001"
       type: object
     PushNotificationSettingsResponse:
       properties:
@@ -5721,6 +5901,30 @@ components:
       - duration
       title: Response
       type: object
+    SubscriberAllMetrics:
+      properties:
+        audio:
+          $ref: '#/components/schemas/SubscriberAudioMetrics'
+          x-stream-index: "001"
+        rtt_ms:
+          $ref: '#/components/schemas/ActiveCallsLatencyStats'
+          x-stream-index: "003"
+        video:
+          $ref: '#/components/schemas/SubscriberVideoMetrics'
+          x-stream-index: "002"
+      type: object
+    SubscriberAudioMetrics:
+      properties:
+        concealment_pct:
+          $ref: '#/components/schemas/ActiveCallsLatencyStats'
+          x-stream-index: "003"
+        jitter_ms:
+          $ref: '#/components/schemas/ActiveCallsLatencyStats'
+          x-stream-index: "001"
+        packets_lost_pct:
+          $ref: '#/components/schemas/ActiveCallsLatencyStats'
+          x-stream-index: "002"
+      type: object
     SubscriberStatsResponse:
       properties:
         total:
@@ -5739,6 +5943,24 @@ components:
       - total
       - unique
       - total_subscribed_duration_seconds
+      type: object
+    SubscriberVideoMetrics:
+      properties:
+        fps_30:
+          $ref: '#/components/schemas/ActiveCallsFPSStats'
+          x-stream-index: "002"
+        jitter_ms:
+          $ref: '#/components/schemas/ActiveCallsLatencyStats'
+          x-stream-index: "001"
+        packets_lost_pct:
+          $ref: '#/components/schemas/ActiveCallsLatencyStats'
+          x-stream-index: "003"
+      type: object
+    SubscribersMetrics:
+      properties:
+        all:
+          $ref: '#/components/schemas/SubscriberAllMetrics'
+          x-stream-index: "001"
       type: object
     TargetResolution:
       properties:
@@ -6377,7 +6599,7 @@ components:
           x-stream-index: "023"
         language:
           type: string
-          x-stream-index: "034"
+          x-stream-index: "035"
         last_active:
           format: date-time
           readOnly: true
@@ -6398,7 +6620,7 @@ components:
         revoke_tokens_issued_before:
           format: date-time
           type: string
-          x-stream-index: "041"
+          x-stream-index: "042"
         role:
           type: string
           x-stream-index: "004"
@@ -6406,7 +6628,7 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "035"
+          x-stream-index: "036"
         teams_role:
           additionalProperties:
             type: string
@@ -7181,9 +7403,36 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v178.0.0
+  version: v186.0.2
 openapi: 3.0.3
 paths:
+  /video/active_calls_status:
+    get:
+      description: |
+        Get the current status of all active calls including metrics and summary information
+      operationId: GetActiveCallsStatus
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetActiveCallsStatusResponse'
+          description: GetActiveCallsStatusResponse
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get active calls status
+      tags:
+      - product:video
   /video/call/{type}/{id}:
     get:
       description: |2+
