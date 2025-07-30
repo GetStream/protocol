@@ -427,7 +427,7 @@ components:
           type: string
           x-stream-index: "002.001"
         type:
-          default: export.moderation_logs.error
+          default: export.bulk_image_moderation.error
           type: string
           x-stream-index: "003.002"
       required:
@@ -1356,6 +1356,11 @@ components:
           type: string
           writeOnly: true
           x-stream-index: "003"
+        avg_response_time:
+          format: int32
+          readOnly: true
+          type: integer
+          x-stream-index: "001.046"
         ban_expires:
           format: date-time
           type: number
@@ -1797,6 +1802,9 @@ components:
         geofencing:
           $ref: '#/components/schemas/GeofenceSettings'
           x-stream-index: "008"
+        ingress:
+          $ref: '#/components/schemas/IngressSettings'
+          x-stream-index: "014"
         limits:
           $ref: '#/components/schemas/LimitsSettings'
           x-stream-index: "012"
@@ -1839,6 +1847,9 @@ components:
         geofencing:
           $ref: '#/components/schemas/GeofenceSettingsResponse'
           x-stream-index: "004"
+        ingress:
+          $ref: '#/components/schemas/IngressSettingsResponse'
+          x-stream-index: "014"
         limits:
           $ref: '#/components/schemas/LimitsSettingsResponse'
           x-stream-index: "012"
@@ -3363,6 +3374,11 @@ components:
       type: object
     EntityCreator:
       properties:
+        avg_response_time:
+          format: int32
+          readOnly: true
+          type: integer
+          x-stream-index: "001.046"
         ban_count:
           format: int32
           type: integer
@@ -3457,6 +3473,10 @@ components:
       type: object
     EntityCreatorResponse:
       properties:
+        avg_response_time:
+          format: int32
+          type: integer
+          x-stream-index: 001.001.018
         ban_count:
           description: Number of minor actions performed on the user
           format: int32
@@ -4125,6 +4145,157 @@ components:
       - fixed_width
       - fixed_width_still
       - fixed_width_downsampled
+      type: object
+    IngressAudioEncodingOptions:
+      properties:
+        bitrate:
+          maximum: 128000
+          minimum: 16000
+          type: integer
+          x-stream-index: "003"
+        channels:
+          enum:
+          - "1"
+          - "2"
+          format: int32
+          type: integer
+          x-stream-index: "001"
+        enable_dtx:
+          type: boolean
+          x-stream-index: "002"
+      required:
+      - channels
+      - enable_dtx
+      - bitrate
+      type: object
+    IngressAudioEncodingResponse:
+      properties:
+        bitrate:
+          format: int32
+          type: integer
+          x-stream-index: "003"
+        channels:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+        enable_dtx:
+          type: boolean
+          x-stream-index: "002"
+      required:
+      - channels
+      - enable_dtx
+      - bitrate
+      type: object
+    IngressSettings:
+      properties:
+        audio_encoding_options:
+          $ref: '#/components/schemas/IngressAudioEncodingOptions'
+          x-stream-index: "002"
+        enabled:
+          type: boolean
+          x-stream-index: "001"
+        video_encoding_options:
+          additionalProperties:
+            $ref: '#/components/schemas/IngressVideoEncodingOptions'
+          type: object
+          x-stream-index: "003"
+      required:
+      - enabled
+      type: object
+    IngressSettingsResponse:
+      properties:
+        audio_encoding_options:
+          $ref: '#/components/schemas/IngressAudioEncodingResponse'
+          x-stream-index: "002"
+        enabled:
+          type: boolean
+          x-stream-index: "001"
+        video_encoding_options:
+          additionalProperties:
+            $ref: '#/components/schemas/IngressVideoEncodingResponse'
+          type: object
+          x-stream-index: "003"
+      required:
+      - enabled
+      type: object
+    IngressVideoEncodingOptions:
+      properties:
+        layers:
+          items:
+            $ref: '#/components/schemas/IngressVideoLayer'
+          minimum: 1
+          type: array
+          x-stream-index: "001"
+      required:
+      - layers
+      type: object
+    IngressVideoEncodingResponse:
+      properties:
+        layers:
+          items:
+            $ref: '#/components/schemas/IngressVideoLayerResponse'
+          type: array
+          x-stream-index: "001"
+      required:
+      - layers
+      type: object
+    IngressVideoLayer:
+      nullable: true
+      properties:
+        bitrate:
+          minimum: 1000
+          type: integer
+          x-stream-index: "002"
+        codec:
+          enum:
+          - h264
+          - vp8
+          type: string
+          x-stream-index: "001"
+        frame_rate:
+          maximum: 60
+          minimum: 1
+          type: integer
+          x-stream-index: "003"
+        max_dimension:
+          minimum: 240
+          type: integer
+          x-stream-index: "005"
+        min_dimension:
+          minimum: 240
+          type: integer
+          x-stream-index: "004"
+      required:
+      - codec
+      - bitrate
+      - frame_rate
+      - min_dimension
+      - max_dimension
+      type: object
+    IngressVideoLayerResponse:
+      nullable: true
+      properties:
+        bitrate:
+          type: integer
+          x-stream-index: "002"
+        codec:
+          type: string
+          x-stream-index: "001"
+        frame_rate_limit:
+          type: integer
+          x-stream-index: "005"
+        max_dimension:
+          type: integer
+          x-stream-index: "004"
+        min_dimension:
+          type: integer
+          x-stream-index: "003"
+      required:
+      - codec
+      - bitrate
+      - min_dimension
+      - max_dimension
+      - frame_rate_limit
       type: object
     LabelThresholds:
       properties:
@@ -5180,6 +5351,10 @@ components:
       type: object
     OwnUser:
       properties:
+        avg_response_time:
+          format: int32
+          type: integer
+          x-stream-index: "046"
         banned:
           type: boolean
           x-stream-index: "016"
@@ -5450,11 +5625,6 @@ components:
       type: object
     PollResponseData:
       properties:
-        Custom:
-          additionalProperties: {}
-          type: object
-          writeOnly: true
-          x-stream-index: "021"
         allow_answers:
           type: boolean
           x-stream-index: "008"
@@ -5475,6 +5645,10 @@ components:
         created_by_id:
           type: string
           x-stream-index: "017"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "021"
         description:
           type: string
           x-stream-index: "003"
@@ -5551,7 +5725,7 @@ components:
       - created_by_id
       - created_at
       - updated_at
-      - Custom
+      - custom
       type: object
     PollVote:
       nullable: true
@@ -6358,6 +6532,9 @@ components:
         ai_text_severity:
           type: string
           x-stream-index: "021"
+        archived_at:
+          $ref: '#/components/schemas/NullTime'
+          x-stream-index: "043"
         assigned_to:
           $ref: '#/components/schemas/User'
           x-stream-index: "032"
@@ -6401,6 +6578,16 @@ components:
         feeds_v2_reaction:
           $ref: '#/components/schemas/Reaction'
           x-stream-index: "042"
+        flag_labels:
+          items:
+            type: string
+          type: array
+          x-stream-index: "045"
+        flag_types:
+          items:
+            type: string
+          type: array
+          x-stream-index: "044"
         flags:
           items:
             $ref: '#/components/schemas/Flag'
@@ -6442,6 +6629,11 @@ components:
         recommended_action:
           type: string
           x-stream-index: "017"
+        reporter_ids:
+          items:
+            type: string
+          type: array
+          x-stream-index: "046"
         reviewed_at:
           $ref: '#/components/schemas/NullTime'
           x-stream-index: "022"
@@ -6490,6 +6682,10 @@ components:
       - flags
       - actions
       - content_changed
+      - archived_at
+      - flag_types
+      - flag_labels
+      - reporter_ids
       type: object
     ReviewQueueItemNewEvent:
       description: This event is sent when a new moderation review queue item is created
@@ -7167,6 +7363,7 @@ components:
           - delete_user
           - unblock
           - shadow_block
+          - unmask
           - kick_user
           - end_call
           title: Action Type
@@ -7716,6 +7913,11 @@ components:
       type: object
     User:
       properties:
+        avg_response_time:
+          format: int32
+          readOnly: true
+          type: integer
+          x-stream-index: "046"
         ban_expires:
           format: date-time
           type: number
@@ -7898,6 +8100,10 @@ components:
     UserResponse:
       description: User response object
       properties:
+        avg_response_time:
+          format: int32
+          type: integer
+          x-stream-index: "001.018"
         ban_expires:
           description: Date when ban expires
           format: date-time
@@ -8324,7 +8530,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v186.5.0
+  version: v187.6.1
 openapi: 3.0.3
 paths:
   /api/v2/moderation/ban:
