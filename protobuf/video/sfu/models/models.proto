@@ -173,6 +173,10 @@ message PublishOption {
   //   independently. For instance, an `id` is critical when stopping a specific
   //   publish request without affecting others.
   int32 id = 8;
+  // If true, instructs the publisher to send only the highest available simulcast layer,
+  // disabling all lower layers. This applies to simulcast encodings.
+  // For SVC codecs, prefer using the L1T3 (single spatial, 3 temporal layers) mode instead.
+  bool use_single_layer = 9;
 }
 
 message Codec {
@@ -218,8 +222,10 @@ enum ErrorCode {
   ERROR_CODE_PARTICIPANT_MIGRATING = 203;
   ERROR_CODE_PARTICIPANT_RECONNECT_FAILED = 204;
   ERROR_CODE_PARTICIPANT_MEDIA_TRANSPORT_FAILURE = 205;
+  ERROR_CODE_PARTICIPANT_SIGNAL_LOST = 206;
 
   ERROR_CODE_CALL_NOT_FOUND = 300;
+  ERROR_CODE_CALL_PARTICIPANT_LIMIT_REACHED = 301;
 
   ERROR_CODE_REQUEST_VALIDATION_FAILED = 400;
   ERROR_CODE_UNAUTHENTICATED = 401;
@@ -408,3 +414,26 @@ enum AppleThermalState {
   APPLE_THERMAL_STATE_SERIOUS = 3;
   APPLE_THERMAL_STATE_CRITICAL = 4;
 }
+
+// PerformanceStats represents the encoding/decoding statistics for a track.
+message PerformanceStats {
+  // the type of the track (e.g., video, audio, screen share)
+  TrackType track_type = 1;
+  // the codec used for the track
+  Codec codec = 2;
+  // the average encode/decode time in ms
+  float avg_frame_time_ms = 3;
+  // the average fps for the track
+  float avg_fps = 4;
+  // the track dimensions
+  VideoDimension video_dimension = 5;
+  // the target bitrate for the track, only for published tracks
+  int32 target_bitrate = 6;
+}
+
+// ClientCapability defines a feature that client supports
+enum ClientCapability {
+  CLIENT_CAPABILITY_UNSPECIFIED = 0;
+  // Enables SFU pausing inbound video
+  CLIENT_CAPABILITY_SUBSCRIBER_VIDEO_PAUSE = 1;
+};

@@ -132,13 +132,27 @@ components:
       required:
       - enabled
       - development
-      - notification_template
       type: object
     APNS:
       properties:
         body:
           type: string
           x-stream-index: "002"
+        content-available:
+          format: int32
+          type: integer
+          x-stream-index: "004"
+        data:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "006"
+        mutable-content:
+          format: int32
+          type: integer
+          x-stream-index: "005"
+        sound:
+          type: string
+          x-stream-index: "003"
         title:
           type: string
           x-stream-index: "001"
@@ -169,14 +183,79 @@ components:
       - text
       - type
       type: object
-    AggregatedStats:
+    ActiveCallsFPSStats:
       properties:
-        publisher_aggregate_stats:
-          $ref: '#/components/schemas/PublisherAggregateStats'
-          x-stream-index: "002"
-        turn:
-          $ref: '#/components/schemas/TURNAggregatedStats'
+        p05:
+          format: float
+          type: number
           x-stream-index: "001"
+        p10:
+          format: float
+          type: number
+          x-stream-index: "002"
+        p50:
+          format: float
+          type: number
+          x-stream-index: "003"
+        p90:
+          format: float
+          type: number
+          x-stream-index: "004"
+      required:
+      - p05
+      - p10
+      - p50
+      - p90
+      type: object
+    ActiveCallsLatencyStats:
+      properties:
+        p50:
+          format: float
+          type: number
+          x-stream-index: "001"
+        p90:
+          format: float
+          type: number
+          x-stream-index: "002"
+      required:
+      - p50
+      - p90
+      type: object
+    ActiveCallsMetrics:
+      properties:
+        join_call_api:
+          $ref: '#/components/schemas/JoinCallAPIMetrics'
+          x-stream-index: "001"
+        publishers:
+          $ref: '#/components/schemas/PublishersMetrics'
+          x-stream-index: "002"
+        subscribers:
+          $ref: '#/components/schemas/SubscribersMetrics'
+          x-stream-index: "003"
+      type: object
+    ActiveCallsSummary:
+      properties:
+        active_calls:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+        active_publishers:
+          format: int32
+          type: integer
+          x-stream-index: "002"
+        active_subscribers:
+          format: int32
+          type: integer
+          x-stream-index: "003"
+        participants:
+          format: int32
+          type: integer
+          x-stream-index: "004"
+      required:
+      - active_calls
+      - active_publishers
+      - active_subscribers
+      - participants
       type: object
     AppResponseFields:
       properties:
@@ -226,6 +305,11 @@ components:
         enforce_unique_usernames:
           type: string
           x-stream-index: "023"
+        event_hooks:
+          items:
+            $ref: '#/components/schemas/EventHook'
+          type: array
+          x-stream-index: "045"
         file_upload_config:
           $ref: '#/components/schemas/FileUploadConfig'
           x-stream-index: "030"
@@ -255,6 +339,9 @@ components:
         image_upload_config:
           $ref: '#/components/schemas/FileUploadConfig'
           x-stream-index: "031"
+        moderation_dashboard_preferences:
+          $ref: '#/components/schemas/ModerationDashboardPreferences'
+          x-stream-index: "044"
         moderation_enabled:
           type: boolean
           x-stream-index: "041"
@@ -318,6 +405,9 @@ components:
         suspended_explanation:
           type: string
           x-stream-index: "010"
+        use_hook_v2:
+          type: boolean
+          x-stream-index: "046"
         user_search_disallowed_roles:
           items:
             type: string
@@ -369,6 +459,8 @@ components:
       - moderation_enabled
       - moderation_multitenant_blocklist_enabled
       - guest_user_creation_disabled
+      - event_hooks
+      - use_hook_v2
       type: object
     AsyncExportChannelsEvent:
       nullable: true
@@ -562,7 +654,7 @@ components:
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "021"
+          x-stream-index: "018"
         fallback:
           type: string
           x-stream-index: "002"
@@ -579,41 +671,24 @@ components:
           x-stream-index: "014"
         giphy:
           $ref: '#/components/schemas/Images'
-          x-stream-index: "022"
+          x-stream-index: "019"
         image_url:
           type: string
           x-stream-index: "011"
-        latitude:
-          description: The latitude of the location
-          format: float
-          title: Latitude
-          type: number
-          x-stream-index: "018"
-        longitude:
-          description: The longitude of the location
-          format: float
-          title: Longitude
-          type: number
-          x-stream-index: "019"
         og_scrape_url:
           type: string
-          x-stream-index: "023"
+          x-stream-index: "020"
         original_height:
           format: int32
           type: integer
-          x-stream-index: "025"
+          x-stream-index: "022"
         original_width:
           format: int32
           type: integer
-          x-stream-index: "024"
+          x-stream-index: "021"
         pretext:
           type: string
           x-stream-index: "004"
-        stopped_sharing:
-          description: If the user has stopped sharing their location
-          title: Stopped Sharing
-          type: boolean
-          x-stream-index: "020"
         text:
           type: string
           x-stream-index: "010"
@@ -1336,6 +1411,11 @@ components:
           format: date-time
           type: number
           x-stream-index: "001.002"
+        reason:
+          description: The reason why the call ended, if available
+          title: CallEndedReason
+          type: string
+          x-stream-index: "005"
         type:
           default: call.ended
           description: 'The type of event: "call.ended" in this case'
@@ -1359,53 +1439,6 @@ components:
       x-stream-event-doc-group: call
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
-    CallEvent:
-      nullable: true
-      properties:
-        category:
-          type: string
-          x-stream-index: "009"
-        component:
-          type: string
-          x-stream-index: "007"
-        description:
-          type: string
-          x-stream-index: "004"
-        end_timestamp:
-          format: int32
-          type: integer
-          x-stream-index: "002"
-        internal:
-          type: boolean
-          x-stream-index: "006"
-        issue_tags:
-          items:
-            type: string
-          type: array
-          x-stream-index: "010"
-        kind:
-          type: string
-          x-stream-index: "008"
-        severity:
-          format: int32
-          type: integer
-          x-stream-index: "003"
-        timestamp:
-          format: int32
-          type: integer
-          x-stream-index: "001"
-        type:
-          type: string
-          x-stream-index: "005"
-      required:
-      - timestamp
-      - end_timestamp
-      - severity
-      - description
-      - type
-      - internal
-      - kind
-      type: object
     CallFrameRecordingFailedEvent:
       description: This event is sent when frame recording has failed
       properties:
@@ -1934,6 +1967,74 @@ components:
       x-stream-event-doc-group: ring
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    CallModerationBlurEvent:
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "001.002"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "004"
+        type:
+          default: call.moderation_blur
+          type: string
+          x-stream-index: "001.001"
+        user_id:
+          type: string
+          x-stream-index: "003"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - user_id
+      - custom
+      title: CallModerationBlurEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallModerationWarningEvent:
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "001.002"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "005"
+        message:
+          type: string
+          x-stream-index: "004"
+        type:
+          default: call.moderation_warning
+          type: string
+          x-stream-index: "001.001"
+        user_id:
+          type: string
+          x-stream-index: "003"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - user_id
+      - message
+      - custom
+      title: CallModerationWarningEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     CallNotificationEvent:
       description: This event is sent to all call members to notify they are getting
         called
@@ -2284,6 +2385,9 @@ components:
     CallRequest:
       description: CallRequest is the payload for creating a call.
       properties:
+        channel_cid:
+          type: string
+          x-stream-index: "009"
         created_by:
           $ref: '#/components/schemas/UserRequest'
           title: The user that create this call
@@ -2331,6 +2435,9 @@ components:
         captioning:
           type: boolean
           x-stream-index: "013"
+        channel_cid:
+          type: string
+          x-stream-index: "024"
         cid:
           description: The unique identifier for a call (<type>:<id>)
           title: CID
@@ -2989,6 +3096,38 @@ components:
       - blocked_users
       title: CallStateResponseFields
       type: object
+    CallStatsReportReadyEvent:
+      description: This event is sent when the insights report is ready
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "001.002"
+        session_id:
+          description: Call session ID
+          title: Session ID
+          type: string
+          x-stream-index: "003.001"
+        type:
+          default: call.stats_report_ready
+          description: The type of event, "call.report_ready" in this case
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - session_id
+      title: CallStatsReportReadyEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     CallStatsReportSummaryResponse:
       properties:
         call_cid:
@@ -3027,16 +3166,6 @@ components:
       - call_status
       - call_duration_seconds
       type: object
-    CallTimeline:
-      properties:
-        events:
-          items:
-            $ref: '#/components/schemas/CallEvent'
-          type: array
-          x-stream-index: "001"
-      required:
-      - events
-      type: object
     CallTranscription:
       description: CallTranscription represents a transcription of a call.
       properties:
@@ -3049,6 +3178,10 @@ components:
           title: The filename of the transcription.
           type: string
           x-stream-index: "001"
+        session_id:
+          title: The session ID of the transcription.
+          type: string
+          x-stream-index: "005"
         start_time:
           format: date-time
           title: The start time of the transcription.
@@ -3063,6 +3196,7 @@ components:
       - url
       - start_time
       - end_time
+      - session_id
       title: CallTranscription
       type: object
     CallTranscriptionFailedEvent:
@@ -3078,6 +3212,11 @@ components:
         egress_id:
           type: string
           x-stream-index: "003"
+        error:
+          description: The error message detailing why transcription failed.
+          title: string
+          type: string
+          x-stream-index: "004"
         type:
           default: call.transcription_failed
           description: 'The type of event: "call.transcription_failed" in this case'
@@ -3450,51 +3589,143 @@ components:
       required:
       - daily
       type: object
+    Channel:
+      properties:
+        active_live_locations:
+          items:
+            $ref: '#/components/schemas/SharedLocation'
+          type: array
+          x-stream-index: "034"
+        auto_translation_enabled:
+          type: boolean
+          x-stream-index: "029"
+        auto_translation_language:
+          type: string
+          x-stream-index: "030"
+        cid:
+          type: string
+          x-stream-index: "003"
+        config:
+          $ref: '#/components/schemas/ChannelConfig'
+          x-stream-index: "026"
+        config_overrides:
+          $ref: '#/components/schemas/ConfigOverrides'
+          x-stream-index: "027"
+        cooldown:
+          format: int32
+          type: integer
+          x-stream-index: "031"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "009"
+        created_by:
+          $ref: '#/components/schemas/User'
+          x-stream-index: "008"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "019"
+        deleted_at:
+          format: date-time
+          type: number
+          x-stream-index: "011"
+        disabled:
+          type: boolean
+          x-stream-index: "017"
+        frozen:
+          type: boolean
+          x-stream-index: "016"
+        id:
+          type: string
+          x-stream-index: "004"
+        invites:
+          items:
+            $ref: '#/components/schemas/ChannelMember'
+          type: array
+          x-stream-index: "022"
+        last_campaigns:
+          type: string
+          x-stream-index: "032"
+        last_message_at:
+          format: date-time
+          type: number
+          x-stream-index: "006"
+        member_count:
+          format: int32
+          type: integer
+          x-stream-index: "021"
+        members:
+          items:
+            $ref: '#/components/schemas/ChannelMember'
+          type: array
+          x-stream-index: "020"
+        team:
+          type: string
+          x-stream-index: "028"
+        truncated_by:
+          $ref: '#/components/schemas/User'
+          x-stream-index: "015"
+        type:
+          type: string
+          x-stream-index: "005"
+        updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "010"
+      required:
+      - cid
+      - id
+      - type
+      - created_at
+      - updated_at
+      - frozen
+      - disabled
+      - custom
+      - auto_translation_language
+      type: object
     ChannelConfig:
-      nullable: true
       properties:
         allowed_flag_reasons:
           items:
             type: string
           type: array
-          x-stream-index: "001.024"
+          x-stream-index: "001.026"
         automod:
           enum:
           - disabled
           - simple
           - AI
           type: string
-          x-stream-index: "001.019"
+          x-stream-index: "001.021"
         automod_behavior:
           enum:
           - flag
           - block
           - shadow_block
           type: string
-          x-stream-index: "001.020"
+          x-stream-index: "001.022"
         automod_thresholds:
           $ref: '#/components/schemas/Thresholds'
-          x-stream-index: "001.025"
+          x-stream-index: "001.027"
         blocklist:
           type: string
-          x-stream-index: "001.021"
+          x-stream-index: "001.023"
         blocklist_behavior:
           enum:
           - flag
           - block
           - shadow_block
           type: string
-          x-stream-index: "001.022"
+          x-stream-index: "001.024"
         blocklists:
           items:
             $ref: '#/components/schemas/BlockListOptions'
           type: array
-          x-stream-index: "001.023"
+          x-stream-index: "001.025"
         commands:
-          description: List of commands that channel supports
           items:
             type: string
-          title: Commands
           type: array
           x-stream-index: "003"
         connect_events:
@@ -3514,7 +3745,7 @@ components:
           format: int32
           maximum: 20000
           type: integer
-          x-stream-index: "001.018"
+          x-stream-index: "001.020"
         mutes:
           type: boolean
           x-stream-index: "001.009"
@@ -3524,13 +3755,10 @@ components:
         partition_size:
           format: int32
           type: integer
-          x-stream-index: "001.026"
+          x-stream-index: "001.028"
         partition_ttl:
-          example: 24h
-          format: duration
-          nullable: true
-          type: string
-          x-stream-index: "001.027"
+          type: integer
+          x-stream-index: "001.029"
         polls:
           type: boolean
           x-stream-index: "001.016"
@@ -3555,9 +3783,12 @@ components:
         search:
           type: boolean
           x-stream-index: "001.005"
+        shared_locations:
+          type: boolean
+          x-stream-index: "001.018"
         skip_last_msg_update_for_system_msgs:
           type: boolean
-          x-stream-index: "001.028"
+          x-stream-index: "001.030"
         typing_events:
           type: boolean
           x-stream-index: "001.002"
@@ -3571,6 +3802,9 @@ components:
         url_enrichment:
           type: boolean
           x-stream-index: "001.011"
+        user_message_reminders:
+          type: boolean
+          x-stream-index: "001.017"
       required:
       - name
       - typing_events
@@ -3588,6 +3822,8 @@ components:
       - reminders
       - mark_messages_pending
       - polls
+      - user_message_reminders
+      - shared_locations
       - message_retention
       - max_message_length
       - automod
@@ -3603,39 +3839,39 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: 001.002.024
+          x-stream-index: 001.002.026
         automod:
           enum:
           - disabled
           - simple
           - AI
           type: string
-          x-stream-index: 001.002.019
+          x-stream-index: 001.002.021
         automod_behavior:
           enum:
           - flag
           - block
           - shadow_block
           type: string
-          x-stream-index: 001.002.020
+          x-stream-index: 001.002.022
         automod_thresholds:
           $ref: '#/components/schemas/Thresholds'
-          x-stream-index: 001.002.025
+          x-stream-index: 001.002.027
         blocklist:
           type: string
-          x-stream-index: 001.002.021
+          x-stream-index: 001.002.023
         blocklist_behavior:
           enum:
           - flag
           - block
           - shadow_block
           type: string
-          x-stream-index: 001.002.022
+          x-stream-index: 001.002.024
         blocklists:
           items:
             $ref: '#/components/schemas/BlockListOptions'
           type: array
-          x-stream-index: 001.002.023
+          x-stream-index: 001.002.025
         commands:
           items:
             $ref: '#/components/schemas/Command'
@@ -3665,7 +3901,7 @@ components:
           format: int32
           maximum: 20000
           type: integer
-          x-stream-index: 001.002.018
+          x-stream-index: 001.002.020
         mutes:
           type: boolean
           x-stream-index: 001.002.009
@@ -3675,13 +3911,13 @@ components:
         partition_size:
           format: int32
           type: integer
-          x-stream-index: 001.002.026
+          x-stream-index: 001.002.028
         partition_ttl:
           example: 24h
           format: duration
           nullable: true
           type: string
-          x-stream-index: 001.002.027
+          x-stream-index: 001.002.029
         polls:
           type: boolean
           x-stream-index: 001.002.016
@@ -3706,9 +3942,12 @@ components:
         search:
           type: boolean
           x-stream-index: 001.002.005
+        shared_locations:
+          type: boolean
+          x-stream-index: 001.002.018
         skip_last_msg_update_for_system_msgs:
           type: boolean
-          x-stream-index: 001.002.028
+          x-stream-index: 001.002.030
         typing_events:
           type: boolean
           x-stream-index: 001.002.002
@@ -3722,6 +3961,9 @@ components:
         url_enrichment:
           type: boolean
           x-stream-index: 001.002.011
+        user_message_reminders:
+          type: boolean
+          x-stream-index: 001.002.017
       required:
       - created_at
       - updated_at
@@ -3741,6 +3983,8 @@ components:
       - reminders
       - mark_messages_pending
       - polls
+      - user_message_reminders
+      - shared_locations
       - message_retention
       - max_message_length
       - automod
@@ -3920,6 +4164,7 @@ components:
       - send-restricted-visibility-message
       - send-typing-events
       - set-channel-cooldown
+      - share-location
       - skip-slow-mode
       - slow-mode
       - typing-events
@@ -4086,6 +4331,12 @@ components:
       - custom
       title: Channel
       type: object
+    ChatActivityStatsResponse:
+      properties:
+        Messages:
+          $ref: '#/components/schemas/MessageStatsResponse'
+          x-stream-index: "001"
+      type: object
     CheckExternalStorageResponse:
       description: Basic response information
       nullable: true
@@ -4113,6 +4364,17 @@ components:
           type: string
           x-stream-docs-page-id: push_template
           x-stream-index: "002"
+        event_type:
+          description: 'Type of event for push templates (default: message.new)'
+          enum:
+          - message.new
+          - message.updated
+          - reaction.new
+          - reaction.updated
+          - notification.reminder_due
+          title: Event type
+          type: string
+          x-stream-index: "008"
         firebase_data_template:
           description: Push message data template for Firebase
           title: Firebase data template
@@ -4152,10 +4414,10 @@ components:
           x-stream-index: "005"
         user:
           $ref: '#/components/schemas/UserRequest'
-          x-stream-index: "008.002"
+          x-stream-index: "009.002"
         user_id:
           type: string
-          x-stream-index: "008.001"
+          x-stream-index: "009.001"
       title: CheckPushRequest
       type: object
     CheckPushResponse:
@@ -4172,7 +4434,12 @@ components:
             key: device_id
         duration:
           type: string
-          x-stream-index: "007.001"
+          x-stream-index: "008.001"
+        event_type:
+          description: The event type that was tested
+          title: Event type
+          type: string
+          x-stream-index: "004"
         general_errors:
           description: List of general errors
           items:
@@ -4183,17 +4450,17 @@ components:
         rendered_apn_template:
           title: Rendered APN template
           type: string
-          x-stream-index: "004"
+          x-stream-index: "005"
         rendered_firebase_template:
           title: Rendered Firebase template
           type: string
-          x-stream-index: "005"
+          x-stream-index: "006"
         rendered_message:
           additionalProperties:
             type: string
           title: Rendered message
           type: object
-          x-stream-index: "006"
+          x-stream-index: "007"
         skip_devices:
           description: Don't require existing devices to render templates
           title: Skip devices
@@ -4435,32 +4702,76 @@ components:
       - set
       title: Command
       type: object
-    Coordinates:
+    ConfigOverrides:
       properties:
-        latitude:
-          format: float
-          type: number
-          x-stream-index: "001"
-        longitude:
-          format: float
-          type: number
-          x-stream-index: "002"
-      required:
-      - latitude
-      - longitude
-      type: object
-    Count:
-      properties:
-        approximate:
+        blocklist:
+          type: string
+          x-stream-index: "008"
+        blocklist_behavior:
+          enum:
+          - flag
+          - block
+          type: string
+          x-stream-index: "009"
+        commands:
+          items:
+            type: string
+          type: array
+          x-stream-index: "011"
+        grants:
+          additionalProperties:
+            items:
+              type: string
+            type: array
+          type: object
+          x-stream-index: "010"
+        max_message_length:
+          format: int32
+          maximum: 20000
+          type: integer
+          x-stream-index: "007"
+        quotes:
+          type: boolean
+          x-stream-index: "004"
+        reactions:
           type: boolean
           x-stream-index: "002"
-        value:
+        replies:
+          type: boolean
+          x-stream-index: "003"
+        shared_locations:
+          type: boolean
+          x-stream-index: "013"
+        typing_events:
+          type: boolean
+          x-stream-index: "001"
+        uploads:
+          type: boolean
+          x-stream-index: "005"
+        url_enrichment:
+          type: boolean
+          x-stream-index: "006"
+        user_message_reminders:
+          type: boolean
+          x-stream-index: "012"
+      required:
+      - grants
+      - commands
+      type: object
+    CountByMinuteResponse:
+      nullable: true
+      properties:
+        count:
           format: int32
           type: integer
+          x-stream-index: "002"
+        start_ts:
+          format: date-time
+          type: number
           x-stream-index: "001"
       required:
-      - value
-      - approximate
+      - start_ts
+      - count
       type: object
     CreateBlockListRequest:
       description: Block list contains restricted words
@@ -4480,6 +4791,7 @@ components:
           enum:
           - regex
           - domain
+          - domain_allowlist
           - email
           - word
           title: Type
@@ -5490,6 +5802,78 @@ components:
       - type
       - description
       type: object
+    EventHook:
+      nullable: true
+      properties:
+        callback:
+          $ref: '#/components/schemas/AsyncModerationCallbackConfig'
+          x-stream-index: 018.001.002
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "019"
+        enabled:
+          type: boolean
+          x-stream-index: "003"
+        event_types:
+          items:
+            type: string
+          type: array
+          x-stream-index: "004"
+        hook_type:
+          type: string
+          x-stream-index: "002"
+        id:
+          type: string
+          x-stream-index: "001"
+        sns_auth_type:
+          type: string
+          x-stream-index: "014"
+        sns_key:
+          type: string
+          x-stream-index: "015"
+        sns_region:
+          type: string
+          x-stream-index: "013"
+        sns_role_arn:
+          type: string
+          x-stream-index: "017"
+        sns_secret:
+          type: string
+          x-stream-index: "016"
+        sns_topic_arn:
+          type: string
+          x-stream-index: "012"
+        sqs_auth_type:
+          type: string
+          x-stream-index: "008"
+        sqs_key:
+          type: string
+          x-stream-index: "009"
+        sqs_queue_url:
+          type: string
+          x-stream-index: "006"
+        sqs_region:
+          type: string
+          x-stream-index: "007"
+        sqs_role_arn:
+          type: string
+          x-stream-index: "011"
+        sqs_secret:
+          type: string
+          x-stream-index: "010"
+        timeout_ms:
+          format: int32
+          type: integer
+          x-stream-index: 018.001.001
+        updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "020"
+        webhook_url:
+          type: string
+          x-stream-index: "005"
+      type: object
     EventNotificationSettings:
       properties:
         apns:
@@ -5498,9 +5882,13 @@ components:
         enabled:
           type: boolean
           x-stream-index: "001"
+        fcm:
+          $ref: '#/components/schemas/FCM'
+          x-stream-index: "003"
       required:
       - enabled
       - apns
+      - fcm
       type: object
     ExportUserResponse:
       nullable: true
@@ -5586,18 +5974,12 @@ components:
       - bucket
       - path
       type: object
-    FPSStats:
+    FCM:
       properties:
-        average_fps:
-          format: float
-          type: number
-          x-stream-index: "002"
-        tracked:
-          type: integer
+        data:
+          additionalProperties: {}
+          type: object
           x-stream-index: "001"
-      required:
-      - tracked
-      - average_fps
       type: object
     Field:
       nullable: true
@@ -5647,6 +6029,43 @@ components:
       required:
       - size_limit
       type: object
+    FileUploadRequest:
+      nullable: true
+      properties:
+        file:
+          description: file field
+          title: File
+          type: string
+          x-stream-index: "001"
+        user:
+          $ref: '#/components/schemas/OnlyUserID'
+          description: user for the request **server side only**
+          title: User
+          x-stream-index: "002"
+      type: object
+    FileUploadResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "003.001"
+        file:
+          description: URL to the uploaded asset. Should be used to put to `asset_url`
+            attachment field
+          title: File
+          type: string
+          x-stream-index: "001"
+        thumb_url:
+          description: URL of the file thumbnail for supported file formats. Should
+            be put to `thumb_url` attachment field
+          title: Thumbnail URL
+          type: string
+          x-stream-index: "002"
+      required:
+      - duration
+      type: object
     FirebaseConfig:
       properties:
         Disabled:
@@ -5691,9 +6110,6 @@ components:
           x-stream-index: "005"
       required:
       - enabled
-      - notification_template
-      - data_template
-      - apn_template
       type: object
     FrameRecordSettings:
       properties:
@@ -5783,7 +6199,7 @@ components:
           x-stream-index: "015"
         banned:
           type: boolean
-          x-stream-index: "001.011"
+          x-stream-index: "001.012"
         blocked_user_ids:
           items:
             type: string
@@ -5797,7 +6213,7 @@ components:
         created_at:
           format: date-time
           type: number
-          x-stream-index: "001.008"
+          x-stream-index: "001.009"
         custom:
           additionalProperties: {}
           type: object
@@ -5805,11 +6221,11 @@ components:
         deactivated_at:
           format: date-time
           type: number
-          x-stream-index: "001.015"
+          x-stream-index: "001.016"
         deleted_at:
           format: date-time
           type: number
-          x-stream-index: "001.010"
+          x-stream-index: "001.011"
         devices:
           items:
             $ref: '#/components/schemas/DeviceResponse'
@@ -5830,7 +6246,7 @@ components:
         last_active:
           format: date-time
           type: number
-          x-stream-index: "001.013"
+          x-stream-index: "001.014"
         latest_hidden_channels:
           items:
             type: string
@@ -5846,14 +6262,14 @@ components:
           x-stream-index: "001.002"
         online:
           type: boolean
-          x-stream-index: "001.012"
+          x-stream-index: "001.013"
         privacy_settings:
           $ref: '#/components/schemas/PrivacySettingsResponse'
           x-stream-index: "003"
         revoke_tokens_issued_before:
           format: date-time
           type: number
-          x-stream-index: "001.014"
+          x-stream-index: "001.015"
         role:
           type: string
           x-stream-index: "001.006"
@@ -5865,6 +6281,11 @@ components:
             type: string
           type: array
           x-stream-index: "001.007"
+        teams_role:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "001.008"
         total_unread_count:
           format: int32
           type: integer
@@ -5884,7 +6305,7 @@ components:
         updated_at:
           format: date-time
           type: number
-          x-stream-index: "001.009"
+          x-stream-index: "001.010"
       required:
       - id
       - custom
@@ -5954,52 +6375,40 @@ components:
       required:
       - names
       type: object
-    GeolocationResult:
+    GetActiveCallsStatusResponse:
+      description: Response containing active calls status information
+      nullable: true
       properties:
-        accuracy_radius:
-          format: int32
-          type: integer
-          x-stream-index: "004"
-        city:
+        duration:
           type: string
-          x-stream-index: "003.001"
-        continent:
-          type: string
-          x-stream-index: "003.004"
-        continent_code:
-          type: string
-          x-stream-index: "002.003"
-        country:
-          type: string
-          x-stream-index: "003.003"
-        country_iso_code:
-          type: string
-          x-stream-index: "002.002"
-        latitude:
-          format: float
-          type: number
           x-stream-index: "001.001"
-        longitude:
-          format: float
+        end_time:
+          description: End time of the status period
+          format: date-time
+          title: time.Time
           type: number
-          x-stream-index: "001.002"
-        subdivision:
-          type: string
-          x-stream-index: "003.002"
-        subdivision_iso_code:
-          type: string
-          x-stream-index: "002.001"
+          x-stream-index: "003"
+        metrics:
+          $ref: '#/components/schemas/ActiveCallsMetrics'
+          description: Detailed metrics
+          title: '*ActiveCallsMetrics'
+          x-stream-index: "005"
+        start_time:
+          description: Start time of the status period
+          format: date-time
+          title: time.Time
+          type: number
+          x-stream-index: "002"
+        summary:
+          $ref: '#/components/schemas/ActiveCallsSummary'
+          description: Summary of active calls
+          title: '*ActiveCallsSummary'
+          x-stream-index: "004"
       required:
-      - latitude
-      - longitude
-      - subdivision_iso_code
-      - country_iso_code
-      - continent_code
-      - city
-      - subdivision
-      - country
-      - continent
-      - accuracy_radius
+      - duration
+      - start_time
+      - end_time
+      title: GetActiveCallsStatusResponse
       type: object
     GetApplicationResponse:
       description: Basic response information
@@ -6058,6 +6467,9 @@ components:
       description: Basic response information
       nullable: true
       properties:
+        chat_activity:
+          $ref: '#/components/schemas/ChatActivityStatsResponse'
+          x-stream-index: "004"
         duration:
           description: Duration of the request in milliseconds
           title: Duration
@@ -6069,6 +6481,11 @@ components:
         session_id:
           type: string
           x-stream-index: "002"
+        video_reactions:
+          items:
+            $ref: '#/components/schemas/VideoReactionsResponse'
+          type: array
+          x-stream-index: "005"
       required:
       - duration
       - session_id
@@ -6101,90 +6518,6 @@ components:
       - blocked_users
       - duration
       title: GetCallResponse
-      type: object
-    GetCallStatsResponse:
-      description: Basic response information
-      nullable: true
-      properties:
-        aggregated:
-          $ref: '#/components/schemas/AggregatedStats'
-          x-stream-index: "005"
-        average_connection_time:
-          format: float
-          type: number
-          x-stream-index: "011"
-        call_duration_seconds:
-          format: int32
-          type: integer
-          x-stream-index: "003"
-        call_status:
-          type: string
-          x-stream-index: "002"
-        call_timeline:
-          $ref: '#/components/schemas/CallTimeline'
-          x-stream-index: "015"
-        duration:
-          description: Duration of the request in milliseconds
-          title: Duration
-          type: string
-          x-stream-index: "001.001"
-        is_truncated_report:
-          type: boolean
-          x-stream-index: "017"
-        jitter:
-          $ref: '#/components/schemas/TimeStats'
-          x-stream-index: "006"
-        latency:
-          $ref: '#/components/schemas/TimeStats'
-          x-stream-index: "007"
-        max_freezes_duration_seconds:
-          format: int32
-          type: integer
-          x-stream-index: "013"
-        max_participants:
-          format: int32
-          type: integer
-          x-stream-index: "008"
-        max_total_quality_limitation_duration_seconds:
-          format: int32
-          type: integer
-          x-stream-index: "012"
-        participant_report:
-          items:
-            $ref: '#/components/schemas/UserStats'
-          type: array
-          x-stream-index: "016"
-        publishing_participants:
-          format: int32
-          type: integer
-          x-stream-index: "009"
-        quality_score:
-          format: int32
-          type: integer
-          x-stream-index: "004"
-        sfu_count:
-          format: int32
-          type: integer
-          x-stream-index: "010"
-        sfus:
-          items:
-            $ref: '#/components/schemas/SFULocationResponse'
-          type: array
-          x-stream-index: "014"
-      required:
-      - duration
-      - call_status
-      - call_duration_seconds
-      - quality_score
-      - max_participants
-      - publishing_participants
-      - sfu_count
-      - max_total_quality_limitation_duration_seconds
-      - max_freezes_duration_seconds
-      - sfus
-      - participant_report
-      - is_truncated_report
-      title: Response
       type: object
     GetCallTypeResponse:
       nullable: true
@@ -6313,7 +6646,7 @@ components:
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "001.021"
+          x-stream-index: "001.018"
         duration:
           type: string
           x-stream-index: "002.001"
@@ -6333,39 +6666,28 @@ components:
           x-stream-index: "001.014"
         giphy:
           $ref: '#/components/schemas/Images'
-          x-stream-index: "001.022"
+          x-stream-index: "001.019"
         image_url:
           description: URL of detected image
           title: Image URL
           type: string
           x-stream-index: "001.011"
-        latitude:
-          format: float
-          type: number
-          x-stream-index: "001.018"
-        longitude:
-          format: float
-          type: number
-          x-stream-index: "001.019"
         og_scrape_url:
           description: extracted url from the text
           title: OG Scrape URL
           type: string
-          x-stream-index: "001.023"
+          x-stream-index: "001.020"
         original_height:
           format: int32
           type: integer
-          x-stream-index: "001.025"
+          x-stream-index: "001.022"
         original_width:
           format: int32
           type: integer
-          x-stream-index: "001.024"
+          x-stream-index: "001.021"
         pretext:
           type: string
           x-stream-index: "001.004"
-        stopped_sharing:
-          type: boolean
-          x-stream-index: "001.020"
         text:
           description: og:description
           title: Text
@@ -6595,6 +6917,20 @@ components:
       - duration
       title: Response
       type: object
+    GroupedStatsResponse:
+      nullable: true
+      properties:
+        name:
+          type: string
+          x-stream-index: "001"
+        unique:
+          format: int32
+          type: integer
+          x-stream-index: "002"
+      required:
+      - name
+      - unique
+      type: object
     HLSSettings:
       properties:
         auto_on:
@@ -6718,6 +7054,84 @@ components:
       - size
       - frames
       type: object
+    ImageSize:
+      properties:
+        crop:
+          description: Crop mode
+          enum:
+          - top
+          - bottom
+          - left
+          - right
+          - center
+          title: Crop
+          type: string
+          x-stream-index: "001"
+        height:
+          description: Target image height
+          format: int32
+          title: Height
+          type: integer
+          x-stream-index: "003"
+        resize:
+          description: Resize method
+          enum:
+          - clip
+          - crop
+          - scale
+          - fill
+          title: Resize
+          type: string
+          x-stream-index: "002"
+        width:
+          description: Target image width
+          format: int32
+          title: Width
+          type: integer
+          x-stream-index: "004"
+      title: Image size configuration
+      type: object
+    ImageUploadRequest:
+      nullable: true
+      properties:
+        file:
+          type: string
+          x-stream-index: "001.001"
+        upload_sizes:
+          description: field with JSON-encoded array of image size configurations
+          items:
+            $ref: '#/components/schemas/ImageSize'
+          title: Upload sizes
+          type: array
+          x-stream-index: "002"
+        user:
+          $ref: '#/components/schemas/OnlyUserID'
+          x-stream-index: "001.002"
+      type: object
+    ImageUploadResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: 001.003.001
+        file:
+          type: string
+          x-stream-index: "001.001"
+        thumb_url:
+          type: string
+          x-stream-index: "001.002"
+        upload_sizes:
+          description: Array of image size configurations
+          items:
+            $ref: '#/components/schemas/ImageSize'
+          title: Upload sizes
+          type: array
+          x-stream-index: "002"
+      required:
+      - duration
+      type: object
     Images:
       properties:
         fixed_height:
@@ -6807,6 +7221,23 @@ components:
       - prev_state
       - next_state
       - created_at
+      type: object
+    JoinCallAPIMetrics:
+      properties:
+        failures:
+          format: float
+          type: number
+          x-stream-index: "002"
+        latency:
+          $ref: '#/components/schemas/ActiveCallsLatencyStats'
+          x-stream-index: "003"
+        total:
+          format: float
+          type: number
+          x-stream-index: "001"
+      required:
+      - total
+      - failures
       type: object
     LabelThresholds:
       properties:
@@ -6944,11 +7375,21 @@ components:
         max_duration_seconds:
           format: int32
           type: integer
-          x-stream-index: "002"
+          x-stream-index: "004"
         max_participants:
           format: int32
           type: integer
           x-stream-index: "001"
+        max_participants_exclude_owner:
+          type: boolean
+          x-stream-index: "003"
+        max_participants_exclude_roles:
+          items:
+            type: string
+          type: array
+          x-stream-index: "002"
+      required:
+      - max_participants_exclude_roles
       type: object
     LimitsSettingsRequest:
       properties:
@@ -6956,22 +7397,40 @@ components:
           format: int32
           minimum: 0
           type: integer
-          x-stream-index: "002"
+          x-stream-index: "004"
         max_participants:
           format: int32
           type: integer
           x-stream-index: "001"
+        max_participants_exclude_owner:
+          type: boolean
+          x-stream-index: "003"
+        max_participants_exclude_roles:
+          items:
+            type: string
+          type: array
+          x-stream-index: "002"
       type: object
     LimitsSettingsResponse:
       properties:
         max_duration_seconds:
           format: int32
           type: integer
-          x-stream-index: "002"
+          x-stream-index: "004"
         max_participants:
           format: int32
           type: integer
           x-stream-index: "001"
+        max_participants_exclude_owner:
+          type: boolean
+          x-stream-index: "003"
+        max_participants_exclude_roles:
+          items:
+            type: string
+          type: array
+          x-stream-index: "002"
+      required:
+      - max_participants_exclude_roles
       type: object
     ListBlockListResponse:
       description: Basic response information
@@ -7159,42 +7618,6 @@ components:
       - transcriptions
       title: ListTranscriptionsResponse
       type: object
-    Location:
-      properties:
-        continent_code:
-          type: string
-          x-stream-index: "003"
-        country_iso_code:
-          type: string
-          x-stream-index: "002"
-        subdivision_iso_code:
-          type: string
-          x-stream-index: "001"
-      required:
-      - subdivision_iso_code
-      - country_iso_code
-      - continent_code
-      type: object
-    MediaPubSubHint:
-      properties:
-        audio_published:
-          type: boolean
-          x-stream-index: "001"
-        audio_subscribed:
-          type: boolean
-          x-stream-index: "002"
-        video_published:
-          type: boolean
-          x-stream-index: "003"
-        video_subscribed:
-          type: boolean
-          x-stream-index: "004"
-      required:
-      - audio_published
-      - audio_subscribed
-      - video_published
-      - video_subscribed
-      type: object
     MemberRequest:
       description: MemberRequest is the payload for adding a member to a call.
       properties:
@@ -7261,6 +7684,235 @@ components:
       - created_at
       - updated_at
       title: MemberResponse
+      type: object
+    Message:
+      properties:
+        attachments:
+          items:
+            $ref: '#/components/schemas/Attachment'
+          type: array
+          x-stream-index: "012"
+        before_message_send_failed:
+          type: boolean
+          x-stream-index: "046"
+        cid:
+          type: string
+          x-stream-index: "028"
+        command:
+          type: string
+          x-stream-index: "006"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "030"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "034"
+        deleted_at:
+          format: date-time
+          type: number
+          x-stream-index: "033"
+        deleted_reply_count:
+          format: int32
+          type: integer
+          x-stream-index: "023"
+        html:
+          type: string
+          x-stream-index: "007"
+        i18n:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "044"
+        id:
+          type: string
+          x-stream-index: "002"
+        image_labels:
+          additionalProperties:
+            items:
+              type: string
+            type: array
+          type: object
+          x-stream-index: "040"
+        latest_reactions:
+          items:
+            $ref: '#/components/schemas/Reaction'
+          type: array
+          x-stream-index: "013"
+        mentioned_users:
+          items:
+            $ref: '#/components/schemas/User'
+          type: array
+          x-stream-index: "043"
+        message_text_updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "052"
+        mml:
+          type: string
+          x-stream-index: "005"
+        moderation:
+          $ref: '#/components/schemas/ModerationV2Response'
+          x-stream-index: "056"
+        own_reactions:
+          items:
+            $ref: '#/components/schemas/Reaction'
+          type: array
+          x-stream-index: "014"
+        parent_id:
+          type: string
+          x-stream-index: "019"
+        pin_expires:
+          format: date-time
+          type: number
+          x-stream-index: "051"
+        pinned:
+          type: boolean
+          x-stream-index: "047"
+        pinned_at:
+          format: date-time
+          type: number
+          x-stream-index: "048"
+        pinned_by:
+          $ref: '#/components/schemas/User'
+          x-stream-index: "050"
+        poll:
+          $ref: '#/components/schemas/Poll'
+          x-stream-index: "054"
+        poll_id:
+          type: string
+          x-stream-index: "053"
+        quoted_message:
+          $ref: '#/components/schemas/Message'
+          x-stream-index: "025"
+        quoted_message_id:
+          type: string
+          x-stream-index: "024"
+        reaction_counts:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "015"
+        reaction_groups:
+          additionalProperties:
+            $ref: '#/components/schemas/ReactionGroupResponse'
+          type: object
+          x-stream-index: "017"
+        reaction_scores:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "016"
+        reminder:
+          $ref: '#/components/schemas/MessageReminder'
+          x-stream-index: "058"
+        reply_count:
+          format: int32
+          type: integer
+          x-stream-index: "022"
+        restricted_visibility:
+          items:
+            type: string
+          type: array
+          x-stream-index: "011"
+        shadowed:
+          type: boolean
+          x-stream-index: "036"
+        shared_location:
+          $ref: '#/components/schemas/SharedLocation'
+          x-stream-index: "055"
+        show_in_channel:
+          type: boolean
+          x-stream-index: "021"
+        silent:
+          type: boolean
+          x-stream-index: "045"
+        text:
+          type: string
+          x-stream-index: "004"
+        thread_participants:
+          items:
+            $ref: '#/components/schemas/User'
+          type: array
+          x-stream-index: "027"
+        type:
+          type: string
+          x-stream-index: "008"
+        updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "031"
+        user:
+          $ref: '#/components/schemas/User'
+          x-stream-index: "010"
+      required:
+      - id
+      - text
+      - html
+      - type
+      - restricted_visibility
+      - attachments
+      - latest_reactions
+      - own_reactions
+      - reaction_counts
+      - reaction_scores
+      - reaction_groups
+      - reply_count
+      - deleted_reply_count
+      - cid
+      - created_at
+      - updated_at
+      - custom
+      - shadowed
+      - mentioned_users
+      - silent
+      - pinned
+      type: object
+    MessageReminder:
+      properties:
+        channel:
+          $ref: '#/components/schemas/Channel'
+          x-stream-index: "004"
+        channel_cid:
+          type: string
+          x-stream-index: "003"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "011"
+        message:
+          $ref: '#/components/schemas/Message'
+          x-stream-index: "006"
+        message_id:
+          type: string
+          x-stream-index: "005"
+        remind_at:
+          format: date-time
+          type: number
+          x-stream-index: "009"
+        task_id:
+          type: string
+          x-stream-index: "010"
+        updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "012"
+        user:
+          $ref: '#/components/schemas/User'
+          x-stream-index: "008"
+        user_id:
+          type: string
+          x-stream-index: "007"
+      required:
+      - channel_cid
+      - message_id
+      - user_id
+      - task_id
+      - created_at
+      - updated_at
       type: object
     MessageResponse:
       description: Represents any chat message
@@ -7445,6 +8097,9 @@ components:
           title: Reaction scores
           type: object
           x-stream-index: "012"
+        reminder:
+          $ref: '#/components/schemas/ReminderResponseData'
+          x-stream-index: "042"
         reply_count:
           description: Number of replies to this message
           format: int32
@@ -7466,6 +8121,11 @@ components:
           type: boolean
           x-stream-docs-page-id: moderation#shadow-ban
           x-stream-index: "027"
+        shared_location:
+          $ref: '#/components/schemas/SharedLocationResponseData'
+          description: Contains shared location data
+          title: Shared Location
+          x-stream-index: "043"
         show_in_channel:
           description: Whether thread reply should be shown in the channel as well
           title: Show in channel
@@ -7539,6 +8199,23 @@ components:
       title: Message
       type: object
       x-stream-docs-page-id: send_message
+    MessageStatsResponse:
+      properties:
+        count_over_time:
+          items:
+            $ref: '#/components/schemas/CountByMinuteResponse'
+          type: array
+          x-stream-index: "001"
+      type: object
+    ModerationDashboardPreferences:
+      properties:
+        flag_user_on_flagged_content:
+          type: boolean
+          x-stream-index: "002"
+        media_queue_blur_enabled:
+          type: boolean
+          x-stream-index: "001"
+      type: object
     ModerationV2Response:
       properties:
         action:
@@ -7678,6 +8355,14 @@ components:
       - call_ring
       - call_missed
       type: object
+    OnlyUserID:
+      properties:
+        id:
+          type: string
+          x-stream-index: "001"
+      required:
+      - id
+      type: object
     OwnCapability:
       description: All possibility of string to use
       enum:
@@ -7713,8 +8398,79 @@ components:
       - update-call-settings
       title: OwnCapability
       type: string
+    ParticipantCountByMinuteResponse:
+      nullable: true
+      properties:
+        first:
+          format: int32
+          type: integer
+          x-stream-index: "002"
+        last:
+          format: int32
+          type: integer
+          x-stream-index: "003"
+        max:
+          format: int32
+          type: integer
+          x-stream-index: "004"
+        min:
+          format: int32
+          type: integer
+          x-stream-index: "005"
+        start_ts:
+          format: date-time
+          type: number
+          x-stream-index: "001"
+      required:
+      - start_ts
+      - first
+      - last
+      - max
+      - min
+      type: object
+    ParticipantCountOverTimeResponse:
+      properties:
+        by_minute:
+          items:
+            $ref: '#/components/schemas/ParticipantCountByMinuteResponse'
+          type: array
+          x-stream-index: "001"
+      type: object
     ParticipantReportResponse:
       properties:
+        by_browser:
+          items:
+            $ref: '#/components/schemas/GroupedStatsResponse'
+          type: array
+          x-stream-index: "008"
+        by_country:
+          items:
+            $ref: '#/components/schemas/GroupedStatsResponse'
+          type: array
+          x-stream-index: "005"
+        by_device:
+          items:
+            $ref: '#/components/schemas/GroupedStatsResponse'
+          type: array
+          x-stream-index: "006"
+        by_operating_system:
+          items:
+            $ref: '#/components/schemas/GroupedStatsResponse'
+          type: array
+          x-stream-index: "007"
+        count_over_time:
+          $ref: '#/components/schemas/ParticipantCountOverTimeResponse'
+          x-stream-index: "004"
+        max_concurrent:
+          format: int32
+          type: integer
+          x-stream-index: "003"
+        publishers:
+          $ref: '#/components/schemas/PublisherStatsResponse'
+          x-stream-index: "009"
+        subscribers:
+          $ref: '#/components/schemas/SubscriberStatsResponse'
+          x-stream-index: "010"
         sum:
           format: int32
           type: integer
@@ -7948,6 +8704,129 @@ components:
       - created_at
       - updated_at
       type: object
+    Poll:
+      properties:
+        Custom:
+          additionalProperties: {}
+          type: object
+          writeOnly: true
+          x-stream-index: "023"
+        allow_answers:
+          type: boolean
+          x-stream-index: "010"
+        allow_user_suggested_options:
+          type: boolean
+          x-stream-index: "009"
+        answers_count:
+          format: int32
+          type: integer
+          x-stream-index: "015"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "021"
+        created_by:
+          $ref: '#/components/schemas/User'
+          x-stream-index: "020"
+        created_by_id:
+          type: string
+          x-stream-index: "019"
+        description:
+          type: string
+          x-stream-index: "005"
+        enforce_unique_vote:
+          type: boolean
+          x-stream-index: "007"
+        id:
+          type: string
+          x-stream-index: "003"
+        is_closed:
+          type: boolean
+          x-stream-index: "011"
+        latest_answers:
+          items:
+            $ref: '#/components/schemas/PollVote'
+          type: array
+          x-stream-index: "017"
+        latest_votes_by_option:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/PollVote'
+            type: array
+          type: object
+          x-stream-index: "016"
+        max_votes_allowed:
+          format: int32
+          type: integer
+          x-stream-index: "008"
+        name:
+          type: string
+          x-stream-index: "004"
+        options:
+          items:
+            $ref: '#/components/schemas/PollOption'
+          type: array
+          x-stream-index: "013"
+        own_votes:
+          items:
+            $ref: '#/components/schemas/PollVote'
+          type: array
+          x-stream-index: "018"
+        updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "022"
+        vote_count:
+          format: int32
+          type: integer
+          x-stream-index: "012"
+        vote_counts_by_option:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "014"
+        voting_visibility:
+          type: string
+          x-stream-index: "006"
+      required:
+      - id
+      - name
+      - description
+      - enforce_unique_vote
+      - allow_user_suggested_options
+      - allow_answers
+      - vote_count
+      - options
+      - vote_counts_by_option
+      - answers_count
+      - latest_votes_by_option
+      - latest_answers
+      - own_votes
+      - created_by_id
+      - created_at
+      - updated_at
+      - Custom
+      type: object
+    PollOption:
+      nullable: true
+      properties:
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "003"
+        id:
+          maxLength: 255
+          type: string
+          x-stream-index: "001"
+        text:
+          type: string
+          x-stream-index: "002"
+      required:
+      - id
+      - text
+      - custom
+      type: object
     PollOptionResponseData:
       nullable: true
       properties:
@@ -8071,6 +8950,45 @@ components:
       - updated_at
       - Custom
       type: object
+    PollVote:
+      nullable: true
+      properties:
+        answer_text:
+          type: string
+          x-stream-index: "007"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "010"
+        id:
+          type: string
+          x-stream-index: "004"
+        is_answer:
+          type: boolean
+          x-stream-index: "006"
+        option_id:
+          type: string
+          x-stream-index: "005"
+        poll_id:
+          type: string
+          x-stream-index: "003"
+        updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "011"
+        user:
+          $ref: '#/components/schemas/User'
+          x-stream-index: "009"
+        user_id:
+          type: string
+          x-stream-index: "008"
+      required:
+      - poll_id
+      - id
+      - option_id
+      - created_at
+      - updated_at
+      type: object
     PollVoteResponseData:
       nullable: true
       properties:
@@ -8128,28 +9046,59 @@ components:
           $ref: '#/components/schemas/TypingIndicatorsResponse'
           x-stream-index: "001"
       type: object
-    PublishedTrackInfo:
+    PublisherAllMetrics:
       properties:
-        codec_mime_type:
-          type: string
+        audio:
+          $ref: '#/components/schemas/PublisherAudioMetrics'
+          x-stream-index: "001"
+        rtt_ms:
+          $ref: '#/components/schemas/ActiveCallsLatencyStats'
           x-stream-index: "003"
-        duration_seconds:
+        video:
+          $ref: '#/components/schemas/PublisherVideoMetrics'
+          x-stream-index: "002"
+      type: object
+    PublisherAudioMetrics:
+      properties:
+        jitter_ms:
+          $ref: '#/components/schemas/ActiveCallsLatencyStats'
+          x-stream-index: "001"
+      type: object
+    PublisherStatsResponse:
+      properties:
+        by_track:
+          items:
+            $ref: '#/components/schemas/TrackStatsResponse'
+          type: array
+          x-stream-index: "003"
+        total:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+        unique:
           format: int32
           type: integer
           x-stream-index: "002"
-        track_type:
-          type: string
+      required:
+      - total
+      - unique
+      type: object
+    PublisherVideoMetrics:
+      properties:
+        fps_30:
+          $ref: '#/components/schemas/ActiveCallsFPSStats'
+          x-stream-index: "002"
+        frame_encoding_time_ms:
+          $ref: '#/components/schemas/ActiveCallsLatencyStats'
+          x-stream-index: "003"
+        jitter_ms:
+          $ref: '#/components/schemas/ActiveCallsLatencyStats'
           x-stream-index: "001"
       type: object
-    PublisherAggregateStats:
+    PublishersMetrics:
       properties:
-        by_track_type:
-          additionalProperties:
-            $ref: '#/components/schemas/Count'
-          type: object
-          x-stream-index: "002"
-        total:
-          $ref: '#/components/schemas/Count'
+        all:
+          $ref: '#/components/schemas/PublisherAllMetrics'
           x-stream-index: "001"
       type: object
     PushConfig:
@@ -8161,6 +9110,7 @@ components:
           enum:
           - v1
           - v2
+          - v3
           type: string
           x-stream-index: "001"
       required:
@@ -8284,6 +9234,11 @@ components:
           minLength: 1
           type: string
           x-stream-index: "005"
+        push_templates:
+          items:
+            $ref: '#/components/schemas/PushTemplate'
+          type: array
+          x-stream-index: "031"
         type:
           type: string
           x-stream-index: "006"
@@ -8395,6 +9350,37 @@ components:
       required:
       - name
       - type
+      - created_at
+      - updated_at
+      type: object
+    PushTemplate:
+      nullable: true
+      properties:
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "007"
+        enable_push:
+          type: boolean
+          x-stream-index: "003"
+        event_type:
+          enum:
+          - message.new
+          - message.updated
+          - reaction.new
+          - notification.reminder_due
+          type: string
+          x-stream-index: "005"
+        template:
+          type: string
+          x-stream-index: "006"
+        updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "008"
+      required:
+      - enable_push
+      - event_type
       - created_at
       - updated_at
       type: object
@@ -8528,6 +9514,53 @@ components:
       - members
       - duration
       title: Response
+      type: object
+    QueryCallParticipantsRequest:
+      nullable: true
+      properties:
+        filter_conditions:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "003"
+      type: object
+    QueryCallParticipantsResponse:
+      nullable: true
+      properties:
+        call:
+          $ref: '#/components/schemas/CallResponse'
+          x-stream-index: "001.001"
+        duration:
+          type: string
+          x-stream-index: "004.001"
+        members:
+          items:
+            $ref: '#/components/schemas/MemberResponse'
+          type: array
+          x-stream-index: "001.002"
+        own_capabilities:
+          items:
+            $ref: '#/components/schemas/OwnCapability'
+          type: array
+          x-stream-index: "001.004"
+        participants:
+          description: List of call participants
+          items:
+            $ref: '#/components/schemas/CallParticipantResponse'
+          title: '[]CallParticipantResponse'
+          type: array
+          x-stream-index: "002"
+        total_participants:
+          format: int32
+          type: integer
+          x-stream-index: "003"
+      required:
+      - call
+      - members
+      - own_capabilities
+      - blocked_users
+      - participants
+      - total_participants
+      - duration
       type: object
     QueryCallStatsRequest:
       nullable: true
@@ -8882,6 +9915,48 @@ components:
       - layout
       title: RTMPSettingsResponse
       type: object
+    Reaction:
+      nullable: true
+      properties:
+        created_at:
+          format: date-time
+          readOnly: true
+          type: number
+          x-stream-index: "008"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "010"
+        message_id:
+          type: string
+          x-stream-index: "003"
+        score:
+          format: int32
+          type: integer
+          x-stream-index: "007"
+        type:
+          maxLength: 30
+          type: string
+          x-stream-index: "006"
+        updated_at:
+          format: date-time
+          readOnly: true
+          type: number
+          x-stream-index: "009"
+        user:
+          $ref: '#/components/schemas/User'
+          x-stream-index: "005"
+        user_id:
+          type: string
+          x-stream-index: "004"
+      required:
+      - message_id
+      - type
+      - score
+      - created_at
+      - updated_at
+      - custom
+      type: object
     ReactionGroupResponse:
       description: ReactionGroupResponse contains all information about a reaction
         of the same type.
@@ -9154,6 +10229,45 @@ components:
       - layout
       title: RecordSettingsResponse
       type: object
+    ReminderResponseData:
+      properties:
+        channel:
+          $ref: '#/components/schemas/ChannelResponse'
+          x-stream-index: "003"
+        channel_cid:
+          type: string
+          x-stream-index: "002"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "008"
+        message:
+          $ref: '#/components/schemas/Message'
+          x-stream-index: "005"
+        message_id:
+          type: string
+          x-stream-index: "004"
+        remind_at:
+          format: date-time
+          type: number
+          x-stream-index: "001"
+        updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "009"
+        user:
+          $ref: '#/components/schemas/User'
+          x-stream-index: "007"
+        user_id:
+          type: string
+          x-stream-index: "006"
+      required:
+      - channel_cid
+      - message_id
+      - user_id
+      - created_at
+      - updated_at
+      type: object
     ReportByHistogramBucket:
       properties:
         category:
@@ -9343,6 +10457,12 @@ components:
           title: S3ApiKey
           type: string
           x-stream-index: "002"
+        s3_custom_endpoint_url:
+          description: The custom endpoint for S3. If you want to use a custom endpoint,
+            you must also provide the `s3_api_key` and `s3_secret` parameters.
+          title: S3CustomEndpointURL
+          type: string
+          x-stream-index: "004"
         s3_region:
           description: The AWS region where the bucket is hosted
           title: S3Region
@@ -9376,26 +10496,6 @@ components:
           x-stream-index: "001"
       required:
       - daily
-      type: object
-    SFULocationResponse:
-      properties:
-        coordinates:
-          $ref: '#/components/schemas/Coordinates'
-          x-stream-index: "004"
-        datacenter:
-          type: string
-          x-stream-index: "002"
-        id:
-          type: string
-          x-stream-index: "001"
-        location:
-          $ref: '#/components/schemas/Location'
-          x-stream-index: "003"
-      required:
-      - id
-      - datacenter
-      - location
-      - coordinates
       type: object
     ScreensharingSettings:
       properties:
@@ -9501,6 +10601,196 @@ components:
       required:
       - inactivity_timeout_seconds
       type: object
+    SharedLocation:
+      properties:
+        channel:
+          $ref: '#/components/schemas/Channel'
+          x-stream-index: "013"
+        channel_cid:
+          type: string
+          x-stream-index: "003"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "010"
+        created_by_device_id:
+          type: string
+          x-stream-index: "008"
+        end_at:
+          format: date-time
+          type: number
+          x-stream-index: "009"
+        latitude:
+          format: float
+          maximum: 90
+          minimum: 1.8446744073709552e+19
+          type: number
+          x-stream-index: "006"
+        longitude:
+          format: float
+          maximum: 180
+          minimum: 1.8446744073709552e+19
+          type: number
+          x-stream-index: "007"
+        message:
+          $ref: '#/components/schemas/Message'
+          x-stream-index: "012"
+        message_id:
+          type: string
+          x-stream-index: "004"
+        updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "011"
+        user_id:
+          type: string
+          x-stream-index: "005"
+      required:
+      - channel_cid
+      - message_id
+      - user_id
+      - created_by_device_id
+      - created_at
+      - updated_at
+      type: object
+    SharedLocationResponse:
+      nullable: true
+      properties:
+        channel:
+          $ref: '#/components/schemas/ChannelResponse'
+          x-stream-index: "001.011"
+        channel_cid:
+          description: Channel CID
+          title: string
+          type: string
+          x-stream-index: "001.001"
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: number
+          x-stream-index: "001.008"
+        created_by_device_id:
+          description: Device ID that created the live location
+          title: string
+          type: string
+          x-stream-index: "001.006"
+        duration:
+          type: string
+          x-stream-index: "002.001"
+        end_at:
+          description: Time when the live location expires
+          format: date-time
+          title: string
+          type: number
+          x-stream-index: "001.007"
+        latitude:
+          description: Latitude coordinate
+          format: float
+          title: number
+          type: number
+          x-stream-index: "001.004"
+        longitude:
+          description: Longitude coordinate
+          format: float
+          title: number
+          type: number
+          x-stream-index: "001.005"
+        message:
+          $ref: '#/components/schemas/MessageResponse'
+          x-stream-index: "001.010"
+        message_id:
+          description: Message ID
+          title: string
+          type: string
+          x-stream-index: "001.002"
+        updated_at:
+          description: Date/time of the last update
+          format: date-time
+          title: Updated at
+          type: number
+          x-stream-index: "001.009"
+        user_id:
+          description: User ID
+          title: string
+          type: string
+          x-stream-index: "001.003"
+      required:
+      - channel_cid
+      - message_id
+      - user_id
+      - latitude
+      - longitude
+      - created_by_device_id
+      - created_at
+      - updated_at
+      - duration
+      type: object
+    SharedLocationResponseData:
+      properties:
+        channel:
+          $ref: '#/components/schemas/ChannelResponse'
+          x-stream-index: "011"
+        channel_cid:
+          type: string
+          x-stream-index: "001"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "008"
+        created_by_device_id:
+          type: string
+          x-stream-index: "006"
+        end_at:
+          format: date-time
+          type: number
+          x-stream-index: "007"
+        latitude:
+          format: float
+          type: number
+          x-stream-index: "004"
+        longitude:
+          format: float
+          type: number
+          x-stream-index: "005"
+        message:
+          $ref: '#/components/schemas/MessageResponse'
+          x-stream-index: "010"
+        message_id:
+          type: string
+          x-stream-index: "002"
+        updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "009"
+        user_id:
+          type: string
+          x-stream-index: "003"
+      required:
+      - channel_cid
+      - message_id
+      - user_id
+      - latitude
+      - longitude
+      - created_by_device_id
+      - created_at
+      - updated_at
+      type: object
+    SharedLocationsResponse:
+      nullable: true
+      properties:
+        active_live_locations:
+          items:
+            $ref: '#/components/schemas/SharedLocationResponseData'
+          type: array
+          x-stream-index: "001"
+        duration:
+          type: string
+          x-stream-index: "002.001"
+      required:
+      - active_live_locations
+      - duration
+      type: object
     SortParamRequest:
       nullable: true
       properties:
@@ -9534,6 +10824,44 @@ components:
         language:
           description: The spoken language in the call, if not provided the language
             defined in the transcription settings will be used
+          enum:
+          - auto
+          - en
+          - fr
+          - es
+          - de
+          - it
+          - nl
+          - pt
+          - pl
+          - ca
+          - cs
+          - da
+          - el
+          - fi
+          - id
+          - ja
+          - ru
+          - sv
+          - ta
+          - th
+          - tr
+          - hu
+          - ro
+          - zh
+          - ar
+          - tl
+          - he
+          - hi
+          - hr
+          - ko
+          - ms
+          - "no"
+          - uk
+          - bg
+          - et
+          - sl
+          - sk
           title: Language
           type: string
           x-stream-index: "004"
@@ -9657,6 +10985,44 @@ components:
         language:
           description: The spoken language in the call, if not provided the language
             defined in the transcription settings will be used
+          enum:
+          - auto
+          - en
+          - fr
+          - es
+          - de
+          - it
+          - nl
+          - pt
+          - pl
+          - ca
+          - cs
+          - da
+          - el
+          - fi
+          - id
+          - ja
+          - ru
+          - sv
+          - ta
+          - th
+          - tr
+          - hu
+          - ro
+          - zh
+          - ar
+          - tl
+          - he
+          - hi
+          - hr
+          - ko
+          - ms
+          - "no"
+          - uk
+          - bg
+          - et
+          - sl
+          - sk
           title: Language
           type: string
           x-stream-index: "004"
@@ -9836,35 +11202,65 @@ components:
       - duration
       title: Response
       type: object
-    Subsession:
-      nullable: true
+    SubscriberAllMetrics:
       properties:
-        ended_at:
-          format: int32
-          type: integer
+        audio:
+          $ref: '#/components/schemas/SubscriberAudioMetrics'
+          x-stream-index: "001"
+        rtt_ms:
+          $ref: '#/components/schemas/ActiveCallsLatencyStats'
+          x-stream-index: "003"
+        video:
+          $ref: '#/components/schemas/SubscriberVideoMetrics'
           x-stream-index: "002"
-        joined_at:
+      type: object
+    SubscriberAudioMetrics:
+      properties:
+        concealment_pct:
+          $ref: '#/components/schemas/ActiveCallsLatencyStats'
+          x-stream-index: "003"
+        jitter_ms:
+          $ref: '#/components/schemas/ActiveCallsLatencyStats'
+          x-stream-index: "001"
+        packets_lost_pct:
+          $ref: '#/components/schemas/ActiveCallsLatencyStats'
+          x-stream-index: "002"
+      type: object
+    SubscriberStatsResponse:
+      properties:
+        total:
           format: int32
           type: integer
           x-stream-index: "001"
-        pub_sub_hint:
-          $ref: '#/components/schemas/MediaPubSubHint'
-          x-stream-index: "004"
-        sfu_id:
-          type: string
+        total_subscribed_duration_seconds:
+          format: int32
+          type: integer
           x-stream-index: "003"
-      required:
-      - joined_at
-      - ended_at
-      - sfu_id
-      type: object
-    TURNAggregatedStats:
-      properties:
-        tcp:
-          $ref: '#/components/schemas/Count'
+        unique:
+          format: int32
+          type: integer
           x-stream-index: "002"
-        total:
-          $ref: '#/components/schemas/Count'
+      required:
+      - total
+      - unique
+      - total_subscribed_duration_seconds
+      type: object
+    SubscriberVideoMetrics:
+      properties:
+        fps_30:
+          $ref: '#/components/schemas/ActiveCallsFPSStats'
+          x-stream-index: "002"
+        jitter_ms:
+          $ref: '#/components/schemas/ActiveCallsLatencyStats'
+          x-stream-index: "001"
+        packets_lost_pct:
+          $ref: '#/components/schemas/ActiveCallsLatencyStats'
+          x-stream-index: "003"
+      type: object
+    SubscribersMetrics:
+      properties:
+        all:
+          $ref: '#/components/schemas/SubscriberAllMetrics'
           x-stream-index: "001"
       type: object
     TargetResolution:
@@ -9941,19 +11337,19 @@ components:
       required:
       - enabled
       type: object
-    TimeStats:
+    TrackStatsResponse:
+      nullable: true
       properties:
-        average_seconds:
-          format: float
-          type: number
-          x-stream-index: "001"
-        max_seconds:
-          format: float
-          type: number
+        duration_seconds:
+          format: int32
+          type: integer
           x-stream-index: "002"
+        track_type:
+          type: string
+          x-stream-index: "001"
       required:
-      - average_seconds
-      - max_seconds
+      - track_type
+      - duration_seconds
       type: object
     TranscriptionSettings:
       properties:
@@ -10001,6 +11397,10 @@ components:
           - ms
           - "no"
           - uk
+          - bg
+          - et
+          - sl
+          - sk
           title: Language
           type: string
           x-stream-index: "004"
@@ -10062,6 +11462,10 @@ components:
           - ms
           - "no"
           - uk
+          - bg
+          - et
+          - sl
+          - sk
           type: string
           x-stream-index: "004"
         mode:
@@ -10118,6 +11522,10 @@ components:
           - ms
           - "no"
           - uk
+          - bg
+          - et
+          - sl
+          - sk
           type: string
           x-stream-index: "004"
         mode:
@@ -10316,6 +11724,11 @@ components:
           - team
           type: string
           x-stream-index: "001.022"
+        event_hooks:
+          items:
+            $ref: '#/components/schemas/EventHook'
+          type: array
+          x-stream-index: "001.046"
         feeds_moderation_enabled:
           type: boolean
           x-stream-index: "001.042"
@@ -10360,6 +11773,9 @@ components:
         migrate_permissions_to_v2:
           type: boolean
           x-stream-index: "001.035"
+        moderation_dashboard_preferences:
+          $ref: '#/components/schemas/ModerationDashboardPreferences'
+          x-stream-index: "001.044"
         moderation_enabled:
           type: boolean
           x-stream-index: "001.009"
@@ -10707,6 +12123,45 @@ components:
       - duration
       title: Response
       type: object
+    UpdateLiveLocationRequest:
+      nullable: true
+      properties:
+        created_by_device_id:
+          description: Device ID that created the live location
+          title: string
+          type: string
+          x-stream-index: "004"
+        end_at:
+          description: Time when the live location expires
+          format: date-time
+          title: string
+          type: number
+          x-stream-index: "005"
+        latitude:
+          description: Latitude coordinate
+          format: float
+          maximum: 90
+          minimum: 1.8446744073709552e+19
+          title: number
+          type: number
+          x-stream-index: "002"
+        longitude:
+          description: Longitude coordinate
+          format: float
+          maximum: 180
+          minimum: 1.8446744073709552e+19
+          title: number
+          type: number
+          x-stream-index: "003"
+        message_id:
+          description: Live location ID
+          title: string
+          type: string
+          x-stream-index: "001"
+      required:
+      - message_id
+      - created_by_device_id
+      type: object
     UpdateUserPartialRequest:
       properties:
         id:
@@ -10880,59 +12335,59 @@ components:
         ban_expires:
           format: date-time
           type: number
-          x-stream-index: "016"
+          x-stream-index: "017"
         banned:
           type: boolean
-          x-stream-index: "015"
+          x-stream-index: "016"
         created_at:
           format: date-time
           readOnly: true
           type: number
-          x-stream-index: "007"
+          x-stream-index: "008"
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "005"
+          x-stream-index: "006"
         deactivated_at:
           format: date-time
           readOnly: true
           type: number
-          x-stream-index: "013"
+          x-stream-index: "014"
         deleted_at:
           format: date-time
           readOnly: true
           type: number
-          x-stream-index: "012"
+          x-stream-index: "013"
         id:
           type: string
           x-stream-index: "003"
         invisible:
           type: boolean
-          x-stream-index: "022"
+          x-stream-index: "023"
         language:
           type: string
-          x-stream-index: "033"
+          x-stream-index: "035"
         last_active:
           format: date-time
           readOnly: true
           type: number
-          x-stream-index: "010"
+          x-stream-index: "011"
         last_engaged_at:
           format: date-time
           readOnly: true
           type: number
-          x-stream-index: "011"
+          x-stream-index: "012"
         online:
           readOnly: true
           type: boolean
-          x-stream-index: "021"
+          x-stream-index: "022"
         privacy_settings:
           $ref: '#/components/schemas/PrivacySettings'
-          x-stream-index: "025"
+          x-stream-index: "026"
         revoke_tokens_issued_before:
           format: date-time
           type: number
-          x-stream-index: "040"
+          x-stream-index: "042"
         role:
           type: string
           x-stream-index: "004"
@@ -10940,15 +12395,21 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "034"
+          x-stream-index: "036"
+        teams_role:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "005"
         updated_at:
           format: date-time
           readOnly: true
           type: number
-          x-stream-index: "008"
+          x-stream-index: "009"
       required:
       - id
       - role
+      - teams_role
       - custom
       - banned
       - online
@@ -11098,33 +12559,6 @@ components:
       - sdk_version
       - platform
       type: object
-    UserInfoResponse:
-      properties:
-        custom:
-          additionalProperties: {}
-          type: object
-          x-stream-index: "004"
-        id:
-          type: string
-          x-stream-index: "001"
-        image:
-          type: string
-          x-stream-index: "003"
-        name:
-          type: string
-          x-stream-index: "002"
-        roles:
-          items:
-            type: string
-          type: array
-          x-stream-index: "005"
-      required:
-      - id
-      - name
-      - image
-      - custom
-      - roles
-      type: object
     UserMuteResponse:
       nullable: true
       properties:
@@ -11221,6 +12655,7 @@ components:
       properties:
         custom:
           additionalProperties: {}
+          description: Custom user data
           title: Custom
           type: object
           x-stream-index: "004"
@@ -11230,6 +12665,7 @@ components:
           type: string
           x-stream-index: "001"
         image:
+          description: User's profile image URL
           title: Image
           type: string
           x-stream-index: "003"
@@ -11248,14 +12684,23 @@ components:
           $ref: '#/components/schemas/PrivacySettingsResponse'
           x-stream-index: "007"
         role:
+          description: User's global role
           title: Role
           type: string
           x-stream-index: "008"
         teams:
+          description: List of teams the user belongs to
           items:
             type: string
           title: Teams
           type: array
+          x-stream-index: "010"
+        teams_role:
+          additionalProperties:
+            type: string
+          description: Map of team-specific roles for the user
+          title: TeamsRole
+          type: object
           x-stream-index: "009"
       required:
       - id
@@ -11274,18 +12719,18 @@ components:
           description: Whether a user is banned or not
           title: Banned
           type: boolean
-          x-stream-index: "001.011"
+          x-stream-index: "001.012"
         blocked_user_ids:
           items:
             type: string
           type: array
-          x-stream-index: "001.016"
+          x-stream-index: "001.017"
         created_at:
           description: Date/time of creation
           format: date-time
           title: Created at
           type: number
-          x-stream-index: "001.008"
+          x-stream-index: "001.009"
         custom:
           additionalProperties: {}
           description: Custom data for this object
@@ -11297,13 +12742,13 @@ components:
           format: date-time
           title: Deactivated at
           type: number
-          x-stream-index: "001.015"
+          x-stream-index: "001.016"
         deleted_at:
           description: Date/time of deletion
           format: date-time
           title: Deleted at
           type: number
-          x-stream-index: "001.010"
+          x-stream-index: "001.011"
         devices:
           description: List of devices user is using
           items:
@@ -11333,7 +12778,7 @@ components:
           format: date-time
           title: Last active
           type: number
-          x-stream-index: "001.013"
+          x-stream-index: "001.014"
         name:
           description: Optional name of user
           title: Name
@@ -11343,7 +12788,7 @@ components:
           description: Whether a user online or not
           title: Online
           type: boolean
-          x-stream-index: "001.012"
+          x-stream-index: "001.013"
         privacy_settings:
           $ref: '#/components/schemas/PrivacySettingsResponse'
           description: User privacy settings
@@ -11359,7 +12804,7 @@ components:
           format: date-time
           title: Revoke tokens issued before
           type: number
-          x-stream-index: "001.014"
+          x-stream-index: "001.015"
         role:
           description: Determines the set of user permissions
           title: Role
@@ -11377,12 +12822,17 @@ components:
           title: Teams
           type: array
           x-stream-index: "001.007"
+        teams_role:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "001.008"
         updated_at:
           description: Date/time of the last update
           format: date-time
           title: Updated at
           type: number
-          x-stream-index: "001.009"
+          x-stream-index: "001.010"
       required:
       - id
       - custom
@@ -11402,16 +12852,16 @@ components:
       properties:
         banned:
           type: boolean
-          x-stream-index: "001.011"
+          x-stream-index: "001.012"
         blocked_user_ids:
           items:
             type: string
           type: array
-          x-stream-index: "001.016"
+          x-stream-index: "001.017"
         created_at:
           format: date-time
           type: number
-          x-stream-index: "001.008"
+          x-stream-index: "001.009"
         custom:
           additionalProperties: {}
           type: object
@@ -11419,11 +12869,11 @@ components:
         deactivated_at:
           format: date-time
           type: number
-          x-stream-index: "001.015"
+          x-stream-index: "001.016"
         deleted_at:
           format: date-time
           type: number
-          x-stream-index: "001.010"
+          x-stream-index: "001.011"
         id:
           type: string
           x-stream-index: "001.001"
@@ -11439,20 +12889,20 @@ components:
         last_active:
           format: date-time
           type: number
-          x-stream-index: "001.013"
+          x-stream-index: "001.014"
         name:
           type: string
           x-stream-index: "001.002"
         online:
           type: boolean
-          x-stream-index: "001.012"
+          x-stream-index: "001.013"
         privacy_settings:
           $ref: '#/components/schemas/PrivacySettingsResponse'
           x-stream-index: "002"
         revoke_tokens_issued_before:
           format: date-time
           type: number
-          x-stream-index: "001.014"
+          x-stream-index: "001.015"
         role:
           type: string
           x-stream-index: "001.006"
@@ -11461,10 +12911,15 @@ components:
             type: string
           type: array
           x-stream-index: "001.007"
+        teams_role:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "001.008"
         updated_at:
           format: date-time
           type: number
-          x-stream-index: "001.009"
+          x-stream-index: "001.010"
       required:
       - id
       - custom
@@ -11476,234 +12931,6 @@ components:
       - banned
       - online
       - blocked_user_ids
-      type: object
-    UserSessionStats:
-      properties:
-        average_connection_time:
-          format: float
-          type: number
-          x-stream-index: "010"
-        browser:
-          type: string
-          x-stream-index: "015.008"
-        browser_version:
-          type: string
-          x-stream-index: "015.009"
-        current_ip:
-          type: string
-          x-stream-index: "006"
-        current_sfu:
-          type: string
-          x-stream-index: "007"
-        device_model:
-          type: string
-          x-stream-index: "015.006"
-        device_version:
-          type: string
-          x-stream-index: "015.007"
-        distance_to_sfu_kilometers:
-          format: float
-          type: number
-          x-stream-index: "008"
-        fps:
-          $ref: '#/components/schemas/FPSStats'
-          x-stream-index: "017.017"
-        freeze_duration_seconds:
-          format: int32
-          type: integer
-          x-stream-index: "017.011"
-        geolocation:
-          $ref: '#/components/schemas/GeolocationResult'
-          x-stream-index: "009"
-        group:
-          type: string
-          x-stream-index: "015.010"
-        jitter:
-          $ref: '#/components/schemas/TimeStats'
-          x-stream-index: "002"
-        latency:
-          $ref: '#/components/schemas/TimeStats'
-          x-stream-index: "003"
-        max_fir_per_second:
-          format: float
-          type: number
-          x-stream-index: "017.003"
-        max_freeze_fraction:
-          format: float
-          type: number
-          x-stream-index: "017.006"
-        max_freezes_duration_seconds:
-          format: int32
-          type: integer
-          x-stream-index: "017.005"
-        max_freezes_per_second:
-          format: float
-          type: number
-          x-stream-index: "017.004"
-        max_nack_per_second:
-          format: float
-          type: number
-          x-stream-index: "017.002"
-        max_pli_per_second:
-          format: float
-          type: number
-          x-stream-index: "017.001"
-        max_publishing_video_quality:
-          $ref: '#/components/schemas/VideoQuality'
-          x-stream-index: "016.003"
-        max_receiving_video_quality:
-          $ref: '#/components/schemas/VideoQuality'
-          x-stream-index: "017.012"
-        min_event_ts:
-          format: int32
-          type: integer
-          x-stream-index: "005"
-        os:
-          type: string
-          x-stream-index: "015.001"
-        os_version:
-          type: string
-          x-stream-index: "015.002"
-        packet_loss_fraction:
-          format: float
-          type: number
-          x-stream-index: "017.007"
-        pub_sub_hints:
-          $ref: '#/components/schemas/MediaPubSubHint'
-          x-stream-index: "013"
-        published_tracks:
-          items:
-            $ref: '#/components/schemas/PublishedTrackInfo'
-          type: array
-          x-stream-index: "016.002"
-        publisher_jitter:
-          $ref: '#/components/schemas/TimeStats'
-          x-stream-index: "016.009"
-        publisher_latency:
-          $ref: '#/components/schemas/TimeStats'
-          x-stream-index: "016.008"
-        publisher_noise_cancellation_seconds:
-          format: float
-          type: number
-          x-stream-index: "016.012"
-        publisher_packet_loss_fraction:
-          format: float
-          type: number
-          x-stream-index: "016.007"
-        publisher_quality_limitation_fraction:
-          format: float
-          type: number
-          x-stream-index: "016.011"
-        publisher_video_quality_limitation_duration_seconds:
-          additionalProperties:
-            format: float
-            type: number
-          type: object
-          x-stream-index: "016.010"
-        publishing_audio_codec:
-          type: string
-          x-stream-index: "016.005"
-        publishing_duration_seconds:
-          format: int32
-          type: integer
-          x-stream-index: "016.001"
-        publishing_video_codec:
-          type: string
-          x-stream-index: "016.006"
-        quality_score:
-          format: float
-          type: number
-          x-stream-index: "004"
-        receiving_audio_codec:
-          type: string
-          x-stream-index: "017.014"
-        receiving_duration_seconds:
-          format: int32
-          type: integer
-          x-stream-index: "017.010"
-        receiving_video_codec:
-          type: string
-          x-stream-index: "017.015"
-        sdk:
-          type: string
-          x-stream-index: "015.004"
-        sdk_version:
-          type: string
-          x-stream-index: "015.005"
-        session_id:
-          type: string
-          x-stream-index: "012"
-        subscriber_jitter:
-          $ref: '#/components/schemas/TimeStats'
-          x-stream-index: "017.009"
-        subscriber_latency:
-          $ref: '#/components/schemas/TimeStats'
-          x-stream-index: "017.008"
-        subscriber_video_quality_throttled_duration_seconds:
-          format: float
-          type: number
-          x-stream-index: "017.016"
-        subsessions:
-          items:
-            $ref: '#/components/schemas/Subsession'
-          type: array
-          x-stream-index: "011"
-        timeline:
-          $ref: '#/components/schemas/CallTimeline'
-          x-stream-index: "001"
-        total_pixels_in:
-          type: integer
-          x-stream-index: "017.013"
-        total_pixels_out:
-          type: integer
-          x-stream-index: "016.004"
-        truncated:
-          type: boolean
-          x-stream-index: "014"
-        webrtc_version:
-          type: string
-          x-stream-index: "015.003"
-      required:
-      - quality_score
-      - min_event_ts
-      - session_id
-      - group
-      - publishing_duration_seconds
-      - total_pixels_out
-      - publisher_packet_loss_fraction
-      - max_freezes_duration_seconds
-      - max_freeze_fraction
-      - packet_loss_fraction
-      - receiving_duration_seconds
-      - freeze_duration_seconds
-      - total_pixels_in
-      type: object
-    UserStats:
-      nullable: true
-      properties:
-        feedback:
-          type: string
-          x-stream-index: "004"
-        info:
-          $ref: '#/components/schemas/UserInfoResponse'
-          x-stream-index: "001"
-        min_event_ts:
-          format: int32
-          type: integer
-          x-stream-index: "005"
-        rating:
-          format: int32
-          type: integer
-          x-stream-index: "003"
-        session_stats:
-          items:
-            $ref: '#/components/schemas/UserSessionStats'
-          type: array
-          x-stream-index: "002"
-      required:
-      - info
-      - session_stats
-      - min_event_ts
       type: object
     UserUpdatedEvent:
       description: This event is sent when a user gets updated. The event contains
@@ -11746,26 +12973,25 @@ components:
       x-stream-event-doc-group: other
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
-    VideoDimension:
+    VideoReactionOverTimeResponse:
       properties:
-        height:
-          type: integer
-          x-stream-index: "002"
-        width:
-          type: integer
+        by_minute:
+          items:
+            $ref: '#/components/schemas/CountByMinuteResponse'
+          type: array
           x-stream-index: "001"
-      required:
-      - width
-      - height
       type: object
-    VideoQuality:
+    VideoReactionsResponse:
+      nullable: true
       properties:
-        resolution:
-          $ref: '#/components/schemas/VideoDimension'
+        count_over_time:
+          $ref: '#/components/schemas/VideoReactionOverTimeResponse'
           x-stream-index: "002"
-        usage_type:
+        reaction:
           type: string
           x-stream-index: "001"
+      required:
+      - reaction
       type: object
     VideoSettings:
       properties:
@@ -11872,6 +13098,8 @@ components:
           call.member_updated: '#/components/schemas/CallMemberUpdatedEvent'
           call.member_updated_permission: '#/components/schemas/CallMemberUpdatedPermissionEvent'
           call.missed: '#/components/schemas/CallMissedEvent'
+          call.moderation_blur: '#/components/schemas/CallModerationBlurEvent'
+          call.moderation_warning: '#/components/schemas/CallModerationWarningEvent'
           call.notification: '#/components/schemas/CallNotificationEvent'
           call.permission_request: '#/components/schemas/PermissionRequestEvent'
           call.permissions_updated: '#/components/schemas/UpdatedCallPermissionsEvent'
@@ -11889,6 +13117,7 @@ components:
           call.session_participant_joined: '#/components/schemas/CallSessionParticipantJoinedEvent'
           call.session_participant_left: '#/components/schemas/CallSessionParticipantLeftEvent'
           call.session_started: '#/components/schemas/CallSessionStartedEvent'
+          call.stats_report_ready: '#/components/schemas/CallStatsReportReadyEvent'
           call.transcription_failed: '#/components/schemas/CallTranscriptionFailedEvent'
           call.transcription_ready: '#/components/schemas/CallTranscriptionReadyEvent'
           call.transcription_started: '#/components/schemas/CallTranscriptionStartedEvent'
@@ -11934,6 +13163,8 @@ components:
       - $ref: '#/components/schemas/CallMemberUpdatedEvent'
       - $ref: '#/components/schemas/CallMemberUpdatedPermissionEvent'
       - $ref: '#/components/schemas/CallMissedEvent'
+      - $ref: '#/components/schemas/CallModerationBlurEvent'
+      - $ref: '#/components/schemas/CallModerationWarningEvent'
       - $ref: '#/components/schemas/CallNotificationEvent'
       - $ref: '#/components/schemas/CallReactionEvent'
       - $ref: '#/components/schemas/CallRecordingFailedEvent'
@@ -11949,6 +13180,7 @@ components:
       - $ref: '#/components/schemas/CallSessionParticipantJoinedEvent'
       - $ref: '#/components/schemas/CallSessionParticipantLeftEvent'
       - $ref: '#/components/schemas/CallSessionStartedEvent'
+      - $ref: '#/components/schemas/CallStatsReportReadyEvent'
       - $ref: '#/components/schemas/CallTranscriptionFailedEvent'
       - $ref: '#/components/schemas/CallTranscriptionReadyEvent'
       - $ref: '#/components/schemas/CallTranscriptionStartedEvent'
@@ -12034,7 +13266,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v167.1.0
+  version: v186.5.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -13276,6 +14508,146 @@ paths:
       summary: Get status of a task
       tags:
       - product:common
+  /api/v2/uploads/file:
+    delete:
+      description: |
+        Deletes previously uploaded file
+      operationId: DeleteFileGlobal
+      parameters:
+      - in: query
+        name: url
+        schema:
+          description: File URL to delete
+          title: URL
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Delete file
+      tags:
+      - product:common
+      x-stream-sdk-name: DeleteFile
+    post:
+      description: |
+        Uploads file
+      operationId: UploadFileGlobal
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FileUploadRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileUploadResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Upload file
+      tags:
+      - product:common
+      x-stream-sdk-name: UploadFile
+  /api/v2/uploads/image:
+    delete:
+      description: |
+        Deletes previously uploaded image
+      operationId: DeleteImageGlobal
+      parameters:
+      - in: query
+        name: url
+        schema:
+          description: File URL to delete
+          title: URL
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Delete image
+      tags:
+      - product:common
+      x-stream-sdk-name: DeleteImage
+    post:
+      description: |
+        Uploads image
+      operationId: UploadImageGlobal
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ImageUploadRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImageUploadResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Upload image
+      tags:
+      - product:common
+      x-stream-sdk-name: UploadImage
   /api/v2/users:
     get:
       description: |
@@ -13647,6 +15019,82 @@ paths:
       summary: Delete Users
       tags:
       - product:common
+  /api/v2/users/live_locations:
+    get:
+      description: |
+        Retrieves all active live locations for a user
+      operationId: GetUserLiveLocations
+      parameters:
+      - in: query
+        name: user_id
+        schema:
+          description: User ID to get live locations for. If not provided, returns
+            live locations for the authenticated user.
+          title: string
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedLocationsResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get user live locations
+      tags:
+      - product:common
+    put:
+      description: |
+        Updates an existing live location with new coordinates or expiration time
+      operationId: UpdateLiveLocation
+      parameters:
+      - in: query
+        name: user_id
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "006.001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLiveLocationRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedLocationResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Update live location
+      tags:
+      - product:common
   /api/v2/users/reactivate:
     post:
       description: |
@@ -13751,6 +15199,33 @@ paths:
       summary: Unblock user
       tags:
       - product:common
+  /api/v2/video/active_calls_status:
+    get:
+      description: |
+        Get the current status of all active calls including metrics and summary information
+      operationId: GetActiveCallsStatus
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetActiveCallsStatusResponse'
+          description: GetActiveCallsStatusResponse
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get active calls status
+      tags:
+      - product:video
   /api/v2/video/call/{type}/{id}:
     get:
       description: |2+
@@ -14519,6 +15994,63 @@ paths:
       summary: Mute users
       tags:
       - product:video
+  /api/v2/video/call/{type}/{id}/participants:
+    post:
+      description: |
+        Returns a list of participants connected to the call
+      operationId: QueryCallParticipants
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          maxLength: 255
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      - in: path
+        name: type
+        required: true
+        schema:
+          maxLength: 255
+          type: string
+          writeOnly: true
+          x-stream-index: "002"
+      - in: query
+        name: limit
+        schema:
+          format: int32
+          maximum: 100
+          type: integer
+          x-stream-index: "004"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryCallParticipantsRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryCallParticipantsResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Query call participants
+      tags:
+      - product:video
   /api/v2/video/call/{type}/{id}/pin:
     post:
       description: |
@@ -15099,58 +16631,6 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Start transcription
-      tags:
-      - product:video
-  /api/v2/video/call/{type}/{id}/stats/{session}:
-    get:
-      description: |2+
-
-      operationId: GetCallStats
-      parameters:
-      - in: path
-        name: type
-        required: true
-        schema:
-          maxLength: 64
-          type: string
-          writeOnly: true
-          x-stream-index: "001.001"
-      - in: path
-        name: id
-        required: true
-        schema:
-          maxLength: 64
-          type: string
-          writeOnly: true
-          x-stream-index: "001.002"
-      - in: path
-        name: session
-        required: true
-        schema:
-          maxLength: 64
-          type: string
-          writeOnly: true
-          x-stream-index: "003"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetCallStatsResponse'
-          description: Response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Get Call Stats
       tags:
       - product:video
   /api/v2/video/call/{type}/{id}/stop_broadcasting:
