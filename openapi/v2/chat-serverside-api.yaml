@@ -423,6 +423,51 @@ components:
       - warning
       - warning_text
       type: object
+    ActivityMarkedEvent:
+      properties:
+        all_read:
+          type: boolean
+          x-stream-index: "006"
+        all_seen:
+          type: boolean
+          x-stream-index: "007"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "001.002"
+        feed_id:
+          type: string
+          x-stream-index: "003"
+        marked_read:
+          items:
+            type: string
+          type: array
+          x-stream-index: "004"
+        marked_watched:
+          items:
+            type: string
+          type: array
+          x-stream-index: "005"
+        type:
+          default: activity.marked
+          type: string
+          x-stream-index: "001.001"
+        user_id:
+          type: string
+          x-stream-index: "002"
+      required:
+      - type
+      - created_at
+      - user_id
+      - feed_id
+      - all_read
+      - all_seen
+      title: ActivityMarkedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     AnyEvent:
       properties:
         created_at:
@@ -524,6 +569,9 @@ components:
         image_upload_config:
           $ref: '#/components/schemas/FileUploadConfig'
           x-stream-index: "031"
+        moderation_bulk_submit_action_enabled:
+          type: boolean
+          x-stream-index: "048"
         moderation_dashboard_preferences:
           $ref: '#/components/schemas/ModerationDashboardPreferences'
           x-stream-index: "044"
@@ -593,6 +641,9 @@ components:
         use_hook_v2:
           type: boolean
           x-stream-index: "046"
+        user_response_time_enabled:
+          type: boolean
+          x-stream-index: "047"
         user_search_disallowed_roles:
           items:
             type: string
@@ -646,6 +697,8 @@ components:
       - guest_user_creation_disabled
       - event_hooks
       - use_hook_v2
+      - user_response_time_enabled
+      - moderation_bulk_submit_action_enabled
       type: object
     AsyncBulkImageModerationEvent:
       nullable: true
@@ -771,7 +824,7 @@ components:
           type: string
           x-stream-index: "002.001"
         type:
-          default: export.channels.error
+          default: export.moderation_logs.error
           type: string
           x-stream-index: "003.002"
       required:
@@ -1970,6 +2023,11 @@ components:
           type: string
           writeOnly: true
           x-stream-index: "003"
+        avg_response_time:
+          format: int32
+          readOnly: true
+          type: integer
+          x-stream-index: "001.046"
         ban_expires:
           format: date-time
           type: number
@@ -2411,6 +2469,9 @@ components:
         geofencing:
           $ref: '#/components/schemas/GeofenceSettings'
           x-stream-index: "008"
+        ingress:
+          $ref: '#/components/schemas/IngressSettings'
+          x-stream-index: "014"
         limits:
           $ref: '#/components/schemas/LimitsSettings'
           x-stream-index: "012"
@@ -2453,6 +2514,9 @@ components:
         geofencing:
           $ref: '#/components/schemas/GeofenceSettingsResponse'
           x-stream-index: "004"
+        ingress:
+          $ref: '#/components/schemas/IngressSettingsResponse'
+          x-stream-index: "014"
         limits:
           $ref: '#/components/schemas/LimitsSettingsResponse'
           x-stream-index: "012"
@@ -2795,15 +2859,15 @@ components:
       properties:
         user:
           $ref: '#/components/schemas/UserRequest'
-          x-stream-index: "004.002"
+          x-stream-index: "005.002"
         user_id:
           type: string
-          x-stream-index: "004.001"
+          x-stream-index: "005.001"
         vote:
           $ref: '#/components/schemas/VoteData'
           description: Vote data
           title: VoteData
-          x-stream-index: "003"
+          x-stream-index: "004"
       type: object
     Channel:
       properties:
@@ -5640,10 +5704,6 @@ components:
           additionalProperties: {}
           type: object
           writeOnly: true
-          x-stream-index: "004"
-        position:
-          format: int32
-          type: integer
           x-stream-index: "003"
         text:
           description: Option text
@@ -5652,10 +5712,10 @@ components:
           x-stream-index: "002"
         user:
           $ref: '#/components/schemas/UserRequest'
-          x-stream-index: "005.002"
+          x-stream-index: "004.002"
         user_id:
           type: string
-          x-stream-index: "005.001"
+          x-stream-index: "004.001"
       required:
       - text
       type: object
@@ -6669,6 +6729,11 @@ components:
       type: object
     EntityCreator:
       properties:
+        avg_response_time:
+          format: int32
+          readOnly: true
+          type: integer
+          x-stream-index: "001.046"
         ban_count:
           format: int32
           type: integer
@@ -6763,6 +6828,10 @@ components:
       type: object
     EntityCreatorResponse:
       properties:
+        avg_response_time:
+          format: int32
+          type: integer
+          x-stream-index: 001.001.018
         ban_count:
           description: Number of minor actions performed on the user
           format: int32
@@ -7683,6 +7752,10 @@ components:
       type: object
     FullUserResponse:
       properties:
+        avg_response_time:
+          format: int32
+          type: integer
+          x-stream-index: "001.018"
         ban_expires:
           format: date-time
           type: number
@@ -8906,6 +8979,157 @@ components:
       - prev_state
       - next_state
       - created_at
+      type: object
+    IngressAudioEncodingOptions:
+      properties:
+        bitrate:
+          maximum: 128000
+          minimum: 16000
+          type: integer
+          x-stream-index: "003"
+        channels:
+          enum:
+          - "1"
+          - "2"
+          format: int32
+          type: integer
+          x-stream-index: "001"
+        enable_dtx:
+          type: boolean
+          x-stream-index: "002"
+      required:
+      - channels
+      - enable_dtx
+      - bitrate
+      type: object
+    IngressAudioEncodingResponse:
+      properties:
+        bitrate:
+          format: int32
+          type: integer
+          x-stream-index: "003"
+        channels:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+        enable_dtx:
+          type: boolean
+          x-stream-index: "002"
+      required:
+      - channels
+      - enable_dtx
+      - bitrate
+      type: object
+    IngressSettings:
+      properties:
+        audio_encoding_options:
+          $ref: '#/components/schemas/IngressAudioEncodingOptions'
+          x-stream-index: "002"
+        enabled:
+          type: boolean
+          x-stream-index: "001"
+        video_encoding_options:
+          additionalProperties:
+            $ref: '#/components/schemas/IngressVideoEncodingOptions'
+          type: object
+          x-stream-index: "003"
+      required:
+      - enabled
+      type: object
+    IngressSettingsResponse:
+      properties:
+        audio_encoding_options:
+          $ref: '#/components/schemas/IngressAudioEncodingResponse'
+          x-stream-index: "002"
+        enabled:
+          type: boolean
+          x-stream-index: "001"
+        video_encoding_options:
+          additionalProperties:
+            $ref: '#/components/schemas/IngressVideoEncodingResponse'
+          type: object
+          x-stream-index: "003"
+      required:
+      - enabled
+      type: object
+    IngressVideoEncodingOptions:
+      properties:
+        layers:
+          items:
+            $ref: '#/components/schemas/IngressVideoLayer'
+          minimum: 1
+          type: array
+          x-stream-index: "001"
+      required:
+      - layers
+      type: object
+    IngressVideoEncodingResponse:
+      properties:
+        layers:
+          items:
+            $ref: '#/components/schemas/IngressVideoLayerResponse'
+          type: array
+          x-stream-index: "001"
+      required:
+      - layers
+      type: object
+    IngressVideoLayer:
+      nullable: true
+      properties:
+        bitrate:
+          minimum: 1000
+          type: integer
+          x-stream-index: "002"
+        codec:
+          enum:
+          - h264
+          - vp8
+          type: string
+          x-stream-index: "001"
+        frame_rate:
+          maximum: 60
+          minimum: 1
+          type: integer
+          x-stream-index: "003"
+        max_dimension:
+          minimum: 240
+          type: integer
+          x-stream-index: "005"
+        min_dimension:
+          minimum: 240
+          type: integer
+          x-stream-index: "004"
+      required:
+      - codec
+      - bitrate
+      - frame_rate
+      - min_dimension
+      - max_dimension
+      type: object
+    IngressVideoLayerResponse:
+      nullable: true
+      properties:
+        bitrate:
+          type: integer
+          x-stream-index: "002"
+        codec:
+          type: string
+          x-stream-index: "001"
+        frame_rate_limit:
+          type: integer
+          x-stream-index: "005"
+        max_dimension:
+          type: integer
+          x-stream-index: "004"
+        min_dimension:
+          type: integer
+          x-stream-index: "003"
+      required:
+      - codec
+      - bitrate
+      - min_dimension
+      - max_dimension
+      - frame_rate_limit
       type: object
     Label:
       properties:
@@ -11483,6 +11707,10 @@ components:
       type: object
     OwnUser:
       properties:
+        avg_response_time:
+          format: int32
+          type: integer
+          x-stream-index: "046"
         banned:
           type: boolean
           x-stream-index: "016"
@@ -11612,6 +11840,10 @@ components:
       type: object
     OwnUserResponse:
       properties:
+        avg_response_time:
+          format: int32
+          type: integer
+          x-stream-index: "001.018"
         banned:
           type: boolean
           x-stream-index: "001.012"
@@ -12213,11 +12445,6 @@ components:
       type: object
     PollResponseData:
       properties:
-        Custom:
-          additionalProperties: {}
-          type: object
-          writeOnly: true
-          x-stream-index: "021"
         allow_answers:
           type: boolean
           x-stream-index: "008"
@@ -12238,6 +12465,10 @@ components:
         created_by_id:
           type: string
           x-stream-index: "017"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "021"
         description:
           type: string
           x-stream-index: "003"
@@ -12314,7 +12545,7 @@ components:
       - created_by_id
       - created_at
       - updated_at
-      - Custom
+      - custom
       type: object
     PollVote:
       nullable: true
@@ -14584,6 +14815,193 @@ components:
           $ref: '#/components/schemas/VideoOrientation'
           x-stream-index: "009"
       type: object
+    ReminderCreatedEvent:
+      description: Emitted when a reminder is created.
+      nullable: true
+      properties:
+        cid:
+          description: The CID of the Channel for which the reminder was created
+          title: Channel CID
+          type: string
+          x-stream-index: "001.004"
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: number
+          x-stream-index: 001.001.003
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.007
+        message_id:
+          description: The ID of the message for which the reminder was created
+          title: Message ID
+          type: string
+          x-stream-index: "001.002"
+        parent_id:
+          description: The ID of the parent message, if the reminder is for a thread
+            message
+          title: Parent ID
+          type: string
+          x-stream-index: "001.005"
+        received_at:
+          format: date-time
+          type: number
+          x-stream-index: 001.001.004
+        reminder:
+          $ref: '#/components/schemas/ReminderResponseData'
+          description: The reminder object which was created
+          title: MessageReminder
+          x-stream-index: "001.006"
+        type:
+          default: reminder.created
+          description: 'The type of event: "reminder.created" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: 001.001.002
+        user_id:
+          description: The ID of the user for whom the reminder was created
+          title: User ID
+          type: string
+          x-stream-index: "001.003"
+      required:
+      - type
+      - created_at
+      - custom
+      - message_id
+      - user_id
+      - cid
+      title: ReminderCreatedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    ReminderDeletedEvent:
+      description: Emitted when a reminder is deleted.
+      nullable: true
+      properties:
+        cid:
+          description: The CID of the Channel for which the reminder was created
+          title: Channel CID
+          type: string
+          x-stream-index: "001.004"
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: number
+          x-stream-index: 001.001.003
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.007
+        message_id:
+          description: The ID of the message for which the reminder was created
+          title: Message ID
+          type: string
+          x-stream-index: "001.002"
+        parent_id:
+          description: The ID of the parent message, if the reminder is for a thread
+            message
+          title: Parent ID
+          type: string
+          x-stream-index: "001.005"
+        received_at:
+          format: date-time
+          type: number
+          x-stream-index: 001.001.004
+        reminder:
+          $ref: '#/components/schemas/ReminderResponseData'
+          description: The reminder object which was created
+          title: MessageReminder
+          x-stream-index: "001.006"
+        type:
+          default: reminder.deleted
+          description: 'The type of event: "reminder.deleted" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: 001.001.002
+        user_id:
+          description: The ID of the user for whom the reminder was created
+          title: User ID
+          type: string
+          x-stream-index: "001.003"
+      required:
+      - type
+      - created_at
+      - custom
+      - message_id
+      - user_id
+      - cid
+      title: ReminderDeletedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    ReminderNotificationEvent:
+      description: Emitted when a reminder becomes due, triggering a notification
+        for the user.
+      nullable: true
+      properties:
+        cid:
+          description: The CID of the Channel for which the reminder was created
+          title: Channel CID
+          type: string
+          x-stream-index: "001.004"
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: number
+          x-stream-index: 001.001.003
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.007
+        message_id:
+          description: The ID of the message for which the reminder was created
+          title: Message ID
+          type: string
+          x-stream-index: "001.002"
+        parent_id:
+          type: string
+          x-stream-index: "001.005"
+        received_at:
+          format: date-time
+          type: number
+          x-stream-index: 001.001.004
+        reminder:
+          $ref: '#/components/schemas/ReminderResponseData'
+          description: The reminder object which was created
+          title: MessageReminder
+          x-stream-index: "001.006"
+        type:
+          default: notification.reminder_due
+          description: 'The type of event: "notification.reminder_due" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: 001.001.002
+        user_id:
+          description: The ID of the user for whom the reminder was created
+          title: User ID
+          type: string
+          x-stream-index: "001.003"
+      required:
+      - type
+      - created_at
+      - custom
+      - message_id
+      - user_id
+      - cid
+      title: ReminderNotificationEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     ReminderResponseData:
       properties:
         channel:
@@ -14623,6 +15041,69 @@ components:
       - created_at
       - updated_at
       type: object
+    ReminderUpdatedEvent:
+      description: Emitted when a reminder is updated.
+      nullable: true
+      properties:
+        cid:
+          description: The CID of the Channel for which the reminder was created
+          title: Channel CID
+          type: string
+          x-stream-index: "001.004"
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: number
+          x-stream-index: 001.001.003
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.007
+        message_id:
+          description: The ID of the message for which the reminder was created
+          title: Message ID
+          type: string
+          x-stream-index: "001.002"
+        parent_id:
+          description: The ID of the parent message, if the reminder is for a thread
+            message
+          title: Parent ID
+          type: string
+          x-stream-index: "001.005"
+        received_at:
+          format: date-time
+          type: number
+          x-stream-index: 001.001.004
+        reminder:
+          $ref: '#/components/schemas/ReminderResponseData'
+          description: The reminder object which was created
+          title: MessageReminder
+          x-stream-index: "001.006"
+        type:
+          default: reminder.updated
+          description: 'The type of event: "reminder.updated" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: 001.001.002
+        user_id:
+          description: The ID of the user for whom the reminder was created
+          title: User ID
+          type: string
+          x-stream-index: "001.003"
+      required:
+      - type
+      - created_at
+      - custom
+      - message_id
+      - user_id
+      - cid
+      title: ReminderUpdatedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     Response:
       description: Basic response information
       nullable: true
@@ -14664,6 +15145,9 @@ components:
         ai_text_severity:
           type: string
           x-stream-index: "021"
+        archived_at:
+          $ref: '#/components/schemas/NullTime'
+          x-stream-index: "043"
         assigned_to:
           $ref: '#/components/schemas/User'
           x-stream-index: "032"
@@ -14707,6 +15191,16 @@ components:
         feeds_v2_reaction:
           $ref: '#/components/schemas/Reaction'
           x-stream-index: "042"
+        flag_labels:
+          items:
+            type: string
+          type: array
+          x-stream-index: "045"
+        flag_types:
+          items:
+            type: string
+          type: array
+          x-stream-index: "044"
         flags:
           items:
             $ref: '#/components/schemas/Flag'
@@ -14748,6 +15242,11 @@ components:
         recommended_action:
           type: string
           x-stream-index: "017"
+        reporter_ids:
+          items:
+            type: string
+          type: array
+          x-stream-index: "046"
         reviewed_at:
           $ref: '#/components/schemas/NullTime'
           x-stream-index: "022"
@@ -14796,6 +15295,10 @@ components:
       - flags
       - actions
       - content_changed
+      - archived_at
+      - flag_types
+      - flag_labels
+      - reporter_ids
       type: object
     ReviewQueueItemNewEvent:
       description: This event is sent when a new moderation review queue item is created
@@ -16246,6 +16749,7 @@ components:
           - delete_user
           - unblock
           - shadow_block
+          - unmask
           - kick_user
           - end_call
           title: Action Type
@@ -17240,7 +17744,6 @@ components:
       required:
       - total_unread_count
       - total_unread_threads_count
-      - total_unread_count_by_team
       - channels
       - channel_type
       - threads
@@ -17421,6 +17924,9 @@ components:
         sqs_url:
           type: string
           x-stream-index: "001.023"
+        user_response_time_enabled:
+          type: boolean
+          x-stream-index: "001.048"
         user_search_disallowed_roles:
           items:
             type: string
@@ -18063,17 +18569,12 @@ components:
     UpdateLiveLocationRequest:
       nullable: true
       properties:
-        created_by_device_id:
-          description: Device ID that created the live location
-          title: string
-          type: string
-          x-stream-index: "004"
         end_at:
           description: Time when the live location expires
           format: date-time
           title: string
           type: number
-          x-stream-index: "005"
+          x-stream-index: "004"
         latitude:
           description: Latitude coordinate
           format: float
@@ -18097,7 +18598,6 @@ components:
           x-stream-index: "001"
       required:
       - message_id
-      - created_by_device_id
       type: object
     UpdateMemberPartialRequest:
       nullable: true
@@ -18782,6 +19282,11 @@ components:
       type: object
     User:
       properties:
+        avg_response_time:
+          format: int32
+          readOnly: true
+          type: integer
+          x-stream-index: "046"
         ban_expires:
           format: date-time
           type: number
@@ -19195,6 +19700,10 @@ components:
     UserResponse:
       description: User response object
       properties:
+        avg_response_time:
+          format: int32
+          type: integer
+          x-stream-index: "001.018"
         ban_expires:
           description: Date when ban expires
           format: date-time
@@ -19336,6 +19845,10 @@ components:
       type: object
     UserResponseCommonFields:
       properties:
+        avg_response_time:
+          format: int32
+          type: integer
+          x-stream-index: "018"
         banned:
           type: boolean
           x-stream-index: "012"
@@ -19414,6 +19927,10 @@ components:
       type: object
     UserResponsePrivacyFields:
       properties:
+        avg_response_time:
+          format: int32
+          type: integer
+          x-stream-index: "001.018"
         banned:
           type: boolean
           x-stream-index: "001.012"
@@ -19857,9 +20374,6 @@ components:
       type: object
     VoteData:
       properties:
-        Option:
-          $ref: '#/components/schemas/PollOptionResponseData'
-          x-stream-index: "003"
         answer_text:
           type: string
           x-stream-index: "002"
@@ -19969,6 +20483,7 @@ components:
       discriminator:
         mapping:
           '*': '#/components/schemas/AnyEvent'
+          activity.marked: '#/components/schemas/ActivityMarkedEvent'
           campaign.completed: '#/components/schemas/CampaignCompletedEvent'
           campaign.started: '#/components/schemas/CampaignStartedEvent'
           channel.created: '#/components/schemas/ChannelCreatedEvent'
@@ -20006,10 +20521,14 @@ components:
           moderation.mark_reviewed: '#/components/schemas/ModerationMarkReviewedEvent'
           moderation_check.completed: '#/components/schemas/ModerationCheckCompletedEvent'
           notification.mark_unread: '#/components/schemas/NotificationMarkUnreadEvent'
+          notification.reminder_due: '#/components/schemas/ReminderNotificationEvent'
           notification.thread_message_new: '#/components/schemas/MessageNewEvent'
           reaction.deleted: '#/components/schemas/ReactionDeletedEvent'
           reaction.new: '#/components/schemas/ReactionNewEvent'
           reaction.updated: '#/components/schemas/ReactionUpdatedEvent'
+          reminder.created: '#/components/schemas/ReminderCreatedEvent'
+          reminder.deleted: '#/components/schemas/ReminderDeletedEvent'
+          reminder.updated: '#/components/schemas/ReminderUpdatedEvent'
           review_queue_item.new: '#/components/schemas/ReviewQueueItemNewEvent'
           review_queue_item.updated: '#/components/schemas/ReviewQueueItemUpdatedEvent'
           thread.updated: '#/components/schemas/ThreadUpdatedEvent'
@@ -20025,6 +20544,7 @@ components:
           user.updated: '#/components/schemas/UserUpdatedEvent'
         propertyName: type
       oneOf:
+      - $ref: '#/components/schemas/ActivityMarkedEvent'
       - $ref: '#/components/schemas/AnyEvent'
       - $ref: '#/components/schemas/AsyncBulkImageModerationEvent'
       - $ref: '#/components/schemas/AsyncExportChannelsEvent'
@@ -20067,6 +20587,10 @@ components:
       - $ref: '#/components/schemas/ReactionDeletedEvent'
       - $ref: '#/components/schemas/ReactionNewEvent'
       - $ref: '#/components/schemas/ReactionUpdatedEvent'
+      - $ref: '#/components/schemas/ReminderCreatedEvent'
+      - $ref: '#/components/schemas/ReminderDeletedEvent'
+      - $ref: '#/components/schemas/ReminderNotificationEvent'
+      - $ref: '#/components/schemas/ReminderUpdatedEvent'
       - $ref: '#/components/schemas/ReviewQueueItemNewEvent'
       - $ref: '#/components/schemas/ReviewQueueItemUpdatedEvent'
       - $ref: '#/components/schemas/ThreadUpdatedEvent'
@@ -20121,7 +20645,6 @@ components:
       required:
       - total_unread_count
       - total_unread_threads_count
-      - total_unread_count_by_team
       - channels
       - channel_type
       - threads
@@ -20196,7 +20719,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v186.5.0
+  version: v187.6.2
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -22847,7 +23370,12 @@ paths:
         Cast a vote on a poll
 
         Sends events:
+        - feeds.poll.vote_casted
+        - feeds.poll.vote_changed
+        - feeds.poll.vote_removed
         - poll.vote_casted
+        - poll.vote_changed
+        - poll.vote_removed
       operationId: CastPollVote
       parameters:
       - in: path
@@ -22865,7 +23393,7 @@ paths:
           maxLength: 255
           title: string
           type: string
-          x-stream-index: "002"
+          x-stream-index: "003"
       requestBody:
         content:
           application/json:
@@ -22900,8 +23428,9 @@ paths:
         Delete a vote from a poll
 
         Sends events:
+        - feeds.poll.vote_removed
         - poll.vote_removed
-      operationId: RemovePollVote
+      operationId: DeletePollVote
       parameters:
       - in: path
         name: message_id
@@ -22918,7 +23447,7 @@ paths:
           maxLength: 255
           title: string
           type: string
-          x-stream-index: "003"
+          x-stream-index: "004"
       - in: path
         name: vote_id
         required: true
@@ -22927,7 +23456,7 @@ paths:
           maxLength: 255
           title: string
           type: string
-          x-stream-index: "004"
+          x-stream-index: "005"
       - in: query
         name: user_id
         schema:
@@ -23376,495 +23905,6 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Unmute channel
-      tags:
-      - product:chat
-  /api/v2/chat/polls:
-    post:
-      description: |
-        Creates a new poll
-      operationId: CreatePoll
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreatePollRequest'
-        description: Create Poll Request
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PollResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Create poll
-      tags:
-      - product:chat
-    put:
-      description: |
-        Updates a poll
-
-        Sends events:
-        - poll.closed
-        - poll.updated
-      operationId: UpdatePoll
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdatePollRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PollResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Update poll
-      tags:
-      - product:chat
-  /api/v2/chat/polls/{poll_id}:
-    delete:
-      description: |
-        Deletes a poll
-
-        Sends events:
-        - poll.deleted
-      operationId: DeletePoll
-      parameters:
-      - in: path
-        name: poll_id
-        required: true
-        schema:
-          description: Poll ID
-          maxLength: 255
-          title: string
-          type: string
-          x-stream-index: "002"
-      - in: query
-        name: user_id
-        schema:
-          type: string
-          writeOnly: true
-          x-stream-index: "001"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Response'
-          description: Response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Delete poll
-      tags:
-      - product:chat
-    get:
-      description: |
-        Retrieves a poll
-      operationId: GetPoll
-      parameters:
-      - in: path
-        name: poll_id
-        required: true
-        schema:
-          description: Poll ID
-          maxLength: 255
-          title: string
-          type: string
-          x-stream-index: "002"
-      - in: query
-        name: user_id
-        schema:
-          type: string
-          writeOnly: true
-          x-stream-index: "001"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PollResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Get poll
-      tags:
-      - product:chat
-    patch:
-      description: |
-        Updates a poll partially
-
-        Sends events:
-        - poll.updated
-      operationId: UpdatePollPartial
-      parameters:
-      - in: path
-        name: poll_id
-        required: true
-        schema:
-          description: Poll ID
-          maxLength: 255
-          title: string
-          type: string
-          x-stream-index: "001"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdatePollPartialRequest'
-        required: true
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PollResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Partial update poll
-      tags:
-      - product:chat
-  /api/v2/chat/polls/{poll_id}/options:
-    post:
-      description: |
-        Creates a poll option
-
-        Sends events:
-        - poll.updated
-      operationId: CreatePollOption
-      parameters:
-      - in: path
-        name: poll_id
-        required: true
-        schema:
-          description: Poll ID
-          maxLength: 255
-          title: string
-          type: string
-          x-stream-index: "001"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreatePollOptionRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PollOptionResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Create poll option
-      tags:
-      - product:chat
-    put:
-      description: |
-        Updates a poll option
-
-        Sends events:
-        - poll.updated
-      operationId: UpdatePollOption
-      parameters:
-      - in: path
-        name: poll_id
-        required: true
-        schema:
-          description: Poll ID
-          maxLength: 255
-          title: string
-          type: string
-          x-stream-index: "001"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdatePollOptionRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PollOptionResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Update poll option
-      tags:
-      - product:chat
-  /api/v2/chat/polls/{poll_id}/options/{option_id}:
-    delete:
-      description: |
-        Deletes a poll option
-
-        Sends events:
-        - poll.updated
-      operationId: DeletePollOption
-      parameters:
-      - in: path
-        name: poll_id
-        required: true
-        schema:
-          description: Poll ID
-          maxLength: 255
-          title: string
-          type: string
-          x-stream-index: "002"
-      - in: path
-        name: option_id
-        required: true
-        schema:
-          description: Option ID
-          maxLength: 255
-          title: string
-          type: string
-          x-stream-index: "003"
-      - in: query
-        name: user_id
-        schema:
-          type: string
-          writeOnly: true
-          x-stream-index: "001"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Response'
-          description: Response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Delete poll option
-      tags:
-      - product:chat
-    get:
-      description: |
-        Retrieves a poll option
-      operationId: GetPollOption
-      parameters:
-      - in: path
-        name: poll_id
-        required: true
-        schema:
-          description: Poll ID
-          maxLength: 255
-          title: string
-          type: string
-          x-stream-index: "002"
-      - in: path
-        name: option_id
-        required: true
-        schema:
-          description: Option ID
-          maxLength: 255
-          title: string
-          type: string
-          x-stream-index: "003"
-      - in: query
-        name: user_id
-        schema:
-          type: string
-          writeOnly: true
-          x-stream-index: "001"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PollOptionResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Get poll option
-      tags:
-      - product:chat
-  /api/v2/chat/polls/{poll_id}/votes:
-    post:
-      description: |
-        Queries votes
-      operationId: QueryPollVotes
-      parameters:
-      - in: path
-        name: poll_id
-        required: true
-        schema:
-          description: Poll ID
-          maxLength: 255
-          title: string
-          type: string
-          x-stream-index: "002"
-      - in: query
-        name: user_id
-        schema:
-          type: string
-          writeOnly: true
-          x-stream-index: "001"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/QueryPollVotesRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PollVotesResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Query votes
-      tags:
-      - product:chat
-  /api/v2/chat/polls/query:
-    post:
-      description: |
-        Queries polls
-      operationId: QueryPolls
-      parameters:
-      - in: query
-        name: user_id
-        schema:
-          type: string
-          writeOnly: true
-          x-stream-index: "001"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/QueryPollsRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/QueryPollsResponse'
-          description: Successful response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Query polls
       tags:
       - product:chat
   /api/v2/chat/push_preferences:
@@ -25941,6 +25981,504 @@ paths:
       summary: Get permission
       tags:
       - product:common
+  /api/v2/polls:
+    post:
+      description: |
+        Creates a new poll
+      operationId: CreatePoll
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePollRequest'
+        description: Create Poll Request
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PollResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Create poll
+      tags:
+      - product:common
+    put:
+      description: |
+        Updates a poll
+
+        Sends events:
+        - feeds.poll.closed
+        - feeds.poll.updated
+        - poll.closed
+        - poll.updated
+      operationId: UpdatePoll
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePollRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PollResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Update poll
+      tags:
+      - product:common
+  /api/v2/polls/{poll_id}:
+    delete:
+      description: |
+        Deletes a poll
+
+        Sends events:
+        - feeds.poll.deleted
+        - poll.deleted
+      operationId: DeletePoll
+      parameters:
+      - in: path
+        name: poll_id
+        required: true
+        schema:
+          description: Poll ID
+          maxLength: 255
+          title: string
+          type: string
+          x-stream-index: "002"
+      - in: query
+        name: user_id
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Delete poll
+      tags:
+      - product:common
+    get:
+      description: |
+        Retrieves a poll
+      operationId: GetPoll
+      parameters:
+      - in: path
+        name: poll_id
+        required: true
+        schema:
+          description: Poll ID
+          maxLength: 255
+          title: string
+          type: string
+          x-stream-index: "002"
+      - in: query
+        name: user_id
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PollResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get poll
+      tags:
+      - product:common
+    patch:
+      description: |
+        Updates a poll partially
+
+        Sends events:
+        - feeds.poll.closed
+        - feeds.poll.updated
+        - poll.closed
+        - poll.updated
+      operationId: UpdatePollPartial
+      parameters:
+      - in: path
+        name: poll_id
+        required: true
+        schema:
+          description: Poll ID
+          maxLength: 255
+          title: string
+          type: string
+          x-stream-index: "001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePollPartialRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PollResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Partial update poll
+      tags:
+      - product:common
+  /api/v2/polls/{poll_id}/options:
+    post:
+      description: |
+        Creates a poll option
+
+        Sends events:
+        - feeds.poll.updated
+        - poll.updated
+      operationId: CreatePollOption
+      parameters:
+      - in: path
+        name: poll_id
+        required: true
+        schema:
+          description: Poll ID
+          maxLength: 255
+          title: string
+          type: string
+          x-stream-index: "001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePollOptionRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PollOptionResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Create poll option
+      tags:
+      - product:common
+    put:
+      description: |
+        Updates a poll option
+
+        Sends events:
+        - feeds.poll.updated
+        - poll.updated
+      operationId: UpdatePollOption
+      parameters:
+      - in: path
+        name: poll_id
+        required: true
+        schema:
+          description: Poll ID
+          maxLength: 255
+          title: string
+          type: string
+          x-stream-index: "001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePollOptionRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PollOptionResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Update poll option
+      tags:
+      - product:common
+  /api/v2/polls/{poll_id}/options/{option_id}:
+    delete:
+      description: |
+        Deletes a poll option
+
+        Sends events:
+        - feeds.poll.updated
+        - poll.updated
+      operationId: DeletePollOption
+      parameters:
+      - in: path
+        name: poll_id
+        required: true
+        schema:
+          description: Poll ID
+          maxLength: 255
+          title: string
+          type: string
+          x-stream-index: "002"
+      - in: path
+        name: option_id
+        required: true
+        schema:
+          description: Option ID
+          maxLength: 255
+          title: string
+          type: string
+          x-stream-index: "003"
+      - in: query
+        name: user_id
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Delete poll option
+      tags:
+      - product:common
+    get:
+      description: |
+        Retrieves a poll option
+      operationId: GetPollOption
+      parameters:
+      - in: path
+        name: poll_id
+        required: true
+        schema:
+          description: Poll ID
+          maxLength: 255
+          title: string
+          type: string
+          x-stream-index: "002"
+      - in: path
+        name: option_id
+        required: true
+        schema:
+          description: Option ID
+          maxLength: 255
+          title: string
+          type: string
+          x-stream-index: "003"
+      - in: query
+        name: user_id
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PollOptionResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get poll option
+      tags:
+      - product:common
+  /api/v2/polls/{poll_id}/votes:
+    post:
+      description: |
+        Queries votes
+      operationId: QueryPollVotes
+      parameters:
+      - in: path
+        name: poll_id
+        required: true
+        schema:
+          description: Poll ID
+          maxLength: 255
+          title: string
+          type: string
+          x-stream-index: "002"
+      - in: query
+        name: user_id
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryPollVotesRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PollVotesResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Query votes
+      tags:
+      - product:common
+  /api/v2/polls/query:
+    post:
+      description: |
+        Queries polls
+      operationId: QueryPolls
+      parameters:
+      - in: query
+        name: user_id
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryPollsRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryPollsResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Query polls
+      tags:
+      - product:common
   /api/v2/push_providers:
     get:
       description: |
@@ -26809,7 +27347,7 @@ paths:
         schema:
           type: string
           writeOnly: true
-          x-stream-index: "006.001"
+          x-stream-index: "005.001"
       requestBody:
         content:
           application/json:
