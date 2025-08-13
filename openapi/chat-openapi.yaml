@@ -183,6 +183,51 @@ components:
       - text
       - type
       type: object
+    ActivityMarkedEvent:
+      properties:
+        all_read:
+          type: boolean
+          x-stream-index: "006"
+        all_seen:
+          type: boolean
+          x-stream-index: "007"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        feed_id:
+          type: string
+          x-stream-index: "003"
+        marked_read:
+          items:
+            type: string
+          type: array
+          x-stream-index: "004"
+        marked_watched:
+          items:
+            type: string
+          type: array
+          x-stream-index: "005"
+        type:
+          default: activity.marked
+          type: string
+          x-stream-index: "001.001"
+        user_id:
+          type: string
+          x-stream-index: "002"
+      required:
+      - type
+      - created_at
+      - user_id
+      - feed_id
+      - all_read
+      - all_seen
+      title: ActivityMarkedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     AnyEvent:
       properties:
         created_at:
@@ -284,6 +329,9 @@ components:
         image_upload_config:
           $ref: '#/components/schemas/FileUploadConfig'
           x-stream-index: "031"
+        moderation_bulk_submit_action_enabled:
+          type: boolean
+          x-stream-index: "048"
         moderation_dashboard_preferences:
           $ref: '#/components/schemas/ModerationDashboardPreferences'
           x-stream-index: "044"
@@ -353,6 +401,9 @@ components:
         use_hook_v2:
           type: boolean
           x-stream-index: "046"
+        user_response_time_enabled:
+          type: boolean
+          x-stream-index: "047"
         user_search_disallowed_roles:
           items:
             type: string
@@ -406,6 +457,8 @@ components:
       - guest_user_creation_disabled
       - event_hooks
       - use_hook_v2
+      - user_response_time_enabled
+      - moderation_bulk_submit_action_enabled
       type: object
     AsyncBulkImageModerationEvent:
       nullable: true
@@ -531,7 +584,7 @@ components:
           type: string
           x-stream-index: "002.001"
         type:
-          default: export.moderation_logs.error
+          default: export.channels.error
           type: string
           x-stream-index: "003.002"
       required:
@@ -1112,6 +1165,9 @@ components:
         geofencing:
           $ref: '#/components/schemas/GeofenceSettings'
           x-stream-index: "008"
+        ingress:
+          $ref: '#/components/schemas/IngressSettings'
+          x-stream-index: "014"
         limits:
           $ref: '#/components/schemas/LimitsSettings'
           x-stream-index: "012"
@@ -1440,15 +1496,15 @@ components:
       properties:
         user:
           $ref: '#/components/schemas/UserRequest'
-          x-stream-index: "004.002"
+          x-stream-index: "005.002"
         user_id:
           type: string
-          x-stream-index: "004.001"
+          x-stream-index: "005.001"
         vote:
           $ref: '#/components/schemas/VoteData'
           description: Vote data
           title: VoteData
-          x-stream-index: "003"
+          x-stream-index: "004"
       type: object
     Channel:
       properties:
@@ -4094,10 +4150,6 @@ components:
           additionalProperties: {}
           type: object
           writeOnly: true
-          x-stream-index: "004"
-        position:
-          format: int32
-          type: integer
           x-stream-index: "003"
         text:
           description: Option text
@@ -4106,10 +4158,10 @@ components:
           x-stream-index: "002"
         user:
           $ref: '#/components/schemas/UserRequest'
-          x-stream-index: "005.002"
+          x-stream-index: "004.002"
         user_id:
           type: string
-          x-stream-index: "005.001"
+          x-stream-index: "004.001"
       required:
       - text
       type: object
@@ -5412,6 +5464,10 @@ components:
       type: object
     FullUserResponse:
       properties:
+        avg_response_time:
+          format: int32
+          type: integer
+          x-stream-index: "001.018"
         ban_expires:
           format: date-time
           type: string
@@ -6505,6 +6561,88 @@ components:
       - prev_state
       - next_state
       - created_at
+      type: object
+    IngressAudioEncodingOptions:
+      properties:
+        bitrate:
+          maximum: 128000
+          minimum: 16000
+          type: integer
+          x-stream-index: "003"
+        channels:
+          enum:
+          - "1"
+          - "2"
+          format: int32
+          type: integer
+          x-stream-index: "001"
+        enable_dtx:
+          type: boolean
+          x-stream-index: "002"
+      required:
+      - channels
+      - enable_dtx
+      - bitrate
+      type: object
+    IngressSettings:
+      properties:
+        audio_encoding_options:
+          $ref: '#/components/schemas/IngressAudioEncodingOptions'
+          x-stream-index: "002"
+        enabled:
+          type: boolean
+          x-stream-index: "001"
+        video_encoding_options:
+          additionalProperties:
+            $ref: '#/components/schemas/IngressVideoEncodingOptions'
+          type: object
+          x-stream-index: "003"
+      required:
+      - enabled
+      type: object
+    IngressVideoEncodingOptions:
+      properties:
+        layers:
+          items:
+            $ref: '#/components/schemas/IngressVideoLayer'
+          minimum: 1
+          type: array
+          x-stream-index: "001"
+      required:
+      - layers
+      type: object
+    IngressVideoLayer:
+      nullable: true
+      properties:
+        bitrate:
+          minimum: 1000
+          type: integer
+          x-stream-index: "002"
+        codec:
+          enum:
+          - h264
+          - vp8
+          type: string
+          x-stream-index: "001"
+        frame_rate:
+          maximum: 60
+          minimum: 1
+          type: integer
+          x-stream-index: "003"
+        max_dimension:
+          minimum: 240
+          type: integer
+          x-stream-index: "005"
+        min_dimension:
+          minimum: 240
+          type: integer
+          x-stream-index: "004"
+      required:
+      - codec
+      - bitrate
+      - frame_rate
+      - min_dimension
+      - max_dimension
       type: object
     Label:
       properties:
@@ -8737,6 +8875,10 @@ components:
       type: object
     OwnUser:
       properties:
+        avg_response_time:
+          format: int32
+          type: integer
+          x-stream-index: "046"
         banned:
           type: boolean
           x-stream-index: "016"
@@ -8866,6 +9008,10 @@ components:
       type: object
     OwnUserResponse:
       properties:
+        avg_response_time:
+          format: int32
+          type: integer
+          x-stream-index: "001.018"
         banned:
           type: boolean
           x-stream-index: "001.012"
@@ -9467,11 +9613,6 @@ components:
       type: object
     PollResponseData:
       properties:
-        Custom:
-          additionalProperties: {}
-          type: object
-          writeOnly: true
-          x-stream-index: "021"
         allow_answers:
           type: boolean
           x-stream-index: "008"
@@ -9492,6 +9633,10 @@ components:
         created_by_id:
           type: string
           x-stream-index: "017"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "021"
         description:
           type: string
           x-stream-index: "003"
@@ -9568,7 +9713,7 @@ components:
       - created_by_id
       - created_at
       - updated_at
-      - Custom
+      - custom
       type: object
     PollVote:
       nullable: true
@@ -11411,6 +11556,193 @@ components:
       required:
       - mode
       type: object
+    ReminderCreatedEvent:
+      description: Emitted when a reminder is created.
+      nullable: true
+      properties:
+        cid:
+          description: The CID of the Channel for which the reminder was created
+          title: Channel CID
+          type: string
+          x-stream-index: "001.004"
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: 001.001.003
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.007
+        message_id:
+          description: The ID of the message for which the reminder was created
+          title: Message ID
+          type: string
+          x-stream-index: "001.002"
+        parent_id:
+          description: The ID of the parent message, if the reminder is for a thread
+            message
+          title: Parent ID
+          type: string
+          x-stream-index: "001.005"
+        received_at:
+          format: date-time
+          type: string
+          x-stream-index: 001.001.004
+        reminder:
+          $ref: '#/components/schemas/ReminderResponseData'
+          description: The reminder object which was created
+          title: MessageReminder
+          x-stream-index: "001.006"
+        type:
+          default: reminder.created
+          description: 'The type of event: "reminder.created" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: 001.001.002
+        user_id:
+          description: The ID of the user for whom the reminder was created
+          title: User ID
+          type: string
+          x-stream-index: "001.003"
+      required:
+      - type
+      - created_at
+      - custom
+      - message_id
+      - user_id
+      - cid
+      title: ReminderCreatedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    ReminderDeletedEvent:
+      description: Emitted when a reminder is deleted.
+      nullable: true
+      properties:
+        cid:
+          description: The CID of the Channel for which the reminder was created
+          title: Channel CID
+          type: string
+          x-stream-index: "001.004"
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: 001.001.003
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.007
+        message_id:
+          description: The ID of the message for which the reminder was created
+          title: Message ID
+          type: string
+          x-stream-index: "001.002"
+        parent_id:
+          description: The ID of the parent message, if the reminder is for a thread
+            message
+          title: Parent ID
+          type: string
+          x-stream-index: "001.005"
+        received_at:
+          format: date-time
+          type: string
+          x-stream-index: 001.001.004
+        reminder:
+          $ref: '#/components/schemas/ReminderResponseData'
+          description: The reminder object which was created
+          title: MessageReminder
+          x-stream-index: "001.006"
+        type:
+          default: reminder.deleted
+          description: 'The type of event: "reminder.deleted" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: 001.001.002
+        user_id:
+          description: The ID of the user for whom the reminder was created
+          title: User ID
+          type: string
+          x-stream-index: "001.003"
+      required:
+      - type
+      - created_at
+      - custom
+      - message_id
+      - user_id
+      - cid
+      title: ReminderDeletedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    ReminderNotificationEvent:
+      description: Emitted when a reminder becomes due, triggering a notification
+        for the user.
+      nullable: true
+      properties:
+        cid:
+          description: The CID of the Channel for which the reminder was created
+          title: Channel CID
+          type: string
+          x-stream-index: "001.004"
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: 001.001.003
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.007
+        message_id:
+          description: The ID of the message for which the reminder was created
+          title: Message ID
+          type: string
+          x-stream-index: "001.002"
+        parent_id:
+          type: string
+          x-stream-index: "001.005"
+        received_at:
+          format: date-time
+          type: string
+          x-stream-index: 001.001.004
+        reminder:
+          $ref: '#/components/schemas/ReminderResponseData'
+          description: The reminder object which was created
+          title: MessageReminder
+          x-stream-index: "001.006"
+        type:
+          default: notification.reminder_due
+          description: 'The type of event: "notification.reminder_due" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: 001.001.002
+        user_id:
+          description: The ID of the user for whom the reminder was created
+          title: User ID
+          type: string
+          x-stream-index: "001.003"
+      required:
+      - type
+      - created_at
+      - custom
+      - message_id
+      - user_id
+      - cid
+      title: ReminderNotificationEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     ReminderResponseData:
       properties:
         channel:
@@ -11450,6 +11782,69 @@ components:
       - created_at
       - updated_at
       type: object
+    ReminderUpdatedEvent:
+      description: Emitted when a reminder is updated.
+      nullable: true
+      properties:
+        cid:
+          description: The CID of the Channel for which the reminder was created
+          title: Channel CID
+          type: string
+          x-stream-index: "001.004"
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: 001.001.003
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.007
+        message_id:
+          description: The ID of the message for which the reminder was created
+          title: Message ID
+          type: string
+          x-stream-index: "001.002"
+        parent_id:
+          description: The ID of the parent message, if the reminder is for a thread
+            message
+          title: Parent ID
+          type: string
+          x-stream-index: "001.005"
+        received_at:
+          format: date-time
+          type: string
+          x-stream-index: 001.001.004
+        reminder:
+          $ref: '#/components/schemas/ReminderResponseData'
+          description: The reminder object which was created
+          title: MessageReminder
+          x-stream-index: "001.006"
+        type:
+          default: reminder.updated
+          description: 'The type of event: "reminder.updated" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: 001.001.002
+        user_id:
+          description: The ID of the user for whom the reminder was created
+          title: User ID
+          type: string
+          x-stream-index: "001.003"
+      required:
+      - type
+      - created_at
+      - custom
+      - message_id
+      - user_id
+      - cid
+      title: ReminderUpdatedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     Response:
       description: Basic response information
       nullable: true
@@ -13184,7 +13579,6 @@ components:
       required:
       - total_unread_count
       - total_unread_threads_count
-      - total_unread_count_by_team
       - channels
       - channel_type
       - threads
@@ -13365,6 +13759,9 @@ components:
         sqs_url:
           type: string
           x-stream-index: "001.023"
+        user_response_time_enabled:
+          type: boolean
+          x-stream-index: "001.048"
         user_search_disallowed_roles:
           items:
             type: string
@@ -14007,17 +14404,12 @@ components:
     UpdateLiveLocationRequest:
       nullable: true
       properties:
-        created_by_device_id:
-          description: Device ID that created the live location
-          title: string
-          type: string
-          x-stream-index: "004"
         end_at:
           description: Time when the live location expires
           format: date-time
           title: string
           type: string
-          x-stream-index: "005"
+          x-stream-index: "004"
         latitude:
           description: Latitude coordinate
           format: float
@@ -14041,7 +14433,6 @@ components:
           x-stream-index: "001"
       required:
       - message_id
-      - created_by_device_id
       type: object
     UpdateMemberPartialRequest:
       nullable: true
@@ -14572,6 +14963,11 @@ components:
       type: object
     User:
       properties:
+        avg_response_time:
+          format: int32
+          readOnly: true
+          type: integer
+          x-stream-index: "046"
         ban_expires:
           format: date-time
           type: string
@@ -14979,6 +15375,10 @@ components:
     UserResponse:
       description: User response object
       properties:
+        avg_response_time:
+          format: int32
+          type: integer
+          x-stream-index: "001.018"
         ban_expires:
           description: Date when ban expires
           format: date-time
@@ -15120,6 +15520,10 @@ components:
       type: object
     UserResponseCommonFields:
       properties:
+        avg_response_time:
+          format: int32
+          type: integer
+          x-stream-index: "018"
         banned:
           type: boolean
           x-stream-index: "012"
@@ -15198,6 +15602,10 @@ components:
       type: object
     UserResponsePrivacyFields:
       properties:
+        avg_response_time:
+          format: int32
+          type: integer
+          x-stream-index: "001.018"
         banned:
           type: boolean
           x-stream-index: "001.012"
@@ -15450,9 +15858,6 @@ components:
       type: object
     VoteData:
       properties:
-        Option:
-          $ref: '#/components/schemas/PollOptionResponseData'
-          x-stream-index: "003"
         answer_text:
           type: string
           x-stream-index: "002"
@@ -15562,6 +15967,7 @@ components:
       discriminator:
         mapping:
           '*': '#/components/schemas/AnyEvent'
+          activity.marked: '#/components/schemas/ActivityMarkedEvent'
           campaign.completed: '#/components/schemas/CampaignCompletedEvent'
           campaign.started: '#/components/schemas/CampaignStartedEvent'
           channel.created: '#/components/schemas/ChannelCreatedEvent'
@@ -15595,10 +16001,14 @@ components:
           message.undeleted: '#/components/schemas/MessageUndeletedEvent'
           message.updated: '#/components/schemas/MessageUpdatedEvent'
           notification.mark_unread: '#/components/schemas/NotificationMarkUnreadEvent'
+          notification.reminder_due: '#/components/schemas/ReminderNotificationEvent'
           notification.thread_message_new: '#/components/schemas/MessageNewEvent'
           reaction.deleted: '#/components/schemas/ReactionDeletedEvent'
           reaction.new: '#/components/schemas/ReactionNewEvent'
           reaction.updated: '#/components/schemas/ReactionUpdatedEvent'
+          reminder.created: '#/components/schemas/ReminderCreatedEvent'
+          reminder.deleted: '#/components/schemas/ReminderDeletedEvent'
+          reminder.updated: '#/components/schemas/ReminderUpdatedEvent'
           thread.updated: '#/components/schemas/ThreadUpdatedEvent'
           user.banned: '#/components/schemas/UserBannedEvent'
           user.deactivated: '#/components/schemas/UserDeactivatedEvent'
@@ -15612,6 +16022,7 @@ components:
           user.updated: '#/components/schemas/UserUpdatedEvent'
         propertyName: type
       oneOf:
+      - $ref: '#/components/schemas/ActivityMarkedEvent'
       - $ref: '#/components/schemas/AnyEvent'
       - $ref: '#/components/schemas/AsyncBulkImageModerationEvent'
       - $ref: '#/components/schemas/AsyncExportChannelsEvent'
@@ -15650,6 +16061,10 @@ components:
       - $ref: '#/components/schemas/ReactionDeletedEvent'
       - $ref: '#/components/schemas/ReactionNewEvent'
       - $ref: '#/components/schemas/ReactionUpdatedEvent'
+      - $ref: '#/components/schemas/ReminderCreatedEvent'
+      - $ref: '#/components/schemas/ReminderDeletedEvent'
+      - $ref: '#/components/schemas/ReminderNotificationEvent'
+      - $ref: '#/components/schemas/ReminderUpdatedEvent'
       - $ref: '#/components/schemas/ThreadUpdatedEvent'
       - $ref: '#/components/schemas/UserBannedEvent'
       - $ref: '#/components/schemas/UserDeactivatedEvent'
@@ -15702,7 +16117,6 @@ components:
       required:
       - total_unread_count
       - total_unread_threads_count
-      - total_unread_count_by_team
       - channels
       - channel_type
       - threads
@@ -15777,7 +16191,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v186.5.0
+  version: v187.6.2
 openapi: 3.0.3
 paths:
   /app:
@@ -18993,7 +19407,12 @@ paths:
         Cast a vote on a poll
 
         Sends events:
+        - feeds.poll.vote_casted
+        - feeds.poll.vote_changed
+        - feeds.poll.vote_removed
         - poll.vote_casted
+        - poll.vote_changed
+        - poll.vote_removed
       operationId: CastPollVote
       parameters:
       - in: path
@@ -19011,7 +19430,7 @@ paths:
           maxLength: 255
           title: string
           type: string
-          x-stream-index: "002"
+          x-stream-index: "003"
       requestBody:
         content:
           application/json:
@@ -19046,8 +19465,9 @@ paths:
         Delete a vote from a poll
 
         Sends events:
+        - feeds.poll.vote_removed
         - poll.vote_removed
-      operationId: RemovePollVote
+      operationId: DeletePollVote
       parameters:
       - in: path
         name: message_id
@@ -19064,7 +19484,7 @@ paths:
           maxLength: 255
           title: string
           type: string
-          x-stream-index: "003"
+          x-stream-index: "004"
       - in: path
         name: vote_id
         required: true
@@ -19073,7 +19493,7 @@ paths:
           maxLength: 255
           title: string
           type: string
-          x-stream-index: "004"
+          x-stream-index: "005"
       - in: query
         name: user_id
         schema:
@@ -19864,6 +20284,8 @@ paths:
         Updates a poll
 
         Sends events:
+        - feeds.poll.closed
+        - feeds.poll.updated
         - poll.closed
         - poll.updated
       operationId: UpdatePoll
@@ -19901,6 +20323,7 @@ paths:
         Deletes a poll
 
         Sends events:
+        - feeds.poll.deleted
         - poll.deleted
       operationId: DeletePoll
       parameters:
@@ -19988,6 +20411,9 @@ paths:
         Updates a poll partially
 
         Sends events:
+        - feeds.poll.closed
+        - feeds.poll.updated
+        - poll.closed
         - poll.updated
       operationId: UpdatePollPartial
       parameters:
@@ -20034,6 +20460,7 @@ paths:
         Creates a poll option
 
         Sends events:
+        - feeds.poll.updated
         - poll.updated
       operationId: CreatePollOption
       parameters:
@@ -20079,6 +20506,7 @@ paths:
         Updates a poll option
 
         Sends events:
+        - feeds.poll.updated
         - poll.updated
       operationId: UpdatePollOption
       parameters:
@@ -20125,6 +20553,7 @@ paths:
         Deletes a poll option
 
         Sends events:
+        - feeds.poll.updated
         - poll.updated
       operationId: DeletePollOption
       parameters:
@@ -21881,7 +22310,7 @@ paths:
         schema:
           type: string
           writeOnly: true
-          x-stream-index: "006.001"
+          x-stream-index: "005.001"
       requestBody:
         content:
           application/json:

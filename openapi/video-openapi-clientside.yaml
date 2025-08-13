@@ -2178,6 +2178,9 @@ components:
         geofencing:
           $ref: '#/components/schemas/GeofenceSettingsRequest'
           x-stream-index: "003"
+        ingress:
+          $ref: '#/components/schemas/IngressSettingsRequest'
+          x-stream-index: "014"
         limits:
           $ref: '#/components/schemas/LimitsSettingsRequest'
           x-stream-index: "012"
@@ -2220,6 +2223,9 @@ components:
         geofencing:
           $ref: '#/components/schemas/GeofenceSettingsResponse'
           x-stream-index: "004"
+        ingress:
+          $ref: '#/components/schemas/IngressSettingsResponse'
+          x-stream-index: "014"
         limits:
           $ref: '#/components/schemas/LimitsSettingsResponse'
           x-stream-index: "012"
@@ -2565,6 +2571,68 @@ components:
       type: object
       x-stream-event-call-type: true
       x-stream-event-doc-group: call
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallUserFeedbackSubmittedEvent:
+      description: This event is sent when a user submits feedback for a call.
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        custom:
+          additionalProperties: {}
+          description: Custom data provided by the user
+          title: Custom
+          type: object
+          x-stream-index: "007"
+        rating:
+          description: The rating given by the user (1-5)
+          format: int32
+          title: Rating
+          type: integer
+          x-stream-index: "005"
+        reason:
+          description: The reason provided by the user for the rating
+          title: Reason
+          type: string
+          x-stream-index: "006"
+        sdk:
+          type: string
+          x-stream-index: "008"
+        sdk_version:
+          type: string
+          x-stream-index: "009"
+        session_id:
+          description: Call session ID
+          title: Session ID
+          type: string
+          x-stream-index: "003.001"
+        type:
+          default: call.user_feedback_submitted
+          description: The type of event, "call.user_feedback" in this case
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          description: The user who submitted the feedback
+          title: User
+          x-stream-index: "004"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - session_id
+      - user
+      - rating
+      title: CallUserFeedbackSubmittedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: other
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
     CallUserMutedEvent:
@@ -3644,6 +3712,155 @@ components:
       - username
       - password
       type: object
+    IngressAudioEncodingOptionsRequest:
+      properties:
+        bitrate:
+          maximum: 128000
+          minimum: 16000
+          type: integer
+          x-stream-index: "003"
+        channels:
+          enum:
+          - "1"
+          - "2"
+          format: int32
+          type: integer
+          x-stream-index: "001"
+        enable_dtx:
+          type: boolean
+          x-stream-index: "002"
+      required:
+      - channels
+      - bitrate
+      type: object
+    IngressAudioEncodingResponse:
+      properties:
+        bitrate:
+          format: int32
+          type: integer
+          x-stream-index: "003"
+        channels:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+        enable_dtx:
+          type: boolean
+          x-stream-index: "002"
+      required:
+      - channels
+      - enable_dtx
+      - bitrate
+      type: object
+    IngressSettingsRequest:
+      properties:
+        audio_encoding_options:
+          $ref: '#/components/schemas/IngressAudioEncodingOptionsRequest'
+          x-stream-index: "002"
+        enabled:
+          type: boolean
+          x-stream-index: "001"
+        video_encoding_options:
+          additionalProperties:
+            $ref: '#/components/schemas/IngressVideoEncodingOptionsRequest'
+          type: object
+          x-stream-index: "003"
+      type: object
+    IngressSettingsResponse:
+      properties:
+        audio_encoding_options:
+          $ref: '#/components/schemas/IngressAudioEncodingResponse'
+          x-stream-index: "002"
+        enabled:
+          type: boolean
+          x-stream-index: "001"
+        video_encoding_options:
+          additionalProperties:
+            $ref: '#/components/schemas/IngressVideoEncodingResponse'
+          type: object
+          x-stream-index: "003"
+      required:
+      - enabled
+      type: object
+    IngressVideoEncodingOptionsRequest:
+      properties:
+        layers:
+          items:
+            $ref: '#/components/schemas/IngressVideoLayerRequest'
+          minimum: 1
+          type: array
+          x-stream-index: "001"
+      required:
+      - layers
+      type: object
+    IngressVideoEncodingResponse:
+      properties:
+        layers:
+          items:
+            $ref: '#/components/schemas/IngressVideoLayerResponse'
+          type: array
+          x-stream-index: "001"
+      required:
+      - layers
+      type: object
+    IngressVideoLayerRequest:
+      nullable: true
+      properties:
+        bitrate:
+          format: int32
+          minimum: 1000
+          type: integer
+          x-stream-index: "002"
+        codec:
+          enum:
+          - h264
+          - vp8
+          type: string
+          x-stream-index: "001"
+        frame_rate_limit:
+          maximum: 60
+          minimum: 1
+          type: integer
+          x-stream-index: "005"
+        max_dimension:
+          minimum: 240
+          type: integer
+          x-stream-index: "004"
+        min_dimension:
+          minimum: 240
+          type: integer
+          x-stream-index: "003"
+      required:
+      - codec
+      - bitrate
+      - min_dimension
+      - max_dimension
+      - frame_rate_limit
+      type: object
+    IngressVideoLayerResponse:
+      nullable: true
+      properties:
+        bitrate:
+          type: integer
+          x-stream-index: "002"
+        codec:
+          type: string
+          x-stream-index: "001"
+        frame_rate_limit:
+          type: integer
+          x-stream-index: "005"
+        max_dimension:
+          type: integer
+          x-stream-index: "004"
+        min_dimension:
+          type: integer
+          x-stream-index: "003"
+      required:
+      - codec
+      - bitrate
+      - min_dimension
+      - max_dimension
+      - frame_rate_limit
+      type: object
     JoinCallRequest:
       nullable: true
       properties:
@@ -4040,6 +4257,10 @@ components:
       type: string
     OwnUserResponse:
       properties:
+        avg_response_time:
+          format: int32
+          type: integer
+          x-stream-index: "001.018"
         blocked_user_ids:
           items:
             type: string
@@ -6006,6 +6227,11 @@ components:
       x-stream-ws-base-event-name: VideoEvent
     User:
       properties:
+        avg_response_time:
+          format: int32
+          readOnly: true
+          type: integer
+          x-stream-index: "046"
         ban_expires:
           format: date-time
           type: string
@@ -6298,6 +6524,10 @@ components:
     UserResponse:
       description: User response object
       properties:
+        avg_response_time:
+          format: int32
+          type: integer
+          x-stream-index: "001.018"
         blocked_user_ids:
           items:
             type: string
@@ -6398,6 +6628,10 @@ components:
       type: object
     UserResponsePrivacyFields:
       properties:
+        avg_response_time:
+          format: int32
+          type: integer
+          x-stream-index: "001.018"
         blocked_user_ids:
           items:
             type: string
@@ -6570,6 +6804,7 @@ components:
           call.transcription_stopped: '#/components/schemas/CallTranscriptionStoppedEvent'
           call.unblocked_user: '#/components/schemas/UnblockedUserEvent'
           call.updated: '#/components/schemas/CallUpdatedEvent'
+          call.user_feedback_submitted: '#/components/schemas/CallUserFeedbackSubmittedEvent'
           call.user_muted: '#/components/schemas/CallUserMutedEvent'
           connection.error: '#/components/schemas/ConnectionErrorEvent'
           connection.ok: '#/components/schemas/ConnectedEvent'
@@ -6628,6 +6863,7 @@ components:
       - $ref: '#/components/schemas/CallTranscriptionStartedEvent'
       - $ref: '#/components/schemas/CallTranscriptionStoppedEvent'
       - $ref: '#/components/schemas/CallUpdatedEvent'
+      - $ref: '#/components/schemas/CallUserFeedbackSubmittedEvent'
       - $ref: '#/components/schemas/CallUserMutedEvent'
       - $ref: '#/components/schemas/ClosedCaptionEvent'
       - $ref: '#/components/schemas/ConnectedEvent'
@@ -6774,7 +7010,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v186.5.0
+  version: v187.6.2
 openapi: 3.0.3
 paths:
   /video/call/{type}/{id}:

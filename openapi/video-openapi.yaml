@@ -235,7 +235,7 @@ components:
           type: string
           x-stream-index: "002.001"
         type:
-          default: export.users.error
+          default: export.channels.error
           type: string
           x-stream-index: "003.002"
       required:
@@ -2123,6 +2123,52 @@ components:
       x-stream-event-doc-group: session
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    CallSessionParticipantCountsUpdatedEvent:
+      description: This event is sent when the participant counts in a call session
+        are updated
+      properties:
+        anonymous_participant_count:
+          format: int32
+          type: integer
+          x-stream-index: "005"
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        participants_count_by_role:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "004"
+        session_id:
+          description: Call session ID
+          title: Session ID
+          type: string
+          x-stream-index: "003.001"
+        type:
+          default: call.session_participant_count_updated
+          description: 'The type of event: "call.session_participant_count_updated"
+            in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - session_id
+      - participants_count_by_role
+      - anonymous_participant_count
+      title: CallSessionParticipantCountsUpdatedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: session
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     CallSessionParticipantJoinedEvent:
       description: This event is sent when a participant joins a call session
       properties:
@@ -2330,6 +2376,9 @@ components:
         geofencing:
           $ref: '#/components/schemas/GeofenceSettingsRequest'
           x-stream-index: "003"
+        ingress:
+          $ref: '#/components/schemas/IngressSettingsRequest'
+          x-stream-index: "014"
         limits:
           $ref: '#/components/schemas/LimitsSettingsRequest'
           x-stream-index: "012"
@@ -2372,6 +2421,9 @@ components:
         geofencing:
           $ref: '#/components/schemas/GeofenceSettingsResponse'
           x-stream-index: "004"
+        ingress:
+          $ref: '#/components/schemas/IngressSettingsResponse'
+          x-stream-index: "014"
         limits:
           $ref: '#/components/schemas/LimitsSettingsResponse'
           x-stream-index: "012"
@@ -4040,6 +4092,155 @@ components:
       - quality_tracks
       - layout
       title: HLSSettingsResponse
+      type: object
+    IngressAudioEncodingOptionsRequest:
+      properties:
+        bitrate:
+          maximum: 128000
+          minimum: 16000
+          type: integer
+          x-stream-index: "003"
+        channels:
+          enum:
+          - "1"
+          - "2"
+          format: int32
+          type: integer
+          x-stream-index: "001"
+        enable_dtx:
+          type: boolean
+          x-stream-index: "002"
+      required:
+      - channels
+      - bitrate
+      type: object
+    IngressAudioEncodingResponse:
+      properties:
+        bitrate:
+          format: int32
+          type: integer
+          x-stream-index: "003"
+        channels:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+        enable_dtx:
+          type: boolean
+          x-stream-index: "002"
+      required:
+      - channels
+      - enable_dtx
+      - bitrate
+      type: object
+    IngressSettingsRequest:
+      properties:
+        audio_encoding_options:
+          $ref: '#/components/schemas/IngressAudioEncodingOptionsRequest'
+          x-stream-index: "002"
+        enabled:
+          type: boolean
+          x-stream-index: "001"
+        video_encoding_options:
+          additionalProperties:
+            $ref: '#/components/schemas/IngressVideoEncodingOptionsRequest'
+          type: object
+          x-stream-index: "003"
+      type: object
+    IngressSettingsResponse:
+      properties:
+        audio_encoding_options:
+          $ref: '#/components/schemas/IngressAudioEncodingResponse'
+          x-stream-index: "002"
+        enabled:
+          type: boolean
+          x-stream-index: "001"
+        video_encoding_options:
+          additionalProperties:
+            $ref: '#/components/schemas/IngressVideoEncodingResponse'
+          type: object
+          x-stream-index: "003"
+      required:
+      - enabled
+      type: object
+    IngressVideoEncodingOptionsRequest:
+      properties:
+        layers:
+          items:
+            $ref: '#/components/schemas/IngressVideoLayerRequest'
+          minimum: 1
+          type: array
+          x-stream-index: "001"
+      required:
+      - layers
+      type: object
+    IngressVideoEncodingResponse:
+      properties:
+        layers:
+          items:
+            $ref: '#/components/schemas/IngressVideoLayerResponse'
+          type: array
+          x-stream-index: "001"
+      required:
+      - layers
+      type: object
+    IngressVideoLayerRequest:
+      nullable: true
+      properties:
+        bitrate:
+          format: int32
+          minimum: 1000
+          type: integer
+          x-stream-index: "002"
+        codec:
+          enum:
+          - h264
+          - vp8
+          type: string
+          x-stream-index: "001"
+        frame_rate_limit:
+          maximum: 60
+          minimum: 1
+          type: integer
+          x-stream-index: "005"
+        max_dimension:
+          minimum: 240
+          type: integer
+          x-stream-index: "004"
+        min_dimension:
+          minimum: 240
+          type: integer
+          x-stream-index: "003"
+      required:
+      - codec
+      - bitrate
+      - min_dimension
+      - max_dimension
+      - frame_rate_limit
+      type: object
+    IngressVideoLayerResponse:
+      nullable: true
+      properties:
+        bitrate:
+          type: integer
+          x-stream-index: "002"
+        codec:
+          type: string
+          x-stream-index: "001"
+        frame_rate_limit:
+          type: integer
+          x-stream-index: "005"
+        max_dimension:
+          type: integer
+          x-stream-index: "004"
+        min_dimension:
+          type: integer
+          x-stream-index: "003"
+      required:
+      - codec
+      - bitrate
+      - min_dimension
+      - max_dimension
+      - frame_rate_limit
       type: object
     JoinCallAPIMetrics:
       properties:
@@ -6565,6 +6766,11 @@ components:
       x-stream-ws-base-event-name: VideoEvent
     User:
       properties:
+        avg_response_time:
+          format: int32
+          readOnly: true
+          type: integer
+          x-stream-index: "046"
         ban_expires:
           format: date-time
           type: string
@@ -6917,6 +7123,10 @@ components:
     UserResponse:
       description: User response object
       properties:
+        avg_response_time:
+          format: int32
+          type: integer
+          x-stream-index: "001.018"
         ban_expires:
           description: Date when ban expires
           format: date-time
@@ -7048,6 +7258,10 @@ components:
       type: object
     UserResponsePrivacyFields:
       properties:
+        avg_response_time:
+          format: int32
+          type: integer
+          x-stream-index: "001.018"
         blocked_user_ids:
           items:
             type: string
@@ -7278,6 +7492,7 @@ components:
           call.rtmp_broadcast_started: '#/components/schemas/CallRtmpBroadcastStartedEvent'
           call.rtmp_broadcast_stopped: '#/components/schemas/CallRtmpBroadcastStoppedEvent'
           call.session_ended: '#/components/schemas/CallSessionEndedEvent'
+          call.session_participant_count_updated: '#/components/schemas/CallSessionParticipantCountsUpdatedEvent'
           call.session_participant_joined: '#/components/schemas/CallSessionParticipantJoinedEvent'
           call.session_participant_left: '#/components/schemas/CallSessionParticipantLeftEvent'
           call.session_started: '#/components/schemas/CallSessionStartedEvent'
@@ -7341,6 +7556,7 @@ components:
       - $ref: '#/components/schemas/CallRtmpBroadcastStartedEvent'
       - $ref: '#/components/schemas/CallRtmpBroadcastStoppedEvent'
       - $ref: '#/components/schemas/CallSessionEndedEvent'
+      - $ref: '#/components/schemas/CallSessionParticipantCountsUpdatedEvent'
       - $ref: '#/components/schemas/CallSessionParticipantJoinedEvent'
       - $ref: '#/components/schemas/CallSessionParticipantLeftEvent'
       - $ref: '#/components/schemas/CallSessionStartedEvent'
@@ -7403,7 +7619,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v186.5.0
+  version: v187.6.2
 openapi: 3.0.3
 paths:
   /video/active_calls_status:
