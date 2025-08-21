@@ -190,6 +190,7 @@ components:
       - use_hook_v2
       - user_response_time_enabled
       - moderation_bulk_submit_action_enabled
+      - moderation_llm_configurability_enabled
       type: object
     AppUpdatedEvent:
       description: Emitted when app settings are updated
@@ -3069,6 +3070,14 @@ components:
             $ref: '#/components/schemas/ChannelMember'
           type: array
           x-stream-index: "020"
+        message_count:
+          format: int64
+          type: integer
+          x-stream-index: "035"
+        message_count_updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "036"
         team:
           type: string
           x-stream-index: "028"
@@ -3099,39 +3108,39 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "001.026"
+          x-stream-index: "001.027"
         automod:
           enum:
           - disabled
           - simple
           - AI
           type: string
-          x-stream-index: "001.021"
+          x-stream-index: "001.022"
         automod_behavior:
           enum:
           - flag
           - block
           - shadow_block
           type: string
-          x-stream-index: "001.022"
+          x-stream-index: "001.023"
         automod_thresholds:
           $ref: '#/components/schemas/Thresholds'
-          x-stream-index: "001.027"
+          x-stream-index: "001.028"
         blocklist:
           type: string
-          x-stream-index: "001.023"
+          x-stream-index: "001.024"
         blocklist_behavior:
           enum:
           - flag
           - block
           - shadow_block
           type: string
-          x-stream-index: "001.024"
+          x-stream-index: "001.025"
         blocklists:
           items:
             $ref: '#/components/schemas/BlockListOptions'
           type: array
-          x-stream-index: "001.025"
+          x-stream-index: "001.026"
         commands:
           items:
             type: string
@@ -3140,6 +3149,9 @@ components:
         connect_events:
           type: boolean
           x-stream-index: "001.004"
+        count_messages:
+          type: boolean
+          x-stream-index: "001.019"
         created_at:
           format: date-time
           type: number
@@ -3154,7 +3166,7 @@ components:
           format: int32
           maximum: 20000
           type: integer
-          x-stream-index: "001.020"
+          x-stream-index: "001.021"
         mutes:
           type: boolean
           x-stream-index: "001.009"
@@ -3164,10 +3176,10 @@ components:
         partition_size:
           format: int32
           type: integer
-          x-stream-index: "001.028"
+          x-stream-index: "001.029"
         partition_ttl:
           type: integer
-          x-stream-index: "001.029"
+          x-stream-index: "001.030"
         polls:
           type: boolean
           x-stream-index: "001.016"
@@ -3197,7 +3209,7 @@ components:
           x-stream-index: "001.018"
         skip_last_msg_update_for_system_msgs:
           type: boolean
-          x-stream-index: "001.030"
+          x-stream-index: "001.031"
         typing_events:
           type: boolean
           x-stream-index: "001.002"
@@ -3233,6 +3245,7 @@ components:
       - polls
       - user_message_reminders
       - shared_locations
+      - count_messages
       - message_retention
       - max_message_length
       - automod
@@ -3248,39 +3261,39 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: 001.002.026
+          x-stream-index: 001.002.027
         automod:
           enum:
           - disabled
           - simple
           - AI
           type: string
-          x-stream-index: 001.002.021
+          x-stream-index: 001.002.022
         automod_behavior:
           enum:
           - flag
           - block
           - shadow_block
           type: string
-          x-stream-index: 001.002.022
+          x-stream-index: 001.002.023
         automod_thresholds:
           $ref: '#/components/schemas/Thresholds'
-          x-stream-index: 001.002.027
+          x-stream-index: 001.002.028
         blocklist:
           type: string
-          x-stream-index: 001.002.023
+          x-stream-index: 001.002.024
         blocklist_behavior:
           enum:
           - flag
           - block
           - shadow_block
           type: string
-          x-stream-index: 001.002.024
+          x-stream-index: 001.002.025
         blocklists:
           items:
             $ref: '#/components/schemas/BlockListOptions'
           type: array
-          x-stream-index: 001.002.025
+          x-stream-index: 001.002.026
         commands:
           items:
             $ref: '#/components/schemas/Command'
@@ -3289,6 +3302,9 @@ components:
         connect_events:
           type: boolean
           x-stream-index: 001.002.004
+        count_messages:
+          type: boolean
+          x-stream-index: 001.002.019
         created_at:
           format: date-time
           type: number
@@ -3310,7 +3326,7 @@ components:
           format: int32
           maximum: 20000
           type: integer
-          x-stream-index: 001.002.020
+          x-stream-index: 001.002.021
         mutes:
           type: boolean
           x-stream-index: 001.002.009
@@ -3320,13 +3336,13 @@ components:
         partition_size:
           format: int32
           type: integer
-          x-stream-index: 001.002.028
+          x-stream-index: 001.002.029
         partition_ttl:
           example: 24h
           format: duration
           nullable: true
           type: string
-          x-stream-index: 001.002.029
+          x-stream-index: 001.002.030
         polls:
           type: boolean
           x-stream-index: 001.002.016
@@ -3356,7 +3372,7 @@ components:
           x-stream-index: 001.002.018
         skip_last_msg_update_for_system_msgs:
           type: boolean
-          x-stream-index: 001.002.030
+          x-stream-index: 001.002.031
         typing_events:
           type: boolean
           x-stream-index: 001.002.002
@@ -3394,6 +3410,7 @@ components:
       - polls
       - user_message_reminders
       - shared_locations
+      - count_messages
       - message_retention
       - max_message_length
       - automod
@@ -3438,6 +3455,11 @@ components:
           format: date-time
           type: number
           x-stream-index: "011"
+        deleted_messages:
+          items:
+            type: string
+          type: array
+          x-stream-index: "020"
         invite_accepted_at:
           description: Date when invite was accepted
           format: date-time
@@ -3685,6 +3707,12 @@ components:
           title: ChannelMembers
           type: array
           x-stream-index: "011"
+        message_count:
+          description: Number of messages in the channel
+          format: int64
+          title: Message count
+          type: integer
+          x-stream-index: "027"
         mute_expires_at:
           description: Date of mute expiration
           format: date-time
@@ -3887,6 +3915,9 @@ components:
             type: string
           type: array
           x-stream-index: "011"
+        count_messages:
+          type: boolean
+          x-stream-index: "014"
         grants:
           additionalProperties:
             items:
@@ -6042,6 +6073,9 @@ components:
           format: date-time
           type: number
           x-stream-index: "033"
+        deleted_for_me:
+          type: boolean
+          x-stream-index: "059"
         deleted_reply_count:
           format: int32
           type: integer
@@ -6281,6 +6315,9 @@ components:
           title: Deleted at
           type: number
           x-stream-index: "025"
+        deleted_for_me:
+          type: boolean
+          x-stream-index: "044"
         deleted_reply_count:
           format: int32
           type: integer
@@ -10751,7 +10788,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v187.13.0
+  version: v190.2.1
 openapi: 3.0.3
 paths:
   /api/v2/app:
