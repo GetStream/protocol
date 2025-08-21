@@ -190,6 +190,7 @@ components:
       - use_hook_v2
       - user_response_time_enabled
       - moderation_bulk_submit_action_enabled
+      - moderation_llm_configurability_enabled
       type: object
     AppUpdatedEvent:
       description: Emitted when app settings are updated
@@ -3069,6 +3070,14 @@ components:
             $ref: '#/components/schemas/ChannelMember'
           type: array
           x-stream-index: "020"
+        message_count:
+          format: int64
+          type: integer
+          x-stream-index: "035"
+        message_count_updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "036"
         team:
           type: string
           x-stream-index: "028"
@@ -3099,39 +3108,39 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "001.026"
+          x-stream-index: "001.027"
         automod:
           enum:
           - disabled
           - simple
           - AI
           type: string
-          x-stream-index: "001.021"
+          x-stream-index: "001.022"
         automod_behavior:
           enum:
           - flag
           - block
           - shadow_block
           type: string
-          x-stream-index: "001.022"
+          x-stream-index: "001.023"
         automod_thresholds:
           $ref: '#/components/schemas/Thresholds'
-          x-stream-index: "001.027"
+          x-stream-index: "001.028"
         blocklist:
           type: string
-          x-stream-index: "001.023"
+          x-stream-index: "001.024"
         blocklist_behavior:
           enum:
           - flag
           - block
           - shadow_block
           type: string
-          x-stream-index: "001.024"
+          x-stream-index: "001.025"
         blocklists:
           items:
             $ref: '#/components/schemas/BlockListOptions'
           type: array
-          x-stream-index: "001.025"
+          x-stream-index: "001.026"
         commands:
           items:
             type: string
@@ -3140,6 +3149,9 @@ components:
         connect_events:
           type: boolean
           x-stream-index: "001.004"
+        count_messages:
+          type: boolean
+          x-stream-index: "001.019"
         created_at:
           format: date-time
           type: number
@@ -3154,7 +3166,7 @@ components:
           format: int32
           maximum: 20000
           type: integer
-          x-stream-index: "001.020"
+          x-stream-index: "001.021"
         mutes:
           type: boolean
           x-stream-index: "001.009"
@@ -3164,10 +3176,10 @@ components:
         partition_size:
           format: int32
           type: integer
-          x-stream-index: "001.028"
+          x-stream-index: "001.029"
         partition_ttl:
           type: integer
-          x-stream-index: "001.029"
+          x-stream-index: "001.030"
         polls:
           type: boolean
           x-stream-index: "001.016"
@@ -3197,7 +3209,7 @@ components:
           x-stream-index: "001.018"
         skip_last_msg_update_for_system_msgs:
           type: boolean
-          x-stream-index: "001.030"
+          x-stream-index: "001.031"
         typing_events:
           type: boolean
           x-stream-index: "001.002"
@@ -3233,6 +3245,7 @@ components:
       - polls
       - user_message_reminders
       - shared_locations
+      - count_messages
       - message_retention
       - max_message_length
       - automod
@@ -3248,39 +3261,39 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: 001.002.026
+          x-stream-index: 001.002.027
         automod:
           enum:
           - disabled
           - simple
           - AI
           type: string
-          x-stream-index: 001.002.021
+          x-stream-index: 001.002.022
         automod_behavior:
           enum:
           - flag
           - block
           - shadow_block
           type: string
-          x-stream-index: 001.002.022
+          x-stream-index: 001.002.023
         automod_thresholds:
           $ref: '#/components/schemas/Thresholds'
-          x-stream-index: 001.002.027
+          x-stream-index: 001.002.028
         blocklist:
           type: string
-          x-stream-index: 001.002.023
+          x-stream-index: 001.002.024
         blocklist_behavior:
           enum:
           - flag
           - block
           - shadow_block
           type: string
-          x-stream-index: 001.002.024
+          x-stream-index: 001.002.025
         blocklists:
           items:
             $ref: '#/components/schemas/BlockListOptions'
           type: array
-          x-stream-index: 001.002.025
+          x-stream-index: 001.002.026
         commands:
           items:
             $ref: '#/components/schemas/Command'
@@ -3289,6 +3302,9 @@ components:
         connect_events:
           type: boolean
           x-stream-index: 001.002.004
+        count_messages:
+          type: boolean
+          x-stream-index: 001.002.019
         created_at:
           format: date-time
           type: number
@@ -3310,7 +3326,7 @@ components:
           format: int32
           maximum: 20000
           type: integer
-          x-stream-index: 001.002.020
+          x-stream-index: 001.002.021
         mutes:
           type: boolean
           x-stream-index: 001.002.009
@@ -3320,13 +3336,13 @@ components:
         partition_size:
           format: int32
           type: integer
-          x-stream-index: 001.002.028
+          x-stream-index: 001.002.029
         partition_ttl:
           example: 24h
           format: duration
           nullable: true
           type: string
-          x-stream-index: 001.002.029
+          x-stream-index: 001.002.030
         polls:
           type: boolean
           x-stream-index: 001.002.016
@@ -3356,7 +3372,7 @@ components:
           x-stream-index: 001.002.018
         skip_last_msg_update_for_system_msgs:
           type: boolean
-          x-stream-index: 001.002.030
+          x-stream-index: 001.002.031
         typing_events:
           type: boolean
           x-stream-index: 001.002.002
@@ -3394,6 +3410,7 @@ components:
       - polls
       - user_message_reminders
       - shared_locations
+      - count_messages
       - message_retention
       - max_message_length
       - automod
@@ -3438,6 +3455,11 @@ components:
           format: date-time
           type: number
           x-stream-index: "011"
+        deleted_messages:
+          items:
+            type: string
+          type: array
+          x-stream-index: "020"
         invite_accepted_at:
           description: Date when invite was accepted
           format: date-time
@@ -3685,6 +3707,12 @@ components:
           title: ChannelMembers
           type: array
           x-stream-index: "011"
+        message_count:
+          description: Number of messages in the channel
+          format: int64
+          title: Message count
+          type: integer
+          x-stream-index: "027"
         mute_expires_at:
           description: Date of mute expiration
           format: date-time
@@ -3887,6 +3915,9 @@ components:
             type: string
           type: array
           x-stream-index: "011"
+        count_messages:
+          type: boolean
+          x-stream-index: "014"
         grants:
           additionalProperties:
             items:
@@ -5786,6 +5817,76 @@ components:
       - duration
       title: JoinCallResponse
       type: object
+    KickUserRequest:
+      description: KickUserRequest is the payload for kicking a user from a call.
+        Optionally block the user as well.
+      nullable: true
+      properties:
+        block:
+          description: If true, also block the user from rejoining the call
+          title: Block
+          type: boolean
+          x-stream-index: "004"
+        user_id:
+          description: The user to kick
+          title: UserID
+          type: string
+          x-stream-index: "003"
+      required:
+      - user_id
+      title: KickUserRequest
+      type: object
+    KickUserResponse:
+      description: KickUserResponse is the payload for kicking a user from a call.
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      title: KickUserResponse
+      type: object
+    KickedUserEvent:
+      description: This event is sent to call participants to notify when a user is
+        kicked from a call. Clients should make the kicked user leave the call UI.
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "001.002"
+        kicked_by_user:
+          $ref: '#/components/schemas/UserResponse'
+          description: The user that kicked the participant, null if server-side
+          title: Kicked by
+          x-stream-index: "004"
+        type:
+          default: call.kicked_user
+          description: 'The type of event: "call.kicked_user" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          description: The user that was kicked
+          title: User
+          x-stream-index: "003"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - user
+      title: KickedUserEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: call
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     LabelThresholds:
       properties:
         block:
@@ -6042,6 +6143,9 @@ components:
           format: date-time
           type: number
           x-stream-index: "033"
+        deleted_for_me:
+          type: boolean
+          x-stream-index: "059"
         deleted_reply_count:
           format: int32
           type: integer
@@ -6281,6 +6385,9 @@ components:
           title: Deleted at
           type: number
           x-stream-index: "025"
+        deleted_for_me:
+          type: boolean
+          x-stream-index: "044"
         deleted_reply_count:
           format: int32
           type: integer
@@ -6661,6 +6768,7 @@ components:
       - join-backstage
       - join-call
       - join-ended-call
+      - kick-user
       - mute-users
       - pin-for-everyone
       - read-call
@@ -10603,6 +10711,7 @@ components:
           call.hls_broadcasting_failed: '#/components/schemas/CallHLSBroadcastingFailedEvent'
           call.hls_broadcasting_started: '#/components/schemas/CallHLSBroadcastingStartedEvent'
           call.hls_broadcasting_stopped: '#/components/schemas/CallHLSBroadcastingStoppedEvent'
+          call.kicked_user: '#/components/schemas/KickedUserEvent'
           call.live_started: '#/components/schemas/CallLiveStartedEvent'
           call.member_added: '#/components/schemas/CallMemberAddedEvent'
           call.member_removed: '#/components/schemas/CallMemberRemovedEvent'
@@ -10702,6 +10811,7 @@ components:
       - $ref: '#/components/schemas/ConnectionErrorEvent'
       - $ref: '#/components/schemas/CustomVideoEvent'
       - $ref: '#/components/schemas/HealthCheckEvent'
+      - $ref: '#/components/schemas/KickedUserEvent'
       - $ref: '#/components/schemas/PermissionRequestEvent'
       - $ref: '#/components/schemas/UnblockedUserEvent'
       - $ref: '#/components/schemas/UpdatedCallPermissionsEvent'
@@ -10751,7 +10861,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v187.13.0
+  version: v190.6.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -12757,6 +12867,65 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Join call
+      tags:
+      - product:video
+  /api/v2/video/call/{type}/{id}/kick:
+    post:
+      description: |
+        Kicks a user from the call. Optionally block the user from rejoining by setting block=true.
+
+        Sends events:
+        - call.blocked_user
+        - call.kicked_user
+      operationId: KickUser
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          description: The type of call
+          maxLength: 64
+          title: Type
+          type: string
+          writeOnly: true
+          x-stream-index: "002.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Call ID
+          maxLength: 64
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "002.002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KickUserRequest'
+        description: KickUserRequest
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KickUserResponse'
+          description: KickUserResponse
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Kick user from a call
       tags:
       - product:video
   /api/v2/video/call/{type}/{id}/mark_ended:
