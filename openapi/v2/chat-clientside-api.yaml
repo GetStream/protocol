@@ -7152,7 +7152,7 @@ components:
           type: array
           x-stream-index: "001.002"
         type:
-          default: notification.thread_message_new
+          default: message.new
           type: string
           x-stream-index: "004.001"
         user:
@@ -8074,6 +8074,68 @@ components:
       x-stream-event-doc-group: other
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    ModerationFlagResponse:
+      nullable: true
+      properties:
+        created_at:
+          type: string
+          x-stream-index: "015"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "010"
+        entity_creator_id:
+          type: string
+          x-stream-index: "007"
+        entity_id:
+          type: string
+          x-stream-index: "006"
+        entity_type:
+          type: string
+          x-stream-index: "005"
+        labels:
+          items:
+            type: string
+          type: array
+          x-stream-index: "011"
+        moderation_payload:
+          $ref: '#/components/schemas/ModerationPayload'
+          x-stream-index: "008"
+        reason:
+          type: string
+          x-stream-index: "009"
+        result:
+          items:
+            additionalProperties: {}
+            type: object
+          type: array
+          x-stream-index: "012"
+        review_queue_item:
+          $ref: '#/components/schemas/ReviewQueueItemResponse'
+          x-stream-index: "014"
+        review_queue_item_id:
+          type: string
+          x-stream-index: "013"
+        type:
+          type: string
+          x-stream-index: "002"
+        updated_at:
+          type: string
+          x-stream-index: "016"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          x-stream-index: "004"
+        user_id:
+          type: string
+          x-stream-index: "003"
+      required:
+      - type
+      - user_id
+      - entity_type
+      - entity_id
+      - created_at
+      - updated_at
+      type: object
     ModerationFlaggedEvent:
       properties:
         created_at:
@@ -11927,7 +11989,7 @@ components:
         flags:
           description: Associated flag records
           items:
-            $ref: '#/components/schemas/FlagResponse'
+            $ref: '#/components/schemas/ModerationFlagResponse'
           title: Flags
           type: array
           x-stream-index: "023"
@@ -14881,6 +14943,91 @@ components:
       x-stream-event-doc-group: other
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    UserMessagesDeletedEvent:
+      description: This event is sent when a user's message get deleted. The event
+        contains information about the user whose messages got deleted.
+      nullable: true
+      properties:
+        channel_custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.005
+        channel_id:
+          description: The ID of the channel where the target user's messages were
+            deleted
+          title: Channel ID
+          type: string
+          x-stream-index: 001.002.002
+        channel_member_count:
+          format: int32
+          type: integer
+          x-stream-index: 001.001.004
+        channel_type:
+          description: The type of the channel where the target user's messages were
+            deleted
+          title: Channel Type
+          type: string
+          x-stream-index: 001.002.001
+        cid:
+          description: The CID of the channel where the target user's messages were
+            deleted
+          title: Channel CID
+          type: string
+          x-stream-index: 001.001.001.002
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: number
+          x-stream-index: 001.001.001.001.003
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.001.001.007
+        hard_delete:
+          description: Whether Messages were hard deleted
+          title: Hard Delete
+          type: boolean
+          x-stream-index: "004"
+        received_at:
+          format: date-time
+          type: number
+          x-stream-index: 001.001.001.001.004
+        soft_delete:
+          description: Whether Messages were soft deleted
+          title: Soft Delete
+          type: boolean
+          x-stream-index: "003"
+        team:
+          description: The team of the channel where the target user's messages were
+            deleted
+          title: Team
+          type: string
+          x-stream-index: 001.001.003
+        type:
+          default: user.messages.deleted
+          description: 'The type of event: "user.messages.deleted" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: 001.001.001.001.002
+        user:
+          $ref: '#/components/schemas/UserResponseCommonFields'
+          description: The target user whose messages got deleted
+          title: User
+          x-stream-index: "002.001"
+      required:
+      - type
+      - created_at
+      - custom
+      - user
+      - soft_delete
+      - hard_delete
+      title: UserMessagesDeletedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     UserMute:
       nullable: true
       properties:
@@ -15770,6 +15917,7 @@ components:
           reminder.created: '#/components/schemas/ReminderCreatedEvent'
           reminder.deleted: '#/components/schemas/ReminderDeletedEvent'
           reminder.updated: '#/components/schemas/ReminderUpdatedEvent'
+          user.messages.deleted: '#/components/schemas/UserMessagesDeletedEvent'
           user.updated: '#/components/schemas/UserUpdatedEvent'
         propertyName: type
       oneOf:
@@ -15788,6 +15936,7 @@ components:
       - $ref: '#/components/schemas/ReminderDeletedEvent'
       - $ref: '#/components/schemas/ReminderNotificationEvent'
       - $ref: '#/components/schemas/ReminderUpdatedEvent'
+      - $ref: '#/components/schemas/UserMessagesDeletedEvent'
       - $ref: '#/components/schemas/UserUpdatedEvent'
     WSEvent:
       description: The discriminator object for all websocket events, it maps events'
@@ -15856,6 +16005,7 @@ components:
           user.banned: '#/components/schemas/UserBannedEvent'
           user.deactivated: '#/components/schemas/UserDeactivatedEvent'
           user.deleted: '#/components/schemas/UserDeletedEvent'
+          user.messages.deleted: '#/components/schemas/UserMessagesDeletedEvent'
           user.muted: '#/components/schemas/UserMutedEvent'
           user.presence.changed: '#/components/schemas/UserPresenceChangedEvent'
           user.reactivated: '#/components/schemas/UserReactivatedEvent'
@@ -15927,6 +16077,7 @@ components:
       - $ref: '#/components/schemas/UserBannedEvent'
       - $ref: '#/components/schemas/UserDeactivatedEvent'
       - $ref: '#/components/schemas/UserDeletedEvent'
+      - $ref: '#/components/schemas/UserMessagesDeletedEvent'
       - $ref: '#/components/schemas/UserMutedEvent'
       - $ref: '#/components/schemas/UserPresenceChangedEvent'
       - $ref: '#/components/schemas/UserReactivatedEvent'
@@ -16022,7 +16173,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v187.13.0
+  version: v188.1.2
 openapi: 3.0.3
 paths:
   /api/v2/app:
