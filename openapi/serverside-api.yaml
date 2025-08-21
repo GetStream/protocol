@@ -473,6 +473,20 @@ components:
           $ref: '#/components/schemas/SubscribersMetrics'
           x-stream-index: "003"
       type: object
+    ActiveCallsResolutionStats:
+      properties:
+        p10:
+          format: float
+          type: number
+          x-stream-index: "001"
+        p50:
+          format: float
+          type: number
+          x-stream-index: "002"
+      required:
+      - p10
+      - p50
+      type: object
     ActiveCallsSummary:
       properties:
         active_calls:
@@ -14630,60 +14644,61 @@ components:
       properties:
         created_at:
           type: string
-          x-stream-index: "014"
+          x-stream-index: "015"
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "009"
+          x-stream-index: "010"
         entity_creator_id:
           type: string
-          x-stream-index: "006"
+          x-stream-index: "007"
         entity_id:
           type: string
-          x-stream-index: "005"
+          x-stream-index: "006"
         entity_type:
           type: string
-          x-stream-index: "004"
-        id:
-          type: string
-          x-stream-index: "001"
+          x-stream-index: "005"
         labels:
           items:
             type: string
           type: array
-          x-stream-index: "010"
+          x-stream-index: "011"
         moderation_payload:
           $ref: '#/components/schemas/ModerationPayload'
-          x-stream-index: "007"
+          x-stream-index: "008"
         reason:
           type: string
-          x-stream-index: "008"
+          x-stream-index: "009"
         result:
           items:
             additionalProperties: {}
             type: object
           type: array
-          x-stream-index: "011"
+          x-stream-index: "012"
         review_queue_item:
           $ref: '#/components/schemas/ReviewQueueItemResponse'
-          x-stream-index: "013"
+          x-stream-index: "014"
         review_queue_item_id:
           type: string
-          x-stream-index: "012"
+          x-stream-index: "013"
         type:
           type: string
           x-stream-index: "002"
         updated_at:
           type: string
-          x-stream-index: "015"
+          x-stream-index: "016"
         user:
           $ref: '#/components/schemas/UserResponse'
+          x-stream-index: "004"
+        user_id:
+          type: string
           x-stream-index: "003"
       required:
-      - id
       - type
+      - user_id
       - entity_type
       - entity_id
+      - result
       - created_at
       - updated_at
       type: object
@@ -16402,6 +16417,9 @@ components:
         jitter_ms:
           $ref: '#/components/schemas/ActiveCallsLatencyStats'
           x-stream-index: "001"
+        resolution:
+          $ref: '#/components/schemas/ActiveCallsResolutionStats'
+          x-stream-index: "004"
       type: object
     PublishersMetrics:
       properties:
@@ -19529,7 +19547,7 @@ components:
         flags:
           description: The flags associated with this review queue item
           items:
-            $ref: '#/components/schemas/FlagResponse'
+            $ref: '#/components/schemas/ModerationFlagResponse'
           title: Flags
           type: array
           x-stream-index: "003"
@@ -19636,7 +19654,7 @@ components:
         flags:
           description: Associated flag records
           items:
-            $ref: '#/components/schemas/FlagResponse'
+            $ref: '#/components/schemas/ModerationFlagResponse'
           title: Flags
           type: array
           x-stream-index: "023"
@@ -19746,7 +19764,7 @@ components:
         flags:
           description: The flags associated with this review queue item
           items:
-            $ref: '#/components/schemas/FlagResponse'
+            $ref: '#/components/schemas/ModerationFlagResponse'
           title: Flags
           type: array
           x-stream-index: "003"
@@ -24784,6 +24802,91 @@ components:
       x-stream-event-doc-group: other
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    UserMessagesDeletedEvent:
+      description: This event is sent when a user's message get deleted. The event
+        contains information about the user whose messages got deleted.
+      nullable: true
+      properties:
+        channel_custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.005
+        channel_id:
+          description: The ID of the channel where the target user's messages were
+            deleted
+          title: Channel ID
+          type: string
+          x-stream-index: 001.002.002
+        channel_member_count:
+          format: int32
+          type: integer
+          x-stream-index: 001.001.004
+        channel_type:
+          description: The type of the channel where the target user's messages were
+            deleted
+          title: Channel Type
+          type: string
+          x-stream-index: 001.002.001
+        cid:
+          description: The CID of the channel where the target user's messages were
+            deleted
+          title: Channel CID
+          type: string
+          x-stream-index: 001.001.001.002
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: number
+          x-stream-index: 001.001.001.001.003
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.001.001.007
+        hard_delete:
+          description: Whether Messages were hard deleted
+          title: Hard Delete
+          type: boolean
+          x-stream-index: "004"
+        received_at:
+          format: date-time
+          type: number
+          x-stream-index: 001.001.001.001.004
+        soft_delete:
+          description: Whether Messages were soft deleted
+          title: Soft Delete
+          type: boolean
+          x-stream-index: "003"
+        team:
+          description: The team of the channel where the target user's messages were
+            deleted
+          title: Team
+          type: string
+          x-stream-index: 001.001.003
+        type:
+          default: user.messages.deleted
+          description: 'The type of event: "user.messages.deleted" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: 001.001.001.001.002
+        user:
+          $ref: '#/components/schemas/UserResponseCommonFields'
+          description: The target user whose messages got deleted
+          title: User
+          x-stream-index: "002.001"
+      required:
+      - type
+      - created_at
+      - custom
+      - user
+      - soft_delete
+      - hard_delete
+      title: UserMessagesDeletedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     UserMute:
       nullable: true
       properties:
@@ -25899,6 +26002,7 @@ components:
           user.deactivated: '#/components/schemas/UserDeactivatedEvent'
           user.deleted: '#/components/schemas/UserDeletedEvent'
           user.flagged: '#/components/schemas/UserFlaggedEvent'
+          user.messages.deleted: '#/components/schemas/UserMessagesDeletedEvent'
           user.muted: '#/components/schemas/UserMutedEvent'
           user.reactivated: '#/components/schemas/UserReactivatedEvent'
           user.unbanned: '#/components/schemas/UserUnbannedEvent'
@@ -26013,6 +26117,7 @@ components:
       - $ref: '#/components/schemas/UserDeactivatedEvent'
       - $ref: '#/components/schemas/UserDeletedEvent'
       - $ref: '#/components/schemas/UserFlaggedEvent'
+      - $ref: '#/components/schemas/UserMessagesDeletedEvent'
       - $ref: '#/components/schemas/UserMutedEvent'
       - $ref: '#/components/schemas/UserReactivatedEvent'
       - $ref: '#/components/schemas/UserUnbannedEvent'
@@ -26134,7 +26239,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v187.13.0
+  version: v188.1.3
 openapi: 3.0.3
 paths:
   /api/v2/app:
