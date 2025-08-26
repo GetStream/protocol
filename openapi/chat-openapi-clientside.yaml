@@ -341,6 +341,7 @@ components:
       - use_hook_v2
       - user_response_time_enabled
       - moderation_bulk_submit_action_enabled
+      - moderation_llm_configurability_enabled
       type: object
     AppUpdatedEvent:
       description: Emitted when app settings are updated
@@ -790,6 +791,14 @@ components:
             $ref: '#/components/schemas/ChannelMember'
           type: array
           x-stream-index: "020"
+        message_count:
+          format: int64
+          type: integer
+          x-stream-index: "035"
+        message_count_updated_at:
+          format: date-time
+          type: string
+          x-stream-index: "036"
         team:
           type: string
           x-stream-index: "028"
@@ -820,39 +829,39 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "001.026"
+          x-stream-index: "001.027"
         automod:
           enum:
           - disabled
           - simple
           - AI
           type: string
-          x-stream-index: "001.021"
+          x-stream-index: "001.022"
         automod_behavior:
           enum:
           - flag
           - block
           - shadow_block
           type: string
-          x-stream-index: "001.022"
+          x-stream-index: "001.023"
         automod_thresholds:
           $ref: '#/components/schemas/Thresholds'
-          x-stream-index: "001.027"
+          x-stream-index: "001.028"
         blocklist:
           type: string
-          x-stream-index: "001.023"
+          x-stream-index: "001.024"
         blocklist_behavior:
           enum:
           - flag
           - block
           - shadow_block
           type: string
-          x-stream-index: "001.024"
+          x-stream-index: "001.025"
         blocklists:
           items:
             $ref: '#/components/schemas/BlockListOptions'
           type: array
-          x-stream-index: "001.025"
+          x-stream-index: "001.026"
         commands:
           items:
             type: string
@@ -861,6 +870,9 @@ components:
         connect_events:
           type: boolean
           x-stream-index: "001.004"
+        count_messages:
+          type: boolean
+          x-stream-index: "001.019"
         created_at:
           format: date-time
           type: string
@@ -875,7 +887,7 @@ components:
           format: int32
           maximum: 20000
           type: integer
-          x-stream-index: "001.020"
+          x-stream-index: "001.021"
         mutes:
           type: boolean
           x-stream-index: "001.009"
@@ -885,10 +897,10 @@ components:
         partition_size:
           format: int32
           type: integer
-          x-stream-index: "001.028"
+          x-stream-index: "001.029"
         partition_ttl:
           type: integer
-          x-stream-index: "001.029"
+          x-stream-index: "001.030"
         polls:
           type: boolean
           x-stream-index: "001.016"
@@ -918,7 +930,7 @@ components:
           x-stream-index: "001.018"
         skip_last_msg_update_for_system_msgs:
           type: boolean
-          x-stream-index: "001.030"
+          x-stream-index: "001.031"
         typing_events:
           type: boolean
           x-stream-index: "001.002"
@@ -954,6 +966,7 @@ components:
       - polls
       - user_message_reminders
       - shared_locations
+      - count_messages
       - message_retention
       - max_message_length
       - automod
@@ -969,39 +982,39 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: 001.002.026
+          x-stream-index: 001.002.027
         automod:
           enum:
           - disabled
           - simple
           - AI
           type: string
-          x-stream-index: 001.002.021
+          x-stream-index: 001.002.022
         automod_behavior:
           enum:
           - flag
           - block
           - shadow_block
           type: string
-          x-stream-index: 001.002.022
+          x-stream-index: 001.002.023
         automod_thresholds:
           $ref: '#/components/schemas/Thresholds'
-          x-stream-index: 001.002.027
+          x-stream-index: 001.002.028
         blocklist:
           type: string
-          x-stream-index: 001.002.023
+          x-stream-index: 001.002.024
         blocklist_behavior:
           enum:
           - flag
           - block
           - shadow_block
           type: string
-          x-stream-index: 001.002.024
+          x-stream-index: 001.002.025
         blocklists:
           items:
             $ref: '#/components/schemas/BlockListOptions'
           type: array
-          x-stream-index: 001.002.025
+          x-stream-index: 001.002.026
         commands:
           items:
             $ref: '#/components/schemas/Command'
@@ -1010,6 +1023,9 @@ components:
         connect_events:
           type: boolean
           x-stream-index: 001.002.004
+        count_messages:
+          type: boolean
+          x-stream-index: 001.002.019
         created_at:
           format: date-time
           type: string
@@ -1031,7 +1047,7 @@ components:
           format: int32
           maximum: 20000
           type: integer
-          x-stream-index: 001.002.020
+          x-stream-index: 001.002.021
         mutes:
           type: boolean
           x-stream-index: 001.002.009
@@ -1041,13 +1057,13 @@ components:
         partition_size:
           format: int32
           type: integer
-          x-stream-index: 001.002.028
+          x-stream-index: 001.002.029
         partition_ttl:
           example: 24h
           format: duration
           nullable: true
           type: string
-          x-stream-index: 001.002.029
+          x-stream-index: 001.002.030
         polls:
           type: boolean
           x-stream-index: 001.002.016
@@ -1077,7 +1093,7 @@ components:
           x-stream-index: 001.002.018
         skip_last_msg_update_for_system_msgs:
           type: boolean
-          x-stream-index: 001.002.030
+          x-stream-index: 001.002.031
         typing_events:
           type: boolean
           x-stream-index: 001.002.002
@@ -1115,6 +1131,7 @@ components:
       - polls
       - user_message_reminders
       - shared_locations
+      - count_messages
       - message_retention
       - max_message_length
       - automod
@@ -1430,6 +1447,11 @@ components:
           format: date-time
           type: string
           x-stream-index: "011"
+        deleted_messages:
+          items:
+            type: string
+          type: array
+          x-stream-index: "020"
         invite_accepted_at:
           description: Date when invite was accepted
           format: date-time
@@ -1795,6 +1817,12 @@ components:
           title: ChannelMembers
           type: array
           x-stream-index: "011"
+        message_count:
+          description: Number of messages in the channel
+          format: int64
+          title: Message count
+          type: integer
+          x-stream-index: "027"
         mute_expires_at:
           description: Date of mute expiration
           format: date-time
@@ -1861,6 +1889,11 @@ components:
         channel:
           $ref: '#/components/schemas/ChannelResponse'
           x-stream-index: "001.001"
+        deleted_messages:
+          items:
+            type: string
+          type: array
+          x-stream-index: "001.016"
         draft:
           $ref: '#/components/schemas/DraftResponse'
           x-stream-index: "001.014"
@@ -1938,6 +1971,11 @@ components:
         channel:
           $ref: '#/components/schemas/ChannelResponse'
           x-stream-index: "001"
+        deleted_messages:
+          items:
+            type: string
+          type: array
+          x-stream-index: "016"
         draft:
           $ref: '#/components/schemas/DraftResponse'
           x-stream-index: "014"
@@ -2236,6 +2274,9 @@ components:
             type: string
           type: array
           x-stream-index: "011"
+        count_messages:
+          type: boolean
+          x-stream-index: "014"
         grants:
           additionalProperties:
             items:
@@ -2966,6 +3007,48 @@ components:
       - event
       - duration
       title: Response
+      type: object
+    FeedsEventPreferences:
+      properties:
+        comments:
+          type: string
+          x-stream-index: "002"
+        mentions:
+          type: string
+          x-stream-index: "004"
+        new_followers:
+          type: string
+          x-stream-index: "003"
+        reactions:
+          type: string
+          x-stream-index: "001"
+      type: object
+    FeedsEventPreferencesInput:
+      properties:
+        comments:
+          enum:
+          - all
+          - none
+          type: string
+          x-stream-index: "002"
+        mentions:
+          enum:
+          - all
+          - none
+          type: string
+          x-stream-index: "004"
+        new_followers:
+          enum:
+          - all
+          - none
+          type: string
+          x-stream-index: "003"
+        reactions:
+          enum:
+          - all
+          - none
+          type: string
+          x-stream-index: "001"
       type: object
     Field:
       nullable: true
@@ -4101,6 +4184,9 @@ components:
           format: date-time
           type: string
           x-stream-index: "033"
+        deleted_for_me:
+          type: boolean
+          x-stream-index: "059"
         deleted_reply_count:
           format: int32
           type: integer
@@ -4740,6 +4826,9 @@ components:
           title: Deleted at
           type: string
           x-stream-index: "025"
+        deleted_for_me:
+          type: boolean
+          x-stream-index: "044"
         deleted_reply_count:
           format: int32
           type: integer
@@ -5129,6 +5218,9 @@ components:
           title: Deleted at
           type: string
           x-stream-index: "001.025"
+        deleted_for_me:
+          type: boolean
+          x-stream-index: "001.044"
         deleted_reply_count:
           format: int32
           type: integer
@@ -7250,11 +7342,25 @@ components:
           description: Disable push notifications till a certain time
           format: date-time
           type: string
+          x-stream-index: "007"
+        feeds_events:
+          $ref: '#/components/schemas/FeedsEventPreferencesInput'
+          description: Set granular feeds event preferences for reactions, comments,
+            new followers, and mentions
+          x-stream-index: "006"
+        feeds_level:
+          description: Set the level of feeds push notifications for the user. One
+            of all, none, default
+          enum:
+          - all
+          - none
+          - default
+          type: string
           x-stream-index: "005"
         remove_disable:
           description: Remove the disabled until time. (IE stop snoozing notifications)
           type: boolean
-          x-stream-index: "006"
+          x-stream-index: "008"
         user_id:
           description: The user id for which to set the push preferences. Required
             when using server side auths, defaults to current user with client side
@@ -7272,6 +7378,12 @@ components:
           x-stream-index: "001"
         disabled_until:
           format: date-time
+          type: string
+          x-stream-index: "005"
+        feeds_events:
+          $ref: '#/components/schemas/FeedsEventPreferences'
+          x-stream-index: "004"
+        feeds_level:
           type: string
           x-stream-index: "003"
       type: object
@@ -8661,6 +8773,9 @@ components:
           format: date-time
           type: string
           x-stream-index: "001.025"
+        deleted_for_me:
+          type: boolean
+          x-stream-index: "001.044"
         deleted_reply_count:
           format: int32
           type: integer
@@ -10732,6 +10847,84 @@ components:
       x-stream-event-doc-group: other
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    UserMessagesDeletedEvent:
+      description: This event is sent when a user's message get deleted. The event
+        contains information about the user whose messages got deleted.
+      nullable: true
+      properties:
+        channel_custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.005
+        channel_id:
+          description: The ID of the channel where the target user's messages were
+            deleted
+          title: Channel ID
+          type: string
+          x-stream-index: 001.002.002
+        channel_member_count:
+          format: int32
+          type: integer
+          x-stream-index: 001.001.004
+        channel_type:
+          description: The type of the channel where the target user's messages were
+            deleted
+          title: Channel Type
+          type: string
+          x-stream-index: 001.002.001
+        cid:
+          description: The CID of the channel where the target user's messages were
+            deleted
+          title: Channel CID
+          type: string
+          x-stream-index: 001.001.001.002
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: 001.001.001.001.003
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.001.001.007
+        hard_delete:
+          description: Whether Messages were hard deleted
+          title: Hard Delete
+          type: boolean
+          x-stream-index: "003"
+        received_at:
+          format: date-time
+          type: string
+          x-stream-index: 001.001.001.001.004
+        team:
+          description: The team of the channel where the target user's messages were
+            deleted
+          title: Team
+          type: string
+          x-stream-index: 001.001.003
+        type:
+          default: user.messages.deleted
+          description: 'The type of event: "user.messages.deleted" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: 001.001.001.001.002
+        user:
+          $ref: '#/components/schemas/UserResponseCommonFields'
+          description: The target user whose messages got deleted
+          title: User
+          x-stream-index: "002.001"
+      required:
+      - type
+      - created_at
+      - custom
+      - user
+      title: UserMessagesDeletedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     UserMute:
       nullable: true
       properties:
@@ -11381,6 +11574,7 @@ components:
           reminder.created: '#/components/schemas/ReminderCreatedEvent'
           reminder.deleted: '#/components/schemas/ReminderDeletedEvent'
           reminder.updated: '#/components/schemas/ReminderUpdatedEvent'
+          user.messages.deleted: '#/components/schemas/UserMessagesDeletedEvent'
           user.updated: '#/components/schemas/UserUpdatedEvent'
         propertyName: type
       oneOf:
@@ -11399,6 +11593,7 @@ components:
       - $ref: '#/components/schemas/ReminderDeletedEvent'
       - $ref: '#/components/schemas/ReminderNotificationEvent'
       - $ref: '#/components/schemas/ReminderUpdatedEvent'
+      - $ref: '#/components/schemas/UserMessagesDeletedEvent'
       - $ref: '#/components/schemas/UserUpdatedEvent'
     WSEvent:
       description: The discriminator object for all websocket events, it maps events'
@@ -11464,6 +11659,7 @@ components:
           user.banned: '#/components/schemas/UserBannedEvent'
           user.deactivated: '#/components/schemas/UserDeactivatedEvent'
           user.deleted: '#/components/schemas/UserDeletedEvent'
+          user.messages.deleted: '#/components/schemas/UserMessagesDeletedEvent'
           user.muted: '#/components/schemas/UserMutedEvent'
           user.presence.changed: '#/components/schemas/UserPresenceChangedEvent'
           user.reactivated: '#/components/schemas/UserReactivatedEvent'
@@ -11532,6 +11728,7 @@ components:
       - $ref: '#/components/schemas/UserBannedEvent'
       - $ref: '#/components/schemas/UserDeactivatedEvent'
       - $ref: '#/components/schemas/UserDeletedEvent'
+      - $ref: '#/components/schemas/UserMessagesDeletedEvent'
       - $ref: '#/components/schemas/UserMutedEvent'
       - $ref: '#/components/schemas/UserPresenceChangedEvent'
       - $ref: '#/components/schemas/UserReactivatedEvent'
@@ -11630,7 +11827,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v187.13.0
+  version: v190.10.1
 openapi: 3.0.3
 paths:
   /app:
@@ -13382,6 +13579,14 @@ paths:
           type: string
           writeOnly: true
           x-stream-index: "003"
+      - in: query
+        name: delete_for_me
+        schema:
+          description: Delete the message only for the user making the request
+          title: Delete for me
+          type: boolean
+          writeOnly: true
+          x-stream-index: "004"
       responses:
         "200":
           content:
@@ -14272,6 +14477,7 @@ paths:
 
         Sends events:
         - user.banned
+        - user.messages.deleted
         - user.banned
       operationId: Ban
       requestBody:
