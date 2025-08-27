@@ -1238,6 +1238,10 @@ components:
           title: The end time of the closed caption.
           type: number
           x-stream-index: "003"
+        service:
+          title: The service that generated the closed caption. By default stream
+          type: string
+          x-stream-index: "006"
         speaker_id:
           title: The speaker ID of the closed caption.
           type: string
@@ -1253,7 +1257,7 @@ components:
           x-stream-index: "001"
         user:
           $ref: '#/components/schemas/UserResponse'
-          title: The full user for the closed caption.
+          title: The user who spoke the closed caption.
           x-stream-index: "005"
       required:
       - text
@@ -8931,6 +8935,7 @@ components:
       - remove-call-member
       - screenshare
       - send-audio
+      - send-closed-captions-call
       - send-video
       - start-broadcast-call
       - start-closed-captions-call
@@ -11300,6 +11305,52 @@ components:
       required:
       - duration
       title: SendCallEventResponse
+      type: object
+    SendClosedCaptionRequest:
+      nullable: true
+      properties:
+        end_time:
+          format: date-time
+          title: Optional end time, defaults to start_time + 1s if omitted
+          type: number
+          x-stream-index: "007"
+        service:
+          title: The service that generated the closed caption. By default stream
+          type: string
+          x-stream-index: "008"
+        speaker_id:
+          maxLength: 256
+          title: Speaker user id
+          type: string
+          x-stream-index: "005"
+        start_time:
+          format: date-time
+          title: Optional start time, defaults to now
+          type: number
+          x-stream-index: "006"
+        text:
+          maxLength: 32768
+          title: The caption text
+          type: string
+          x-stream-index: "004"
+        user:
+          $ref: '#/components/schemas/UserRequest'
+          x-stream-index: "003.002"
+        user_id:
+          type: string
+          x-stream-index: "003.001"
+      required:
+      - text
+      - speaker_id
+      type: object
+    SendClosedCaptionResponse:
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
       type: object
     SessionSettings:
       properties:
@@ -14150,7 +14201,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v191.1.0
+  version: v191.1.1
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -16983,6 +17034,63 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Block user on a call
+      tags:
+      - product:video
+  /api/v2/video/call/{type}/{id}/closed_captions:
+    post:
+      description: |
+        Sends a closed caption event to the call
+
+        Sends events:
+        - call.closed_caption
+      operationId: SendClosedCaption
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          description: The type of call
+          maxLength: 64
+          title: Type
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Call ID
+          maxLength: 64
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendClosedCaptionRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendClosedCaptionResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Send closed caption
       tags:
       - product:video
   /api/v2/video/call/{type}/{id}/delete:
