@@ -390,6 +390,18 @@ components:
           title: The end time of the closed caption.
           type: string
           x-stream-index: "003"
+        id:
+          title: The ID of the closed caption.
+          type: string
+          x-stream-index: "009"
+        language:
+          title: The language of the closed caption.
+          type: string
+          x-stream-index: "007"
+        service:
+          title: The service that generated the closed caption. By default stream
+          type: string
+          x-stream-index: "006"
         speaker_id:
           title: The speaker ID of the closed caption.
           type: string
@@ -403,9 +415,13 @@ components:
           title: The text of the closed caption.
           type: string
           x-stream-index: "001"
+        translated:
+          title: Whether the closed caption is translated.
+          type: boolean
+          x-stream-index: "008"
         user:
           $ref: '#/components/schemas/UserResponse'
-          title: The full user for the closed caption.
+          title: The user who spoke the closed caption.
           x-stream-index: "005"
       required:
       - text
@@ -413,6 +429,9 @@ components:
       - end_time
       - speaker_id
       - user
+      - language
+      - translated
+      - id
       title: CallClosedCaption
       type: object
     CallClosedCaptionsFailedEvent:
@@ -3310,20 +3329,28 @@ components:
       - duration
       title: EndCallResponse
       type: object
-    FeedsEventPreferences:
+    FeedsPreferences:
       properties:
-        comments:
+        comment:
           type: string
           x-stream-index: "002"
-        mentions:
+        comment_reaction:
           type: string
           x-stream-index: "004"
-        new_followers:
-          type: string
-          x-stream-index: "003"
-        reactions:
+        custom_activity_types:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "006"
+        follow:
           type: string
           x-stream-index: "001"
+        mention:
+          type: string
+          x-stream-index: "005"
+        reaction:
+          type: string
+          x-stream-index: "003"
       type: object
     FileUploadConfig:
       properties:
@@ -4324,6 +4351,7 @@ components:
       - remove-call-member
       - screenshare
       - send-audio
+      - send-closed-captions-call
       - send-video
       - start-broadcast-call
       - start-closed-captions-call
@@ -4654,12 +4682,12 @@ components:
           format: date-time
           type: string
           x-stream-index: "005"
-        feeds_events:
-          $ref: '#/components/schemas/FeedsEventPreferences'
-          x-stream-index: "004"
         feeds_level:
           type: string
           x-stream-index: "003"
+        feeds_preferences:
+          $ref: '#/components/schemas/FeedsPreferences'
+          x-stream-index: "004"
       type: object
     QualityScoreReport:
       properties:
@@ -5440,6 +5468,17 @@ components:
           type: string
           x-stream-index: "001"
       type: object
+    SpeechSegmentConfig:
+      properties:
+        max_speech_caption_ms:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+        silence_duration_ms:
+          format: int32
+          type: integer
+          x-stream-index: "002"
+      type: object
     StartClosedCaptionsRequest:
       nullable: true
       properties:
@@ -5498,6 +5537,9 @@ components:
           title: Language
           type: string
           x-stream-index: "004"
+        speech_segment_config:
+          $ref: '#/components/schemas/SpeechSegmentConfig'
+          x-stream-index: "005"
       type: object
     StartClosedCaptionsResponse:
       nullable: true
@@ -5983,8 +6025,9 @@ components:
           - auto-on
           type: string
           x-stream-index: "001"
-      required:
-      - mode
+        speech_segment_config:
+          $ref: '#/components/schemas/SpeechSegmentConfig'
+          x-stream-index: "005"
       type: object
     TranscriptionSettingsResponse:
       properties:
@@ -6043,6 +6086,9 @@ components:
           - auto-on
           type: string
           x-stream-index: "001"
+        speech_segment_config:
+          $ref: '#/components/schemas/SpeechSegmentConfig'
+          x-stream-index: "005"
       required:
       - mode
       - closed_caption_mode
@@ -7104,7 +7150,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v191.1.0
+  version: v193.3.0
 openapi: 3.0.3
 paths:
   /video/call/{type}/{id}:
