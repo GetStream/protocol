@@ -18,10 +18,6 @@ components:
             $ref: '#/components/schemas/AWSRekognitionRule'
           type: array
           x-stream-index: "003"
-      required:
-      - enabled
-      - rules
-      - ocr_rules
       type: object
     AITextConfig:
       properties:
@@ -44,11 +40,6 @@ components:
             $ref: '#/components/schemas/BodyguardSeverityRule'
           type: array
           x-stream-index: "005"
-      required:
-      - enabled
-      - profile
-      - rules
-      - severity_rules
       type: object
     AIVideoConfig:
       properties:
@@ -63,9 +54,6 @@ components:
             $ref: '#/components/schemas/AWSRekognitionRule'
           type: array
           x-stream-index: "003"
-      required:
-      - enabled
-      - rules
       type: object
     APIError:
       nullable: true
@@ -482,14 +470,6 @@ components:
         warning_text:
           type: string
           x-stream-index: "007"
-      required:
-      - action
-      - threshold
-      - time_window
-      - cooldown_period
-      - blur
-      - warning
-      - warning_text
       type: object
     ActiveCallsBitrateStats:
       properties:
@@ -2557,7 +2537,7 @@ components:
           type: string
           x-stream-index: "002.001"
         type:
-          default: export.users.error
+          default: export.moderation_logs.error
           type: string
           x-stream-index: "003.002"
       required:
@@ -2906,9 +2886,6 @@ components:
             $ref: '#/components/schemas/AutomodRule'
           type: array
           x-stream-index: "003"
-      required:
-      - enabled
-      - rules
       type: object
     AutomodRule:
       properties:
@@ -2949,9 +2926,6 @@ components:
             $ref: '#/components/schemas/AutomodSemanticFiltersRule'
           type: array
           x-stream-index: "003"
-      required:
-      - enabled
-      - rules
       type: object
     AutomodSemanticFiltersRule:
       properties:
@@ -2989,9 +2963,6 @@ components:
             $ref: '#/components/schemas/AutomodRule'
           type: array
           x-stream-index: "003"
-      required:
-      - enabled
-      - rules
       type: object
     AzureRequest:
       description: Config for creating Azure Blob Storage storage
@@ -3232,9 +3203,6 @@ components:
           maximum: 10
           type: array
           x-stream-index: "003"
-      required:
-      - enabled
-      - rules
       type: object
     BlockListOptions:
       properties:
@@ -3321,8 +3289,6 @@ components:
           type: string
           x-stream-index: "002"
       required:
-      - name
-      - team
       - action
       type: object
     BlockUserRequest:
@@ -3472,6 +3438,14 @@ components:
       - blocked_user_id
       - created_at
       type: object
+    BodyguardImageAnalysisConfig:
+      properties:
+        rules:
+          items:
+            $ref: '#/components/schemas/BodyguardRule'
+          type: array
+          x-stream-index: "001"
+      type: object
     BodyguardRule:
       properties:
         action:
@@ -3494,8 +3468,6 @@ components:
           x-stream-index: "003"
       required:
       - label
-      - action
-      - severity_rules
       type: object
     BodyguardSeverityRule:
       properties:
@@ -4122,6 +4094,18 @@ components:
           title: The end time of the closed caption.
           type: number
           x-stream-index: "003"
+        id:
+          title: The ID of the closed caption.
+          type: string
+          x-stream-index: "009"
+        language:
+          title: The language of the closed caption.
+          type: string
+          x-stream-index: "007"
+        service:
+          title: The service that generated the closed caption. By default stream
+          type: string
+          x-stream-index: "006"
         speaker_id:
           title: The speaker ID of the closed caption.
           type: string
@@ -4135,9 +4119,13 @@ components:
           title: The text of the closed caption.
           type: string
           x-stream-index: "001"
+        translated:
+          title: Whether the closed caption is translated.
+          type: boolean
+          x-stream-index: "008"
         user:
           $ref: '#/components/schemas/UserResponse'
-          title: The full user for the closed caption.
+          title: The user who spoke the closed caption.
           x-stream-index: "005"
       required:
       - text
@@ -4145,6 +4133,9 @@ components:
       - end_time
       - speaker_id
       - user
+      - language
+      - translated
+      - id
       title: CallClosedCaption
       type: object
     CallClosedCaptionsFailedEvent:
@@ -8996,6 +8987,11 @@ components:
     CheckRequest:
       nullable: true
       properties:
+        config:
+          $ref: '#/components/schemas/ModerationConfig'
+          description: Custom moderation configuration (test mode only)
+          title: Config
+          x-stream-index: "009"
         config_key:
           description: Key of the moderation configuration to use
           title: Config Key
@@ -9039,10 +9035,10 @@ components:
           x-stream-index: "008"
         user:
           $ref: '#/components/schemas/UserRequest'
-          x-stream-index: "009.002"
+          x-stream-index: "010.002"
         user_id:
           type: string
-          x-stream-index: "009.001"
+          x-stream-index: "010.001"
       required:
       - entity_type
       - entity_id
@@ -16590,9 +16586,6 @@ components:
         severity:
           type: integer
           x-stream-index: "002"
-      required:
-      - action_sequences
-      - severity
       type: object
     HideChannelRequest:
       nullable: true
@@ -17213,9 +17206,6 @@ components:
             type: string
           type: object
           x-stream-index: "004"
-      required:
-      - enabled
-      - rules
       type: object
     LLMRule:
       properties:
@@ -17244,8 +17234,6 @@ components:
       required:
       - label
       - description
-      - action
-      - severity_rules
       type: object
     Label:
       properties:
@@ -18647,7 +18635,7 @@ components:
           type: array
           x-stream-index: "001.002"
         type:
-          default: message.new
+          default: notification.thread_message_new
           type: string
           x-stream-index: "004.001"
         user:
@@ -19652,6 +19640,62 @@ components:
       x-stream-event-doc-group: other
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    ModerationConfig:
+      properties:
+        ai_image_config:
+          $ref: '#/components/schemas/AIImageConfig'
+          x-stream-index: "012"
+        ai_image_lite_config:
+          $ref: '#/components/schemas/BodyguardImageAnalysisConfig'
+          x-stream-index: "011"
+        ai_text_config:
+          $ref: '#/components/schemas/AITextConfig'
+          x-stream-index: "010"
+        ai_video_config:
+          $ref: '#/components/schemas/AIVideoConfig'
+          x-stream-index: "013"
+        async:
+          type: boolean
+          x-stream-index: "005"
+        automod_platform_circumvention_config:
+          $ref: '#/components/schemas/AutomodPlatformCircumventionConfig'
+          x-stream-index: "007"
+        automod_semantic_filters_config:
+          $ref: '#/components/schemas/AutomodSemanticFiltersConfig'
+          x-stream-index: "008"
+        automod_toxicity_config:
+          $ref: '#/components/schemas/AutomodToxicityConfig'
+          x-stream-index: "006"
+        block_list_config:
+          $ref: '#/components/schemas/BlockListConfig'
+          x-stream-index: "009"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "019"
+        google_vision_config:
+          $ref: '#/components/schemas/GoogleVisionConfig'
+          x-stream-index: "014"
+        key:
+          type: string
+          x-stream-index: "004"
+        llm_config:
+          $ref: '#/components/schemas/LLMConfig'
+          x-stream-index: "017"
+        team:
+          type: string
+          x-stream-index: "018"
+        updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "020"
+        velocity_filter_config:
+          $ref: '#/components/schemas/VelocityFilterConfig'
+          x-stream-index: "015"
+        video_call_rule_config:
+          $ref: '#/components/schemas/VideoCallRuleConfig'
+          x-stream-index: "021"
+      type: object
     ModerationCustomActionEvent:
       properties:
         created_at:
@@ -20414,6 +20458,7 @@ components:
       - remove-call-member
       - screenshare
       - send-audio
+      - send-closed-captions-call
       - send-video
       - start-broadcast-call
       - start-closed-captions-call
@@ -26741,6 +26786,60 @@ components:
       - duration
       title: SendCallEventResponse
       type: object
+    SendClosedCaptionRequest:
+      nullable: true
+      properties:
+        end_time:
+          format: date-time
+          title: Optional end time, defaults to start_time + 1s if omitted
+          type: number
+          x-stream-index: "007"
+        language:
+          title: The language of the closed caption.
+          type: string
+          x-stream-index: "009"
+        service:
+          title: The service that generated the closed caption. By default stream
+          type: string
+          x-stream-index: "008"
+        speaker_id:
+          maxLength: 256
+          title: Speaker user id
+          type: string
+          x-stream-index: "005"
+        start_time:
+          format: date-time
+          title: Optional start time, defaults to now
+          type: number
+          x-stream-index: "006"
+        text:
+          maxLength: 32768
+          title: The caption text
+          type: string
+          x-stream-index: "004"
+        translated:
+          title: Whether the closed caption is translated.
+          type: boolean
+          x-stream-index: "010"
+        user:
+          $ref: '#/components/schemas/UserRequest'
+          x-stream-index: "003.002"
+        user_id:
+          type: string
+          x-stream-index: "003.001"
+      required:
+      - text
+      - speaker_id
+      type: object
+    SendClosedCaptionResponse:
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      type: object
     SendEventRequest:
       nullable: true
       properties:
@@ -27974,6 +28073,8 @@ components:
       - channel_cid
       - parent_message_id
       - created_by_user_id
+      - participant_count
+      - active_participant_count
       - created_at
       - updated_at
       - title
@@ -28089,6 +28190,8 @@ components:
       - channel_cid
       - parent_message_id
       - created_by_user_id
+      - participant_count
+      - active_participant_count
       - created_at
       - updated_at
       - title
@@ -31833,7 +31936,7 @@ components:
         channel_custom:
           additionalProperties: {}
           type: object
-          x-stream-index: 001.001.005
+          x-stream-index: 001.001.006
         channel_id:
           description: The ID of the channel where the target user's messages were
             deleted
@@ -31844,6 +31947,10 @@ components:
           format: int32
           type: integer
           x-stream-index: 001.001.004
+        channel_message_count:
+          format: int64
+          type: integer
+          x-stream-index: 001.001.005
         channel_type:
           description: The type of the channel where the target user's messages were
             deleted
@@ -32573,13 +32680,6 @@ components:
             $ref: '#/components/schemas/VelocityFilterConfigRule'
           type: array
           x-stream-index: "003"
-      required:
-      - enabled
-      - rules
-      - cascading_actions
-      - first_message_only
-      - cids_per_user
-      - advanced_filters
       type: object
     VelocityFilterConfigRule:
       properties:
@@ -32645,18 +32745,6 @@ components:
           x-stream-index: "013"
       required:
       - action
-      - ban_duration
-      - shadow_ban
-      - ip_ban
-      - cascading_threshold
-      - cascading_action
-      - fast_spam_threshold
-      - slow_spam_threshold
-      - check_message_context
-      - fast_spam_ttl
-      - slow_spam_ttl
-      - url_only
-      - probation_period
       type: object
     VideoCallRuleConfig:
       properties:
@@ -32665,8 +32753,6 @@ components:
             $ref: '#/components/schemas/HarmConfig'
           type: object
           x-stream-index: "001"
-      required:
-      - rules
       type: object
     VideoContentParameters:
       properties:
@@ -33320,7 +33406,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v191.1.0
+  version: v191.6.2
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -43627,6 +43713,63 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Block user on a call
+      tags:
+      - product:video
+  /api/v2/video/call/{type}/{id}/closed_captions:
+    post:
+      description: |
+        Sends a closed caption event to the call
+
+        Sends events:
+        - call.closed_caption
+      operationId: SendClosedCaption
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          description: The type of call
+          maxLength: 64
+          title: Type
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Call ID
+          maxLength: 64
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendClosedCaptionRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendClosedCaptionResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Send closed caption
       tags:
       - product:video
   /api/v2/video/call/{type}/{id}/delete:
