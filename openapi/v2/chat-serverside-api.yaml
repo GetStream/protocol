@@ -808,7 +808,7 @@ components:
           type: string
           x-stream-index: "002.001"
         type:
-          default: export.channels.error
+          default: export.moderation_logs.error
           type: string
           x-stream-index: "003.002"
       required:
@@ -1937,8 +1937,12 @@ components:
           $ref: '#/components/schemas/RTMPIngress'
           title: RTMP
           x-stream-index: "001"
+        srt:
+          $ref: '#/components/schemas/SRTIngress'
+          x-stream-index: "002"
       required:
       - rtmp
+      - srt
       title: CallIngressResponse
       type: object
     CallMember:
@@ -7426,92 +7430,73 @@ components:
       type: object
     Flag:
       description: Contains information about flagged user or message
-      nullable: true
       properties:
+        approved_at:
+          description: Date of the approval
+          format: date-time
+          title: Approved at
+          type: number
+          x-stream-index: "015"
         created_at:
           description: Date/time of creation
           format: date-time
           title: Created at
           type: number
-          x-stream-index: "019"
+          x-stream-index: "011"
+        created_by_automod:
+          type: boolean
+          x-stream-index: "004"
         custom:
           additionalProperties: {}
-          description: Additional metadata about the flag
-          title: Custom
           type: object
+          x-stream-index: "022"
+        details:
+          $ref: '#/components/schemas/FlagDetails'
+          x-stream-index: "021"
+        reason:
+          type: string
+          x-stream-index: "020"
+        rejected_at:
+          description: Date of the rejection
+          format: date-time
+          title: Rejected at
+          type: number
+          x-stream-index: "016"
+        reviewed_at:
+          description: Date of the review
+          format: date-time
+          title: Reviewed at
+          type: number
+          x-stream-index: "013"
+        reviewed_by:
+          type: string
           x-stream-index: "014"
-        entity_creator_id:
-          description: ID of the user who created the flagged entity
-          title: Entity Creator ID
-          type: string
-          x-stream-index: "009"
-        entity_id:
-          description: Unique identifier of the entity being flagged
-          title: Entity ID
-          type: string
+        target_message:
+          $ref: '#/components/schemas/Message'
           x-stream-index: "008"
-        entity_type:
-          description: Type of entity being flagged (e.g., message, user)
-          title: Entity Type
+        target_message_id:
+          description: ID of flagged message
+          title: Target Message ID
           type: string
           x-stream-index: "007"
-        is_streamed_content:
-          type: boolean
-          x-stream-index: "012"
-        labels:
-          description: Labels from bodyguard, API calls, our own AI etc
-          items:
-            type: string
-          title: Labels
-          type: array
-          x-stream-index: "015"
-        moderation_payload:
-          $ref: '#/components/schemas/ModerationPayload'
-          description: Content being flagged
-          title: Moderation Payload
+        target_user:
+          $ref: '#/components/schemas/User'
+          description: Flagged user
+          title: User
           x-stream-index: "010"
-        moderation_payload_hash:
-          type: string
-          x-stream-index: "011"
-        reason:
-          description: Optional explanation for why the content is being flagged
-          title: Reason
-          type: string
-          x-stream-index: "013"
-        result:
-          description: Result of bodyguard, API calls, our own AI etc
-          items:
-            additionalProperties: {}
-            type: object
-          title: Result
-          type: array
-          x-stream-index: "016"
-        review_queue_item:
-          $ref: '#/components/schemas/ReviewQueueItem'
-          x-stream-index: "018"
-        review_queue_item_id:
-          description: ID of the review queue item
-          title: Review Queue Item ID
-          type: string
-          x-stream-index: "017"
-        type:
-          type: string
-          x-stream-index: "004"
         updated_at:
           description: Date/time of the last update
           format: date-time
           title: Updated at
           type: number
-          x-stream-index: "020"
+          x-stream-index: "012"
         user:
           $ref: '#/components/schemas/User'
           description: User who flagged a message or a user
           title: User
           x-stream-index: "006"
       required:
-      - entity_type
-      - entity_id
-      - result
+      - created_by_automod
       - created_at
       - updated_at
       title: Flag
@@ -16107,6 +16092,14 @@ components:
       - process_start_time
       - last_seen
       type: object
+    SRTIngress:
+      properties:
+        address:
+          type: string
+          x-stream-index: "001"
+      required:
+      - address
+      type: object
     STTEgressConfig:
       properties:
         closed_captions_enabled:
@@ -21200,7 +21193,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v193.9.0
+  version: v193.10.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
