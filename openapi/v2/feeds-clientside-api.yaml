@@ -3261,8 +3261,17 @@ components:
           $ref: '#/components/schemas/RTMPIngress'
           title: RTMP
           x-stream-index: "001"
+        srt:
+          $ref: '#/components/schemas/SRTIngress'
+          x-stream-index: "003"
+        whip:
+          $ref: '#/components/schemas/WHIPIngress'
+          title: WHIP
+          x-stream-index: "002"
       required:
       - rtmp
+      - whip
+      - srt
       title: CallIngressResponse
       type: object
     CallMember:
@@ -3432,18 +3441,18 @@ components:
       properties:
         backstage:
           type: boolean
-          x-stream-index: "016"
+          x-stream-index: "017"
         blocked_user_ids:
           items:
             type: string
           type: array
-          x-stream-index: "018"
+          x-stream-index: "019"
         captioning:
           type: boolean
           x-stream-index: "013"
         channel_cid:
           type: string
-          x-stream-index: "024"
+          x-stream-index: "025"
         cid:
           description: The unique identifier for a call (<type>:<id>)
           title: CID
@@ -3471,13 +3480,13 @@ components:
           x-stream-index: "008"
         egress:
           $ref: '#/components/schemas/EgressResponse'
-          x-stream-index: "021"
+          x-stream-index: "022"
         ended_at:
           description: Date/time when the call ended
           format: date-time
           title: Ended At
           type: number
-          x-stream-index: "014"
+          x-stream-index: "015"
         id:
           description: Call ID
           title: ID
@@ -3485,35 +3494,38 @@ components:
           x-stream-index: "003"
         ingress:
           $ref: '#/components/schemas/CallIngressResponse'
-          x-stream-index: "019"
+          x-stream-index: "020"
         join_ahead_time_seconds:
           format: int32
           type: integer
-          x-stream-index: "023"
+          x-stream-index: "024"
         recording:
           type: boolean
           x-stream-index: "011"
         session:
           $ref: '#/components/schemas/CallSessionResponse'
-          x-stream-index: "020"
+          x-stream-index: "021"
         settings:
           $ref: '#/components/schemas/CallSettingsResponse'
-          x-stream-index: "017"
+          x-stream-index: "018"
         starts_at:
           description: Date/time when the call will start
           format: date-time
           title: Starts At
           type: number
-          x-stream-index: "015"
+          x-stream-index: "016"
         team:
           type: string
           x-stream-index: "006"
         thumbnails:
           $ref: '#/components/schemas/ThumbnailResponse'
-          x-stream-index: "022"
+          x-stream-index: "023"
         transcribing:
           type: boolean
           x-stream-index: "012"
+        translating:
+          type: boolean
+          x-stream-index: "014"
         type:
           description: The type of call
           title: Type
@@ -3537,6 +3549,7 @@ components:
       - recording
       - transcribing
       - captioning
+      - translating
       - backstage
       - settings
       - blocked_user_ids
@@ -3908,26 +3921,26 @@ components:
           items:
             $ref: '#/components/schemas/SharedLocation'
           type: array
-          x-stream-index: "034"
+          x-stream-index: "035"
         auto_translation_enabled:
           type: boolean
-          x-stream-index: "029"
+          x-stream-index: "030"
         auto_translation_language:
           type: string
-          x-stream-index: "030"
+          x-stream-index: "031"
         cid:
           type: string
           x-stream-index: "003"
         config:
           $ref: '#/components/schemas/ChannelConfig'
-          x-stream-index: "026"
+          x-stream-index: "027"
         config_overrides:
           $ref: '#/components/schemas/ConfigOverrides'
-          x-stream-index: "027"
+          x-stream-index: "028"
         cooldown:
           format: int32
           type: integer
-          x-stream-index: "031"
+          x-stream-index: "032"
         created_at:
           format: date-time
           type: number
@@ -3956,10 +3969,10 @@ components:
           items:
             $ref: '#/components/schemas/ChannelMember'
           type: array
-          x-stream-index: "022"
+          x-stream-index: "023"
         last_campaigns:
           type: string
-          x-stream-index: "032"
+          x-stream-index: "033"
         last_message_at:
           format: date-time
           type: number
@@ -3973,17 +3986,22 @@ components:
             $ref: '#/components/schemas/ChannelMember'
           type: array
           x-stream-index: "020"
+        members_lookup:
+          additionalProperties:
+            $ref: '#/components/schemas/ChannelMemberLookup'
+          type: object
+          x-stream-index: "022"
         message_count:
           format: int64
           type: integer
-          x-stream-index: "035"
+          x-stream-index: "036"
         message_count_updated_at:
           format: date-time
           type: number
-          x-stream-index: "036"
+          x-stream-index: "037"
         team:
           type: string
-          x-stream-index: "028"
+          x-stream-index: "029"
         truncated_by:
           $ref: '#/components/schemas/User'
           x-stream-index: "015"
@@ -4433,6 +4451,39 @@ components:
       - channel_role
       - notifications_muted
       title: Channel member
+      type: object
+    ChannelMemberLookup:
+      nullable: true
+      properties:
+        archived:
+          type: boolean
+          x-stream-index: "003"
+        archived_at:
+          format: date-time
+          type: number
+          x-stream-index: "006"
+        ban_expires:
+          format: date-time
+          type: number
+          x-stream-index: "007"
+        banned:
+          type: boolean
+          x-stream-index: "004"
+        hidden:
+          type: boolean
+          x-stream-index: "001"
+        pinned:
+          type: boolean
+          x-stream-index: "002"
+        pinned_at:
+          format: date-time
+          type: number
+          x-stream-index: "005"
+      required:
+      - hidden
+      - pinned
+      - archived
+      - banned
       type: object
     ChannelMemberResponse:
       properties:
@@ -13228,6 +13279,14 @@ components:
       - process_start_time
       - last_seen
       type: object
+    SRTIngress:
+      properties:
+        address:
+          type: string
+          x-stream-index: "001"
+      required:
+      - address
+      type: object
     STTEgressConfig:
       properties:
         closed_captions_enabled:
@@ -13975,6 +14034,9 @@ components:
           x-stream-index: "001"
         speech_segment_config:
           $ref: '#/components/schemas/SpeechSegmentConfig'
+          x-stream-index: "006"
+        translation:
+          $ref: '#/components/schemas/TranslationSettings'
           x-stream-index: "005"
       required:
       - mode
@@ -14041,12 +14103,29 @@ components:
           x-stream-index: "001"
         speech_segment_config:
           $ref: '#/components/schemas/SpeechSegmentConfig'
+          x-stream-index: "006"
+        translation:
+          $ref: '#/components/schemas/TranslationSettings'
           x-stream-index: "005"
       required:
       - mode
       - closed_caption_mode
       - languages
       - language
+      type: object
+    TranslationSettings:
+      properties:
+        enabled:
+          type: boolean
+          x-stream-index: "001"
+        languages:
+          items:
+            type: string
+          type: array
+          x-stream-index: "002"
+      required:
+      - enabled
+      - languages
       type: object
     TypingIndicators:
       properties:
@@ -14186,6 +14265,14 @@ components:
           title: string
           type: number
           x-stream-index: "007"
+        feeds:
+          description: List of feeds the activity is present in
+          items:
+            type: string
+          maximum: 255
+          title: '[]string'
+          type: array
+          x-stream-index: "011"
         filter_tags:
           description: Tags used for filtering the activity
           items:
@@ -15812,6 +15899,17 @@ components:
           type: string
           x-stream-index: "001"
       type: object
+    WHIPIngress:
+      properties:
+        address:
+          description: URL for a new whip input, every time a new link is created
+          title: Address
+          type: string
+          x-stream-index: "001"
+      required:
+      - address
+      title: WHIPIngress
+      type: object
     WSAuthMessage:
       description: Websocket auth message
       nullable: true
@@ -16070,7 +16168,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v193.9.0
+  version: v194.3.1
 openapi: 3.0.3
 paths:
   /api/v2/app:
