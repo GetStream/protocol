@@ -230,33 +230,6 @@ components:
       - details
       title: Error response
       type: object
-    APNS:
-      properties:
-        body:
-          type: string
-          x-stream-index: "002"
-        content-available:
-          format: int32
-          type: integer
-          x-stream-index: "004"
-        data:
-          additionalProperties: {}
-          type: object
-          x-stream-index: "006"
-        mutable-content:
-          format: int32
-          type: integer
-          x-stream-index: "005"
-        sound:
-          type: string
-          x-stream-index: "003"
-        title:
-          type: string
-          x-stream-index: "001"
-      required:
-      - title
-      - body
-      type: object
     AWSRekognitionRule:
       properties:
         action:
@@ -384,54 +357,6 @@ components:
       - name
       - text
       - type
-      type: object
-    ActionLog:
-      nullable: true
-      properties:
-        created_at:
-          format: date-time
-          type: number
-          x-stream-index: "004"
-        custom:
-          additionalProperties: {}
-          type: object
-          x-stream-index: "010"
-        id:
-          type: string
-          x-stream-index: "002"
-        reason:
-          type: string
-          x-stream-index: "008"
-        reporter_type:
-          type: string
-          x-stream-index: "009"
-        review_queue_item:
-          $ref: '#/components/schemas/ReviewQueueItem'
-          x-stream-index: "014"
-        review_queue_item_id:
-          type: string
-          x-stream-index: "012"
-        target_user:
-          $ref: '#/components/schemas/User'
-          x-stream-index: "013"
-        target_user_id:
-          type: string
-          x-stream-index: "011"
-        type:
-          type: string
-          x-stream-index: "005"
-        user:
-          $ref: '#/components/schemas/User'
-          x-stream-index: "007"
-      required:
-      - id
-      - created_at
-      - type
-      - reason
-      - reporter_type
-      - custom
-      - target_user_id
-      - review_queue_item_id
       type: object
     ActionLogResponse:
       nullable: true
@@ -1382,11 +1307,10 @@ components:
           title: Moderation
           x-stream-index: "026"
         notification_context:
-          additionalProperties: {}
+          $ref: '#/components/schemas/NotificationContext'
           description: Notification context data for the activity (if this is a reaction,
             comment, follow, etc.)
           title: Notification Context
-          type: object
           x-stream-index: "012"
         own_bookmarks:
           description: Current user's bookmarks for this activity
@@ -1822,6 +1746,12 @@ components:
           title: object
           type: object
           x-stream-index: "003"
+        enforce_unique:
+          description: Whether to enforce unique reactions per user (remove other
+            reaction types from the user when adding this one)
+          title: boolean
+          type: boolean
+          x-stream-index: "006"
         skip_push:
           type: boolean
           x-stream-index: "005"
@@ -1995,6 +1925,12 @@ components:
           title: Custom Data
           type: object
           x-stream-index: "003"
+        enforce_unique:
+          description: Whether to enforce unique reactions per user (remove other
+            reaction types from the user when adding this one)
+          title: Enforce Unique
+          type: boolean
+          x-stream-index: "006"
         skip_push:
           type: boolean
           x-stream-index: "005"
@@ -2048,34 +1984,41 @@ components:
           format: date-time
           title: Created At
           type: number
-          x-stream-index: "006"
+          x-stream-index: "007"
         group:
           description: Grouping identifier
           title: Group
           type: string
-          x-stream-index: "004"
+          x-stream-index: "005"
         score:
           description: Ranking score for this aggregation
           format: float
           title: Score
           type: number
-          x-stream-index: "005"
+          x-stream-index: "006"
         updated_at:
           description: When the aggregation was last updated
           format: date-time
           title: Updated At
           type: number
-          x-stream-index: "007"
+          x-stream-index: "008"
         user_count:
           description: Number of unique users in this aggregation
           format: int32
           title: User Count
           type: integer
           x-stream-index: "003"
+        user_count_truncated:
+          description: Whether this activity group has been truncated due to exceeding
+            the group size limit
+          title: User Count Truncated
+          type: boolean
+          x-stream-index: "004"
       required:
       - activities
       - activity_count
       - user_count
+      - user_count_truncated
       - group
       - score
       - created_at
@@ -2328,40 +2271,6 @@ components:
       title: Attachment
       type: object
       x-stream-docs-page-id: file_uploads
-    AudioSettings:
-      properties:
-        access_request_enabled:
-          type: boolean
-          x-stream-index: "001"
-        default_device:
-          enum:
-          - speaker
-          - earpiece
-          type: string
-          x-stream-index: "006"
-        mic_default_on:
-          type: boolean
-          x-stream-index: "004"
-        noise_cancellation:
-          $ref: '#/components/schemas/NoiseCancellationSettings'
-          x-stream-index: "007"
-        opus_dtx_enabled:
-          type: boolean
-          x-stream-index: "002"
-        redundant_coding_enabled:
-          type: boolean
-          x-stream-index: "003"
-        speaker_default_on:
-          type: boolean
-          x-stream-index: "005"
-      required:
-      - access_request_enabled
-      - opus_dtx_enabled
-      - redundant_coding_enabled
-      - mic_default_on
-      - speaker_default_on
-      - default_device
-      type: object
     AudioSettingsRequest:
       properties:
         access_request_enabled:
@@ -2545,18 +2454,6 @@ components:
       - enabled
       - rules
       type: object
-    BackstageSettings:
-      properties:
-        enabled:
-          type: boolean
-          x-stream-index: "001"
-        join_ahead_time_seconds:
-          format: int32
-          type: integer
-          x-stream-index: "002"
-      required:
-      - enabled
-      type: object
     BackstageSettingsRequest:
       properties:
         enabled:
@@ -2637,6 +2534,13 @@ components:
       type: object
     BanOptions:
       properties:
+        delete_messages:
+          enum:
+          - soft
+          - pruning
+          - hard
+          type: string
+          x-stream-index: "005"
         duration:
           format: int32
           type: integer
@@ -2733,12 +2637,6 @@ components:
           x-stream-index: "002"
       required:
       - created_at
-      type: object
-    BlockContentOptions:
-      properties:
-        reason:
-          type: string
-          x-stream-index: "001"
       type: object
     BlockListConfig:
       properties:
@@ -3352,20 +3250,6 @@ components:
       - value
       - inclusive
       type: object
-    BroadcastSettings:
-      properties:
-        enabled:
-          type: boolean
-          x-stream-index: "001"
-        hls:
-          $ref: '#/components/schemas/HLSSettings'
-          x-stream-index: "002"
-        rtmp:
-          $ref: '#/components/schemas/RTMPSettings'
-          x-stream-index: "003"
-      required:
-      - enabled
-      type: object
     BroadcastSettingsRequest:
       properties:
         enabled:
@@ -3398,165 +3282,6 @@ components:
       - hls
       - rtmp
       title: BroadcastSettingsResponse
-      type: object
-    Call:
-      properties:
-        AppPK:
-          format: int32
-          type: integer
-          writeOnly: true
-          x-stream-index: "002"
-        Backstage:
-          type: boolean
-          writeOnly: true
-          x-stream-index: "023"
-        BlockedUserIDs:
-          items:
-            type: string
-          type: array
-          writeOnly: true
-          x-stream-index: "018"
-        BlockedUsers:
-          items:
-            $ref: '#/components/schemas/User'
-          type: array
-          writeOnly: true
-          x-stream-index: "019"
-        CID:
-          type: string
-          writeOnly: true
-          x-stream-index: "005"
-        CallType:
-          $ref: '#/components/schemas/CallType'
-          x-stream-index: "020"
-        ChannelCID:
-          type: string
-          writeOnly: true
-          x-stream-index: "032"
-        CreatedAt:
-          format: date-time
-          type: number
-          writeOnly: true
-          x-stream-index: "013"
-        CreatedBy:
-          $ref: '#/components/schemas/User'
-          x-stream-index: "008"
-        CreatedByUserID:
-          type: string
-          writeOnly: true
-          x-stream-index: "007"
-        CurrentSessionID:
-          type: string
-          writeOnly: true
-          x-stream-index: "024"
-        Custom:
-          additionalProperties: {}
-          type: object
-          writeOnly: true
-          x-stream-index: "012"
-        DeletedAt:
-          format: date-time
-          type: number
-          writeOnly: true
-          x-stream-index: "028"
-        EgressUpdatedAt:
-          format: date-time
-          type: number
-          writeOnly: true
-          x-stream-index: "027"
-        Egresses:
-          items:
-            $ref: '#/components/schemas/CallEgress'
-          type: array
-          writeOnly: true
-          x-stream-index: "015"
-        EndedAt:
-          format: date-time
-          type: number
-          writeOnly: true
-          x-stream-index: "017"
-        ID:
-          type: string
-          writeOnly: true
-          x-stream-index: "004"
-        JoinAheadTimeSeconds:
-          format: int32
-          type: integer
-          writeOnly: true
-          x-stream-index: "031"
-        LastHeartbeatAt:
-          format: date-time
-          type: number
-          writeOnly: true
-          x-stream-index: "030"
-        LastSessionID:
-          type: string
-          writeOnly: true
-          x-stream-index: "025"
-        MemberCount:
-          format: int32
-          type: integer
-          writeOnly: true
-          x-stream-index: "010"
-        MemberLookup:
-          $ref: '#/components/schemas/MemberLookup'
-          x-stream-index: "011"
-        Members:
-          items:
-            $ref: '#/components/schemas/CallMember'
-          type: array
-          writeOnly: true
-          x-stream-index: "009"
-        Session:
-          $ref: '#/components/schemas/CallSession'
-          x-stream-index: "026"
-        Settings:
-          $ref: '#/components/schemas/CallSettings'
-          x-stream-index: "022"
-        SettingsOverrides:
-          $ref: '#/components/schemas/CallSettings'
-          x-stream-index: "021"
-        StartsAt:
-          format: date-time
-          type: number
-          writeOnly: true
-          x-stream-index: "016"
-        Team:
-          type: string
-          writeOnly: true
-          x-stream-index: "006"
-        ThumbnailURL:
-          type: string
-          writeOnly: true
-          x-stream-index: "029"
-        Type:
-          type: string
-          writeOnly: true
-          x-stream-index: "003"
-        UpdatedAt:
-          format: date-time
-          type: number
-          writeOnly: true
-          x-stream-index: "014"
-      required:
-      - AppPK
-      - Type
-      - ID
-      - CID
-      - Team
-      - CreatedByUserID
-      - Members
-      - Custom
-      - CreatedAt
-      - UpdatedAt
-      - Egresses
-      - BlockedUserIDs
-      - BlockedUsers
-      - Backstage
-      - CurrentSessionID
-      - LastSessionID
-      - ThumbnailURL
-      - ChannelCID
       type: object
     CallAcceptedEvent:
       description: This event is sent when a user accepts a notification to join a
@@ -3602,11 +3327,11 @@ components:
           format: date-time
           title: The end time of the closed caption.
           type: number
-          x-stream-index: "003"
+          x-stream-index: "004"
         id:
           title: The ID of the closed caption.
           type: string
-          x-stream-index: "009"
+          x-stream-index: "001"
         language:
           title: The language of the closed caption.
           type: string
@@ -3614,29 +3339,30 @@ components:
         service:
           title: The service that generated the closed caption. By default stream
           type: string
-          x-stream-index: "006"
+          x-stream-index: "008"
         speaker_id:
           title: The speaker ID of the closed caption.
           type: string
-          x-stream-index: "004"
+          x-stream-index: "005"
         start_time:
           format: date-time
           title: The start time of the closed caption.
           type: number
-          x-stream-index: "002"
+          x-stream-index: "003"
         text:
           title: The text of the closed caption.
           type: string
-          x-stream-index: "001"
+          x-stream-index: "002"
         translated:
           title: Whether the closed caption is translated.
           type: boolean
-          x-stream-index: "008"
+          x-stream-index: "009"
         user:
           $ref: '#/components/schemas/UserResponse'
           title: The user who spoke the closed caption.
-          x-stream-index: "005"
+          x-stream-index: "006"
       required:
+      - id
       - text
       - start_time
       - end_time
@@ -3644,7 +3370,6 @@ components:
       - user
       - language
       - translated
-      - id
       title: CallClosedCaption
       type: object
     CallClosedCaptionsFailedEvent:
@@ -3820,57 +3545,6 @@ components:
           x-stream-index: "001"
       required:
       - daily
-      type: object
-    CallEgress:
-      nullable: true
-      properties:
-        app_pk:
-          format: int32
-          type: integer
-          x-stream-index: "002"
-        call_id:
-          type: string
-          x-stream-index: "004"
-        call_type:
-          type: string
-          x-stream-index: "003"
-        config:
-          $ref: '#/components/schemas/EgressTaskConfig'
-          x-stream-index: "007"
-        egress_id:
-          type: string
-          x-stream-index: "005"
-        egress_type:
-          type: string
-          x-stream-index: "006"
-        instance_ip:
-          type: string
-          x-stream-index: "008"
-        started_at:
-          format: date-time
-          type: number
-          x-stream-index: "010"
-        state:
-          type: string
-          x-stream-index: "009"
-        stopped_at:
-          format: date-time
-          type: number
-          x-stream-index: "011"
-        updated_at:
-          format: date-time
-          type: number
-          x-stream-index: "012"
-      required:
-      - app_pk
-      - call_type
-      - call_id
-      - egress_id
-      - egress_type
-      - instance_ip
-      - state
-      - started_at
-      - updated_at
       type: object
     CallEndedEvent:
       description: This event is sent when a call is mark as ended for all its participants.
@@ -4177,8 +3851,17 @@ components:
           $ref: '#/components/schemas/RTMPIngress'
           title: RTMP
           x-stream-index: "001"
+        srt:
+          $ref: '#/components/schemas/SRTIngress'
+          x-stream-index: "003"
+        whip:
+          $ref: '#/components/schemas/WHIPIngress'
+          title: WHIP
+          x-stream-index: "002"
       required:
       - rtmp
+      - whip
+      - srt
       title: CallIngressResponse
       type: object
     CallLiveStartedEvent:
@@ -4214,41 +3897,6 @@ components:
       x-stream-event-doc-group: streaming
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
-    CallMember:
-      nullable: true
-      properties:
-        created_at:
-          format: date-time
-          type: number
-          x-stream-index: "008"
-        custom:
-          additionalProperties: {}
-          type: object
-          x-stream-index: "007"
-        deleted_at:
-          format: date-time
-          type: number
-          x-stream-index: "010"
-        role:
-          type: string
-          x-stream-index: "006"
-        updated_at:
-          format: date-time
-          type: number
-          x-stream-index: "009"
-        user:
-          $ref: '#/components/schemas/User'
-          x-stream-index: "005"
-        user_id:
-          type: string
-          x-stream-index: "004"
-      required:
-      - user_id
-      - role
-      - custom
-      - created_at
-      - updated_at
-      type: object
     CallMemberAddedEvent:
       description: This event is sent when one or more members are added to a call
       properties:
@@ -4598,112 +4246,6 @@ components:
       x-stream-event-doc-group: ring
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
-    CallParticipant:
-      nullable: true
-      properties:
-        JoinedAt:
-          format: date-time
-          type: number
-          writeOnly: true
-          x-stream-index: "004"
-        Role:
-          type: string
-          writeOnly: true
-          x-stream-index: "002"
-        UserSessionID:
-          type: string
-          writeOnly: true
-          x-stream-index: "003"
-        avg_response_time:
-          format: int32
-          readOnly: true
-          type: integer
-          x-stream-index: "001.046"
-        ban_expires:
-          format: date-time
-          type: number
-          x-stream-index: "001.017"
-        banned:
-          type: boolean
-          x-stream-index: "001.016"
-        created_at:
-          format: date-time
-          readOnly: true
-          type: number
-          x-stream-index: "001.008"
-        custom:
-          additionalProperties: {}
-          type: object
-          x-stream-index: "001.006"
-        deactivated_at:
-          format: date-time
-          readOnly: true
-          type: number
-          x-stream-index: "001.014"
-        deleted_at:
-          format: date-time
-          readOnly: true
-          type: number
-          x-stream-index: "001.013"
-        id:
-          type: string
-          x-stream-index: "001.003"
-        invisible:
-          type: boolean
-          x-stream-index: "001.023"
-        language:
-          type: string
-          x-stream-index: "001.035"
-        last_active:
-          format: date-time
-          readOnly: true
-          type: number
-          x-stream-index: "001.011"
-        last_engaged_at:
-          format: date-time
-          readOnly: true
-          type: number
-          x-stream-index: "001.012"
-        online:
-          readOnly: true
-          type: boolean
-          x-stream-index: "001.022"
-        privacy_settings:
-          $ref: '#/components/schemas/PrivacySettings'
-          x-stream-index: "001.026"
-        revoke_tokens_issued_before:
-          format: date-time
-          type: number
-          x-stream-index: "001.042"
-        role:
-          type: string
-          x-stream-index: "001.004"
-        teams:
-          items:
-            type: string
-          type: array
-          x-stream-index: "001.036"
-        teams_role:
-          additionalProperties:
-            type: string
-          type: object
-          x-stream-index: "001.005"
-        updated_at:
-          format: date-time
-          readOnly: true
-          type: number
-          x-stream-index: "001.009"
-      required:
-      - id
-      - role
-      - teams_role
-      - custom
-      - banned
-      - online
-      - Role
-      - UserSessionID
-      - JoinedAt
-      type: object
     CallParticipantCountReport:
       properties:
         histogram:
@@ -5034,18 +4576,18 @@ components:
       properties:
         backstage:
           type: boolean
-          x-stream-index: "016"
+          x-stream-index: "017"
         blocked_user_ids:
           items:
             type: string
           type: array
-          x-stream-index: "018"
+          x-stream-index: "019"
         captioning:
           type: boolean
           x-stream-index: "013"
         channel_cid:
           type: string
-          x-stream-index: "024"
+          x-stream-index: "025"
         cid:
           description: The unique identifier for a call (<type>:<id>)
           title: CID
@@ -5073,13 +4615,13 @@ components:
           x-stream-index: "008"
         egress:
           $ref: '#/components/schemas/EgressResponse'
-          x-stream-index: "021"
+          x-stream-index: "022"
         ended_at:
           description: Date/time when the call ended
           format: date-time
           title: Ended At
           type: number
-          x-stream-index: "014"
+          x-stream-index: "015"
         id:
           description: Call ID
           title: ID
@@ -5087,35 +4629,38 @@ components:
           x-stream-index: "003"
         ingress:
           $ref: '#/components/schemas/CallIngressResponse'
-          x-stream-index: "019"
+          x-stream-index: "020"
         join_ahead_time_seconds:
           format: int32
           type: integer
-          x-stream-index: "023"
+          x-stream-index: "024"
         recording:
           type: boolean
           x-stream-index: "011"
         session:
           $ref: '#/components/schemas/CallSessionResponse'
-          x-stream-index: "020"
+          x-stream-index: "021"
         settings:
           $ref: '#/components/schemas/CallSettingsResponse'
-          x-stream-index: "017"
+          x-stream-index: "018"
         starts_at:
           description: Date/time when the call will start
           format: date-time
           title: Starts At
           type: number
-          x-stream-index: "015"
+          x-stream-index: "016"
         team:
           type: string
           x-stream-index: "006"
         thumbnails:
           $ref: '#/components/schemas/ThumbnailResponse'
-          x-stream-index: "022"
+          x-stream-index: "023"
         transcribing:
           type: boolean
           x-stream-index: "012"
+        translating:
+          type: boolean
+          x-stream-index: "014"
         type:
           description: The type of call
           title: Type
@@ -5139,6 +4684,7 @@ components:
       - recording
       - transcribing
       - captioning
+      - translating
       - backstage
       - settings
       - blocked_user_ids
@@ -5311,140 +4857,6 @@ components:
       x-stream-event-doc-group: streaming
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
-    CallSession:
-      properties:
-        AcceptedBy:
-          additionalProperties:
-            format: date-time
-            type: number
-          type: object
-          writeOnly: true
-          x-stream-index: "008"
-        ActiveSFUs:
-          items:
-            $ref: '#/components/schemas/SFUIDLastSeen'
-          type: array
-          writeOnly: true
-          x-stream-index: "016"
-        AnonymousParticipantCount:
-          format: int32
-          type: integer
-          writeOnly: true
-          x-stream-index: "019"
-        AppPK:
-          format: int32
-          type: integer
-          writeOnly: true
-          x-stream-index: "002.001"
-        CallID:
-          type: string
-          writeOnly: true
-          x-stream-index: "002.003"
-        CallType:
-          type: string
-          writeOnly: true
-          x-stream-index: "002.002"
-        CreatedAt:
-          format: date-time
-          type: number
-          writeOnly: true
-          x-stream-index: "003"
-        DeletedAt:
-          format: date-time
-          type: number
-          writeOnly: true
-          x-stream-index: "004"
-        EndedAt:
-          format: date-time
-          type: number
-          writeOnly: true
-          x-stream-index: "006"
-        LiveEndedAt:
-          format: date-time
-          type: number
-          writeOnly: true
-          x-stream-index: "013"
-        LiveStartedAt:
-          format: date-time
-          type: number
-          writeOnly: true
-          x-stream-index: "012"
-        MissedBy:
-          additionalProperties:
-            format: date-time
-            type: number
-          type: object
-          writeOnly: true
-          x-stream-index: "010"
-        Participants:
-          items:
-            $ref: '#/components/schemas/CallParticipant'
-          type: array
-          writeOnly: true
-          x-stream-index: "011"
-        ParticipantsCountByRole:
-          additionalProperties:
-            format: int32
-            type: integer
-          type: object
-          writeOnly: true
-          x-stream-index: "018"
-        RejectedBy:
-          additionalProperties:
-            format: date-time
-            type: number
-          type: object
-          writeOnly: true
-          x-stream-index: "009"
-        RingAt:
-          format: date-time
-          type: number
-          writeOnly: true
-          x-stream-index: "007"
-        SFUIDs:
-          items:
-            type: string
-          type: array
-          writeOnly: true
-          x-stream-index: "015"
-        SessionID:
-          type: string
-          writeOnly: true
-          x-stream-index: "002.004"
-        StartedAt:
-          format: date-time
-          type: number
-          writeOnly: true
-          x-stream-index: "005"
-        TimerEndsAt:
-          format: date-time
-          type: number
-          writeOnly: true
-          x-stream-index: "014"
-        UserPermissionOverrides:
-          additionalProperties:
-            additionalProperties:
-              type: boolean
-            type: object
-          type: object
-          writeOnly: true
-          x-stream-index: "017"
-      required:
-      - AppPK
-      - CallType
-      - CallID
-      - SessionID
-      - CreatedAt
-      - AcceptedBy
-      - RejectedBy
-      - MissedBy
-      - Participants
-      - SFUIDs
-      - ActiveSFUs
-      - UserPermissionOverrides
-      - ParticipantsCountByRole
-      - AnonymousParticipantCount
-      type: object
     CallSessionEndedEvent:
       description: This event is sent when a call session ends
       properties:
@@ -5724,51 +5136,6 @@ components:
       x-stream-event-doc-group: session
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
-    CallSettings:
-      properties:
-        audio:
-          $ref: '#/components/schemas/AudioSettings'
-          x-stream-index: "001"
-        backstage:
-          $ref: '#/components/schemas/BackstageSettings'
-          x-stream-index: "002"
-        broadcasting:
-          $ref: '#/components/schemas/BroadcastSettings'
-          x-stream-index: "007"
-        frame_recording:
-          $ref: '#/components/schemas/FrameRecordSettings'
-          x-stream-index: "006"
-        geofencing:
-          $ref: '#/components/schemas/GeofenceSettings'
-          x-stream-index: "008"
-        ingress:
-          $ref: '#/components/schemas/IngressSettings'
-          x-stream-index: "014"
-        limits:
-          $ref: '#/components/schemas/LimitsSettings'
-          x-stream-index: "012"
-        recording:
-          $ref: '#/components/schemas/RecordSettings'
-          x-stream-index: "005"
-        ring:
-          $ref: '#/components/schemas/RingSettings'
-          x-stream-index: "010"
-        screensharing:
-          $ref: '#/components/schemas/ScreensharingSettings'
-          x-stream-index: "004"
-        session:
-          $ref: '#/components/schemas/SessionSettings'
-          x-stream-index: "013"
-        thumbnails:
-          $ref: '#/components/schemas/ThumbnailsSettings'
-          x-stream-index: "011"
-        transcription:
-          $ref: '#/components/schemas/TranscriptionSettings'
-          x-stream-index: "009"
-        video:
-          $ref: '#/components/schemas/VideoSettings'
-          x-stream-index: "003"
-      type: object
     CallSettingsRequest:
       properties:
         audio:
@@ -5902,6 +5269,90 @@ components:
       - own_capabilities
       - blocked_users
       title: CallStateResponseFields
+      type: object
+    CallStatsParticipant:
+      properties:
+        latest_activity_at:
+          format: date-time
+          type: number
+          x-stream-index: "005"
+        name:
+          type: string
+          x-stream-index: "002"
+        roles:
+          items:
+            type: string
+          type: array
+          x-stream-index: "003"
+        sessions:
+          items:
+            $ref: '#/components/schemas/CallStatsParticipantSession'
+          type: array
+          x-stream-index: "004"
+        user_id:
+          type: string
+          x-stream-index: "001"
+      required:
+      - user_id
+      - sessions
+      type: object
+    CallStatsParticipantCounts:
+      properties:
+        live_sessions:
+          format: int32
+          type: integer
+          x-stream-index: "003"
+        participants:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+        publishers:
+          format: int32
+          type: integer
+          x-stream-index: "004"
+        sessions:
+          format: int32
+          type: integer
+          x-stream-index: "002"
+      required:
+      - participants
+      - sessions
+      - live_sessions
+      - publishers
+      type: object
+    CallStatsParticipantSession:
+      properties:
+        cq_score:
+          format: int32
+          type: integer
+          x-stream-index: "008"
+        ended_at:
+          format: date-time
+          type: number
+          x-stream-index: "004"
+        is_live:
+          type: boolean
+          x-stream-index: "005"
+        published_tracks:
+          $ref: '#/components/schemas/PublishedTrackFlags'
+          x-stream-index: "007"
+        publisher_type:
+          type: string
+          x-stream-index: "006"
+        started_at:
+          format: date-time
+          type: number
+          x-stream-index: "003"
+        unified_session_id:
+          type: string
+          x-stream-index: "002"
+        user_session_id:
+          type: string
+          x-stream-index: "001"
+      required:
+      - user_session_id
+      - is_live
+      - published_tracks
       type: object
     CallStatsReportReadyEvent:
       description: This event is sent when the insights report is ready
@@ -6137,50 +5588,6 @@ components:
       x-stream-event-doc-group: transcription
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
-    CallType:
-      properties:
-        AppPK:
-          format: int32
-          type: integer
-          writeOnly: true
-          x-stream-index: "003"
-        CreatedAt:
-          format: date-time
-          type: number
-          writeOnly: true
-          x-stream-index: "005"
-        ExternalStorage:
-          type: string
-          writeOnly: true
-          x-stream-index: "009"
-        Name:
-          type: string
-          writeOnly: true
-          x-stream-index: "004"
-        NotificationSettings:
-          $ref: '#/components/schemas/NotificationSettings'
-          x-stream-index: "008"
-        PK:
-          format: int32
-          type: integer
-          writeOnly: true
-          x-stream-index: "002"
-        Settings:
-          $ref: '#/components/schemas/CallSettings'
-          x-stream-index: "007"
-        UpdatedAt:
-          format: date-time
-          type: number
-          writeOnly: true
-          x-stream-index: "006"
-      required:
-      - PK
-      - AppPK
-      - Name
-      - CreatedAt
-      - UpdatedAt
-      - ExternalStorage
-      type: object
     CallUpdatedEvent:
       description: |-
         This event is sent when a call is updated, clients should use this update the local state of the call.
@@ -6305,6 +5712,9 @@ components:
             type: string
           type: array
           x-stream-index: "004"
+        reason:
+          type: string
+          x-stream-index: "005"
         type:
           default: call.user_muted
           description: 'The type of event: "call.user_muted" in this case'
@@ -6317,6 +5727,7 @@ components:
       - call_cid
       - from_user_id
       - muted_user_ids
+      - reason
       title: CallUserMutedEvent
       type: object
       x-stream-event-call-type: true
@@ -6357,26 +5768,26 @@ components:
           items:
             $ref: '#/components/schemas/SharedLocation'
           type: array
-          x-stream-index: "034"
+          x-stream-index: "035"
         auto_translation_enabled:
           type: boolean
-          x-stream-index: "029"
+          x-stream-index: "030"
         auto_translation_language:
           type: string
-          x-stream-index: "030"
+          x-stream-index: "031"
         cid:
           type: string
           x-stream-index: "003"
         config:
           $ref: '#/components/schemas/ChannelConfig'
-          x-stream-index: "026"
+          x-stream-index: "027"
         config_overrides:
           $ref: '#/components/schemas/ConfigOverrides'
-          x-stream-index: "027"
+          x-stream-index: "028"
         cooldown:
           format: int32
           type: integer
-          x-stream-index: "031"
+          x-stream-index: "032"
         created_at:
           format: date-time
           type: number
@@ -6405,10 +5816,10 @@ components:
           items:
             $ref: '#/components/schemas/ChannelMember'
           type: array
-          x-stream-index: "022"
+          x-stream-index: "023"
         last_campaigns:
           type: string
-          x-stream-index: "032"
+          x-stream-index: "033"
         last_message_at:
           format: date-time
           type: number
@@ -6422,17 +5833,22 @@ components:
             $ref: '#/components/schemas/ChannelMember'
           type: array
           x-stream-index: "020"
+        members_lookup:
+          additionalProperties:
+            $ref: '#/components/schemas/ChannelMemberLookup'
+          type: object
+          x-stream-index: "022"
         message_count:
           format: int64
           type: integer
-          x-stream-index: "035"
+          x-stream-index: "036"
         message_count_updated_at:
           format: date-time
           type: number
-          x-stream-index: "036"
+          x-stream-index: "037"
         team:
           type: string
-          x-stream-index: "028"
+          x-stream-index: "029"
         truncated_by:
           $ref: '#/components/schemas/User'
           x-stream-index: "015"
@@ -7154,6 +6570,39 @@ components:
       - notifications_muted
       title: Channel member
       type: object
+    ChannelMemberLookup:
+      nullable: true
+      properties:
+        archived:
+          type: boolean
+          x-stream-index: "003"
+        archived_at:
+          format: date-time
+          type: number
+          x-stream-index: "006"
+        ban_expires:
+          format: date-time
+          type: number
+          x-stream-index: "007"
+        banned:
+          type: boolean
+          x-stream-index: "004"
+        hidden:
+          type: boolean
+          x-stream-index: "001"
+        pinned:
+          type: boolean
+          x-stream-index: "002"
+        pinned_at:
+          format: date-time
+          type: number
+          x-stream-index: "005"
+      required:
+      - hidden
+      - pinned
+      - archived
+      - banned
+      type: object
     ChannelMemberResponse:
       properties:
         channel_role:
@@ -7421,11 +6870,6 @@ components:
         channel:
           $ref: '#/components/schemas/ChannelResponse'
           x-stream-index: "001.001"
-        deleted_messages:
-          items:
-            type: string
-          type: array
-          x-stream-index: "001.016"
         draft:
           $ref: '#/components/schemas/DraftResponse'
           x-stream-index: "001.014"
@@ -7503,11 +6947,6 @@ components:
         channel:
           $ref: '#/components/schemas/ChannelResponse'
           x-stream-index: "001"
-        deleted_messages:
-          items:
-            type: string
-          type: array
-          x-stream-index: "016"
         draft:
           $ref: '#/components/schemas/DraftResponse'
           x-stream-index: "014"
@@ -8362,15 +7801,6 @@ components:
       x-stream-event-doc-group: other
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
-    CompositeAppSettings:
-      properties:
-        json_encoded_settings:
-          type: string
-          x-stream-index: "005"
-        url:
-          type: string
-          x-stream-index: "004"
-      type: object
     ConfigOverrides:
       properties:
         blocklist:
@@ -8488,6 +7918,11 @@ components:
           description: Configuration for customer-configured LLM moderation
           title: LLM Config
           x-stream-index: "009"
+        supported_video_call_harm_types:
+          items:
+            type: string
+          type: array
+          x-stream-index: "016"
         team:
           description: Team associated with the configuration
           title: Team
@@ -8513,6 +7948,7 @@ components:
       - async
       - created_at
       - updated_at
+      - supported_video_call_harm_types
       type: object
     ConnectUserDetailsRequest:
       properties:
@@ -9296,10 +8732,22 @@ components:
     DeleteCommentResponse:
       nullable: true
       properties:
+        activity:
+          $ref: '#/components/schemas/ActivityResponse'
+          description: The parent activity
+          title: Activity
+          x-stream-index: "002"
+        comment:
+          $ref: '#/components/schemas/CommentResponse'
+          description: The deleted comment
+          title: Comment
+          x-stream-index: "001"
         duration:
           type: string
-          x-stream-index: "001.001"
+          x-stream-index: "003.001"
       required:
+      - comment
+      - activity
       - duration
       title: Delete Comment Response
       type: object
@@ -9800,33 +9248,6 @@ components:
       - broadcasting
       - rtmps
       type: object
-    EgressTaskConfig:
-      properties:
-        egress_user:
-          $ref: '#/components/schemas/EgressUser'
-          x-stream-index: "008"
-        frame_recording_egress_config:
-          $ref: '#/components/schemas/FrameRecordingEgressConfig'
-          x-stream-index: "009"
-        hls_egress_config:
-          $ref: '#/components/schemas/HLSEgressConfig'
-          x-stream-index: "007"
-        recording_egress_config:
-          $ref: '#/components/schemas/RecordingEgressConfig'
-          x-stream-index: "006"
-        rtmp_egress_config:
-          $ref: '#/components/schemas/RTMPEgressConfig'
-          x-stream-index: "004"
-        stt_egress_config:
-          $ref: '#/components/schemas/STTEgressConfig'
-          x-stream-index: "005"
-      type: object
-    EgressUser:
-      properties:
-        token:
-          type: string
-          x-stream-index: "004"
-      type: object
     EndCallRequest:
       description: Request for ending a call
       nullable: true
@@ -9959,105 +9380,6 @@ components:
       - activity_id
       - user_id
       type: object
-    EntityCreator:
-      properties:
-        avg_response_time:
-          format: int32
-          readOnly: true
-          type: integer
-          x-stream-index: "001.046"
-        ban_count:
-          format: int32
-          type: integer
-          x-stream-index: "002"
-        ban_expires:
-          format: date-time
-          type: number
-          x-stream-index: "001.017"
-        banned:
-          type: boolean
-          x-stream-index: "001.016"
-        created_at:
-          format: date-time
-          readOnly: true
-          type: number
-          x-stream-index: "001.008"
-        custom:
-          additionalProperties: {}
-          type: object
-          x-stream-index: "001.006"
-        deactivated_at:
-          format: date-time
-          readOnly: true
-          type: number
-          x-stream-index: "001.014"
-        deleted_at:
-          format: date-time
-          readOnly: true
-          type: number
-          x-stream-index: "001.013"
-        deleted_content_count:
-          format: int32
-          type: integer
-          x-stream-index: "003"
-        id:
-          type: string
-          x-stream-index: "001.003"
-        invisible:
-          type: boolean
-          x-stream-index: "001.023"
-        language:
-          type: string
-          x-stream-index: "001.035"
-        last_active:
-          format: date-time
-          readOnly: true
-          type: number
-          x-stream-index: "001.011"
-        last_engaged_at:
-          format: date-time
-          readOnly: true
-          type: number
-          x-stream-index: "001.012"
-        online:
-          readOnly: true
-          type: boolean
-          x-stream-index: "001.022"
-        privacy_settings:
-          $ref: '#/components/schemas/PrivacySettings'
-          x-stream-index: "001.026"
-        revoke_tokens_issued_before:
-          format: date-time
-          type: number
-          x-stream-index: "001.042"
-        role:
-          type: string
-          x-stream-index: "001.004"
-        teams:
-          items:
-            type: string
-          type: array
-          x-stream-index: "001.036"
-        teams_role:
-          additionalProperties:
-            type: string
-          type: object
-          x-stream-index: "001.005"
-        updated_at:
-          format: date-time
-          readOnly: true
-          type: number
-          x-stream-index: "001.009"
-      required:
-      - id
-      - role
-      - teams_role
-      - custom
-      - banned
-      - online
-      - ban_count
-      - deleted_content_count
-      type: object
     EntityCreatorResponse:
       properties:
         avg_response_time:
@@ -10163,22 +9485,6 @@ components:
       - deleted_content_count
       - flagged_count
       type: object
-    EventNotificationSettings:
-      properties:
-        apns:
-          $ref: '#/components/schemas/APNS'
-          x-stream-index: "002"
-        enabled:
-          type: boolean
-          x-stream-index: "001"
-        fcm:
-          $ref: '#/components/schemas/FCM'
-          x-stream-index: "003"
-      required:
-      - enabled
-      - apns
-      - fcm
-      type: object
     EventRequest:
       properties:
         custom:
@@ -10210,55 +9516,6 @@ components:
       - event
       - duration
       title: Response
-      type: object
-    ExternalStorage:
-      properties:
-        abs_account_name:
-          type: string
-          x-stream-index: "011"
-        abs_client_id:
-          type: string
-          x-stream-index: "013"
-        abs_client_secret:
-          type: string
-          x-stream-index: "014"
-        abs_tenant_id:
-          type: string
-          x-stream-index: "012"
-        bucket:
-          type: string
-          x-stream-index: "005"
-        gcs_credentials:
-          type: string
-          x-stream-index: "010"
-        path:
-          type: string
-          x-stream-index: "006"
-        s3_api_key:
-          type: string
-          x-stream-index: "007"
-        s3_custom_endpoint:
-          type: string
-          x-stream-index: "016"
-        s3_region:
-          type: string
-          x-stream-index: "009"
-        s3_secret_key:
-          type: string
-          x-stream-index: "008"
-        storage_name:
-          type: string
-          x-stream-index: "015"
-        storage_type:
-          type: integer
-          x-stream-index: "004"
-      type: object
-    FCM:
-      properties:
-        data:
-          additionalProperties: {}
-          type: object
-          x-stream-index: "001"
       type: object
     FeedCreatedEvent:
       description: Emitted when a feed is created.
@@ -10836,35 +10093,34 @@ components:
       description: All possibility of string to use
       enum:
       - add-activity
+      - add-activity-bookmark
       - add-activity-reaction
       - add-comment
       - add-comment-reaction
-      - bookmark-activity
       - create-feed
-      - delete-bookmark
-      - delete-comment
+      - delete-any-activity
+      - delete-any-comment
       - delete-feed
-      - edit-bookmark
+      - delete-own-activity
+      - delete-own-activity-bookmark
+      - delete-own-activity-reaction
+      - delete-own-comment
+      - delete-own-comment-reaction
       - follow
-      - invite-feed
-      - join-feed
-      - leave-feed
-      - manage-feed-group
-      - mark-activity
       - pin-activity
       - query-feed-members
       - query-follows
       - read-activities
       - read-feed
-      - remove-activity
-      - remove-activity-reaction
-      - remove-comment-reaction
       - unfollow
-      - update-activity
-      - update-comment
+      - update-any-activity
+      - update-any-comment
       - update-feed
       - update-feed-followers
       - update-feed-members
+      - update-own-activity
+      - update-own-activity-bookmark
+      - update-own-comment
       title: FeedOwnCapability
       type: string
     FeedRequest:
@@ -10942,7 +10198,7 @@ components:
           format: date-time
           title: Created At
           type: number
-          x-stream-index: "015"
+          x-stream-index: "017"
         created_by:
           $ref: '#/components/schemas/UserResponse'
           description: User who created the feed
@@ -10959,7 +10215,7 @@ components:
           format: date-time
           title: Deleted At
           type: number
-          x-stream-index: "017"
+          x-stream-index: "019"
         description:
           description: Description of the feed
           title: Description
@@ -11010,6 +10266,13 @@ components:
           title: Name
           type: string
           x-stream-index: "004"
+        own_capabilities:
+          description: Capabilities the current user has for this feed
+          items:
+            $ref: '#/components/schemas/FeedOwnCapability'
+          title: Own Capabilities
+          type: array
+          x-stream-index: "015"
         own_follows:
           description: Follow relationships where the current user's feeds are following
             this feed
@@ -11018,6 +10281,11 @@ components:
           title: Own Follows
           type: array
           x-stream-index: "014"
+        own_membership:
+          $ref: '#/components/schemas/FeedMemberResponse'
+          description: Membership information for the current user in this feed
+          title: Own Membership
+          x-stream-index: "016"
         pin_count:
           description: Number of pinned activities in this feed
           format: int32
@@ -11029,7 +10297,7 @@ components:
           format: date-time
           title: Updated At
           type: number
-          x-stream-index: "016"
+          x-stream-index: "018"
         visibility:
           description: Visibility setting for the feed
           title: Visibility
@@ -11290,104 +10558,6 @@ components:
           x-stream-index: "002"
       required:
       - duration
-      type: object
-    Flag:
-      description: Contains information about flagged user or message
-      nullable: true
-      properties:
-        created_at:
-          description: Date/time of creation
-          format: date-time
-          title: Created at
-          type: number
-          x-stream-index: "019"
-        custom:
-          additionalProperties: {}
-          description: Additional metadata about the flag
-          title: Custom
-          type: object
-          x-stream-index: "014"
-        entity_creator_id:
-          description: ID of the user who created the flagged entity
-          title: Entity Creator ID
-          type: string
-          x-stream-index: "009"
-        entity_id:
-          description: Unique identifier of the entity being flagged
-          title: Entity ID
-          type: string
-          x-stream-index: "008"
-        entity_type:
-          description: Type of entity being flagged (e.g., message, user)
-          title: Entity Type
-          type: string
-          x-stream-index: "007"
-        is_streamed_content:
-          type: boolean
-          x-stream-index: "012"
-        labels:
-          description: Labels from bodyguard, API calls, our own AI etc
-          items:
-            type: string
-          title: Labels
-          type: array
-          x-stream-index: "015"
-        moderation_payload:
-          $ref: '#/components/schemas/ModerationPayload'
-          description: Content being flagged
-          title: Moderation Payload
-          x-stream-index: "010"
-        moderation_payload_hash:
-          type: string
-          x-stream-index: "011"
-        reason:
-          description: Optional explanation for why the content is being flagged
-          title: Reason
-          type: string
-          x-stream-index: "013"
-        result:
-          description: Result of bodyguard, API calls, our own AI etc
-          items:
-            additionalProperties: {}
-            type: object
-          title: Result
-          type: array
-          x-stream-index: "016"
-        review_queue_item:
-          $ref: '#/components/schemas/ReviewQueueItem'
-          x-stream-index: "018"
-        review_queue_item_id:
-          description: ID of the review queue item
-          title: Review Queue Item ID
-          type: string
-          x-stream-index: "017"
-        type:
-          type: string
-          x-stream-index: "004"
-        updated_at:
-          description: Date/time of the last update
-          format: date-time
-          title: Updated at
-          type: number
-          x-stream-index: "020"
-        user:
-          $ref: '#/components/schemas/User'
-          description: User who flagged a message or a user
-          title: User
-          x-stream-index: "006"
-      required:
-      - entity_type
-      - entity_id
-      - result
-      - created_at
-      - updated_at
-      title: Flag
-      type: object
-    FlagContentOptions:
-      properties:
-        reason:
-          type: string
-          x-stream-index: "001"
       type: object
     FlagDetails:
       properties:
@@ -11785,44 +10955,6 @@ components:
       x-stream-event-doc-group: other
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
-    FrameRecordSettings:
-      properties:
-        capture_interval_in_seconds:
-          format: int32
-          maximum: 60
-          minimum: 2
-          type: integer
-          x-stream-index: "003"
-        mode:
-          enum:
-          - available
-          - disabled
-          - auto-on
-          type: string
-          x-stream-index: "001"
-        quality:
-          type: string
-          x-stream-index: "002"
-      required:
-      - mode
-      - capture_interval_in_seconds
-      type: object
-    FrameRecordingEgressConfig:
-      properties:
-        capture_interval_in_seconds:
-          format: int32
-          type: integer
-          x-stream-index: "007"
-        external_storage:
-          $ref: '#/components/schemas/ExternalStorage'
-          x-stream-index: "006"
-        quality:
-          $ref: '#/components/schemas/Quality'
-          x-stream-index: "004"
-        storage_name:
-          type: string
-          x-stream-index: "005"
-      type: object
     FrameRecordingResponse:
       properties:
         status:
@@ -12021,16 +11153,6 @@ components:
       - shadow_banned
       - blocked_user_ids
       type: object
-    GeofenceSettings:
-      properties:
-        names:
-          items:
-            type: string
-          type: array
-          x-stream-index: "001"
-      required:
-      - names
-      type: object
     GeofenceSettingsRequest:
       properties:
         names:
@@ -12107,7 +11229,7 @@ components:
       properties:
         chat_activity:
           $ref: '#/components/schemas/ChatActivityStatsResponse'
-          x-stream-index: "004"
+          x-stream-index: "005"
         duration:
           description: Duration of the request in milliseconds
           title: Duration
@@ -12115,6 +11237,9 @@ components:
           x-stream-index: "001.001"
         report:
           $ref: '#/components/schemas/ReportResponse'
+          x-stream-index: "004"
+        session:
+          $ref: '#/components/schemas/CallSessionResponse'
           x-stream-index: "003"
         session_id:
           type: string
@@ -12123,7 +11248,7 @@ components:
           items:
             $ref: '#/components/schemas/VideoReactionsResponse'
           type: array
-          x-stream-index: "005"
+          x-stream-index: "006"
       required:
       - duration
       - session_id
@@ -12568,12 +11693,12 @@ components:
           x-stream-index: "003"
         created:
           type: boolean
-          x-stream-index: "015"
+          x-stream-index: "012"
         duration:
           description: Duration of the request in milliseconds
           title: Duration
           type: string
-          x-stream-index: "017.001"
+          x-stream-index: "014.001"
         feed:
           $ref: '#/components/schemas/FeedResponse'
           x-stream-index: "001"
@@ -12584,7 +11709,7 @@ components:
           x-stream-index: "005"
         followers_pagination:
           $ref: '#/components/schemas/PagerResponse'
-          x-stream-index: "012"
+          x-stream-index: "009"
         following:
           items:
             $ref: '#/components/schemas/FollowResponse'
@@ -12592,10 +11717,10 @@ components:
           x-stream-index: "006"
         following_pagination:
           $ref: '#/components/schemas/PagerResponse'
-          x-stream-index: "013"
+          x-stream-index: "010"
         member_pagination:
           $ref: '#/components/schemas/PagerResponse'
-          x-stream-index: "011"
+          x-stream-index: "008"
         members:
           items:
             $ref: '#/components/schemas/FeedMemberResponse'
@@ -12603,23 +11728,10 @@ components:
           x-stream-index: "004"
         next:
           type: string
-          x-stream-index: "016.001"
+          x-stream-index: "013.001"
         notification_status:
           $ref: '#/components/schemas/NotificationStatusResponse'
-          x-stream-index: "014"
-        own_capabilities:
-          items:
-            $ref: '#/components/schemas/FeedOwnCapability'
-          type: array
-          x-stream-index: "008"
-        own_follows:
-          items:
-            $ref: '#/components/schemas/FollowResponse'
-          type: array
-          x-stream-index: "009"
-        own_membership:
-          $ref: '#/components/schemas/FeedMemberResponse'
-          x-stream-index: "010"
+          x-stream-index: "011"
         pinned_activities:
           items:
             $ref: '#/components/schemas/ActivityPinResponse'
@@ -12627,7 +11739,7 @@ components:
           x-stream-index: "007"
         prev:
           type: string
-          x-stream-index: "016.002"
+          x-stream-index: "013.002"
       required:
       - feed
       - activities
@@ -12636,7 +11748,6 @@ components:
       - followers
       - following
       - pinned_activities
-      - own_capabilities
       - created
       - duration
       title: Response
@@ -12752,45 +11863,6 @@ components:
       - name
       - unique
       type: object
-    HLSEgressConfig:
-      properties:
-        composite_app_settings:
-          $ref: '#/components/schemas/CompositeAppSettings'
-          x-stream-index: "005"
-        playlist_url:
-          type: string
-          x-stream-index: "007"
-        qualities:
-          items:
-            $ref: '#/components/schemas/Quality'
-          type: array
-          x-stream-index: "004"
-        start_unix_nano:
-          format: int64
-          type: integer
-          x-stream-index: "006"
-      type: object
-    HLSSettings:
-      properties:
-        auto_on:
-          type: boolean
-          x-stream-index: "001"
-        enabled:
-          type: boolean
-          x-stream-index: "002"
-        layout:
-          $ref: '#/components/schemas/LayoutSettings'
-          x-stream-index: "004"
-        quality_tracks:
-          items:
-            type: string
-          type: array
-          x-stream-index: "003"
-      required:
-      - auto_on
-      - enabled
-      - quality_tracks
-      type: object
     HLSSettingsRequest:
       properties:
         auto_on:
@@ -12841,12 +11913,28 @@ components:
             $ref: '#/components/schemas/ActionSequence'
           type: array
           x-stream-index: "001"
+        cooldown_period:
+          format: int32
+          type: integer
+          x-stream-index: "005"
+        harm_types:
+          items:
+            type: string
+          type: array
+          x-stream-index: "003"
         severity:
           type: integer
           x-stream-index: "002"
+        threshold:
+          format: int32
+          type: integer
+          x-stream-index: "004"
       required:
       - action_sequences
       - severity
+      - harm_types
+      - threshold
+      - cooldown_period
       type: object
     HealthCheckEvent:
       nullable: true
@@ -13084,28 +12172,6 @@ components:
       - fixed_width_still
       - fixed_width_downsampled
       type: object
-    IngressAudioEncodingOptions:
-      properties:
-        bitrate:
-          maximum: 128000
-          minimum: 16000
-          type: integer
-          x-stream-index: "003"
-        channels:
-          enum:
-          - "1"
-          - "2"
-          format: int32
-          type: integer
-          x-stream-index: "001"
-        enable_dtx:
-          type: boolean
-          x-stream-index: "002"
-      required:
-      - channels
-      - enable_dtx
-      - bitrate
-      type: object
     IngressAudioEncodingOptionsRequest:
       properties:
         bitrate:
@@ -13145,22 +12211,6 @@ components:
       - enable_dtx
       - bitrate
       type: object
-    IngressSettings:
-      properties:
-        audio_encoding_options:
-          $ref: '#/components/schemas/IngressAudioEncodingOptions'
-          x-stream-index: "002"
-        enabled:
-          type: boolean
-          x-stream-index: "001"
-        video_encoding_options:
-          additionalProperties:
-            $ref: '#/components/schemas/IngressVideoEncodingOptions'
-          type: object
-          x-stream-index: "003"
-      required:
-      - enabled
-      type: object
     IngressSettingsRequest:
       properties:
         audio_encoding_options:
@@ -13191,17 +12241,6 @@ components:
       required:
       - enabled
       type: object
-    IngressVideoEncodingOptions:
-      properties:
-        layers:
-          items:
-            $ref: '#/components/schemas/IngressVideoLayer'
-          minimum: 1
-          type: array
-          x-stream-index: "001"
-      required:
-      - layers
-      type: object
     IngressVideoEncodingOptionsRequest:
       properties:
         layers:
@@ -13222,39 +12261,6 @@ components:
           x-stream-index: "001"
       required:
       - layers
-      type: object
-    IngressVideoLayer:
-      nullable: true
-      properties:
-        bitrate:
-          minimum: 1000
-          type: integer
-          x-stream-index: "002"
-        codec:
-          enum:
-          - h264
-          - vp8
-          type: string
-          x-stream-index: "001"
-        frame_rate:
-          maximum: 60
-          minimum: 1
-          type: integer
-          x-stream-index: "003"
-        max_dimension:
-          minimum: 240
-          type: integer
-          x-stream-index: "005"
-        min_dimension:
-          minimum: 240
-          type: integer
-          x-stream-index: "004"
-      required:
-      - codec
-      - bitrate
-      - frame_rate
-      - min_dimension
-      - max_dimension
       type: object
     IngressVideoLayerRequest:
       nullable: true
@@ -13565,35 +12571,6 @@ components:
           type: number
           x-stream-index: "001"
       type: object
-    LayoutSettings:
-      properties:
-        detect_orientation:
-          type: boolean
-          x-stream-index: "005"
-        external_app_url:
-          type: string
-          x-stream-index: "003"
-        external_css_url:
-          type: string
-          x-stream-index: "004"
-        name:
-          enum:
-          - spotlight
-          - grid
-          - single-participant
-          - mobile
-          - custom
-          type: string
-          x-stream-index: "001"
-        options:
-          additionalProperties: {}
-          type: object
-          x-stream-index: "002"
-      required:
-      - name
-      - external_app_url
-      - external_css_url
-      type: object
     LayoutSettingsRequest:
       properties:
         detect_orientation:
@@ -13620,27 +12597,6 @@ components:
           x-stream-index: "002"
       required:
       - name
-      type: object
-    LimitsSettings:
-      properties:
-        max_duration_seconds:
-          format: int32
-          type: integer
-          x-stream-index: "004"
-        max_participants:
-          format: int32
-          type: integer
-          x-stream-index: "001"
-        max_participants_exclude_owner:
-          type: boolean
-          x-stream-index: "003"
-        max_participants_exclude_roles:
-          items:
-            type: string
-          type: array
-          x-stream-index: "002"
-      required:
-      - max_participants_exclude_roles
       type: object
     LimitsSettingsRequest:
       properties:
@@ -13900,16 +12856,6 @@ components:
       x-stream-event-doc-group: other
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
-    MemberLookup:
-      properties:
-        Limit:
-          format: int32
-          type: integer
-          writeOnly: true
-          x-stream-index: "001"
-      required:
-      - Limit
-      type: object
     MemberRemovedEvent:
       properties:
         channel_id:
@@ -14580,7 +13526,7 @@ components:
           type: array
           x-stream-index: "001.002"
         type:
-          default: notification.thread_message_new
+          default: message.new
           type: string
           x-stream-index: "004.001"
         user:
@@ -15504,27 +14450,52 @@ components:
       - custom
       type: object
     ModerationCustomActionEvent:
+      description: This event is sent when a custom moderation action is executed
+      nullable: true
       properties:
+        action_id:
+          description: The ID of the custom action that was executed
+          title: ActionID
+          type: string
+          x-stream-index: "002"
+        action_options:
+          additionalProperties: {}
+          description: Additional options passed to the custom action
+          title: ActionOptions
+          type: object
+          x-stream-index: "003"
         created_at:
           format: date-time
           type: number
-          x-stream-index: "004.002"
-        item:
-          $ref: '#/components/schemas/ReviewQueueItem'
-          x-stream-index: "001"
+          x-stream-index: "001.003"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "001.007"
         message:
-          $ref: '#/components/schemas/Message'
-          x-stream-index: "002"
+          $ref: '#/components/schemas/MessageResponse'
+          description: The message if the moderated content was a message
+          title: Message
+          x-stream-index: "005"
+        received_at:
+          format: date-time
+          type: number
+          x-stream-index: "001.004"
+        review_queue_item:
+          $ref: '#/components/schemas/ReviewQueueItemResponse'
+          description: The review queue item the action was executed on
+          title: ReviewQueueItem
+          x-stream-index: "004"
         type:
           default: moderation.custom_action
           type: string
-          x-stream-index: "004.001"
-        user:
-          $ref: '#/components/schemas/User'
-          x-stream-index: "003.001"
+          x-stream-index: "001.002"
       required:
       - type
       - created_at
+      - custom
+      - action_id
+      - review_queue_item
       title: ModerationCustomActionEvent
       type: object
       x-stream-event-client-type: true
@@ -15625,27 +14596,40 @@ components:
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
     ModerationMarkReviewedEvent:
+      description: This event is sent when a moderation item is marked as reviewed
+      nullable: true
       properties:
         created_at:
           format: date-time
           type: number
-          x-stream-index: "004.002"
+          x-stream-index: "003.003"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "003.007"
         item:
-          $ref: '#/components/schemas/ReviewQueueItem'
+          $ref: '#/components/schemas/ReviewQueueItemResponse'
+          description: The review queue item that was marked as reviewed
+          title: ReviewQueueItem
           x-stream-index: "001"
         message:
-          $ref: '#/components/schemas/Message'
+          $ref: '#/components/schemas/MessageResponse'
+          description: The message if the reviewed content was a message
+          title: Message
           x-stream-index: "002"
+        received_at:
+          format: date-time
+          type: number
+          x-stream-index: "003.004"
         type:
           default: moderation.mark_reviewed
           type: string
-          x-stream-index: "004.001"
-        user:
-          $ref: '#/components/schemas/User'
-          x-stream-index: "003.001"
+          x-stream-index: "003.002"
       required:
+      - item
       - type
       - created_at
+      - custom
       title: ModerationMarkReviewedEvent
       type: object
       x-stream-event-client-type: true
@@ -16051,6 +15035,20 @@ components:
         track_seen:
           type: boolean
           x-stream-index: "001"
+      type: object
+    NotificationContext:
+      properties:
+        target:
+          $ref: '#/components/schemas/NotificationTarget'
+          description: Information about the target of the notification
+          title: Notification Target
+          x-stream-index: "002"
+        trigger:
+          $ref: '#/components/schemas/NotificationTrigger'
+          description: Information about what triggered the notification
+          title: Notification Trigger
+          x-stream-index: "001"
+      title: NotificationContext
       type: object
     NotificationFeedUpdatedEvent:
       description: Emitted when notification feed is updated.
@@ -16512,34 +15510,6 @@ components:
       x-stream-event-doc-group: other
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
-    NotificationSettings:
-      properties:
-        call_live_started:
-          $ref: '#/components/schemas/EventNotificationSettings'
-          x-stream-index: "002"
-        call_missed:
-          $ref: '#/components/schemas/EventNotificationSettings'
-          x-stream-index: "006"
-        call_notification:
-          $ref: '#/components/schemas/EventNotificationSettings'
-          x-stream-index: "004"
-        call_ring:
-          $ref: '#/components/schemas/EventNotificationSettings'
-          x-stream-index: "005"
-        enabled:
-          type: boolean
-          x-stream-index: "001"
-        session_started:
-          $ref: '#/components/schemas/EventNotificationSettings'
-          x-stream-index: "003"
-      required:
-      - enabled
-      - call_live_started
-      - session_started
-      - call_notification
-      - call_ring
-      - call_missed
-      type: object
     NotificationStatusResponse:
       properties:
         last_read_at:
@@ -16581,7 +15551,62 @@ components:
       - unseen
       title: Notification Status
       type: object
-    NullTime:
+    NotificationTarget:
+      properties:
+        attachments:
+          description: Attachments on the target activity (for activity targets)
+          items:
+            $ref: '#/components/schemas/Attachment'
+          title: Attachments
+          type: array
+          x-stream-index: "005"
+        id:
+          description: The ID of the target (activity ID or user ID)
+          title: Target ID
+          type: string
+          x-stream-index: "001"
+        name:
+          description: The name of the target user (for user targets like follows)
+          title: User Name
+          type: string
+          x-stream-index: "006"
+        text:
+          description: The text content of the target activity (for activity targets)
+          title: Activity Text
+          type: string
+          x-stream-index: "004"
+        type:
+          description: The type of the target activity (for activity targets)
+          title: Activity Type
+          type: string
+          x-stream-index: "003"
+        user_id:
+          description: The ID of the user who created the target activity (for activity
+            targets)
+          title: User ID
+          type: string
+          x-stream-index: "002"
+      required:
+      - id
+      title: NotificationTarget
+      type: object
+    NotificationTrigger:
+      properties:
+        text:
+          description: Human-readable text describing the notification
+          title: Notification Text
+          type: string
+          x-stream-index: "002"
+        type:
+          description: The type of notification (mention, reaction, comment, follow,
+            etc.)
+          title: Notification Type
+          type: string
+          x-stream-index: "001"
+      required:
+      - type
+      - text
+      title: NotificationTrigger
       type: object
     OCRRule:
       properties:
@@ -18278,6 +17303,26 @@ components:
           $ref: '#/components/schemas/TypingIndicatorsResponse'
           x-stream-index: "001"
       type: object
+    PublishedTrackFlags:
+      properties:
+        audio:
+          type: boolean
+          x-stream-index: "002"
+        screenshare:
+          type: boolean
+          x-stream-index: "003"
+        screenshare_audio:
+          type: boolean
+          x-stream-index: "004"
+        video:
+          type: boolean
+          x-stream-index: "001"
+      required:
+      - video
+      - audio
+      - screenshare
+      - screenshare_audio
+      type: object
     PublisherStatsResponse:
       properties:
         by_track:
@@ -18384,32 +17429,6 @@ components:
         feeds_preferences:
           $ref: '#/components/schemas/FeedsPreferences'
           x-stream-index: "004"
-      type: object
-    Quality:
-      properties:
-        bitdepth:
-          format: int32
-          type: integer
-          x-stream-index: "007"
-        framerate:
-          format: int32
-          type: integer
-          x-stream-index: "008"
-        height:
-          format: int32
-          type: integer
-          x-stream-index: "006"
-        name:
-          type: string
-          x-stream-index: "004"
-        video_bitrate:
-          format: int32
-          type: integer
-          x-stream-index: "009"
-        width:
-          format: int32
-          type: integer
-          x-stream-index: "005"
       type: object
     QualityScoreReport:
       properties:
@@ -18875,6 +17894,50 @@ components:
       - participants
       - total_participants
       - duration
+      type: object
+    QueryCallSessionParticipantStatsResponse:
+      description: Basic response information
+      nullable: true
+      properties:
+        call_id:
+          type: string
+          x-stream-index: "004"
+        call_session_id:
+          type: string
+          x-stream-index: "005"
+        call_type:
+          type: string
+          x-stream-index: "003"
+        counts:
+          $ref: '#/components/schemas/CallStatsParticipantCounts'
+          x-stream-index: "006"
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+        next:
+          type: string
+          x-stream-index: "002.001"
+        participants:
+          items:
+            $ref: '#/components/schemas/CallStatsParticipant'
+          type: array
+          x-stream-index: "007"
+        prev:
+          type: string
+          x-stream-index: "002.002"
+        tmp_data_source:
+          type: string
+          x-stream-index: "008"
+      required:
+      - duration
+      - call_type
+      - call_id
+      - call_session_id
+      - counts
+      - participants
+      title: Response
       type: object
     QueryCallStatsRequest:
       nullable: true
@@ -20023,18 +19086,6 @@ components:
       - stream_url
       title: RTMPBroadcastRequest
       type: object
-    RTMPEgressConfig:
-      properties:
-        composite_app_settings:
-          $ref: '#/components/schemas/CompositeAppSettings'
-          x-stream-index: "005"
-        quality:
-          $ref: '#/components/schemas/Quality'
-          x-stream-index: "004"
-        rtmp_location:
-          type: string
-          x-stream-index: "006"
-      type: object
     RTMPIngress:
       description: RTMP input settings
       properties:
@@ -20045,39 +19096,6 @@ components:
       required:
       - address
       title: RTMPIngress
-      type: object
-    RTMPLocation:
-      properties:
-        name:
-          type: string
-          x-stream-index: "001"
-        stream_key:
-          type: string
-          x-stream-index: "003"
-        stream_url:
-          type: string
-          x-stream-index: "002"
-      required:
-      - name
-      - stream_url
-      - stream_key
-      type: object
-    RTMPSettings:
-      properties:
-        enabled:
-          type: boolean
-          x-stream-index: "001"
-        layout:
-          $ref: '#/components/schemas/LayoutSettings'
-          x-stream-index: "003"
-        location:
-          $ref: '#/components/schemas/RTMPLocation'
-          x-stream-index: "004"
-        quality_name:
-          type: string
-          x-stream-index: "002"
-      required:
-      - enabled
       type: object
     RTMPSettingsRequest:
       properties:
@@ -20491,23 +19509,6 @@ components:
       - last_read
       - unread_messages
       type: object
-    RecordSettings:
-      properties:
-        audio_only:
-          type: boolean
-          x-stream-index: "001"
-        layout:
-          $ref: '#/components/schemas/LayoutSettings'
-          x-stream-index: "004"
-        mode:
-          type: string
-          x-stream-index: "002"
-        quality:
-          type: string
-          x-stream-index: "003"
-      required:
-      - mode
-      type: object
     RecordSettingsRequest:
       properties:
         audio_only:
@@ -20560,27 +19561,6 @@ components:
       - quality
       - layout
       title: RecordSettingsResponse
-      type: object
-    RecordingEgressConfig:
-      properties:
-        audio_only:
-          type: boolean
-          x-stream-index: "006"
-        composite_app_settings:
-          $ref: '#/components/schemas/CompositeAppSettings'
-          x-stream-index: "005"
-        external_storage:
-          $ref: '#/components/schemas/ExternalStorage'
-          x-stream-index: "008"
-        quality:
-          $ref: '#/components/schemas/Quality'
-          x-stream-index: "004"
-        storage_name:
-          type: string
-          x-stream-index: "007"
-        video_orientation_hint:
-          $ref: '#/components/schemas/VideoOrientation'
-          x-stream-index: "009"
       type: object
     RejectCallRequest:
       nullable: true
@@ -21061,174 +20041,6 @@ components:
       type: object
     RestoreActionRequest:
       type: object
-    ReviewQueueItem:
-      properties:
-        actions:
-          items:
-            $ref: '#/components/schemas/ActionLog'
-          type: array
-          x-stream-index: "035"
-        activity:
-          $ref: '#/components/schemas/EnrichedActivity'
-          x-stream-index: "028"
-        ai_text_severity:
-          type: string
-          x-stream-index: "021"
-        archived_at:
-          $ref: '#/components/schemas/NullTime'
-          x-stream-index: "043"
-        assigned_to:
-          $ref: '#/components/schemas/User'
-          x-stream-index: "032"
-        bans:
-          items:
-            $ref: '#/components/schemas/Ban'
-          type: array
-          x-stream-index: "033"
-        bounce_count:
-          format: int32
-          type: integer
-          x-stream-index: "025"
-        call:
-          $ref: '#/components/schemas/Call'
-          x-stream-index: "031"
-        completed_at:
-          $ref: '#/components/schemas/NullTime'
-          x-stream-index: "018"
-        config_key:
-          type: string
-          x-stream-index: "009"
-        content_changed:
-          type: boolean
-          x-stream-index: "036"
-        created_at:
-          format: date-time
-          type: number
-          x-stream-index: "004"
-        entity_creator:
-          $ref: '#/components/schemas/EntityCreator'
-          x-stream-index: "030"
-        entity_id:
-          type: string
-          x-stream-index: "007"
-        entity_type:
-          type: string
-          x-stream-index: "006"
-        feeds_v2_activity:
-          $ref: '#/components/schemas/EnrichedActivity'
-          x-stream-index: "041"
-        feeds_v2_reaction:
-          $ref: '#/components/schemas/Reaction'
-          x-stream-index: "042"
-        flag_labels:
-          items:
-            type: string
-          type: array
-          x-stream-index: "045"
-        flag_types:
-          items:
-            type: string
-          type: array
-          x-stream-index: "044"
-        flags:
-          items:
-            $ref: '#/components/schemas/Flag'
-          type: array
-          x-stream-index: "034"
-        flags_count:
-          format: int32
-          type: integer
-          x-stream-index: "026"
-        has_image:
-          type: boolean
-          x-stream-index: "012"
-        has_text:
-          type: boolean
-          x-stream-index: "014"
-        has_video:
-          type: boolean
-          x-stream-index: "013"
-        id:
-          type: string
-          x-stream-index: "003"
-        languages:
-          items:
-            type: string
-          type: array
-          x-stream-index: "019"
-        message:
-          $ref: '#/components/schemas/Message'
-          x-stream-index: "027"
-        moderation_payload:
-          $ref: '#/components/schemas/ModerationPayload'
-          x-stream-index: "010"
-        moderation_payload_hash:
-          type: string
-          x-stream-index: "011"
-        reaction:
-          $ref: '#/components/schemas/Reaction'
-          x-stream-index: "029"
-        recommended_action:
-          type: string
-          x-stream-index: "017"
-        reporter_ids:
-          items:
-            type: string
-          type: array
-          x-stream-index: "046"
-        reviewed_at:
-          $ref: '#/components/schemas/NullTime'
-          x-stream-index: "022"
-        reviewed_by:
-          type: string
-          x-stream-index: "023"
-        severity:
-          format: int32
-          type: integer
-          x-stream-index: "020"
-        status:
-          type: string
-          x-stream-index: "016"
-        teams:
-          items:
-            type: string
-          type: array
-          x-stream-index: "015"
-        updated_at:
-          format: date-time
-          type: number
-          x-stream-index: "005"
-      required:
-      - id
-      - created_at
-      - updated_at
-      - entity_type
-      - entity_id
-      - config_key
-      - moderation_payload_hash
-      - has_image
-      - has_video
-      - has_text
-      - teams
-      - status
-      - recommended_action
-      - completed_at
-      - languages
-      - severity
-      - ai_text_severity
-      - reviewed_at
-      - reviewed_by
-      - bounce_count
-      - flags_count
-      - bans
-      - flags
-      - actions
-      - content_changed
-      - archived_at
-      - flag_types
-      - flag_labels
-      - reporter_ids
-      type: object
     ReviewQueueItemResponse:
       nullable: true
       properties:
@@ -21400,25 +20212,6 @@ components:
       - actions
       - flags_count
       type: object
-    RingSettings:
-      properties:
-        auto_cancel_timeout_ms:
-          format: int32
-          type: integer
-          x-stream-index: "002"
-        incoming_call_timeout_ms:
-          format: int32
-          type: integer
-          x-stream-index: "001"
-        missed_call_timeout_ms:
-          format: int32
-          type: integer
-          x-stream-index: "003"
-      required:
-      - incoming_call_timeout_ms
-      - auto_cancel_timeout_ms
-      - missed_call_timeout_ms
-      type: object
     RingSettingsRequest:
       properties:
         auto_cancel_timeout_ms:
@@ -21477,15 +20270,9 @@ components:
         ban_options:
           $ref: '#/components/schemas/BanOptions'
           x-stream-index: "002"
-        flag_content_options:
-          $ref: '#/components/schemas/FlagContentOptions'
-          x-stream-index: "004"
         flag_user_options:
           $ref: '#/components/schemas/FlagUserOptions'
           x-stream-index: "003"
-        remove_content_options:
-          $ref: '#/components/schemas/BlockContentOptions'
-          x-stream-index: "005"
         type:
           type: string
           x-stream-index: "001"
@@ -21603,24 +20390,6 @@ components:
       required:
       - daily
       type: object
-    SFUIDLastSeen:
-      properties:
-        id:
-          type: string
-          x-stream-index: "001.001"
-        last_seen:
-          format: date-time
-          type: number
-          x-stream-index: "002"
-        process_start_time:
-          format: int64
-          type: integer
-          x-stream-index: "001.002"
-      required:
-      - id
-      - process_start_time
-      - last_seen
-      type: object
     SFUResponse:
       properties:
         edge_name:
@@ -21637,52 +20406,13 @@ components:
       - url
       - ws_endpoint
       type: object
-    STTEgressConfig:
+    SRTIngress:
       properties:
-        closed_captions_enabled:
-          type: boolean
-          x-stream-index: "005"
-        external_storage:
-          $ref: '#/components/schemas/ExternalStorage'
-          x-stream-index: "011"
-        language:
+        address:
           type: string
-          x-stream-index: "008"
-        speech_segment_config:
-          $ref: '#/components/schemas/SpeechSegmentConfig'
-          x-stream-index: "012"
-        storage_name:
-          type: string
-          x-stream-index: "010"
-        translation_languages:
-          items:
-            type: string
-          type: array
-          x-stream-index: "009"
-        translations_enabled:
-          type: boolean
-          x-stream-index: "006"
-        upload_transcriptions:
-          type: boolean
-          x-stream-index: "004"
-        whisper_server_base_url:
-          type: string
-          x-stream-index: "007"
-      type: object
-    ScreensharingSettings:
-      properties:
-        access_request_enabled:
-          type: boolean
-          x-stream-index: "002"
-        enabled:
-          type: boolean
           x-stream-index: "001"
-        target_resolution:
-          $ref: '#/components/schemas/TargetResolution'
-          x-stream-index: "003"
       required:
-      - enabled
-      - access_request_enabled
+      - address
       type: object
     ScreensharingSettingsRequest:
       properties:
@@ -22146,17 +20876,6 @@ components:
       - reaction
       - duration
       title: Response
-      type: object
-    SessionSettings:
-      properties:
-        inactivity_timeout_seconds:
-          format: int32
-          maximum: 900
-          minimum: 5
-          type: integer
-          x-stream-index: "001"
-      required:
-      - inactivity_timeout_seconds
       type: object
     SessionSettingsRequest:
       properties:
@@ -23576,14 +22295,6 @@ components:
       required:
       - image_url
       type: object
-    ThumbnailsSettings:
-      properties:
-        enabled:
-          type: boolean
-          x-stream-index: "001"
-      required:
-      - enabled
-      type: object
     ThumbnailsSettingsRequest:
       properties:
         enabled:
@@ -23613,76 +22324,6 @@ components:
       required:
       - track_type
       - duration_seconds
-      type: object
-    TranscriptionSettings:
-      properties:
-        closed_caption_mode:
-          enum:
-          - available
-          - disabled
-          - auto-on
-          title: Mode
-          type: string
-          x-stream-index: "002"
-        language:
-          description: The language used in this call as a two letter code
-          enum:
-          - auto
-          - en
-          - fr
-          - es
-          - de
-          - it
-          - nl
-          - pt
-          - pl
-          - ca
-          - cs
-          - da
-          - el
-          - fi
-          - id
-          - ja
-          - ru
-          - sv
-          - ta
-          - th
-          - tr
-          - hu
-          - ro
-          - zh
-          - ar
-          - tl
-          - he
-          - hi
-          - hr
-          - ko
-          - ms
-          - "no"
-          - uk
-          - bg
-          - et
-          - sl
-          - sk
-          title: Language
-          type: string
-          x-stream-index: "004"
-        mode:
-          enum:
-          - available
-          - disabled
-          - auto-on
-          title: Mode
-          type: string
-          x-stream-index: "001"
-        speech_segment_config:
-          $ref: '#/components/schemas/SpeechSegmentConfig'
-          x-stream-index: "005"
-      required:
-      - mode
-      - closed_caption_mode
-      - languages
-      - language
       type: object
     TranscriptionSettingsRequest:
       properties:
@@ -23743,6 +22384,9 @@ components:
           x-stream-index: "001"
         speech_segment_config:
           $ref: '#/components/schemas/SpeechSegmentConfig'
+          x-stream-index: "006"
+        translation:
+          $ref: '#/components/schemas/TranslationSettings'
           x-stream-index: "005"
       type: object
     TranscriptionSettingsResponse:
@@ -23804,6 +22448,9 @@ components:
           x-stream-index: "001"
         speech_segment_config:
           $ref: '#/components/schemas/SpeechSegmentConfig'
+          x-stream-index: "006"
+        translation:
+          $ref: '#/components/schemas/TranslationSettings'
           x-stream-index: "005"
       required:
       - mode
@@ -23879,6 +22526,17 @@ components:
           x-stream-index: "001"
       required:
       - language
+      type: object
+    TranslationSettings:
+      properties:
+        enabled:
+          type: boolean
+          x-stream-index: "001"
+        languages:
+          items:
+            type: string
+          type: array
+          x-stream-index: "002"
       type: object
     TruncateChannelRequest:
       nullable: true
@@ -24331,6 +22989,14 @@ components:
           title: string
           type: number
           x-stream-index: "007"
+        feeds:
+          description: List of feeds the activity is present in
+          items:
+            type: string
+          maximum: 255
+          title: '[]string'
+          type: array
+          x-stream-index: "011"
         filter_tags:
           description: Tags used for filtering the activity
           items:
@@ -25403,6 +24069,90 @@ components:
       x-stream-event-doc-group: call
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    UploadChannelFileRequest:
+      nullable: true
+      properties:
+        file:
+          description: file field
+          title: File
+          type: string
+          x-stream-index: "002"
+        user:
+          $ref: '#/components/schemas/OnlyUserID'
+          description: user for the request **server side only**
+          title: User
+          x-stream-index: "003"
+      type: object
+    UploadChannelFileResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "004.001"
+        file:
+          description: URL to the uploaded asset. Should be used to put to `asset_url`
+            attachment field
+          title: File
+          type: string
+          x-stream-index: "001"
+        moderation_action:
+          type: string
+          x-stream-index: "003"
+        thumb_url:
+          description: URL of the file thumbnail for supported file formats. Should
+            be put to `thumb_url` attachment field
+          title: Thumbnail URL
+          type: string
+          x-stream-index: "002"
+      required:
+      - duration
+      type: object
+    UploadChannelRequest:
+      nullable: true
+      properties:
+        file:
+          type: string
+          x-stream-index: "001.002"
+        upload_sizes:
+          description: field with JSON-encoded array of image size configurations
+          items:
+            $ref: '#/components/schemas/ImageSize'
+          title: Upload sizes
+          type: array
+          x-stream-index: "002"
+        user:
+          $ref: '#/components/schemas/OnlyUserID'
+          x-stream-index: "001.003"
+      type: object
+    UploadChannelResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: 001.004.001
+        file:
+          type: string
+          x-stream-index: "001.001"
+        moderation_action:
+          type: string
+          x-stream-index: "001.003"
+        thumb_url:
+          type: string
+          x-stream-index: "001.002"
+        upload_sizes:
+          description: Array of image size configurations
+          items:
+            $ref: '#/components/schemas/ImageSize'
+          title: Upload sizes
+          type: array
+          x-stream-index: "002"
+      required:
+      - duration
+      type: object
     UpsertActivitiesRequest:
       nullable: true
       properties:
@@ -26658,13 +25408,23 @@ components:
       type: object
     VideoCallRuleConfig:
       properties:
+        flag_all_labels:
+          type: boolean
+          x-stream-index: "002"
+        flagged_labels:
+          items:
+            type: string
+          type: array
+          x-stream-index: "003"
         rules:
-          additionalProperties:
+          items:
             $ref: '#/components/schemas/HarmConfig'
-          type: object
+          type: array
           x-stream-index: "001"
       required:
       - rules
+      - flag_all_labels
+      - flagged_labels
       type: object
     VideoContentParameters:
       properties:
@@ -26677,12 +25437,6 @@ components:
     VideoEndCallRequest:
       type: object
     VideoKickUserRequest:
-      type: object
-    VideoOrientation:
-      properties:
-        orientation:
-          type: integer
-          x-stream-index: "004"
       type: object
     VideoReactionOverTimeResponse:
       properties:
@@ -26718,34 +25472,6 @@ components:
         time_window:
           type: string
           x-stream-index: "002"
-      type: object
-    VideoSettings:
-      properties:
-        access_request_enabled:
-          type: boolean
-          x-stream-index: "002"
-        camera_default_on:
-          type: boolean
-          x-stream-index: "004"
-        camera_facing:
-          enum:
-          - front
-          - back
-          - external
-          type: string
-          x-stream-index: "005"
-        enabled:
-          type: boolean
-          x-stream-index: "001"
-        target_resolution:
-          $ref: '#/components/schemas/TargetResolution'
-          x-stream-index: "003"
-      required:
-      - enabled
-      - access_request_enabled
-      - target_resolution
-      - camera_default_on
-      - camera_facing
       type: object
     VideoSettingsRequest:
       properties:
@@ -26806,6 +25532,17 @@ components:
           maxLength: 255
           type: string
           x-stream-index: "001"
+      type: object
+    WHIPIngress:
+      properties:
+        address:
+          description: URL for a new whip input, every time a new link is created
+          title: Address
+          type: string
+          x-stream-index: "001"
+      required:
+      - address
+      title: WHIPIngress
       type: object
     WSAuthMessage:
       description: Websocket auth message
@@ -26877,6 +25614,8 @@ components:
           feeds.poll.vote_removed: '#/components/schemas/PollVoteRemovedFeedEvent'
           health.check: '#/components/schemas/HealthCheckEvent'
           message.pending: '#/components/schemas/PendingMessageEvent'
+          moderation.custom_action: '#/components/schemas/ModerationCustomActionEvent'
+          moderation.mark_reviewed: '#/components/schemas/ModerationMarkReviewedEvent'
           notification.reminder_due: '#/components/schemas/ReminderNotificationEvent'
           poll.closed: '#/components/schemas/PollClosedEvent'
           poll.deleted: '#/components/schemas/PollDeletedEvent'
@@ -26927,6 +25666,8 @@ components:
       - $ref: '#/components/schemas/FollowDeletedEvent'
       - $ref: '#/components/schemas/FollowUpdatedEvent'
       - $ref: '#/components/schemas/HealthCheckEvent'
+      - $ref: '#/components/schemas/ModerationCustomActionEvent'
+      - $ref: '#/components/schemas/ModerationMarkReviewedEvent'
       - $ref: '#/components/schemas/NotificationFeedUpdatedEvent'
       - $ref: '#/components/schemas/PendingMessageEvent'
       - $ref: '#/components/schemas/PollClosedEvent'
@@ -27370,7 +26111,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v193.9.0
+  version: v196.10.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -27976,7 +26717,7 @@ paths:
     delete:
       description: |
         Deletes previously uploaded file
-      operationId: DeleteFile
+      operationId: DeleteChannelFile
       parameters:
       - in: path
         name: type
@@ -28029,7 +26770,7 @@ paths:
     post:
       description: |
         Uploads file
-      operationId: UploadFile
+      operationId: UploadChannelFile
       parameters:
       - in: path
         name: type
@@ -28049,14 +26790,14 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/FileUploadRequest'
+              $ref: '#/components/schemas/UploadChannelFileRequest'
         required: true
       responses:
         "201":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FileUploadResponse'
+                $ref: '#/components/schemas/UploadChannelFileResponse'
           description: Successful response
         "400":
           content:
@@ -28129,7 +26870,7 @@ paths:
     delete:
       description: |
         Deletes previously uploaded image
-      operationId: DeleteImage
+      operationId: DeleteChannelImage
       parameters:
       - in: path
         name: type
@@ -28182,7 +26923,7 @@ paths:
     post:
       description: |
         Uploads image
-      operationId: UploadImage
+      operationId: UploadChannelImage
       parameters:
       - in: path
         name: type
@@ -28202,14 +26943,14 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/ImageUploadRequest'
+              $ref: '#/components/schemas/UploadChannelRequest'
         required: true
       responses:
         "201":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ImageUploadResponse'
+                $ref: '#/components/schemas/UploadChannelResponse'
           description: Successful response
         "400":
           content:
@@ -31247,6 +29988,8 @@ paths:
         required: true
         schema:
           description: Type of the object to get comments for
+          enum:
+          - activity
           title: Object Type
           type: string
           writeOnly: true
@@ -32466,7 +31209,7 @@ paths:
   /api/v2/feeds/follows:
     patch:
       description: |
-        Updates a follow's custom data, push preference, and follower role. Source owner can update custom data and push preference. Target owner can update follower role.
+        Updates a follow's custom data, push preference, and follower role. Source owner can update custom data and push preference. Follower role can only be updated via server-side requests.
       operationId: UpdateFollow
       requestBody:
         content:
@@ -33675,7 +32418,7 @@ paths:
     delete:
       description: |
         Deletes previously uploaded file
-      operationId: DeleteFileGlobal
+      operationId: DeleteFile
       parameters:
       - in: query
         name: url
@@ -33707,11 +32450,10 @@ paths:
       summary: Delete file
       tags:
       - product:common
-      x-stream-sdk-name: DeleteFile
     post:
       description: |
         Uploads file
-      operationId: UploadFileGlobal
+      operationId: UploadFile
       requestBody:
         content:
           multipart/form-data:
@@ -33740,12 +32482,11 @@ paths:
       summary: Upload file
       tags:
       - product:common
-      x-stream-sdk-name: UploadFile
   /api/v2/uploads/image:
     delete:
       description: |
         Deletes previously uploaded image
-      operationId: DeleteImageGlobal
+      operationId: DeleteImage
       parameters:
       - in: query
         name: url
@@ -33777,11 +32518,10 @@ paths:
       summary: Delete image
       tags:
       - product:common
-      x-stream-sdk-name: DeleteImage
     post:
       description: |
         Uploads image
-      operationId: UploadImageGlobal
+      operationId: UploadImage
       requestBody:
         content:
           multipart/form-data:
@@ -33810,7 +32550,6 @@ paths:
       summary: Upload image
       tags:
       - product:common
-      x-stream-sdk-name: UploadImage
   /api/v2/users:
     get:
       description: |
@@ -36403,6 +35142,74 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Query Call Stats
+      tags:
+      - product:video
+  /api/v2/video/call_stats/{call_type}/{call_id}/{session}/participants:
+    get:
+      description: |2+
+
+      operationId: QueryCallSessionParticipantStats
+      parameters:
+      - in: path
+        name: call_type
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "002"
+      - in: path
+        name: call_id
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "003"
+      - in: path
+        name: session
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "004"
+      - in: query
+        name: sort
+        schema:
+          items:
+            $ref: '#/components/schemas/SortParamRequest'
+          maximum: 1
+          type: array
+          writeOnly: true
+          x-stream-index: "005"
+      - in: query
+        name: filter_conditions
+        schema:
+          additionalProperties: {}
+          type: object
+          writeOnly: true
+          x-stream-index: "006"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryCallSessionParticipantStatsResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Query call participant statistics
       tags:
       - product:video
   /api/v2/video/calls:
