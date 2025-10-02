@@ -1288,6 +1288,9 @@ components:
           title: Interest Tags
           type: array
           x-stream-index: "025"
+        is_watched:
+          type: boolean
+          x-stream-index: "037"
         latest_reactions:
           description: Recent reactions to the activity
           items:
@@ -1995,6 +1998,9 @@ components:
           title: Group
           type: string
           x-stream-index: "005"
+        is_watched:
+          type: boolean
+          x-stream-index: "009"
         score:
           description: Ranking score for this aggregation
           format: float
@@ -21888,16 +21894,68 @@ components:
       type: object
     StoriesConfig:
       properties:
-        expiration_behaviour:
-          enum:
-          - hide_for_everyone
-          - visible_for_author
-          type: string
-          x-stream-index: "001"
         skip_watched:
+          type: boolean
+          x-stream-index: "001"
+        track_watched:
           type: boolean
           x-stream-index: "002"
       type: object
+    StoriesFeedUpdatedEvent:
+      description: Emitted when stories feed is updated.
+      nullable: true
+      properties:
+        aggregated_activities:
+          description: Aggregated activities for stories feeds
+          items:
+            $ref: '#/components/schemas/AggregatedActivityResponse'
+          title: Aggregated Activities
+          type: array
+          x-stream-index: "001"
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: number
+          x-stream-index: 002.001.003
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 002.001.007
+        feed_visibility:
+          type: string
+          x-stream-index: "002.003"
+        fid:
+          description: The ID of the feed
+          title: Feed ID
+          type: string
+          x-stream-index: "002.002"
+        received_at:
+          format: date-time
+          type: number
+          x-stream-index: 002.001.004
+        type:
+          default: feeds.stories_feed.updated
+          description: 'The type of event: "feeds.stories_feed.updated" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: 002.001.002
+        user:
+          $ref: '#/components/schemas/UserResponseCommonFields'
+          description: The user who triggered the stories update
+          title: User
+          x-stream-index: "003.001"
+      required:
+      - type
+      - created_at
+      - custom
+      - fid
+      title: StoriesFeedUpdatedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     SubmitActionRequest:
       nullable: true
       properties:
@@ -25922,6 +25980,7 @@ components:
           feeds.poll.vote_casted: '#/components/schemas/PollVoteCastedFeedEvent'
           feeds.poll.vote_changed: '#/components/schemas/PollVoteChangedFeedEvent'
           feeds.poll.vote_removed: '#/components/schemas/PollVoteRemovedFeedEvent'
+          feeds.stories_feed.updated: '#/components/schemas/StoriesFeedUpdatedEvent'
           health.check: '#/components/schemas/HealthCheckEvent'
           message.pending: '#/components/schemas/PendingMessageEvent'
           moderation.custom_action: '#/components/schemas/ModerationCustomActionEvent'
@@ -25996,6 +26055,7 @@ components:
       - $ref: '#/components/schemas/ReminderDeletedEvent'
       - $ref: '#/components/schemas/ReminderNotificationEvent'
       - $ref: '#/components/schemas/ReminderUpdatedEvent'
+      - $ref: '#/components/schemas/StoriesFeedUpdatedEvent'
       - $ref: '#/components/schemas/UserMessagesDeletedEvent'
       - $ref: '#/components/schemas/UserUpdatedEvent'
     WSEvent:
@@ -26114,6 +26174,7 @@ components:
           feeds.poll.vote_casted: '#/components/schemas/PollVoteCastedFeedEvent'
           feeds.poll.vote_changed: '#/components/schemas/PollVoteChangedFeedEvent'
           feeds.poll.vote_removed: '#/components/schemas/PollVoteRemovedFeedEvent'
+          feeds.stories_feed.updated: '#/components/schemas/StoriesFeedUpdatedEvent'
           health.check: '#/components/schemas/HealthCheckEvent'
           member.added: '#/components/schemas/MemberAddedEvent'
           member.removed: '#/components/schemas/MemberRemovedEvent'
@@ -26317,6 +26378,7 @@ components:
       - $ref: '#/components/schemas/ReminderDeletedEvent'
       - $ref: '#/components/schemas/ReminderNotificationEvent'
       - $ref: '#/components/schemas/ReminderUpdatedEvent'
+      - $ref: '#/components/schemas/StoriesFeedUpdatedEvent'
       - $ref: '#/components/schemas/ThreadUpdatedEvent'
       - $ref: '#/components/schemas/TypingStartEvent'
       - $ref: '#/components/schemas/TypingStopEvent'
@@ -26421,7 +26483,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v196.22.0
+  version: v196.23.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
