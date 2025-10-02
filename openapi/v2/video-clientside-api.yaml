@@ -135,22 +135,30 @@ components:
       properties:
         async_url_enrich_enabled:
           type: boolean
-          x-stream-index: "017"
+          x-stream-index: "019"
         auto_translation_enabled:
           type: boolean
-          x-stream-index: "020"
+          x-stream-index: "022"
         file_upload_config:
           $ref: '#/components/schemas/FileUploadConfig'
-          x-stream-index: "030"
+          x-stream-index: "032"
         image_upload_config:
           $ref: '#/components/schemas/FileUploadConfig'
-          x-stream-index: "031"
+          x-stream-index: "033"
         name:
           type: string
           x-stream-index: "001"
+        region:
+          type: string
+          x-stream-index: "003"
+        shard:
+          type: string
+          x-stream-index: "004"
       required:
       - name
       - organization
+      - region
+      - shard
       - push_notifications
       - webhook_url
       - moderation_webhook_url
@@ -191,6 +199,7 @@ components:
       - user_response_time_enabled
       - moderation_bulk_submit_action_enabled
       - moderation_llm_configurability_enabled
+      - max_aggregated_activities_length
       type: object
     AppUpdatedEvent:
       description: Emitted when app settings are updated
@@ -1663,6 +1672,28 @@ components:
       - user_session_id
       - role
       - joined_at
+      type: object
+    CallParticipantTimeline:
+      properties:
+        data:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "004"
+        severity:
+          type: string
+          x-stream-index: "003"
+        timestamp:
+          format: date-time
+          type: number
+          x-stream-index: "001"
+        type:
+          type: string
+          x-stream-index: "002"
+      required:
+      - timestamp
+      - type
+      - severity
+      - data
       type: object
     CallReactionEvent:
       description: This event is sent when a reaction is sent in a call, clients should
@@ -5370,18 +5401,18 @@ components:
           title: Duration
           type: string
           x-stream-index: "001.001"
-        ingress:
-          $ref: '#/components/schemas/ParticipantSeriesIngressSection'
-          x-stream-index: "010"
         publisher:
-          $ref: '#/components/schemas/ParticipantSeriesPublisherSection'
-          x-stream-index: "008"
-        subscriber:
-          $ref: '#/components/schemas/ParticipantSeriesSubscriberSection'
+          $ref: '#/components/schemas/ParticipantSeriesPublisherStats'
           x-stream-index: "009"
+        subscriber:
+          $ref: '#/components/schemas/ParticipantSeriesSubscriberStats'
+          x-stream-index: "010"
         timeframe:
           $ref: '#/components/schemas/ParticipantSeriesTimeframe'
           x-stream-index: "007"
+        user:
+          $ref: '#/components/schemas/ParticipantSeriesUserStats'
+          x-stream-index: "008"
         user_id:
           type: string
           x-stream-index: "005"
@@ -5940,6 +5971,43 @@ components:
       required:
       - enabled
       type: object
+    IngressSourceRequest:
+      properties:
+        fps:
+          enum:
+          - "30"
+          - "60"
+          type: integer
+          x-stream-index: "003"
+        height:
+          minimum: 2
+          type: integer
+          x-stream-index: "001"
+        width:
+          minimum: 2
+          type: integer
+          x-stream-index: "002"
+      required:
+      - height
+      - width
+      - fps
+      type: object
+    IngressSourceResponse:
+      properties:
+        fps:
+          type: integer
+          x-stream-index: "003"
+        height:
+          type: integer
+          x-stream-index: "002"
+        width:
+          type: integer
+          x-stream-index: "001"
+      required:
+      - width
+      - height
+      - fps
+      type: object
     IngressVideoEncodingOptionsRequest:
       properties:
         layers:
@@ -5947,8 +6015,12 @@ components:
             $ref: '#/components/schemas/IngressVideoLayerRequest'
           minimum: 1
           type: array
+          x-stream-index: "002"
+        source:
+          $ref: '#/components/schemas/IngressSourceRequest'
           x-stream-index: "001"
       required:
+      - source
       - layers
       type: object
     IngressVideoEncodingResponse:
@@ -5957,8 +6029,12 @@ components:
           items:
             $ref: '#/components/schemas/IngressVideoLayerResponse'
           type: array
+          x-stream-index: "002"
+        source:
+          $ref: '#/components/schemas/IngressSourceResponse'
           x-stream-index: "001"
       required:
+      - source
       - layers
       type: object
     IngressVideoLayerRequest:
@@ -7318,12 +7394,9 @@ components:
       - sum
       - unique
       type: object
-    ParticipantSeriesAggregate:
+    ParticipantSeriesPublisherStats:
       properties:
-        label:
-          type: string
-          x-stream-index: "001"
-        series:
+        global:
           additionalProperties:
             items:
               items:
@@ -7332,62 +7405,35 @@ components:
               type: array
             type: array
           type: object
-          x-stream-index: "002"
-      required:
-      - label
-      - series
-      type: object
-    ParticipantSeriesIngressSection:
-      properties:
-        top_charts:
-          items:
-            $ref: '#/components/schemas/ParticipantSeriesTopChart'
-          type: array
           x-stream-index: "001"
-      type: object
-    ParticipantSeriesPublisherSection:
-      properties:
-        aggregate:
-          $ref: '#/components/schemas/ParticipantSeriesAggregate'
-          x-stream-index: "003"
-        by_track_type:
+        tracks:
           additionalProperties:
             items:
-              $ref: '#/components/schemas/ParticipantSeriesTrack'
+              $ref: '#/components/schemas/ParticipantSeriesTrackMetrics'
             type: array
           type: object
           x-stream-index: "002"
-        top_charts:
-          items:
-            $ref: '#/components/schemas/ParticipantSeriesTopChart'
-          type: array
-          x-stream-index: "001"
       type: object
-    ParticipantSeriesSubscriberSection:
+    ParticipantSeriesSubscriberStats:
       properties:
-        aggregate:
-          $ref: '#/components/schemas/ParticipantSeriesAggregate'
-          x-stream-index: "002"
+        global:
+          additionalProperties:
+            items:
+              items:
+                format: float
+                type: number
+              type: array
+            type: array
+          type: object
+          x-stream-index: "001"
         subscriptions:
           items:
-            $ref: '#/components/schemas/ParticipantSeriesSubscriptionsCharts'
+            $ref: '#/components/schemas/ParticipantSeriesSubscriptionTrackMetrics'
           type: array
-          x-stream-index: "003"
-        top_charts:
-          items:
-            $ref: '#/components/schemas/ParticipantSeriesTopChart'
-          type: array
-          x-stream-index: "001"
+          x-stream-index: "002"
       type: object
-    ParticipantSeriesSubscriptionsCharts:
+    ParticipantSeriesSubscriptionTrackMetrics:
       properties:
-        by_track_type:
-          additionalProperties:
-            items:
-              $ref: '#/components/schemas/ParticipantSeriesTrack'
-            type: array
-          type: object
-          x-stream-index: "004"
         publisher_name:
           type: string
           x-stream-index: "003"
@@ -7397,11 +7443,22 @@ components:
         publisher_user_session_id:
           type: string
           x-stream-index: "002"
+        tracks:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/ParticipantSeriesTrackMetrics'
+            type: array
+          type: object
+          x-stream-index: "004"
       required:
       - publisher_user_id
       type: object
     ParticipantSeriesTimeframe:
       properties:
+        max_points:
+          format: int32
+          type: integer
+          x-stream-index: "004"
         since:
           format: date-time
           type: number
@@ -7418,34 +7475,14 @@ components:
       - since
       - until
       - step_seconds
+      - max_points
       type: object
-    ParticipantSeriesTopChart:
+    ParticipantSeriesTrackMetrics:
       properties:
         label:
           type: string
           x-stream-index: "002"
-        metric:
-          type: string
-          x-stream-index: "001"
-        series:
-          items:
-            items:
-              format: float
-              type: number
-            type: array
-          type: array
-          x-stream-index: "003"
-      required:
-      - metric
-      - label
-      - series
-      type: object
-    ParticipantSeriesTrack:
-      properties:
-        label:
-          type: string
-          x-stream-index: "002"
-        series:
+        metrics:
           additionalProperties:
             items:
               items:
@@ -7463,9 +7500,19 @@ components:
           x-stream-index: "003"
       required:
       - track_id
-      - label
-      - track_type
-      - series
+      type: object
+    ParticipantSeriesUserStats:
+      properties:
+        metrics:
+          additionalProperties:
+            items:
+              items:
+                format: float
+                type: number
+              type: array
+            type: array
+          type: object
+          x-stream-index: "001"
       type: object
     PerSDKUsageReport:
       nullable: true
@@ -8287,18 +8334,26 @@ components:
       description: Basic response information
       nullable: true
       properties:
+        call_ended_at:
+          format: date-time
+          type: number
+          x-stream-index: "007"
         call_id:
           type: string
           x-stream-index: "004"
         call_session_id:
           type: string
           x-stream-index: "005"
+        call_started_at:
+          format: date-time
+          type: number
+          x-stream-index: "006"
         call_type:
           type: string
           x-stream-index: "003"
         counts:
           $ref: '#/components/schemas/CallStatsParticipantCounts'
-          x-stream-index: "006"
+          x-stream-index: "008"
         duration:
           description: Duration of the request in milliseconds
           title: Duration
@@ -8311,13 +8366,13 @@ components:
           items:
             $ref: '#/components/schemas/CallStatsParticipant'
           type: array
-          x-stream-index: "007"
+          x-stream-index: "009"
         prev:
           type: string
           x-stream-index: "002.002"
         tmp_data_source:
           type: string
-          x-stream-index: "008"
+          x-stream-index: "010"
       required:
       - duration
       - call_type
@@ -8325,6 +8380,45 @@ components:
       - call_session_id
       - counts
       - participants
+      title: Response
+      type: object
+    QueryCallSessionParticipantStatsTimelineResponse:
+      description: Basic response information
+      nullable: true
+      properties:
+        call_id:
+          type: string
+          x-stream-index: "003"
+        call_session_id:
+          type: string
+          x-stream-index: "004"
+        call_type:
+          type: string
+          x-stream-index: "002"
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+        events:
+          items:
+            $ref: '#/components/schemas/CallParticipantTimeline'
+          type: array
+          x-stream-index: "007"
+        user_id:
+          type: string
+          x-stream-index: "005"
+        user_session_id:
+          type: string
+          x-stream-index: "006"
+      required:
+      - duration
+      - call_type
+      - call_id
+      - call_session_id
+      - user_id
+      - user_session_id
+      - events
       title: Response
       type: object
     QueryCallStatsRequest:
@@ -11535,7 +11629,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v196.16.0
+  version: v196.20.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -15181,204 +15275,6 @@ paths:
       summary: Query Call Stats
       tags:
       - product:video
-  /api/v2/video/call/stats/{call_type}/{call_id}/{session}/participant/{user}/{user_session}/details:
-    get:
-      description: |2+
-
-      operationId: GetCallSessionParticipantStatsDetails
-      parameters:
-      - in: path
-        name: call_type
-        required: true
-        schema:
-          maxLength: 64
-          type: string
-          writeOnly: true
-          x-stream-index: "002"
-      - in: path
-        name: call_id
-        required: true
-        schema:
-          maxLength: 64
-          type: string
-          writeOnly: true
-          x-stream-index: "003"
-      - in: path
-        name: session
-        required: true
-        schema:
-          maxLength: 64
-          type: string
-          writeOnly: true
-          x-stream-index: "004"
-      - in: path
-        name: user
-        required: true
-        schema:
-          maxLength: 256
-          type: string
-          writeOnly: true
-          x-stream-index: "005"
-      - in: path
-        name: user_session
-        required: true
-        schema:
-          maxLength: 256
-          type: string
-          writeOnly: true
-          x-stream-index: "006"
-      - in: query
-        name: metrics
-        schema:
-          maxLength: 256
-          type: string
-          writeOnly: true
-          x-stream-index: "007"
-      - in: query
-        name: since
-        schema:
-          type: string
-          writeOnly: true
-          x-stream-index: "008"
-      - in: query
-        name: until
-        schema:
-          type: string
-          writeOnly: true
-          x-stream-index: "009"
-      - in: query
-        name: step
-        schema:
-          format: int32
-          maximum: 3600
-          minimum: 1
-          type: integer
-          writeOnly: true
-          x-stream-index: "010"
-      - in: query
-        name: max_points
-        schema:
-          format: int32
-          maximum: 4096
-          minimum: 1
-          type: integer
-          writeOnly: true
-          x-stream-index: "011"
-      - in: query
-        name: track_type
-        schema:
-          enum:
-          - video
-          - audio
-          - screenshare
-          - screenshare_audio
-          type: string
-          writeOnly: true
-          x-stream-index: "012"
-      - in: query
-        name: remote_user_id
-        schema:
-          maxLength: 256
-          type: string
-          writeOnly: true
-          x-stream-index: "013"
-      - in: query
-        name: remote_user_session_id
-        schema:
-          maxLength: 256
-          type: string
-          writeOnly: true
-          x-stream-index: "014"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetCallSessionParticipantStatsDetailsResponse'
-          description: Response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Get call session participant stats details
-      tags:
-      - product:video
-  /api/v2/video/call/stats/{call_type}/{call_id}/{session}/participants:
-    get:
-      description: |2+
-
-      operationId: QueryCallSessionParticipantStats
-      parameters:
-      - in: path
-        name: call_type
-        required: true
-        schema:
-          maxLength: 64
-          type: string
-          writeOnly: true
-          x-stream-index: "002"
-      - in: path
-        name: call_id
-        required: true
-        schema:
-          maxLength: 64
-          type: string
-          writeOnly: true
-          x-stream-index: "003"
-      - in: path
-        name: session
-        required: true
-        schema:
-          maxLength: 64
-          type: string
-          writeOnly: true
-          x-stream-index: "004"
-      - in: query
-        name: sort
-        schema:
-          items:
-            $ref: '#/components/schemas/SortParamRequest'
-          maximum: 1
-          type: array
-          writeOnly: true
-          x-stream-index: "005"
-      - in: query
-        name: filter_conditions
-        schema:
-          additionalProperties: {}
-          type: object
-          writeOnly: true
-          x-stream-index: "006"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/QueryCallSessionParticipantStatsResponse'
-          description: Response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Query call participant statistics
-      tags:
-      - product:video
   /api/v2/video/call_stats/{call_type}/{call_id}/{session}/participant/{user}/{user_session}/details:
     get:
       description: |2+
@@ -15426,33 +15322,17 @@ paths:
           writeOnly: true
           x-stream-index: "006"
       - in: query
-        name: metrics
-        schema:
-          maxLength: 256
-          type: string
-          writeOnly: true
-          x-stream-index: "007"
-      - in: query
         name: since
         schema:
           type: string
           writeOnly: true
-          x-stream-index: "008"
+          x-stream-index: "007"
       - in: query
         name: until
         schema:
           type: string
           writeOnly: true
-          x-stream-index: "009"
-      - in: query
-        name: step
-        schema:
-          format: int32
-          maximum: 3600
-          minimum: 1
-          type: integer
-          writeOnly: true
-          x-stream-index: "010"
+          x-stream-index: "008"
       - in: query
         name: max_points
         schema:
@@ -15461,32 +15341,7 @@ paths:
           minimum: 1
           type: integer
           writeOnly: true
-          x-stream-index: "011"
-      - in: query
-        name: track_type
-        schema:
-          enum:
-          - video
-          - audio
-          - screenshare
-          - screenshare_audio
-          type: string
-          writeOnly: true
-          x-stream-index: "012"
-      - in: query
-        name: remote_user_id
-        schema:
-          maxLength: 256
-          type: string
-          writeOnly: true
-          x-stream-index: "013"
-      - in: query
-        name: remote_user_session_id
-        schema:
-          maxLength: 256
-          type: string
-          writeOnly: true
-          x-stream-index: "014"
+          x-stream-index: "009"
       responses:
         "200":
           content:
@@ -15575,6 +15430,94 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Query call participant statistics
+      tags:
+      - product:video
+  /api/v2/video/call_stats/{call_type}/{call_id}/{session}/participants/{user}/{user_session}/timeline:
+    get:
+      description: |2+
+
+      operationId: GetCallSessionParticipantStatsTimeline
+      parameters:
+      - in: path
+        name: call_type
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "002"
+      - in: path
+        name: call_id
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "003"
+      - in: path
+        name: session
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "004"
+      - in: path
+        name: user
+        required: true
+        schema:
+          maxLength: 128
+          type: string
+          writeOnly: true
+          x-stream-index: "005"
+      - in: path
+        name: user_session
+        required: true
+        schema:
+          maxLength: 128
+          type: string
+          writeOnly: true
+          x-stream-index: "006"
+      - in: query
+        name: start_time
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "007"
+      - in: query
+        name: end_time
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "008"
+      - in: query
+        name: severity
+        schema:
+          items:
+            type: string
+          type: array
+          writeOnly: true
+          x-stream-index: "009"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryCallSessionParticipantStatsTimelineResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get participant timeline events
       tags:
       - product:video
   /api/v2/video/calls:
