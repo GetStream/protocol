@@ -2100,16 +2100,16 @@ components:
       properties:
         async_url_enrich_enabled:
           type: boolean
-          x-stream-index: "019"
+          x-stream-index: "020"
         auto_translation_enabled:
           type: boolean
-          x-stream-index: "022"
+          x-stream-index: "023"
         file_upload_config:
           $ref: '#/components/schemas/FileUploadConfig'
-          x-stream-index: "032"
+          x-stream-index: "033"
         image_upload_config:
           $ref: '#/components/schemas/FileUploadConfig'
-          x-stream-index: "033"
+          x-stream-index: "034"
         name:
           type: string
           x-stream-index: "001"
@@ -2137,6 +2137,7 @@ components:
       - permission_version
       - user_search_disallowed_roles
       - multi_tenant_enabled
+      - allow_multi_user_devices
       - image_moderation_enabled
       - async_url_enrich_enabled
       - auto_translation_enabled
@@ -8929,6 +8930,22 @@ components:
           type: boolean
           x-stream-index: "002"
       type: object
+    DeliveryReceipts:
+      properties:
+        enabled:
+          type: boolean
+          x-stream-index: "001"
+      required:
+      - enabled
+      type: object
+    DeliveryReceiptsResponse:
+      properties:
+        enabled:
+          type: boolean
+          x-stream-index: "001"
+      required:
+      - enabled
+      type: object
     Device:
       nullable: true
       properties:
@@ -13511,6 +13528,94 @@ components:
       x-stream-event-doc-group: other
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    MessageDeliveredEvent:
+      description: Emitted when a message is marked as delivered.
+      nullable: true
+      properties:
+        channel:
+          $ref: '#/components/schemas/ChannelResponse'
+          x-stream-index: "003.001"
+        channel_custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.006
+        channel_id:
+          description: The ID of the channel where the message was read
+          title: Channel ID
+          type: string
+          x-stream-index: 001.002.002
+        channel_member_count:
+          description: The number of members in the channel
+          format: int32
+          title: Channel Member Count
+          type: integer
+          x-stream-index: 001.001.004
+        channel_message_count:
+          description: The number of messages in the channel
+          format: int64
+          title: Channel Message Count
+          type: integer
+          x-stream-index: 001.001.005
+        channel_type:
+          description: The type of the channel where the message was read
+          title: Channel Type
+          type: string
+          x-stream-index: 001.002.001
+        cid:
+          description: The CID of the channel where the message was read
+          title: Channel CID
+          type: string
+          x-stream-index: 001.001.001.002
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: number
+          x-stream-index: 001.001.001.001.003
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.001.001.007
+        last_delivered_at:
+          description: The time when the message was delivered
+          title: Last Delivered At
+          type: string
+          x-stream-index: "005"
+        last_delivered_message_id:
+          description: The ID of the last delivered message
+          title: Last Delivered Message ID
+          type: string
+          x-stream-index: "004"
+        received_at:
+          format: date-time
+          type: number
+          x-stream-index: 001.001.001.001.004
+        team:
+          description: The team ID
+          title: Team
+          type: string
+          x-stream-index: 001.001.003
+        type:
+          default: message.delivered
+          description: 'The type of event: "message.delivered" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: 001.001.001.001.002
+        user:
+          $ref: '#/components/schemas/UserResponseCommonFields'
+          description: The user that received the message
+          title: User
+          x-stream-index: "002.001"
+      required:
+      - type
+      - created_at
+      - custom
+      title: MessageDeliveredEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     MessageFlagResponse:
       nullable: true
       properties:
@@ -13664,7 +13769,7 @@ components:
           type: array
           x-stream-index: "001.002"
         type:
-          default: notification.thread_message_new
+          default: message.new
           type: string
           x-stream-index: "004.001"
         user:
@@ -17545,6 +17650,9 @@ components:
       type: object
     PrivacySettings:
       properties:
+        delivery_receipts:
+          $ref: '#/components/schemas/DeliveryReceipts'
+          x-stream-index: "003"
         read_receipts:
           $ref: '#/components/schemas/ReadReceipts'
           x-stream-index: "002"
@@ -17554,6 +17662,9 @@ components:
       type: object
     PrivacySettingsResponse:
       properties:
+        delivery_receipts:
+          $ref: '#/components/schemas/DeliveryReceiptsResponse'
+          x-stream-index: "003"
         read_receipts:
           $ref: '#/components/schemas/ReadReceiptsResponse'
           x-stream-index: "002"
@@ -19795,6 +19906,13 @@ components:
       type: object
     ReadStateResponse:
       properties:
+        last_delivered_at:
+          format: date-time
+          type: number
+          x-stream-index: "005"
+        last_delivered_message_id:
+          type: string
+          x-stream-index: "006"
         last_read:
           format: date-time
           type: number
@@ -25982,6 +26100,7 @@ components:
           feeds.poll.vote_removed: '#/components/schemas/PollVoteRemovedFeedEvent'
           feeds.stories_feed.updated: '#/components/schemas/StoriesFeedUpdatedEvent'
           health.check: '#/components/schemas/HealthCheckEvent'
+          message.delivered: '#/components/schemas/MessageDeliveredEvent'
           message.pending: '#/components/schemas/PendingMessageEvent'
           moderation.custom_action: '#/components/schemas/ModerationCustomActionEvent'
           moderation.mark_reviewed: '#/components/schemas/ModerationMarkReviewedEvent'
@@ -26035,6 +26154,7 @@ components:
       - $ref: '#/components/schemas/FollowDeletedEvent'
       - $ref: '#/components/schemas/FollowUpdatedEvent'
       - $ref: '#/components/schemas/HealthCheckEvent'
+      - $ref: '#/components/schemas/MessageDeliveredEvent'
       - $ref: '#/components/schemas/ModerationCustomActionEvent'
       - $ref: '#/components/schemas/ModerationMarkReviewedEvent'
       - $ref: '#/components/schemas/NotificationFeedUpdatedEvent'
@@ -26180,6 +26300,7 @@ components:
           member.removed: '#/components/schemas/MemberRemovedEvent'
           member.updated: '#/components/schemas/MemberUpdatedEvent'
           message.deleted: '#/components/schemas/MessageDeletedEvent'
+          message.delivered: '#/components/schemas/MessageDeliveredEvent'
           message.new: '#/components/schemas/MessageNewEvent'
           message.pending: '#/components/schemas/PendingMessageEvent'
           message.read: '#/components/schemas/MessageReadEvent'
@@ -26336,6 +26457,7 @@ components:
       - $ref: '#/components/schemas/MemberRemovedEvent'
       - $ref: '#/components/schemas/MemberUpdatedEvent'
       - $ref: '#/components/schemas/MessageDeletedEvent'
+      - $ref: '#/components/schemas/MessageDeliveredEvent'
       - $ref: '#/components/schemas/MessageNewEvent'
       - $ref: '#/components/schemas/MessageNewEvent'
       - $ref: '#/components/schemas/MessageReadEvent'
@@ -26483,7 +26605,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v196.23.0
+  version: v197.4.1
 openapi: 3.0.3
 paths:
   /api/v2/app:
