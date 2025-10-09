@@ -452,28 +452,31 @@ components:
           description: Whether to hide this activity
           title: bool
           type: boolean
-          x-stream-index: "003"
+          x-stream-index: "004"
         mute_user:
           description: Whether to mute the user who created this activity
           title: bool
           type: boolean
-          x-stream-index: "005"
+          x-stream-index: "006"
         reason:
           description: Reason for the feedback (optional)
           maxLength: 1000
           title: string
           type: string
-          x-stream-index: "006"
+          x-stream-index: "007"
         report:
           description: Whether to report this activity
           title: bool
           type: boolean
-          x-stream-index: "004"
+          x-stream-index: "005"
         show_less:
           description: Whether to show less content like this
           title: bool
           type: boolean
           x-stream-index: "002"
+        show_more:
+          type: boolean
+          x-stream-index: "003"
       title: Activity Feedback Request
       type: object
     ActivityFeedbackResponse:
@@ -9343,6 +9346,42 @@ components:
       required:
       - id
       type: object
+    OwnCapabilitiesBatchRequest:
+      nullable: true
+      properties:
+        feeds:
+          description: List of feed IDs to get capabilities for
+          items:
+            type: string
+          maximum: 100
+          minimum: 1
+          title: Feed IDs
+          type: array
+          x-stream-index: "001"
+      required:
+      - feeds
+      title: Own Capabilities Batch Request
+      type: object
+    OwnCapabilitiesBatchResponse:
+      nullable: true
+      properties:
+        capabilities:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/FeedOwnCapability'
+            type: array
+          description: Map of feed ID to capabilities array
+          title: Capabilities
+          type: object
+          x-stream-index: "001"
+        duration:
+          type: string
+          x-stream-index: "002.001"
+      required:
+      - capabilities
+      - duration
+      title: Own Capabilities Batch Response
+      type: object
     OwnUser:
       properties:
         avg_response_time:
@@ -14740,7 +14779,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v198.7.0
+  version: v198.9.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -17082,6 +17121,46 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Create multiple feeds at once
+      tags:
+      - product:feeds
+  /api/v2/feeds/feeds/own_capabilities/batch:
+    post:
+      description: |
+        Retrieves capabilities for multiple feeds in a single request. Useful for batch processing when activities are added to feeds.
+      operationId: OwnCapabilitiesBatch
+      parameters:
+      - in: query
+        name: connection_id
+        schema:
+          type: string
+          x-stream-index: "003.003"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OwnCapabilitiesBatchRequest'
+        description: Own Capabilities Batch Request
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OwnCapabilitiesBatchResponse'
+          description: Own Capabilities Batch Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get capabilities for multiple feeds
       tags:
       - product:feeds
   /api/v2/feeds/feeds/query:
