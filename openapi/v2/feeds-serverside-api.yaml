@@ -2375,7 +2375,7 @@ components:
           type: string
           x-stream-index: "002.001"
         type:
-          default: export.moderation_logs.error
+          default: export.bulk_image_moderation.error
           type: string
           x-stream-index: "003.002"
       required:
@@ -9831,6 +9831,45 @@ components:
       - feed_visibility
       - duration
       title: Get Feed Visibility Response
+      type: object
+    GetFeedsRateLimitsResponse:
+      nullable: true
+      properties:
+        android:
+          additionalProperties:
+            $ref: '#/components/schemas/LimitInfo'
+          description: Rate limits for Android platform (endpoint name -> limit info)
+          title: Android
+          type: object
+          x-stream-index: "002"
+        duration:
+          type: string
+          x-stream-index: "001.001"
+        ios:
+          additionalProperties:
+            $ref: '#/components/schemas/LimitInfo'
+          description: Rate limits for iOS platform (endpoint name -> limit info)
+          title: iOS
+          type: object
+          x-stream-index: "003"
+        server_side:
+          additionalProperties:
+            $ref: '#/components/schemas/LimitInfo'
+          description: Rate limits for server-side platform (endpoint name -> limit
+            info)
+          title: Server Side
+          type: object
+          x-stream-index: "005"
+        web:
+          additionalProperties:
+            $ref: '#/components/schemas/LimitInfo'
+          description: Rate limits for Web platform (endpoint name -> limit info)
+          title: Web
+          type: object
+          x-stream-index: "004"
+      required:
+      - duration
+      title: Get Feeds Rate Limits Response
       type: object
     GetFollowSuggestionsResponse:
       nullable: true
@@ -19787,7 +19826,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v198.26.0
+  version: v198.27.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -23137,6 +23176,76 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Query feeds
+      tags:
+      - product:feeds
+  /api/v2/feeds/feeds/rate_limits:
+    get:
+      description: |
+        Retrieve current rate limit status for feeds operations.
+        Returns information about limits, usage, and remaining quota for various feed operations.
+      operationId: GetFeedsRateLimits
+      parameters:
+      - in: query
+        name: endpoints
+        schema:
+          description: Comma-separated list of endpoint names to filter (optional,
+            returns all if empty)
+          title: Endpoints
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      - in: query
+        name: android
+        schema:
+          description: Include Android platform limits
+          title: Android
+          type: boolean
+          writeOnly: true
+          x-stream-index: "002"
+      - in: query
+        name: ios
+        schema:
+          description: Include iOS platform limits
+          title: iOS
+          type: boolean
+          writeOnly: true
+          x-stream-index: "003"
+      - in: query
+        name: web
+        schema:
+          description: Include Web platform limits
+          title: Web
+          type: boolean
+          writeOnly: true
+          x-stream-index: "004"
+      - in: query
+        name: server_side
+        schema:
+          description: Include server-side platform limits
+          title: Server Side
+          type: boolean
+          writeOnly: true
+          x-stream-index: "005"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetFeedsRateLimitsResponse'
+          description: Get Feeds Rate Limits Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get Feeds Rate Limits
       tags:
       - product:feeds
   /api/v2/feeds/follows:
