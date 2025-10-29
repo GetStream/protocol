@@ -597,7 +597,7 @@ components:
           type: string
           x-stream-index: "002.001"
         type:
-          default: export.channels.error
+          default: export.users.error
           type: string
           x-stream-index: "003.002"
       required:
@@ -3287,6 +3287,33 @@ components:
       - blocked_users
       title: CallStateResponseFields
       type: object
+    CallStatsLocation:
+      properties:
+        accuracy_radius_meters:
+          format: int32
+          type: integer
+          x-stream-index: "007"
+        city:
+          type: string
+          x-stream-index: "001"
+        continent:
+          type: string
+          x-stream-index: "004"
+        country:
+          type: string
+          x-stream-index: "003"
+        latitude:
+          format: float
+          type: number
+          x-stream-index: "005"
+        longitude:
+          format: float
+          type: number
+          x-stream-index: "006"
+        subdivision:
+          type: string
+          x-stream-index: "002"
+      type: object
     CallStatsParticipant:
       properties:
         latest_activity_at:
@@ -3339,10 +3366,26 @@ components:
       type: object
     CallStatsParticipantSession:
       properties:
+        browser:
+          type: string
+          x-stream-index: "010"
+        browser_version:
+          type: string
+          x-stream-index: "011"
         cq_score:
           format: int32
           type: integer
-          x-stream-index: "008"
+          x-stream-index: "017"
+        current_ip:
+          type: string
+          x-stream-index: "012"
+        current_sfu:
+          type: string
+          x-stream-index: "013"
+        distance_to_sfu_kilometers:
+          format: float
+          type: number
+          x-stream-index: "014"
         ended_at:
           format: date-time
           type: number
@@ -3350,12 +3393,21 @@ components:
         is_live:
           type: boolean
           x-stream-index: "005"
+        location:
+          $ref: '#/components/schemas/CallStatsLocation'
+          x-stream-index: "015"
         published_tracks:
           $ref: '#/components/schemas/PublishedTrackFlags'
-          x-stream-index: "007"
+          x-stream-index: "016"
         publisher_type:
           type: string
           x-stream-index: "006"
+        sdk:
+          type: string
+          x-stream-index: "007"
+        sdk_version:
+          type: string
+          x-stream-index: "008"
         started_at:
           format: date-time
           type: number
@@ -3366,6 +3418,9 @@ components:
         user_session_id:
           type: string
           x-stream-index: "001"
+        webrtc_version:
+          type: string
+          x-stream-index: "009"
       required:
       - user_session_id
       - is_live
@@ -3608,47 +3663,41 @@ components:
     CallType:
       nullable: true
       properties:
-        AppPK:
+        app:
           format: int32
           type: integer
-          writeOnly: true
           x-stream-index: "003"
-        CreatedAt:
+        created_at:
           format: date-time
           type: number
-          writeOnly: true
           x-stream-index: "005"
-        ExternalStorage:
+        id:
+          format: int32
+          type: integer
+          x-stream-index: "002"
+        name:
           type: string
-          writeOnly: true
-          x-stream-index: "009"
-        Name:
-          type: string
-          writeOnly: true
           x-stream-index: "004"
-        NotificationSettings:
+        notification_settings:
           $ref: '#/components/schemas/NotificationSettings'
           x-stream-index: "008"
-        PK:
-          format: int32
-          type: integer
-          writeOnly: true
-          x-stream-index: "002"
-        Settings:
+        recording_external_storage:
+          type: string
+          x-stream-index: "009"
+        settings:
           $ref: '#/components/schemas/CallSettings'
           x-stream-index: "007"
-        UpdatedAt:
+        updated_at:
           format: date-time
           type: number
-          writeOnly: true
           x-stream-index: "006"
       required:
-      - PK
-      - AppPK
-      - Name
-      - CreatedAt
-      - UpdatedAt
-      - ExternalStorage
+      - id
+      - app
+      - name
+      - created_at
+      - updated_at
+      - recording_external_storage
       type: object
     CallTypeResponse:
       description: CallTypeResponse is the payload for a call type.
@@ -10648,6 +10697,9 @@ components:
         huawei_app_secret:
           type: string
           x-stream-index: "028"
+        huawei_host:
+          type: string
+          x-stream-index: "032"
         name:
           maxLength: 36
           minLength: 1
@@ -14250,10 +14302,12 @@ components:
           type: string
           x-stream-index: "004"
         push_provider_type:
-          description: Push provider type (firebase, apn)
+          description: Push provider type (firebase, apn, huawei, xiaomi)
           enum:
           - firebase
           - apn
+          - huawei
+          - xiaomi
           title: string
           type: string
           x-stream-index: "005"
@@ -15246,7 +15300,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v198.27.0
+  version: v198.32.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -16835,10 +16889,13 @@ paths:
         name: push_provider_type
         required: true
         schema:
-          description: Push provider type (firebase, apn) to filter templates
+          description: Push provider type (firebase, apn, huawei, xiaomi) to filter
+            templates
           enum:
           - firebase
           - apn
+          - huawei
+          - xiaomi
           title: string
           type: string
           writeOnly: true
