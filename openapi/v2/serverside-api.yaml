@@ -681,7 +681,11 @@ components:
     ActivityFeedbackEventPayload:
       properties:
         action:
-          description: The type of feedback action (hide, show_less, show_more, clear)
+          description: The type of feedback action
+          enum:
+          - hide
+          - show_more
+          - show_less
           title: Action
           type: string
           x-stream-index: "003"
@@ -1361,13 +1365,13 @@ components:
           format: int32
           title: Bookmark Count
           type: integer
-          x-stream-index: "028"
+          x-stream-index: "029"
         comment_count:
           description: Number of comments on the activity
           format: int32
           title: Comment Count
           type: integer
-          x-stream-index: "027"
+          x-stream-index: "028"
         comments:
           description: Comments on this activity
           items:
@@ -1387,7 +1391,7 @@ components:
             only to one feed, it's always set. If an activity is added to multiple
             feeds, it's only set when calling the GetOrCreateFeed endpoint.
           title: Current Feed
-          x-stream-index: "035"
+          x-stream-index: "036"
         custom:
           additionalProperties: {}
           description: Custom data for the activity
@@ -1427,11 +1431,10 @@ components:
           type: array
           x-stream-index: "024"
         hidden:
-          description: If this activity is hidden for this user. For premium content
-            where you want to show a preview
+          description: If this activity is hidden by this user (using activity feedback)
           title: Hidden
           type: boolean
-          x-stream-index: "036"
+          x-stream-index: "037"
         id:
           description: Unique identifier for the activity
           title: ID
@@ -1446,14 +1449,14 @@ components:
           x-stream-index: "025"
         is_watched:
           type: boolean
-          x-stream-index: "037"
+          x-stream-index: "039"
         latest_reactions:
           description: Recent reactions to the activity
           items:
             $ref: '#/components/schemas/FeedsReactionResponse'
           title: Latest Reactions
           type: array
-          x-stream-index: "031"
+          x-stream-index: "032"
         location:
           $ref: '#/components/schemas/ActivityLocation'
           description: Geographic location related to the activity
@@ -1471,6 +1474,9 @@ components:
           description: Moderation information
           title: Moderation
           x-stream-index: "026"
+        moderation_action:
+          type: string
+          x-stream-index: "027"
         notification_context:
           $ref: '#/components/schemas/NotificationContext'
           description: Notification context data for the activity (if this is a reaction,
@@ -1483,14 +1489,14 @@ components:
             $ref: '#/components/schemas/BookmarkResponse'
           title: Own Bookmarks
           type: array
-          x-stream-index: "034"
+          x-stream-index: "035"
         own_reactions:
           description: Current user's reactions to this activity
           items:
             $ref: '#/components/schemas/FeedsReactionResponse'
           title: Own Reactions
           type: array
-          x-stream-index: "033"
+          x-stream-index: "034"
         parent:
           $ref: '#/components/schemas/ActivityResponse'
           description: Parent activity (if this is a reply/comment)
@@ -1507,19 +1513,25 @@ components:
           title: Popularity
           type: integer
           x-stream-index: "013"
+        preview:
+          description: If this activity is obfuscated for this user. For premium content
+            where you want to show a preview
+          title: Preview
+          type: boolean
+          x-stream-index: "038"
         reaction_count:
           description: Number of reactions to the activity
           format: int32
           title: Reaction Count
           type: integer
-          x-stream-index: "030"
+          x-stream-index: "031"
         reaction_groups:
           additionalProperties:
             $ref: '#/components/schemas/ReactionGroupResponse'
           description: Grouped reactions by type
           title: Reaction Groups
           type: object
-          x-stream-index: "032"
+          x-stream-index: "033"
         score:
           description: Ranking score for this activity
           format: float
@@ -1537,7 +1549,7 @@ components:
           format: int32
           title: Share Count
           type: integer
-          x-stream-index: "029"
+          x-stream-index: "030"
         text:
           description: Text content of the activity
           title: Text
@@ -1598,6 +1610,8 @@ components:
       - reaction_groups
       - own_reactions
       - own_bookmarks
+      - hidden
+      - preview
       title: Base Activity
       type: object
     ActivitySelectorConfig:
@@ -3341,6 +3355,12 @@ components:
       required:
       - created_at
       type: object
+    BlockActionRequest:
+      properties:
+        reason:
+          type: string
+          x-stream-index: "001"
+      type: object
     BlockListConfig:
       properties:
         async:
@@ -4893,6 +4913,8 @@ components:
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
     CallModerationBlurEvent:
+      description: This event is sent when a moderation blur action is applied to
+        a user's video stream
       properties:
         call_cid:
           type: string
@@ -4903,13 +4925,19 @@ components:
           x-stream-index: "001.002"
         custom:
           additionalProperties: {}
+          description: Custom data associated with the moderation action
+          title: Custom
           type: object
           x-stream-index: "004"
         type:
           default: call.moderation_blur
+          description: 'The type of event: "call.moderation_blur" in this case'
+          title: Event Type
           type: string
           x-stream-index: "001.001"
         user_id:
+          description: The user ID whose video stream is being blurred
+          title: UserID
           type: string
           x-stream-index: "003"
       required:
@@ -4921,10 +4949,11 @@ components:
       title: CallModerationBlurEvent
       type: object
       x-stream-event-call-type: true
-      x-stream-event-doc-group: other
+      x-stream-event-doc-group: call
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
     CallModerationWarningEvent:
+      description: This event is sent when a moderation warning is issued to a user
       properties:
         call_cid:
           type: string
@@ -4935,16 +4964,24 @@ components:
           x-stream-index: "001.002"
         custom:
           additionalProperties: {}
+          description: Custom data associated with the moderation action
+          title: Custom
           type: object
           x-stream-index: "005"
         message:
+          description: The warning message
+          title: Message
           type: string
           x-stream-index: "004"
         type:
           default: call.moderation_warning
+          description: 'The type of event: "call.moderation_warning" in this case'
+          title: Event Type
           type: string
           x-stream-index: "001.001"
         user_id:
+          description: The user ID who is receiving the warning
+          title: UserID
           type: string
           x-stream-index: "003"
       required:
@@ -4957,7 +4994,7 @@ components:
       title: CallModerationWarningEvent
       type: object
       x-stream-event-call-type: true
-      x-stream-event-doc-group: other
+      x-stream-event-doc-group: call
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
     CallNotificationEvent:
@@ -7053,6 +7090,11 @@ components:
         disabled:
           type: boolean
           x-stream-index: "017"
+        filter_tags:
+          items:
+            type: string
+          type: array
+          x-stream-index: "038"
         frozen:
           type: boolean
           x-stream-index: "016"
@@ -7673,13 +7715,13 @@ components:
           x-stream-index: "013"
         invites:
           items:
-            $ref: '#/components/schemas/ChannelMember'
+            $ref: '#/components/schemas/ChannelMemberRequest'
           maximum: 100
           type: array
           x-stream-index: "016"
         members:
           items:
-            $ref: '#/components/schemas/ChannelMember'
+            $ref: '#/components/schemas/ChannelMemberRequest'
           maximum: 100
           type: array
           x-stream-index: "018"
@@ -7698,7 +7740,160 @@ components:
         archived_at:
           format: date-time
           type: number
-          x-stream-index: "015"
+          x-stream-index: "021"
+        ban_expires:
+          format: date-time
+          type: number
+          x-stream-index: "017"
+        banned:
+          type: boolean
+          x-stream-index: "016"
+        blocked:
+          type: boolean
+          x-stream-index: "029"
+        channel:
+          $ref: '#/components/schemas/DenormalizedChannelFields'
+          x-stream-index: "027"
+        channel_role:
+          type: string
+          x-stream-index: "024"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "012"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "006"
+        deleted_at:
+          format: date-time
+          type: number
+          x-stream-index: "014"
+        deleted_messages:
+          items:
+            type: string
+          type: array
+          x-stream-index: "030"
+        hidden:
+          type: boolean
+          x-stream-index: "028"
+        invite_accepted_at:
+          format: date-time
+          type: number
+          x-stream-index: "009"
+        invite_rejected_at:
+          format: date-time
+          type: number
+          x-stream-index: "010"
+        invited:
+          type: boolean
+          x-stream-index: "008"
+        is_global_banned:
+          type: boolean
+          x-stream-index: "020"
+        is_moderator:
+          type: boolean
+          x-stream-index: "007"
+        notifications_muted:
+          type: boolean
+          x-stream-index: "026"
+        pinned_at:
+          format: date-time
+          type: number
+          x-stream-index: "022"
+        shadow_banned:
+          type: boolean
+          x-stream-index: "019"
+        status:
+          type: string
+          x-stream-index: "011"
+        updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "013"
+        user:
+          $ref: '#/components/schemas/User'
+          x-stream-index: "005"
+        user_id:
+          type: string
+          x-stream-index: "004"
+      required:
+      - custom
+      - created_at
+      - updated_at
+      - banned
+      - shadow_banned
+      - is_global_banned
+      - channel_role
+      - notifications_muted
+      type: object
+    ChannelMemberLookup:
+      nullable: true
+      properties:
+        archived:
+          type: boolean
+          x-stream-index: "003"
+        archived_at:
+          format: date-time
+          type: number
+          x-stream-index: "007"
+        ban_expires:
+          format: date-time
+          type: number
+          x-stream-index: "008"
+        banned:
+          type: boolean
+          x-stream-index: "004"
+        blocked:
+          type: boolean
+          x-stream-index: "005"
+        hidden:
+          type: boolean
+          x-stream-index: "001"
+        pinned:
+          type: boolean
+          x-stream-index: "002"
+        pinned_at:
+          format: date-time
+          type: number
+          x-stream-index: "006"
+      required:
+      - hidden
+      - pinned
+      - archived
+      - banned
+      - blocked
+      type: object
+    ChannelMemberRequest:
+      nullable: true
+      properties:
+        channel_role:
+          description: Role of the member in the channel
+          title: Channel Role
+          type: string
+          x-stream-index: "004"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "003"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          x-stream-index: "002"
+        user_id:
+          title: User ID
+          type: string
+          x-stream-index: "001"
+      required:
+      - user_id
+      title: Channel member
+      type: object
+    ChannelMemberResponse:
+      nullable: true
+      properties:
+        archived_at:
+          format: date-time
+          type: number
+          x-stream-index: "016"
         ban_expires:
           description: Expiration date of the ban
           format: date-time
@@ -7762,7 +7957,7 @@ components:
         pinned_at:
           format: date-time
           type: number
-          x-stream-index: "016"
+          x-stream-index: "015"
         role:
           description: 'Permission level of the member in the channel (DEPRECATED:
             use channel_role instead)'
@@ -7804,51 +7999,6 @@ components:
       - channel_role
       - notifications_muted
       title: Channel member
-      type: object
-    ChannelMemberLookup:
-      nullable: true
-      properties:
-        archived:
-          type: boolean
-          x-stream-index: "003"
-        archived_at:
-          format: date-time
-          type: number
-          x-stream-index: "007"
-        ban_expires:
-          format: date-time
-          type: number
-          x-stream-index: "008"
-        banned:
-          type: boolean
-          x-stream-index: "004"
-        blocked:
-          type: boolean
-          x-stream-index: "005"
-        hidden:
-          type: boolean
-          x-stream-index: "001"
-        pinned:
-          type: boolean
-          x-stream-index: "002"
-        pinned_at:
-          format: date-time
-          type: number
-          x-stream-index: "006"
-      required:
-      - hidden
-      - pinned
-      - archived
-      - banned
-      - blocked
-      type: object
-    ChannelMemberResponse:
-      properties:
-        channel_role:
-          type: string
-          x-stream-index: "001"
-      required:
-      - channel_role
       type: object
     ChannelMessages:
       nullable: true
@@ -8031,6 +8181,13 @@ components:
         disabled:
           type: boolean
           x-stream-index: "010"
+        filter_tags:
+          description: List of filter tags associated with the channel
+          items:
+            type: string
+          title: Filter tags
+          type: array
+          x-stream-index: "028"
         frozen:
           description: Whether channel is frozen or not
           title: Frozen
@@ -8067,8 +8224,8 @@ components:
         members:
           description: List of channel members (max 100)
           items:
-            $ref: '#/components/schemas/ChannelMember'
-          title: ChannelMembers
+            $ref: '#/components/schemas/ChannelMemberResponse'
+          title: Channel members
           type: array
           x-stream-index: "011"
         message_count:
@@ -8158,11 +8315,11 @@ components:
           x-stream-index: "001.012"
         members:
           items:
-            $ref: '#/components/schemas/ChannelMember'
+            $ref: '#/components/schemas/ChannelMemberResponse'
           type: array
           x-stream-index: "001.007"
         membership:
-          $ref: '#/components/schemas/ChannelMember'
+          $ref: '#/components/schemas/ChannelMemberResponse'
           x-stream-index: "001.008"
         messages:
           items:
@@ -8237,12 +8394,12 @@ components:
         members:
           description: List of channel members
           items:
-            $ref: '#/components/schemas/ChannelMember'
+            $ref: '#/components/schemas/ChannelMemberResponse'
           title: Members
           type: array
           x-stream-index: "007"
         membership:
-          $ref: '#/components/schemas/ChannelMember'
+          $ref: '#/components/schemas/ChannelMemberResponse'
           description: Current user membership object
           title: Membership
           x-stream-index: "008"
@@ -11544,6 +11701,15 @@ components:
       - duration
       title: Delete Comment Reaction Response
       type: object
+    DeleteCommentRequest:
+      properties:
+        hard_delete:
+          type: boolean
+          x-stream-index: "001"
+        reason:
+          type: string
+          x-stream-index: "002"
+      type: object
     DeleteCommentResponse:
       nullable: true
       properties:
@@ -11932,6 +12098,44 @@ components:
         enabled:
           type: boolean
           x-stream-index: "001"
+      type: object
+    DenormalizedChannelFields:
+      properties:
+        created_at:
+          type: string
+          x-stream-index: "001"
+        created_by_id:
+          type: string
+          x-stream-index: "008"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "011"
+        disabled:
+          type: boolean
+          x-stream-index: "005"
+        frozen:
+          type: boolean
+          x-stream-index: "006"
+        id:
+          type: string
+          x-stream-index: "010"
+        last_message_at:
+          type: string
+          x-stream-index: "003"
+        member_count:
+          format: int32
+          type: integer
+          x-stream-index: "004"
+        team:
+          type: string
+          x-stream-index: "007"
+        type:
+          type: string
+          x-stream-index: "009"
+        updated_at:
+          type: string
+          x-stream-index: "002"
       type: object
     Device:
       nullable: true
@@ -18095,7 +18299,7 @@ components:
         members:
           description: List of found members
           items:
-            $ref: '#/components/schemas/ChannelMember'
+            $ref: '#/components/schemas/ChannelMemberResponse'
           title: Members
           type: array
           x-stream-index: "001"
@@ -23950,7 +24154,7 @@ components:
           x-stream-index: "006.003"
         members:
           items:
-            $ref: '#/components/schemas/ChannelMember'
+            $ref: '#/components/schemas/ChannelMemberRequest'
           maximum: 100
           type: array
           x-stream-index: "003"
@@ -26226,7 +26430,7 @@ components:
           x-stream-index: "009"
         config_key:
           type: string
-          x-stream-index: "029"
+          x-stream-index: "031"
         created_at:
           description: When the item was created
           format: date-time
@@ -26263,6 +26467,12 @@ components:
           description: Associated feed reaction
           title: Feeds V2 Reaction
           x-stream-index: "027"
+        feeds_v3_activity:
+          $ref: '#/components/schemas/ActivityResponse'
+          x-stream-index: "028"
+        feeds_v3_comment:
+          $ref: '#/components/schemas/CommentResponse'
+          x-stream-index: "029"
         flags:
           description: Associated flag records
           items:
@@ -26273,7 +26483,7 @@ components:
         flags_count:
           format: int32
           type: integer
-          x-stream-index: "030"
+          x-stream-index: "032"
         id:
           description: Unique identifier of the review queue item
           title: ID
@@ -26335,7 +26545,7 @@ components:
             type: string
           title: Teams
           type: array
-          x-stream-index: "028"
+          x-stream-index: "030"
         updated_at:
           description: When the item was last updated
           format: date-time
@@ -28206,6 +28416,7 @@ components:
           - mark_reviewed
           - delete_message
           - delete_activity
+          - delete_comment
           - delete_reaction
           - ban
           - custom
@@ -28213,6 +28424,7 @@ components:
           - restore
           - delete_user
           - unblock
+          - block
           - shadow_block
           - unmask
           - kick_user
@@ -28224,17 +28436,27 @@ components:
           $ref: '#/components/schemas/BanActionRequest'
           description: Configuration for ban action
           title: Ban
-          x-stream-index: "008"
+          x-stream-index: "009"
+        block:
+          $ref: '#/components/schemas/BlockActionRequest'
+          description: Configuration for block action
+          title: Block
+          x-stream-index: "014"
         custom:
           $ref: '#/components/schemas/CustomActionRequest'
           description: Configuration for custom action
           title: Custom
-          x-stream-index: "009"
+          x-stream-index: "010"
         delete_activity:
           $ref: '#/components/schemas/DeleteActivityRequest'
           description: Configuration for activity deletion action
           title: Delete Activity
           x-stream-index: "004"
+        delete_comment:
+          $ref: '#/components/schemas/DeleteCommentRequest'
+          description: Configuration for comment deletion action
+          title: Delete Comment
+          x-stream-index: "005"
         delete_message:
           $ref: '#/components/schemas/DeleteMessageRequest'
           description: Configuration for message deletion action
@@ -28244,12 +28466,12 @@ components:
           $ref: '#/components/schemas/DeleteReactionRequest'
           description: Configuration for reaction deletion action
           title: Delete Reaction
-          x-stream-index: "005"
+          x-stream-index: "006"
         delete_user:
           $ref: '#/components/schemas/DeleteUserRequest'
           description: Configuration for user deletion action
           title: Delete User
-          x-stream-index: "006"
+          x-stream-index: "007"
         item_id:
           description: UUID of the review queue item to act on
           title: Item ID
@@ -28259,23 +28481,23 @@ components:
           $ref: '#/components/schemas/MarkReviewedRequest'
           description: Configuration for marking item as reviewed
           title: Mark Reviewed
-          x-stream-index: "007"
+          x-stream-index: "008"
         shadow_block:
           $ref: '#/components/schemas/ShadowBlockActionRequest'
           description: Configuration for shadow block action
           title: Shadow Block
-          x-stream-index: "013"
+          x-stream-index: "015"
         unban:
           $ref: '#/components/schemas/UnbanActionRequest'
           description: Configuration for unban action
           title: Unban
-          x-stream-index: "010"
+          x-stream-index: "011"
         user:
           $ref: '#/components/schemas/UserRequest'
-          x-stream-index: "016.002"
+          x-stream-index: "018.002"
         user_id:
           type: string
-          x-stream-index: "016.001"
+          x-stream-index: "018.001"
       required:
       - item_id
       - action_type
@@ -30368,10 +30590,17 @@ components:
           title: Accept invite
           type: boolean
           x-stream-index: "008"
+        add_filter_tags:
+          description: List of filter tags to add to the channel
+          items:
+            type: string
+          title: Add filter tags
+          type: array
+          x-stream-index: "013"
         add_members:
           description: List of user IDs to add to the channel
           items:
-            $ref: '#/components/schemas/ChannelMember'
+            $ref: '#/components/schemas/ChannelMemberRequest'
           maximum: 100
           title: Add members
           type: array
@@ -30388,7 +30617,7 @@ components:
           description: List of channel member role assignments. If any specified user
             is not part of the channel, the request will fail
           items:
-            $ref: '#/components/schemas/ChannelMember'
+            $ref: '#/components/schemas/ChannelMemberRequest'
           maximum: 100
           title: Assign roles
           type: array
@@ -30403,7 +30632,7 @@ components:
           x-stream-index: "007"
         data:
           $ref: '#/components/schemas/ChannelInput'
-          x-stream-index: "013.001"
+          x-stream-index: "015.001"
         demote_moderators:
           description: List of user IDs to take away moderators status from
           items:
@@ -30420,7 +30649,7 @@ components:
         invites:
           description: List of user IDs to invite to the channel
           items:
-            $ref: '#/components/schemas/ChannelMember'
+            $ref: '#/components/schemas/ChannelMemberRequest'
           maximum: 100
           title: Invites
           type: array
@@ -30435,6 +30664,13 @@ components:
           title: Reject invite
           type: boolean
           x-stream-index: "009"
+        remove_filter_tags:
+          description: List of filter tags to remove from the channel
+          items:
+            type: string
+          title: Remove filter tags
+          type: array
+          x-stream-index: "014"
         remove_members:
           description: List of user IDs to remove from the channel
           items:
@@ -30450,10 +30686,10 @@ components:
           x-stream-index: "011"
         user:
           $ref: '#/components/schemas/UserRequest'
-          x-stream-index: "014.002"
+          x-stream-index: "016.002"
         user_id:
           type: string
-          x-stream-index: "014.001"
+          x-stream-index: "016.001"
       title: Channel update request
       type: object
       x-stream-docs-page-id: channel_update
@@ -30473,7 +30709,7 @@ components:
         members:
           description: List of channel members
           items:
-            $ref: '#/components/schemas/ChannelMember'
+            $ref: '#/components/schemas/ChannelMemberResponse'
           title: Members
           type: array
           x-stream-index: "003"
@@ -33651,7 +33887,7 @@ components:
           $ref: '#/components/schemas/OwnUserResponse'
           x-stream-index: "019"
         member:
-          $ref: '#/components/schemas/ChannelMember'
+          $ref: '#/components/schemas/ChannelMemberResponse'
           x-stream-index: "014"
         message:
           $ref: '#/components/schemas/MessageResponse'
@@ -34123,7 +34359,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v198.32.0
+  version: v198.36.2
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -34728,14 +34964,14 @@ paths:
         schema:
           type: string
           writeOnly: true
-          x-stream-index: 013.002.001
+          x-stream-index: 015.002.001
       - in: path
         name: id
         required: true
         schema:
           type: string
           writeOnly: true
-          x-stream-index: 013.002.002
+          x-stream-index: 015.002.002
       requestBody:
         content:
           application/json:
