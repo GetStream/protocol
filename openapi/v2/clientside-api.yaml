@@ -613,7 +613,11 @@ components:
     ActivityFeedbackEventPayload:
       properties:
         action:
-          description: The type of feedback action (hide, show_less, show_more, clear)
+          description: The type of feedback action
+          enum:
+          - hide
+          - show_more
+          - show_less
           title: Action
           type: string
           x-stream-index: "003"
@@ -1286,13 +1290,13 @@ components:
           format: int32
           title: Bookmark Count
           type: integer
-          x-stream-index: "028"
+          x-stream-index: "029"
         comment_count:
           description: Number of comments on the activity
           format: int32
           title: Comment Count
           type: integer
-          x-stream-index: "027"
+          x-stream-index: "028"
         comments:
           description: Comments on this activity
           items:
@@ -1312,7 +1316,7 @@ components:
             only to one feed, it's always set. If an activity is added to multiple
             feeds, it's only set when calling the GetOrCreateFeed endpoint.
           title: Current Feed
-          x-stream-index: "035"
+          x-stream-index: "036"
         custom:
           additionalProperties: {}
           description: Custom data for the activity
@@ -1352,11 +1356,10 @@ components:
           type: array
           x-stream-index: "024"
         hidden:
-          description: If this activity is hidden for this user. For premium content
-            where you want to show a preview
+          description: If this activity is hidden by this user (using activity feedback)
           title: Hidden
           type: boolean
-          x-stream-index: "036"
+          x-stream-index: "037"
         id:
           description: Unique identifier for the activity
           title: ID
@@ -1371,14 +1374,14 @@ components:
           x-stream-index: "025"
         is_watched:
           type: boolean
-          x-stream-index: "037"
+          x-stream-index: "039"
         latest_reactions:
           description: Recent reactions to the activity
           items:
             $ref: '#/components/schemas/FeedsReactionResponse'
           title: Latest Reactions
           type: array
-          x-stream-index: "031"
+          x-stream-index: "032"
         location:
           $ref: '#/components/schemas/ActivityLocation'
           description: Geographic location related to the activity
@@ -1396,6 +1399,9 @@ components:
           description: Moderation information
           title: Moderation
           x-stream-index: "026"
+        moderation_action:
+          type: string
+          x-stream-index: "027"
         notification_context:
           $ref: '#/components/schemas/NotificationContext'
           description: Notification context data for the activity (if this is a reaction,
@@ -1408,14 +1414,14 @@ components:
             $ref: '#/components/schemas/BookmarkResponse'
           title: Own Bookmarks
           type: array
-          x-stream-index: "034"
+          x-stream-index: "035"
         own_reactions:
           description: Current user's reactions to this activity
           items:
             $ref: '#/components/schemas/FeedsReactionResponse'
           title: Own Reactions
           type: array
-          x-stream-index: "033"
+          x-stream-index: "034"
         parent:
           $ref: '#/components/schemas/ActivityResponse'
           description: Parent activity (if this is a reply/comment)
@@ -1432,19 +1438,25 @@ components:
           title: Popularity
           type: integer
           x-stream-index: "013"
+        preview:
+          description: If this activity is obfuscated for this user. For premium content
+            where you want to show a preview
+          title: Preview
+          type: boolean
+          x-stream-index: "038"
         reaction_count:
           description: Number of reactions to the activity
           format: int32
           title: Reaction Count
           type: integer
-          x-stream-index: "030"
+          x-stream-index: "031"
         reaction_groups:
           additionalProperties:
             $ref: '#/components/schemas/ReactionGroupResponse'
           description: Grouped reactions by type
           title: Reaction Groups
           type: object
-          x-stream-index: "032"
+          x-stream-index: "033"
         score:
           description: Ranking score for this activity
           format: float
@@ -1462,7 +1474,7 @@ components:
           format: int32
           title: Share Count
           type: integer
-          x-stream-index: "029"
+          x-stream-index: "030"
         text:
           description: Text content of the activity
           title: Text
@@ -1523,6 +1535,8 @@ components:
       - reaction_groups
       - own_reactions
       - own_bookmarks
+      - hidden
+      - preview
       title: Base Activity
       type: object
     ActivitySelectorConfig:
@@ -2750,6 +2764,12 @@ components:
           x-stream-index: "002"
       required:
       - created_at
+      type: object
+    BlockActionRequest:
+      properties:
+        reason:
+          type: string
+          x-stream-index: "001"
       type: object
     BlockListConfig:
       properties:
@@ -4247,6 +4267,8 @@ components:
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
     CallModerationBlurEvent:
+      description: This event is sent when a moderation blur action is applied to
+        a user's video stream
       properties:
         call_cid:
           type: string
@@ -4257,13 +4279,19 @@ components:
           x-stream-index: "001.002"
         custom:
           additionalProperties: {}
+          description: Custom data associated with the moderation action
+          title: Custom
           type: object
           x-stream-index: "004"
         type:
           default: call.moderation_blur
+          description: 'The type of event: "call.moderation_blur" in this case'
+          title: Event Type
           type: string
           x-stream-index: "001.001"
         user_id:
+          description: The user ID whose video stream is being blurred
+          title: UserID
           type: string
           x-stream-index: "003"
       required:
@@ -4275,10 +4303,11 @@ components:
       title: CallModerationBlurEvent
       type: object
       x-stream-event-call-type: true
-      x-stream-event-doc-group: other
+      x-stream-event-doc-group: call
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
     CallModerationWarningEvent:
+      description: This event is sent when a moderation warning is issued to a user
       properties:
         call_cid:
           type: string
@@ -4289,16 +4318,24 @@ components:
           x-stream-index: "001.002"
         custom:
           additionalProperties: {}
+          description: Custom data associated with the moderation action
+          title: Custom
           type: object
           x-stream-index: "005"
         message:
+          description: The warning message
+          title: Message
           type: string
           x-stream-index: "004"
         type:
           default: call.moderation_warning
+          description: 'The type of event: "call.moderation_warning" in this case'
+          title: Event Type
           type: string
           x-stream-index: "001.001"
         user_id:
+          description: The user ID who is receiving the warning
+          title: UserID
           type: string
           x-stream-index: "003"
       required:
@@ -4311,7 +4348,7 @@ components:
       title: CallModerationWarningEvent
       type: object
       x-stream-event-call-type: true
-      x-stream-event-doc-group: other
+      x-stream-event-doc-group: call
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
     CallNotificationEvent:
@@ -6004,6 +6041,11 @@ components:
         disabled:
           type: boolean
           x-stream-index: "017"
+        filter_tags:
+          items:
+            type: string
+          type: array
+          x-stream-index: "038"
         frozen:
           type: boolean
           x-stream-index: "016"
@@ -6605,13 +6647,13 @@ components:
           x-stream-index: "013"
         invites:
           items:
-            $ref: '#/components/schemas/ChannelMember'
+            $ref: '#/components/schemas/ChannelMemberRequest'
           maximum: 100
           type: array
           x-stream-index: "016"
         members:
           items:
-            $ref: '#/components/schemas/ChannelMember'
+            $ref: '#/components/schemas/ChannelMemberRequest'
           maximum: 100
           type: array
           x-stream-index: "018"
@@ -6669,7 +6711,160 @@ components:
         archived_at:
           format: date-time
           type: number
-          x-stream-index: "015"
+          x-stream-index: "021"
+        ban_expires:
+          format: date-time
+          type: number
+          x-stream-index: "017"
+        banned:
+          type: boolean
+          x-stream-index: "016"
+        blocked:
+          type: boolean
+          x-stream-index: "029"
+        channel:
+          $ref: '#/components/schemas/DenormalizedChannelFields'
+          x-stream-index: "027"
+        channel_role:
+          type: string
+          x-stream-index: "024"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "012"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "006"
+        deleted_at:
+          format: date-time
+          type: number
+          x-stream-index: "014"
+        deleted_messages:
+          items:
+            type: string
+          type: array
+          x-stream-index: "030"
+        hidden:
+          type: boolean
+          x-stream-index: "028"
+        invite_accepted_at:
+          format: date-time
+          type: number
+          x-stream-index: "009"
+        invite_rejected_at:
+          format: date-time
+          type: number
+          x-stream-index: "010"
+        invited:
+          type: boolean
+          x-stream-index: "008"
+        is_global_banned:
+          type: boolean
+          x-stream-index: "020"
+        is_moderator:
+          type: boolean
+          x-stream-index: "007"
+        notifications_muted:
+          type: boolean
+          x-stream-index: "026"
+        pinned_at:
+          format: date-time
+          type: number
+          x-stream-index: "022"
+        shadow_banned:
+          type: boolean
+          x-stream-index: "019"
+        status:
+          type: string
+          x-stream-index: "011"
+        updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "013"
+        user:
+          $ref: '#/components/schemas/User'
+          x-stream-index: "005"
+        user_id:
+          type: string
+          x-stream-index: "004"
+      required:
+      - custom
+      - created_at
+      - updated_at
+      - banned
+      - shadow_banned
+      - is_global_banned
+      - channel_role
+      - notifications_muted
+      type: object
+    ChannelMemberLookup:
+      nullable: true
+      properties:
+        archived:
+          type: boolean
+          x-stream-index: "003"
+        archived_at:
+          format: date-time
+          type: number
+          x-stream-index: "007"
+        ban_expires:
+          format: date-time
+          type: number
+          x-stream-index: "008"
+        banned:
+          type: boolean
+          x-stream-index: "004"
+        blocked:
+          type: boolean
+          x-stream-index: "005"
+        hidden:
+          type: boolean
+          x-stream-index: "001"
+        pinned:
+          type: boolean
+          x-stream-index: "002"
+        pinned_at:
+          format: date-time
+          type: number
+          x-stream-index: "006"
+      required:
+      - hidden
+      - pinned
+      - archived
+      - banned
+      - blocked
+      type: object
+    ChannelMemberRequest:
+      nullable: true
+      properties:
+        channel_role:
+          description: Role of the member in the channel
+          title: Channel Role
+          type: string
+          x-stream-index: "004"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "003"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          x-stream-index: "002"
+        user_id:
+          title: User ID
+          type: string
+          x-stream-index: "001"
+      required:
+      - user_id
+      title: Channel member
+      type: object
+    ChannelMemberResponse:
+      nullable: true
+      properties:
+        archived_at:
+          format: date-time
+          type: number
+          x-stream-index: "016"
         ban_expires:
           description: Expiration date of the ban
           format: date-time
@@ -6733,7 +6928,7 @@ components:
         pinned_at:
           format: date-time
           type: number
-          x-stream-index: "016"
+          x-stream-index: "015"
         role:
           description: 'Permission level of the member in the channel (DEPRECATED:
             use channel_role instead)'
@@ -6775,51 +6970,6 @@ components:
       - channel_role
       - notifications_muted
       title: Channel member
-      type: object
-    ChannelMemberLookup:
-      nullable: true
-      properties:
-        archived:
-          type: boolean
-          x-stream-index: "003"
-        archived_at:
-          format: date-time
-          type: number
-          x-stream-index: "007"
-        ban_expires:
-          format: date-time
-          type: number
-          x-stream-index: "008"
-        banned:
-          type: boolean
-          x-stream-index: "004"
-        blocked:
-          type: boolean
-          x-stream-index: "005"
-        hidden:
-          type: boolean
-          x-stream-index: "001"
-        pinned:
-          type: boolean
-          x-stream-index: "002"
-        pinned_at:
-          format: date-time
-          type: number
-          x-stream-index: "006"
-      required:
-      - hidden
-      - pinned
-      - archived
-      - banned
-      - blocked
-      type: object
-    ChannelMemberResponse:
-      properties:
-        channel_role:
-          type: string
-          x-stream-index: "001"
-      required:
-      - channel_role
       type: object
     ChannelMute:
       nullable: true
@@ -6969,6 +7119,13 @@ components:
         disabled:
           type: boolean
           x-stream-index: "010"
+        filter_tags:
+          description: List of filter tags associated with the channel
+          items:
+            type: string
+          title: Filter tags
+          type: array
+          x-stream-index: "028"
         frozen:
           description: Whether channel is frozen or not
           title: Frozen
@@ -7005,8 +7162,8 @@ components:
         members:
           description: List of channel members (max 100)
           items:
-            $ref: '#/components/schemas/ChannelMember'
-          title: ChannelMembers
+            $ref: '#/components/schemas/ChannelMemberResponse'
+          title: Channel members
           type: array
           x-stream-index: "011"
         message_count:
@@ -7096,11 +7253,11 @@ components:
           x-stream-index: "001.012"
         members:
           items:
-            $ref: '#/components/schemas/ChannelMember'
+            $ref: '#/components/schemas/ChannelMemberResponse'
           type: array
           x-stream-index: "001.007"
         membership:
-          $ref: '#/components/schemas/ChannelMember'
+          $ref: '#/components/schemas/ChannelMemberResponse'
           x-stream-index: "001.008"
         messages:
           items:
@@ -7175,12 +7332,12 @@ components:
         members:
           description: List of channel members
           items:
-            $ref: '#/components/schemas/ChannelMember'
+            $ref: '#/components/schemas/ChannelMemberResponse'
           title: Members
           type: array
           x-stream-index: "007"
         membership:
-          $ref: '#/components/schemas/ChannelMember'
+          $ref: '#/components/schemas/ChannelMemberResponse'
           description: Current user membership object
           title: Membership
           x-stream-index: "008"
@@ -8949,6 +9106,15 @@ components:
       - duration
       title: Delete Comment Reaction Response
       type: object
+    DeleteCommentRequest:
+      properties:
+        hard_delete:
+          type: boolean
+          x-stream-index: "001"
+        reason:
+          type: string
+          x-stream-index: "002"
+      type: object
     DeleteCommentResponse:
       nullable: true
       properties:
@@ -9125,6 +9291,44 @@ components:
           x-stream-index: "001"
       required:
       - enabled
+      type: object
+    DenormalizedChannelFields:
+      properties:
+        created_at:
+          type: string
+          x-stream-index: "001"
+        created_by_id:
+          type: string
+          x-stream-index: "008"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "011"
+        disabled:
+          type: boolean
+          x-stream-index: "005"
+        frozen:
+          type: boolean
+          x-stream-index: "006"
+        id:
+          type: string
+          x-stream-index: "010"
+        last_message_at:
+          type: string
+          x-stream-index: "003"
+        member_count:
+          format: int32
+          type: integer
+          x-stream-index: "004"
+        team:
+          type: string
+          x-stream-index: "007"
+        type:
+          type: string
+          x-stream-index: "009"
+        updated_at:
+          type: string
+          x-stream-index: "002"
       type: object
     Device:
       nullable: true
@@ -13480,7 +13684,7 @@ components:
         members:
           description: List of found members
           items:
-            $ref: '#/components/schemas/ChannelMember'
+            $ref: '#/components/schemas/ChannelMemberResponse'
           title: Members
           type: array
           x-stream-index: "001"
@@ -14083,7 +14287,7 @@ components:
           type: array
           x-stream-index: "001.002"
         type:
-          default: notification.thread_message_new
+          default: message.new
           type: string
           x-stream-index: "004.001"
         user:
@@ -15050,6 +15254,20 @@ components:
       title: Message
       type: object
       x-stream-docs-page-id: send_message
+    MetricDescriptor:
+      properties:
+        description:
+          type: string
+          x-stream-index: "003"
+        label:
+          type: string
+          x-stream-index: "001"
+        unit:
+          type: string
+          x-stream-index: "002"
+      required:
+      - label
+      type: object
     MetricThreshold:
       properties:
         level:
@@ -16771,20 +16989,30 @@ components:
             type: array
           type: object
           x-stream-index: "001"
+        global_meta:
+          additionalProperties:
+            $ref: '#/components/schemas/MetricDescriptor'
+          type: object
+          x-stream-index: "002"
+        global_metrics_order:
+          items:
+            type: string
+          type: array
+          x-stream-index: "003"
         global_thresholds:
           additionalProperties:
             items:
               $ref: '#/components/schemas/MetricThreshold'
             type: array
           type: object
-          x-stream-index: "002"
+          x-stream-index: "004"
         tracks:
           additionalProperties:
             items:
               $ref: '#/components/schemas/ParticipantSeriesTrackMetrics'
             type: array
           type: object
-          x-stream-index: "003"
+          x-stream-index: "005"
       type: object
     ParticipantSeriesSubscriberStats:
       properties:
@@ -16798,18 +17026,28 @@ components:
             type: array
           type: object
           x-stream-index: "001"
+        global_meta:
+          additionalProperties:
+            $ref: '#/components/schemas/MetricDescriptor'
+          type: object
+          x-stream-index: "002"
+        global_metrics_order:
+          items:
+            type: string
+          type: array
+          x-stream-index: "003"
         global_thresholds:
           additionalProperties:
             items:
               $ref: '#/components/schemas/MetricThreshold'
             type: array
           type: object
-          x-stream-index: "002"
+          x-stream-index: "004"
         subscriptions:
           items:
             $ref: '#/components/schemas/ParticipantSeriesSubscriptionTrackMetrics'
           type: array
-          x-stream-index: "003"
+          x-stream-index: "005"
       type: object
     ParticipantSeriesSubscriptionTrackMetrics:
       properties:
@@ -16874,6 +17112,16 @@ components:
             type: array
           type: object
           x-stream-index: "006"
+        metrics_meta:
+          additionalProperties:
+            $ref: '#/components/schemas/MetricDescriptor'
+          type: object
+          x-stream-index: "007"
+        metrics_order:
+          items:
+            type: string
+          type: array
+          x-stream-index: "008"
         rid:
           type: string
           x-stream-index: "005"
@@ -16883,7 +17131,7 @@ components:
               $ref: '#/components/schemas/MetricThreshold'
             type: array
           type: object
-          x-stream-index: "007"
+          x-stream-index: "009"
         track_id:
           type: string
           x-stream-index: "001"
@@ -16905,13 +17153,23 @@ components:
             type: array
           type: object
           x-stream-index: "001"
+        metrics_meta:
+          additionalProperties:
+            $ref: '#/components/schemas/MetricDescriptor'
+          type: object
+          x-stream-index: "002"
+        metrics_order:
+          items:
+            type: string
+          type: array
+          x-stream-index: "003"
         thresholds:
           additionalProperties:
             items:
               $ref: '#/components/schemas/MetricThreshold'
             type: array
           type: object
-          x-stream-index: "002"
+          x-stream-index: "004"
       type: object
     PendingMessageEvent:
       description: Pending message event for async moderation
@@ -19398,7 +19656,7 @@ components:
           x-stream-index: "006.003"
         members:
           items:
-            $ref: '#/components/schemas/ChannelMember'
+            $ref: '#/components/schemas/ChannelMemberRequest'
           maximum: 100
           type: array
           x-stream-index: "003"
@@ -20932,6 +21190,65 @@ components:
       - duration
       title: RequestPermissionResponse
       type: object
+    ResolveSipInboundRequest:
+      description: Request to resolve SIP inbound routing using challenge authentication
+      nullable: true
+      properties:
+        challenge:
+          $ref: '#/components/schemas/SIPChallenge'
+          description: SIP challenge authentication data
+          title: SIPChallengeRequest
+          x-stream-index: "003"
+        sip_caller_number:
+          description: SIP caller number
+          title: string
+          type: string
+          x-stream-index: "002"
+        sip_headers:
+          additionalProperties:
+            type: string
+          description: Optional SIP headers as key-value pairs
+          title: map[string]string
+          type: object
+          x-stream-index: "004"
+        sip_trunk_number:
+          description: SIP trunk number to resolve
+          title: string
+          type: string
+          x-stream-index: "001"
+      required:
+      - sip_trunk_number
+      - sip_caller_number
+      - challenge
+      title: ResolveSipInboundRequest
+      type: object
+    ResolveSipInboundResponse:
+      description: Response containing resolved SIP inbound routing information
+      nullable: true
+      properties:
+        credentials:
+          $ref: '#/components/schemas/SipInboundCredentials'
+          description: Credentials for the SIP call
+          title: SipInboundCredentials
+          x-stream-index: "001"
+        duration:
+          type: string
+          x-stream-index: "004.001"
+        sip_routing_rule:
+          $ref: '#/components/schemas/SIPInboundRoutingRuleResponse'
+          description: The matching SIP inbound routing rule
+          title: SIPInboundRoutingRuleResponse
+          x-stream-index: "002"
+        sip_trunk:
+          $ref: '#/components/schemas/SIPTrunkResponse'
+          description: The resolved SIP trunk for the inbound call
+          title: SIPTrunkResponse
+          x-stream-index: "003"
+      required:
+      - credentials
+      - duration
+      title: ResolveSipInboundResponse
+      type: object
     Response:
       description: Basic response information
       nullable: true
@@ -20988,7 +21305,7 @@ components:
           x-stream-index: "009"
         config_key:
           type: string
-          x-stream-index: "029"
+          x-stream-index: "031"
         created_at:
           description: When the item was created
           format: date-time
@@ -21025,6 +21342,12 @@ components:
           description: Associated feed reaction
           title: Feeds V2 Reaction
           x-stream-index: "027"
+        feeds_v3_activity:
+          $ref: '#/components/schemas/ActivityResponse'
+          x-stream-index: "028"
+        feeds_v3_comment:
+          $ref: '#/components/schemas/CommentResponse'
+          x-stream-index: "029"
         flags:
           description: Associated flag records
           items:
@@ -21035,7 +21358,7 @@ components:
         flags_count:
           format: int32
           type: integer
-          x-stream-index: "030"
+          x-stream-index: "032"
         id:
           description: Unique identifier of the review queue item
           title: ID
@@ -21097,7 +21420,7 @@ components:
             type: string
           title: Teams
           type: array
-          x-stream-index: "028"
+          x-stream-index: "030"
         updated_at:
           description: When the item was last updated
           format: date-time
@@ -21326,6 +21649,303 @@ components:
       - edge_name
       - url
       - ws_endpoint
+      type: object
+    SIPCallConfigsResponse:
+      description: SIP call configuration response
+      properties:
+        custom_data:
+          additionalProperties: {}
+          description: Custom data associated with the call
+          title: object
+          type: object
+          x-stream-index: "001"
+      required:
+      - custom_data
+      title: SIPCallConfigsResponse
+      type: object
+    SIPCallerConfigsResponse:
+      description: SIP caller configuration response
+      properties:
+        custom_data:
+          additionalProperties: {}
+          description: Custom data associated with the caller
+          title: object
+          type: object
+          x-stream-index: "002"
+        id:
+          description: Unique identifier for the caller
+          title: string
+          type: string
+          x-stream-index: "001"
+      required:
+      - id
+      - custom_data
+      title: SIPCallerConfigsResponse
+      type: object
+    SIPChallenge:
+      properties:
+        a1:
+          type: string
+          x-stream-index: "011"
+        algorithm:
+          type: string
+          x-stream-index: "007"
+        charset:
+          type: string
+          x-stream-index: "009"
+        cnonce:
+          type: string
+          x-stream-index: "016"
+        domain:
+          items:
+            type: string
+          type: array
+          x-stream-index: "003"
+        method:
+          type: string
+          x-stream-index: "014"
+        nc:
+          type: string
+          x-stream-index: "015"
+        nonce:
+          type: string
+          x-stream-index: "004"
+        opaque:
+          type: string
+          x-stream-index: "005"
+        qop:
+          items:
+            type: string
+          type: array
+          x-stream-index: "008"
+        realm:
+          type: string
+          x-stream-index: "002"
+        response:
+          type: string
+          x-stream-index: "012"
+        stale:
+          type: boolean
+          x-stream-index: "006"
+        uri:
+          type: string
+          x-stream-index: "013"
+        userhash:
+          type: boolean
+          x-stream-index: "010"
+        username:
+          type: string
+          x-stream-index: "001"
+      type: object
+    SIPDirectRoutingRuleCallConfigsResponse:
+      description: Direct routing rule call configuration response
+      properties:
+        call_id:
+          description: ID of the call
+          title: string
+          type: string
+          x-stream-index: "002"
+        call_type:
+          description: Type of the call
+          title: string
+          type: string
+          x-stream-index: "001"
+      required:
+      - call_type
+      - call_id
+      title: SIPDirectRoutingRuleCallConfigsResponse
+      type: object
+    SIPInboundRoutingRulePinConfigsResponse:
+      description: PIN routing rule call configuration response
+      properties:
+        custom_webhook_url:
+          description: Optional webhook URL for custom PIN handling
+          title: string
+          type: string
+          x-stream-index: "005"
+        pin_failed_attempt_prompt:
+          description: Prompt message for failed PIN attempts
+          title: string
+          type: string
+          x-stream-index: "002"
+        pin_hangup_prompt:
+          description: Prompt message for hangup after PIN input
+          title: string
+          type: string
+          x-stream-index: "004"
+        pin_prompt:
+          description: Prompt message for PIN input
+          title: string
+          type: string
+          x-stream-index: "001"
+        pin_success_prompt:
+          description: Prompt message for successful PIN input
+          title: string
+          type: string
+          x-stream-index: "003"
+      title: SIPInboundRoutingRulePinConfigsResponse
+      type: object
+    SIPInboundRoutingRuleResponse:
+      description: SIP Inbound Routing Rule response
+      properties:
+        call_configs:
+          $ref: '#/components/schemas/SIPCallConfigsResponse'
+          description: Call configuration
+          title: SIPCallConfigsResponse
+          x-stream-index: "009"
+        called_numbers:
+          description: List of called numbers
+          items:
+            type: string
+          title: '[]string'
+          type: array
+          x-stream-index: "004"
+        caller_configs:
+          $ref: '#/components/schemas/SIPCallerConfigsResponse'
+          description: Caller configuration
+          title: SIPCallerConfigsResponse
+          x-stream-index: "008"
+        caller_numbers:
+          description: List of caller numbers
+          items:
+            type: string
+          title: '[]string'
+          type: array
+          x-stream-index: "005"
+        direct_routing_configs:
+          $ref: '#/components/schemas/SIPDirectRoutingRuleCallConfigsResponse'
+          description: Direct routing configuration
+          title: SIPDirectRoutingRuleCallConfigsResponse
+          x-stream-index: "006"
+        duration:
+          type: string
+          x-stream-index: "013.001"
+        id:
+          description: Unique identifier of the SIP Inbound Routing Rule
+          title: string
+          type: string
+          x-stream-index: "001"
+        name:
+          description: Name of the SIP Inbound Routing Rule
+          title: string
+          type: string
+          x-stream-index: "002"
+        pin_protection_configs:
+          $ref: '#/components/schemas/SIPPinProtectionConfigsResponse'
+          description: PIN protection configuration
+          title: SIPPinProtectionConfigsResponse
+          x-stream-index: "010"
+        pin_routing_configs:
+          $ref: '#/components/schemas/SIPInboundRoutingRulePinConfigsResponse'
+          description: PIN routing configuration
+          title: SIPInboundRoutingRulePinConfigsResponse
+          x-stream-index: "007"
+        trunk_ids:
+          description: List of SIP trunk IDs
+          items:
+            type: string
+          title: '[]string'
+          type: array
+          x-stream-index: "003"
+        updated_at:
+          $ref: '#/components/schemas/UnixTs'
+          description: Last update timestamp
+          title: string
+          x-stream-index: "012"
+      required:
+      - id
+      - name
+      - trunk_ids
+      - called_numbers
+      - created_at
+      - updated_at
+      - duration
+      title: SIPInboundRoutingRuleResponse
+      type: object
+    SIPPinProtectionConfigsResponse:
+      description: PIN protection configuration response
+      properties:
+        default_pin:
+          description: Default PIN to use if there is no PIN set on the call object
+          title: string
+          type: string
+          x-stream-index: "004"
+        enabled:
+          description: Whether PIN protection is enabled
+          title: boolean
+          type: boolean
+          x-stream-index: "001"
+        max_attempts:
+          description: Maximum number of PIN attempts allowed
+          format: int32
+          title: integer
+          type: integer
+          x-stream-index: "002"
+        required_pin_digits:
+          description: Number of digits required for the PIN
+          format: int32
+          title: integer
+          type: integer
+          x-stream-index: "003"
+      required:
+      - enabled
+      title: SIPPinProtectionConfigsResponse
+      type: object
+    SIPTrunkResponse:
+      description: SIP trunk information
+      properties:
+        created_at:
+          $ref: '#/components/schemas/UnixTs'
+          description: Creation timestamp
+          title: string
+          x-stream-index: "007"
+        id:
+          description: Unique identifier for the SIP trunk
+          title: string
+          type: string
+          x-stream-index: "001"
+        name:
+          description: Name of the SIP trunk
+          title: string
+          type: string
+          x-stream-index: "002"
+        numbers:
+          description: Phone numbers associated with this SIP trunk
+          items:
+            type: string
+          title: '[]string'
+          type: array
+          x-stream-index: "003"
+        password:
+          description: Password for SIP trunk authentication
+          title: string
+          type: string
+          x-stream-index: "006"
+        updated_at:
+          $ref: '#/components/schemas/UnixTs'
+          description: Last update timestamp
+          title: string
+          x-stream-index: "008"
+        uri:
+          description: The URI for the SIP trunk
+          title: string
+          type: string
+          x-stream-index: "004"
+        username:
+          description: Username for SIP trunk authentication
+          title: string
+          type: string
+          x-stream-index: "005"
+      required:
+      - id
+      - name
+      - numbers
+      - uri
+      - username
+      - password
+      - created_at
+      - updated_at
+      title: SIPTrunkResponse
       type: object
     SRTIngress:
       properties:
@@ -22049,6 +22669,50 @@ components:
       - duration
       title: Follow Response
       type: object
+    SipInboundCredentials:
+      description: Credentials for SIP inbound call authentication
+      properties:
+        call_custom_data:
+          additionalProperties: {}
+          description: Custom data associated with the call
+          title: object
+          type: object
+          x-stream-index: "005"
+        call_id:
+          description: ID of the call
+          title: string
+          type: string
+          x-stream-index: "002"
+        call_type:
+          description: Type of the call
+          title: string
+          type: string
+          x-stream-index: "001"
+        token:
+          description: Authentication token for the call
+          title: string
+          type: string
+          x-stream-index: "004"
+        user_custom_data:
+          additionalProperties: {}
+          description: Custom data associated with the user
+          title: object
+          type: object
+          x-stream-index: "006"
+        user_id:
+          description: User ID for the call
+          title: string
+          type: string
+          x-stream-index: "003"
+      required:
+      - call_type
+      - call_id
+      - user_id
+      - token
+      - call_custom_data
+      - user_custom_data
+      title: SipInboundCredentials
+      type: object
     SortParam:
       nullable: true
       properties:
@@ -22582,6 +23246,7 @@ components:
           - mark_reviewed
           - delete_message
           - delete_activity
+          - delete_comment
           - delete_reaction
           - ban
           - custom
@@ -22589,6 +23254,7 @@ components:
           - restore
           - delete_user
           - unblock
+          - block
           - shadow_block
           - unmask
           - kick_user
@@ -22600,17 +23266,27 @@ components:
           $ref: '#/components/schemas/BanActionRequest'
           description: Configuration for ban action
           title: Ban
-          x-stream-index: "008"
+          x-stream-index: "009"
+        block:
+          $ref: '#/components/schemas/BlockActionRequest'
+          description: Configuration for block action
+          title: Block
+          x-stream-index: "014"
         custom:
           $ref: '#/components/schemas/CustomActionRequest'
           description: Configuration for custom action
           title: Custom
-          x-stream-index: "009"
+          x-stream-index: "010"
         delete_activity:
           $ref: '#/components/schemas/DeleteActivityRequest'
           description: Configuration for activity deletion action
           title: Delete Activity
           x-stream-index: "004"
+        delete_comment:
+          $ref: '#/components/schemas/DeleteCommentRequest'
+          description: Configuration for comment deletion action
+          title: Delete Comment
+          x-stream-index: "005"
         delete_message:
           $ref: '#/components/schemas/DeleteMessageRequest'
           description: Configuration for message deletion action
@@ -22620,12 +23296,12 @@ components:
           $ref: '#/components/schemas/DeleteReactionRequest'
           description: Configuration for reaction deletion action
           title: Delete Reaction
-          x-stream-index: "005"
+          x-stream-index: "006"
         delete_user:
           $ref: '#/components/schemas/DeleteUserRequest'
           description: Configuration for user deletion action
           title: Delete User
-          x-stream-index: "006"
+          x-stream-index: "007"
         item_id:
           description: UUID of the review queue item to act on
           title: Item ID
@@ -22635,17 +23311,17 @@ components:
           $ref: '#/components/schemas/MarkReviewedRequest'
           description: Configuration for marking item as reviewed
           title: Mark Reviewed
-          x-stream-index: "007"
+          x-stream-index: "008"
         shadow_block:
           $ref: '#/components/schemas/ShadowBlockActionRequest'
           description: Configuration for shadow block action
           title: Shadow Block
-          x-stream-index: "013"
+          x-stream-index: "015"
         unban:
           $ref: '#/components/schemas/UnbanActionRequest'
           description: Configuration for unban action
           title: Unban
-          x-stream-index: "010"
+          x-stream-index: "011"
       required:
       - item_id
       - action_type
@@ -23771,6 +24447,8 @@ components:
       - duration
       title: Unfollow Response
       type: object
+    UnixTs:
+      type: object
     UnmuteChannelRequest:
       nullable: true
       properties:
@@ -24289,10 +24967,17 @@ components:
           title: Accept invite
           type: boolean
           x-stream-index: "008"
+        add_filter_tags:
+          description: List of filter tags to add to the channel
+          items:
+            type: string
+          title: Add filter tags
+          type: array
+          x-stream-index: "013"
         add_members:
           description: List of user IDs to add to the channel
           items:
-            $ref: '#/components/schemas/ChannelMember'
+            $ref: '#/components/schemas/ChannelMemberRequest'
           maximum: 100
           title: Add members
           type: array
@@ -24309,7 +24994,7 @@ components:
           description: List of channel member role assignments. If any specified user
             is not part of the channel, the request will fail
           items:
-            $ref: '#/components/schemas/ChannelMember'
+            $ref: '#/components/schemas/ChannelMemberRequest'
           maximum: 100
           title: Assign roles
           type: array
@@ -24324,7 +25009,7 @@ components:
           x-stream-index: "007"
         data:
           $ref: '#/components/schemas/ChannelInput'
-          x-stream-index: "013.001"
+          x-stream-index: "015.001"
         demote_moderators:
           description: List of user IDs to take away moderators status from
           items:
@@ -24341,7 +25026,7 @@ components:
         invites:
           description: List of user IDs to invite to the channel
           items:
-            $ref: '#/components/schemas/ChannelMember'
+            $ref: '#/components/schemas/ChannelMemberRequest'
           maximum: 100
           title: Invites
           type: array
@@ -24356,6 +25041,13 @@ components:
           title: Reject invite
           type: boolean
           x-stream-index: "009"
+        remove_filter_tags:
+          description: List of filter tags to remove from the channel
+          items:
+            type: string
+          title: Remove filter tags
+          type: array
+          x-stream-index: "014"
         remove_members:
           description: List of user IDs to remove from the channel
           items:
@@ -24388,7 +25080,7 @@ components:
         members:
           description: List of channel members
           items:
-            $ref: '#/components/schemas/ChannelMember'
+            $ref: '#/components/schemas/ChannelMemberResponse'
           title: Members
           type: array
           x-stream-index: "003"
@@ -27118,7 +27810,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v198.32.0
+  version: v199.0.2
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -27475,14 +28167,14 @@ paths:
         schema:
           type: string
           writeOnly: true
-          x-stream-index: 013.002.001
+          x-stream-index: 015.002.001
       - in: path
         name: id
         required: true
         schema:
           type: string
           writeOnly: true
-          x-stream-index: 013.002.002
+          x-stream-index: 015.002.002
       requestBody:
         content:
           application/json:
@@ -36436,6 +37128,40 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Get Edges
+      tags:
+      - product:video
+  /api/v2/video/sip/resolve:
+    post:
+      description: |
+        Resolve SIP inbound routing based on trunk number, caller number, and challenge authentication
+      operationId: ResolveSipInbound
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResolveSipInboundRequest'
+        description: ResolveSipInboundRequest
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolveSipInboundResponse'
+          description: ResolveSipInboundResponse
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Resolve SIP Inbound Routing
       tags:
       - product:video
   /api/v2/video/stats:
