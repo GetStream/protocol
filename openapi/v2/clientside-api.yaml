@@ -1903,23 +1903,30 @@ components:
             $ref: '#/components/schemas/Attachment'
           title: Attachments
           type: array
-          x-stream-index: "004"
+          x-stream-index: "005"
         comment:
           description: Text content of the comment
           title: Comment
           type: string
-          x-stream-index: "003"
+          x-stream-index: "004"
         create_notification_activity:
           description: Whether to create a notification activity for this comment
           title: Create Notification Activity
           type: boolean
-          x-stream-index: "008"
+          x-stream-index: "009"
         custom:
           additionalProperties: {}
           description: Custom data for the comment
           title: Custom Data
           type: object
-          x-stream-index: "007"
+          x-stream-index: "008"
+        id:
+          description: Optional custom ID for the comment (max 255 characters). If
+            not provided, a UUID will be generated.
+          maxLength: 255
+          title: Comment ID
+          type: string
+          x-stream-index: "001"
         mentioned_user_ids:
           description: List of users mentioned in the reply
           items:
@@ -1927,25 +1934,25 @@ components:
           maximum: 255
           title: Mentioned User IDs
           type: array
-          x-stream-index: "005"
+          x-stream-index: "006"
         object_id:
           description: ID of the object to comment on
           title: Object ID
           type: string
-          x-stream-index: "001"
+          x-stream-index: "002"
         object_type:
           description: Type of the object to comment on
           title: Object Type
           type: string
-          x-stream-index: "002"
+          x-stream-index: "003"
         parent_id:
           description: ID of parent comment for replies
           title: Parent ID
           type: string
-          x-stream-index: "006"
+          x-stream-index: "007"
         skip_push:
           type: boolean
-          x-stream-index: "009"
+          x-stream-index: "010"
       required:
       - object_id
       - object_type
@@ -12255,48 +12262,44 @@ components:
       description: Client request
       nullable: true
       properties:
-        activity_selector_options:
-          additionalProperties: {}
-          type: object
-          x-stream-index: "006"
         data:
           $ref: '#/components/schemas/FeedInput'
           x-stream-index: "003"
         external_ranking:
           additionalProperties: {}
           type: object
-          x-stream-index: "007"
+          x-stream-index: "006"
         filter:
           additionalProperties: {}
           type: object
-          x-stream-index: "009"
+          x-stream-index: "008"
         followers_pagination:
           $ref: '#/components/schemas/PagerRequest'
-          x-stream-index: "011"
+          x-stream-index: "010"
         following_pagination:
           $ref: '#/components/schemas/PagerRequest'
-          x-stream-index: "012"
+          x-stream-index: "011"
         interest_weights:
           additionalProperties:
             format: float
             type: number
           type: object
-          x-stream-index: "008"
+          x-stream-index: "007"
         limit:
           format: int32
           maximum: 100
           minimum: 0
           type: integer
-          x-stream-index: "013.001"
+          x-stream-index: "012.001"
         member_pagination:
           $ref: '#/components/schemas/PagerRequest'
-          x-stream-index: "010"
+          x-stream-index: "009"
         next:
           type: string
-          x-stream-index: "013.002"
+          x-stream-index: "012.002"
         prev:
           type: string
-          x-stream-index: "013.003"
+          x-stream-index: "012.003"
         view:
           type: string
           x-stream-index: "005"
@@ -14287,7 +14290,7 @@ components:
           type: array
           x-stream-index: "001.002"
         type:
-          default: notification.thread_message_new
+          default: message.new
           type: string
           x-stream-index: "004.001"
         user:
@@ -21445,6 +21448,43 @@ components:
       - actions
       - flags_count
       type: object
+    RingCallRequest:
+      nullable: true
+      properties:
+        members_ids:
+          description: Members that should receive the ring. If no ids are provided,
+            all call members who are not already in the call will receive ring notifications.
+          items:
+            type: string
+          maximum: 25
+          title: Members IDs
+          type: array
+          x-stream-index: "003"
+        video:
+          description: Indicate if call should be video
+          title: Video
+          type: boolean
+          x-stream-index: "004"
+      title: RingCallRequest
+      type: object
+    RingCallResponse:
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "001.001"
+        members_ids:
+          description: List of members ringing notification was sent to
+          items:
+            type: string
+          title: Members IDs
+          type: array
+          x-stream-index: "002"
+      required:
+      - duration
+      - members_ids
+      title: RingCallResponse
+      type: object
     RingSettingsRequest:
       properties:
         auto_cancel_timeout_ms:
@@ -27818,7 +27858,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v200.1.0
+  version: v200.5.1
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -32233,7 +32273,7 @@ paths:
             Body or URL parameter
           title: Connection ID
           type: string
-          x-stream-index: "015.003"
+          x-stream-index: "014.003"
       requestBody:
         content:
           application/json:
@@ -35810,6 +35850,64 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Request permission
+      tags:
+      - product:video
+  /api/v2/video/call/{type}/{id}/ring:
+    post:
+      description: |
+        Sends a ring notification to the provided users who are not already in the call. All users should be members of the call
+
+        Sends events:
+        - call.ring
+      operationId: RingCall
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          description: The type of call
+          maxLength: 64
+          title: Type
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Call ID
+          maxLength: 64
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RingCallRequest'
+        description: RingCallRequest
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RingCallResponse'
+          description: RingCallResponse
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Ring Call Users
       tags:
       - product:video
   /api/v2/video/call/{type}/{id}/rtmp_broadcasts:
