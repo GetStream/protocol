@@ -5970,6 +5970,43 @@ components:
       - duration
       title: Response
       type: object
+    RingCallRequest:
+      nullable: true
+      properties:
+        members_ids:
+          description: Members that should receive the ring. If no ids are provided,
+            all call members who are not already in the call will receive ring notifications.
+          items:
+            type: string
+          maximum: 25
+          title: Members IDs
+          type: array
+          x-stream-index: "003"
+        video:
+          description: Indicate if call should be video
+          title: Video
+          type: boolean
+          x-stream-index: "004"
+      title: RingCallRequest
+      type: object
+    RingCallResponse:
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "001.001"
+        members_ids:
+          description: List of members ringing notification was sent to
+          items:
+            type: string
+          title: Members IDs
+          type: array
+          x-stream-index: "002"
+      required:
+      - duration
+      - members_ids
+      title: RingCallResponse
+      type: object
     RingSettingsRequest:
       properties:
         auto_cancel_timeout_ms:
@@ -8242,7 +8279,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v200.1.0
+  version: v201.1.0
 openapi: 3.0.3
 paths:
   /video/call/{type}/{id}:
@@ -9566,6 +9603,64 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Request permission
+      tags:
+      - product:video
+  /video/call/{type}/{id}/ring:
+    post:
+      description: |
+        Sends a ring notification to the provided users who are not already in the call. All users should be members of the call
+
+        Sends events:
+        - call.ring
+      operationId: RingCall
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          description: The type of call
+          maxLength: 64
+          title: Type
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Call ID
+          maxLength: 64
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RingCallRequest'
+        description: RingCallRequest
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RingCallResponse'
+          description: RingCallResponse
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Ring Call Users
       tags:
       - product:video
   /video/call/{type}/{id}/rtmp_broadcasts:
