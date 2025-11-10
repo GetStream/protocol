@@ -2711,24 +2711,27 @@ components:
         accuracy_radius_meters:
           format: int32
           type: integer
-          x-stream-index: "007"
+          x-stream-index: "008"
         city:
           type: string
           x-stream-index: "001"
         continent:
           type: string
-          x-stream-index: "004"
+          x-stream-index: "005"
         country:
           type: string
           x-stream-index: "003"
+        country_iso_code:
+          type: string
+          x-stream-index: "004"
         latitude:
           format: float
           type: number
-          x-stream-index: "005"
+          x-stream-index: "006"
         longitude:
           format: float
           type: number
-          x-stream-index: "006"
+          x-stream-index: "007"
         subdivision:
           type: string
           x-stream-index: "002"
@@ -2769,6 +2772,14 @@ components:
           format: int32
           type: integer
           x-stream-index: "001"
+        peak_concurrent_sessions:
+          format: int32
+          type: integer
+          x-stream-index: "006"
+        peak_concurrent_users:
+          format: int32
+          type: integer
+          x-stream-index: "005"
         publishers:
           format: int32
           type: integer
@@ -2782,6 +2793,8 @@ components:
       - sessions
       - live_sessions
       - publishers
+      - peak_concurrent_users
+      - peak_concurrent_sessions
       type: object
     CallStatsParticipantSession:
       properties:
@@ -2815,6 +2828,9 @@ components:
         location:
           $ref: '#/components/schemas/CallStatsLocation'
           x-stream-index: "015"
+        os:
+          type: string
+          x-stream-index: "018"
         published_tracks:
           $ref: '#/components/schemas/PublishedTrackFlags'
           x-stream-index: "016"
@@ -9542,6 +9558,43 @@ components:
       - duration
       title: Response
       type: object
+    RingCallRequest:
+      nullable: true
+      properties:
+        members_ids:
+          description: Members that should receive the ring. If no ids are provided,
+            all call members who are not already in the call will receive ring notifications.
+          items:
+            type: string
+          maximum: 25
+          title: Members IDs
+          type: array
+          x-stream-index: "003"
+        video:
+          description: Indicate if call should be video
+          title: Video
+          type: boolean
+          x-stream-index: "004"
+      title: RingCallRequest
+      type: object
+    RingCallResponse:
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "001.001"
+        members_ids:
+          description: List of members ringing notification was sent to
+          items:
+            type: string
+          title: Members IDs
+          type: array
+          x-stream-index: "002"
+      required:
+      - duration
+      - members_ids
+      title: RingCallResponse
+      type: object
     RingSettingsRequest:
       properties:
         auto_cancel_timeout_ms:
@@ -9793,6 +9846,12 @@ components:
           title: '[]string'
           type: array
           x-stream-index: "005"
+        created_at:
+          description: Creation timestamp
+          format: date-time
+          title: string
+          type: number
+          x-stream-index: "011"
         direct_routing_configs:
           $ref: '#/components/schemas/SIPDirectRoutingRuleCallConfigsResponse'
           description: Direct routing configuration
@@ -9829,9 +9888,10 @@ components:
           type: array
           x-stream-index: "003"
         updated_at:
-          $ref: '#/components/schemas/UnixTs'
           description: Last update timestamp
+          format: date-time
           title: string
+          type: number
           x-stream-index: "012"
       required:
       - id
@@ -9876,9 +9936,10 @@ components:
       description: SIP trunk information
       properties:
         created_at:
-          $ref: '#/components/schemas/UnixTs'
           description: Creation timestamp
+          format: date-time
           title: string
+          type: number
           x-stream-index: "007"
         id:
           description: Unique identifier for the SIP trunk
@@ -9903,9 +9964,10 @@ components:
           type: string
           x-stream-index: "006"
         updated_at:
-          $ref: '#/components/schemas/UnixTs'
           description: Last update timestamp
+          format: date-time
           title: string
+          type: number
           x-stream-index: "008"
         uri:
           description: The URI for the SIP trunk
@@ -11053,8 +11115,6 @@ components:
       x-stream-event-doc-group: call
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
-    UnixTs:
-      type: object
     UnpinRequest:
       description: UnpinRequest is the payload for unpinning a message.
       nullable: true
@@ -12408,7 +12468,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v200.1.0
+  version: v202.1.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -15039,6 +15099,64 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Request permission
+      tags:
+      - product:video
+  /api/v2/video/call/{type}/{id}/ring:
+    post:
+      description: |
+        Sends a ring notification to the provided users who are not already in the call. All users should be members of the call
+
+        Sends events:
+        - call.ring
+      operationId: RingCall
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          description: The type of call
+          maxLength: 64
+          title: Type
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Call ID
+          maxLength: 64
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RingCallRequest'
+        description: RingCallRequest
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RingCallResponse'
+          description: RingCallResponse
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Ring Call Users
       tags:
       - product:video
   /api/v2/video/call/{type}/{id}/rtmp_broadcasts:
