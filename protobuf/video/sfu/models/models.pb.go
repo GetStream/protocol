@@ -2975,7 +2975,7 @@ type InboundRtp struct {
 	JitterSeconds     float64  `protobuf:"fixed64,2,opt,name=jitter_seconds,json=jitterSeconds,proto3" json:"jitter_seconds,omitempty"`               // stat["jitter"]
 	PacketsReceived   uint64   `protobuf:"varint,3,opt,name=packets_received,json=packetsReceived,proto3" json:"packets_received,omitempty"`          // stat["packetsReceived"]
 	PacketsLost       uint64   `protobuf:"varint,4,opt,name=packets_lost,json=packetsLost,proto3" json:"packets_lost,omitempty"`                      // stat["packetsLost"]
-	PacketLossPercent float64  `protobuf:"fixed64,5,opt,name=packet_loss_percent,json=packetLossPercent,proto3" json:"packet_loss_percent,omitempty"` // (packets_lost / (packets_received + packets_lost)) * 100; skip if denominator <= 0 or counters decreased
+	PacketLossPercent float64  `protobuf:"fixed64,5,opt,name=packet_loss_percent,json=packetLossPercent,proto3" json:"packet_loss_percent,omitempty"` // (packets_lost / (packets_received + packets_lost)) * 100;skip if denominator <= 0 or counters decreased
 	// -------- AUDIO METRICS --------
 	ConcealmentEvents  uint32  `protobuf:"varint,10,opt,name=concealment_events,json=concealmentEvents,proto3" json:"concealment_events,omitempty"`     // stat["concealmentEvents"]
 	ConcealmentPercent float64 `protobuf:"fixed64,11,opt,name=concealment_percent,json=concealmentPercent,proto3" json:"concealment_percent,omitempty"` // (concealedSamples / totalSamplesReceived) * 100 when totalSamplesReceived >= 96_000 (≈2 s @ 48 kHz)

@@ -363,9 +363,9 @@ func (m *SendMetricsRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.RemoteOutbound) > 0 {
-		for iNdEx := len(m.RemoteOutbound) - 1; iNdEx >= 0; iNdEx-- {
-			if marshalto, ok := interface{}(m.RemoteOutbound[iNdEx]).(interface {
+	if len(m.RemoteOutbounds) > 0 {
+		for iNdEx := len(m.RemoteOutbounds) - 1; iNdEx >= 0; iNdEx-- {
+			if marshalto, ok := interface{}(m.RemoteOutbounds[iNdEx]).(interface {
 				MarshalToSizedBufferVT([]byte) (int, error)
 			}); ok {
 				size, err := marshalto.MarshalToSizedBufferVT(dAtA[:i])
@@ -375,7 +375,7 @@ func (m *SendMetricsRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 				i -= size
 				i = encodeVarint(dAtA, i, uint64(size))
 			} else {
-				encoded, err := proto.Marshal(m.RemoteOutbound[iNdEx])
+				encoded, err := proto.Marshal(m.RemoteOutbounds[iNdEx])
 				if err != nil {
 					return 0, err
 				}
@@ -387,9 +387,9 @@ func (m *SendMetricsRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 			dAtA[i] = 0x32
 		}
 	}
-	if len(m.RemoteInbound) > 0 {
-		for iNdEx := len(m.RemoteInbound) - 1; iNdEx >= 0; iNdEx-- {
-			if marshalto, ok := interface{}(m.RemoteInbound[iNdEx]).(interface {
+	if len(m.RemoteInbounds) > 0 {
+		for iNdEx := len(m.RemoteInbounds) - 1; iNdEx >= 0; iNdEx-- {
+			if marshalto, ok := interface{}(m.RemoteInbounds[iNdEx]).(interface {
 				MarshalToSizedBufferVT([]byte) (int, error)
 			}); ok {
 				size, err := marshalto.MarshalToSizedBufferVT(dAtA[:i])
@@ -399,7 +399,7 @@ func (m *SendMetricsRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 				i -= size
 				i = encodeVarint(dAtA, i, uint64(size))
 			} else {
-				encoded, err := proto.Marshal(m.RemoteInbound[iNdEx])
+				encoded, err := proto.Marshal(m.RemoteInbounds[iNdEx])
 				if err != nil {
 					return 0, err
 				}
@@ -411,9 +411,9 @@ func (m *SendMetricsRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 			dAtA[i] = 0x2a
 		}
 	}
-	if len(m.Outbound) > 0 {
-		for iNdEx := len(m.Outbound) - 1; iNdEx >= 0; iNdEx-- {
-			if marshalto, ok := interface{}(m.Outbound[iNdEx]).(interface {
+	if len(m.Outbounds) > 0 {
+		for iNdEx := len(m.Outbounds) - 1; iNdEx >= 0; iNdEx-- {
+			if marshalto, ok := interface{}(m.Outbounds[iNdEx]).(interface {
 				MarshalToSizedBufferVT([]byte) (int, error)
 			}); ok {
 				size, err := marshalto.MarshalToSizedBufferVT(dAtA[:i])
@@ -423,7 +423,7 @@ func (m *SendMetricsRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 				i -= size
 				i = encodeVarint(dAtA, i, uint64(size))
 			} else {
-				encoded, err := proto.Marshal(m.Outbound[iNdEx])
+				encoded, err := proto.Marshal(m.Outbounds[iNdEx])
 				if err != nil {
 					return 0, err
 				}
@@ -435,9 +435,9 @@ func (m *SendMetricsRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 			dAtA[i] = 0x22
 		}
 	}
-	if len(m.Inbound) > 0 {
-		for iNdEx := len(m.Inbound) - 1; iNdEx >= 0; iNdEx-- {
-			if marshalto, ok := interface{}(m.Inbound[iNdEx]).(interface {
+	if len(m.Inbounds) > 0 {
+		for iNdEx := len(m.Inbounds) - 1; iNdEx >= 0; iNdEx-- {
+			if marshalto, ok := interface{}(m.Inbounds[iNdEx]).(interface {
 				MarshalToSizedBufferVT([]byte) (int, error)
 			}); ok {
 				size, err := marshalto.MarshalToSizedBufferVT(dAtA[:i])
@@ -447,7 +447,7 @@ func (m *SendMetricsRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 				i -= size
 				i = encodeVarint(dAtA, i, uint64(size))
 			} else {
-				encoded, err := proto.Marshal(m.Inbound[iNdEx])
+				encoded, err := proto.Marshal(m.Inbounds[iNdEx])
 				if err != nil {
 					return 0, err
 				}
@@ -1860,8 +1860,8 @@ func (m *SendMetricsRequest) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
 	}
-	if len(m.Inbound) > 0 {
-		for _, e := range m.Inbound {
+	if len(m.Inbounds) > 0 {
+		for _, e := range m.Inbounds {
 			if size, ok := interface{}(e).(interface {
 				SizeVT() int
 			}); ok {
@@ -1872,8 +1872,8 @@ func (m *SendMetricsRequest) SizeVT() (n int) {
 			n += 1 + l + sov(uint64(l))
 		}
 	}
-	if len(m.Outbound) > 0 {
-		for _, e := range m.Outbound {
+	if len(m.Outbounds) > 0 {
+		for _, e := range m.Outbounds {
 			if size, ok := interface{}(e).(interface {
 				SizeVT() int
 			}); ok {
@@ -1884,8 +1884,8 @@ func (m *SendMetricsRequest) SizeVT() (n int) {
 			n += 1 + l + sov(uint64(l))
 		}
 	}
-	if len(m.RemoteInbound) > 0 {
-		for _, e := range m.RemoteInbound {
+	if len(m.RemoteInbounds) > 0 {
+		for _, e := range m.RemoteInbounds {
 			if size, ok := interface{}(e).(interface {
 				SizeVT() int
 			}); ok {
@@ -1896,8 +1896,8 @@ func (m *SendMetricsRequest) SizeVT() (n int) {
 			n += 1 + l + sov(uint64(l))
 		}
 	}
-	if len(m.RemoteOutbound) > 0 {
-		for _, e := range m.RemoteOutbound {
+	if len(m.RemoteOutbounds) > 0 {
+		for _, e := range m.RemoteOutbounds {
 			if size, ok := interface{}(e).(interface {
 				SizeVT() int
 			}); ok {
@@ -3080,7 +3080,7 @@ func (m *SendMetricsRequest) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Inbound", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Inbounds", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -3107,22 +3107,22 @@ func (m *SendMetricsRequest) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Inbound = append(m.Inbound, &models.InboundRtp{})
-			if unmarshal, ok := interface{}(m.Inbound[len(m.Inbound)-1]).(interface {
+			m.Inbounds = append(m.Inbounds, &models.InboundRtp{})
+			if unmarshal, ok := interface{}(m.Inbounds[len(m.Inbounds)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
 				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
 			} else {
-				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.Inbound[len(m.Inbound)-1]); err != nil {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.Inbounds[len(m.Inbounds)-1]); err != nil {
 					return err
 				}
 			}
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Outbound", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Outbounds", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -3149,22 +3149,22 @@ func (m *SendMetricsRequest) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Outbound = append(m.Outbound, &models.OutboundRtp{})
-			if unmarshal, ok := interface{}(m.Outbound[len(m.Outbound)-1]).(interface {
+			m.Outbounds = append(m.Outbounds, &models.OutboundRtp{})
+			if unmarshal, ok := interface{}(m.Outbounds[len(m.Outbounds)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
 				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
 			} else {
-				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.Outbound[len(m.Outbound)-1]); err != nil {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.Outbounds[len(m.Outbounds)-1]); err != nil {
 					return err
 				}
 			}
 			iNdEx = postIndex
 		case 5:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field RemoteInbound", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field RemoteInbounds", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -3191,22 +3191,22 @@ func (m *SendMetricsRequest) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.RemoteInbound = append(m.RemoteInbound, &models.RemoteInboundRtp{})
-			if unmarshal, ok := interface{}(m.RemoteInbound[len(m.RemoteInbound)-1]).(interface {
+			m.RemoteInbounds = append(m.RemoteInbounds, &models.RemoteInboundRtp{})
+			if unmarshal, ok := interface{}(m.RemoteInbounds[len(m.RemoteInbounds)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
 				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
 			} else {
-				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.RemoteInbound[len(m.RemoteInbound)-1]); err != nil {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.RemoteInbounds[len(m.RemoteInbounds)-1]); err != nil {
 					return err
 				}
 			}
 			iNdEx = postIndex
 		case 6:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field RemoteOutbound", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field RemoteOutbounds", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -3233,15 +3233,15 @@ func (m *SendMetricsRequest) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.RemoteOutbound = append(m.RemoteOutbound, &models.RemoteOutboundRtp{})
-			if unmarshal, ok := interface{}(m.RemoteOutbound[len(m.RemoteOutbound)-1]).(interface {
+			m.RemoteOutbounds = append(m.RemoteOutbounds, &models.RemoteOutboundRtp{})
+			if unmarshal, ok := interface{}(m.RemoteOutbounds[len(m.RemoteOutbounds)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
 				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
 			} else {
-				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.RemoteOutbound[len(m.RemoteOutbound)-1]); err != nil {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.RemoteOutbounds[len(m.RemoteOutbounds)-1]); err != nil {
 					return err
 				}
 			}
