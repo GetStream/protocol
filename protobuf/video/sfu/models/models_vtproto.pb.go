@@ -1830,9 +1830,9 @@ func (m *RtpBase) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.Timestamp != 0 {
+	if m.TimestampMs != 0 {
 		i -= 8
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.Timestamp))))
+		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.TimestampMs))))
 		i--
 		dAtA[i] = 0x19
 	}
@@ -1881,17 +1881,16 @@ func (m *InboundRtp) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.DecodeTime != 0 {
-		i -= 8
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.DecodeTime))))
+	if m.MinDimensionPx != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.MinDimensionPx))
 		i--
 		dAtA[i] = 0x1
 		i--
-		dAtA[i] = 0xb9
+		dAtA[i] = 0xb8
 	}
-	if m.JitterVideo != 0 {
+	if m.AvgDecodeTimeSeconds != 0 {
 		i -= 8
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.JitterVideo))))
+		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.AvgDecodeTimeSeconds))))
 		i--
 		dAtA[i] = 0x1
 		i--
@@ -1913,15 +1912,9 @@ func (m *InboundRtp) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0xa1
 	}
-	if m.JitterAudio != 0 {
+	if m.ConcealmentPercent != 0 {
 		i -= 8
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.JitterAudio))))
-		i--
-		dAtA[i] = 0x61
-	}
-	if m.ConcealmentPercentage != 0 {
-		i -= 8
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.ConcealmentPercentage))))
+		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.ConcealmentPercent))))
 		i--
 		dAtA[i] = 0x59
 	}
@@ -1929,6 +1922,28 @@ func (m *InboundRtp) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i = encodeVarint(dAtA, i, uint64(m.ConcealmentEvents))
 		i--
 		dAtA[i] = 0x50
+	}
+	if m.PacketLossPercent != 0 {
+		i -= 8
+		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.PacketLossPercent))))
+		i--
+		dAtA[i] = 0x29
+	}
+	if m.PacketsLost != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.PacketsLost))
+		i--
+		dAtA[i] = 0x20
+	}
+	if m.PacketsReceived != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.PacketsReceived))
+		i--
+		dAtA[i] = 0x18
+	}
+	if m.JitterSeconds != 0 {
+		i -= 8
+		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.JitterSeconds))))
+		i--
+		dAtA[i] = 0x11
 	}
 	if m.Base != nil {
 		size, err := m.Base.MarshalToSizedBufferVT(dAtA[:i])
@@ -1973,21 +1988,28 @@ func (m *OutboundRtp) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.EncodeTime != 0 {
+	if m.MinDimensionPx != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.MinDimensionPx))
+		i--
+		dAtA[i] = 0x68
+	}
+	if m.BitrateBps != 0 {
 		i -= 8
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.EncodeTime))))
+		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.BitrateBps))))
 		i--
-		dAtA[i] = 0x1
+		dAtA[i] = 0x61
+	}
+	if m.AvgEncodeTimeSeconds != 0 {
+		i -= 8
+		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.AvgEncodeTimeSeconds))))
 		i--
-		dAtA[i] = 0xa9
+		dAtA[i] = 0x59
 	}
 	if m.Fps != 0 {
 		i -= 8
 		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.Fps))))
 		i--
-		dAtA[i] = 0x1
-		i--
-		dAtA[i] = 0xa1
+		dAtA[i] = 0x51
 	}
 	if m.Base != nil {
 		size, err := m.Base.MarshalToSizedBufferVT(dAtA[:i])
@@ -2032,15 +2054,15 @@ func (m *RemoteInboundRtp) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.RoundTripTime != 0 {
+	if m.RoundTripTimeS != 0 {
 		i -= 8
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.RoundTripTime))))
+		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.RoundTripTimeS))))
 		i--
 		dAtA[i] = 0x19
 	}
-	if m.Jitter != 0 {
+	if m.JitterSeconds != 0 {
 		i -= 8
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.Jitter))))
+		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.JitterSeconds))))
 		i--
 		dAtA[i] = 0x11
 	}
@@ -2087,15 +2109,15 @@ func (m *RemoteOutboundRtp) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.RoundTripTime != 0 {
+	if m.RoundTripTimeS != 0 {
 		i -= 8
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.RoundTripTime))))
+		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.RoundTripTimeS))))
 		i--
 		dAtA[i] = 0x19
 	}
-	if m.Jitter != 0 {
+	if m.JitterSeconds != 0 {
 		i -= 8
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.Jitter))))
+		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.JitterSeconds))))
 		i--
 		dAtA[i] = 0x11
 	}
@@ -2895,7 +2917,7 @@ func (m *RtpBase) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
 	}
-	if m.Timestamp != 0 {
+	if m.TimestampMs != 0 {
 		n += 9
 	}
 	if m.unknownFields != nil {
@@ -2914,13 +2936,22 @@ func (m *InboundRtp) SizeVT() (n int) {
 		l = m.Base.SizeVT()
 		n += 1 + l + sov(uint64(l))
 	}
+	if m.JitterSeconds != 0 {
+		n += 9
+	}
+	if m.PacketsReceived != 0 {
+		n += 1 + sov(uint64(m.PacketsReceived))
+	}
+	if m.PacketsLost != 0 {
+		n += 1 + sov(uint64(m.PacketsLost))
+	}
+	if m.PacketLossPercent != 0 {
+		n += 9
+	}
 	if m.ConcealmentEvents != 0 {
 		n += 1 + sov(uint64(m.ConcealmentEvents))
 	}
-	if m.ConcealmentPercentage != 0 {
-		n += 9
-	}
-	if m.JitterAudio != 0 {
+	if m.ConcealmentPercent != 0 {
 		n += 9
 	}
 	if m.Fps != 0 {
@@ -2929,11 +2960,11 @@ func (m *InboundRtp) SizeVT() (n int) {
 	if m.FreezeDurationSeconds != 0 {
 		n += 10
 	}
-	if m.JitterVideo != 0 {
+	if m.AvgDecodeTimeSeconds != 0 {
 		n += 10
 	}
-	if m.DecodeTime != 0 {
-		n += 10
+	if m.MinDimensionPx != 0 {
+		n += 2 + sov(uint64(m.MinDimensionPx))
 	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
@@ -2952,10 +2983,16 @@ func (m *OutboundRtp) SizeVT() (n int) {
 		n += 1 + l + sov(uint64(l))
 	}
 	if m.Fps != 0 {
-		n += 10
+		n += 9
 	}
-	if m.EncodeTime != 0 {
-		n += 10
+	if m.AvgEncodeTimeSeconds != 0 {
+		n += 9
+	}
+	if m.BitrateBps != 0 {
+		n += 9
+	}
+	if m.MinDimensionPx != 0 {
+		n += 1 + sov(uint64(m.MinDimensionPx))
 	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
@@ -2973,10 +3010,10 @@ func (m *RemoteInboundRtp) SizeVT() (n int) {
 		l = m.Base.SizeVT()
 		n += 1 + l + sov(uint64(l))
 	}
-	if m.Jitter != 0 {
+	if m.JitterSeconds != 0 {
 		n += 9
 	}
-	if m.RoundTripTime != 0 {
+	if m.RoundTripTimeS != 0 {
 		n += 9
 	}
 	if m.unknownFields != nil {
@@ -2995,10 +3032,10 @@ func (m *RemoteOutboundRtp) SizeVT() (n int) {
 		l = m.Base.SizeVT()
 		n += 1 + l + sov(uint64(l))
 	}
-	if m.Jitter != 0 {
+	if m.JitterSeconds != 0 {
 		n += 9
 	}
-	if m.RoundTripTime != 0 {
+	if m.RoundTripTimeS != 0 {
 		n += 9
 	}
 	if m.unknownFields != nil {
@@ -7468,7 +7505,7 @@ func (m *RtpBase) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 3:
 			if wireType != 1 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Timestamp", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field TimestampMs", wireType)
 			}
 			var v uint64
 			if (iNdEx + 8) > l {
@@ -7476,7 +7513,7 @@ func (m *RtpBase) UnmarshalVT(dAtA []byte) error {
 			}
 			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
-			m.Timestamp = float64(math.Float64frombits(v))
+			m.TimestampMs = float64(math.Float64frombits(v))
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])
@@ -7564,6 +7601,66 @@ func (m *InboundRtp) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		case 2:
+			if wireType != 1 {
+				return fmt.Errorf("proto: wrong wireType = %d for field JitterSeconds", wireType)
+			}
+			var v uint64
+			if (iNdEx + 8) > l {
+				return io.ErrUnexpectedEOF
+			}
+			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
+			iNdEx += 8
+			m.JitterSeconds = float64(math.Float64frombits(v))
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PacketsReceived", wireType)
+			}
+			m.PacketsReceived = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.PacketsReceived |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PacketsLost", wireType)
+			}
+			m.PacketsLost = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.PacketsLost |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 5:
+			if wireType != 1 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PacketLossPercent", wireType)
+			}
+			var v uint64
+			if (iNdEx + 8) > l {
+				return io.ErrUnexpectedEOF
+			}
+			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
+			iNdEx += 8
+			m.PacketLossPercent = float64(math.Float64frombits(v))
 		case 10:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field ConcealmentEvents", wireType)
@@ -7585,7 +7682,7 @@ func (m *InboundRtp) UnmarshalVT(dAtA []byte) error {
 			}
 		case 11:
 			if wireType != 1 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ConcealmentPercentage", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ConcealmentPercent", wireType)
 			}
 			var v uint64
 			if (iNdEx + 8) > l {
@@ -7593,18 +7690,7 @@ func (m *InboundRtp) UnmarshalVT(dAtA []byte) error {
 			}
 			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
-			m.ConcealmentPercentage = float64(math.Float64frombits(v))
-		case 12:
-			if wireType != 1 {
-				return fmt.Errorf("proto: wrong wireType = %d for field JitterAudio", wireType)
-			}
-			var v uint64
-			if (iNdEx + 8) > l {
-				return io.ErrUnexpectedEOF
-			}
-			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
-			iNdEx += 8
-			m.JitterAudio = float64(math.Float64frombits(v))
+			m.ConcealmentPercent = float64(math.Float64frombits(v))
 		case 20:
 			if wireType != 1 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Fps", wireType)
@@ -7629,7 +7715,7 @@ func (m *InboundRtp) UnmarshalVT(dAtA []byte) error {
 			m.FreezeDurationSeconds = float64(math.Float64frombits(v))
 		case 22:
 			if wireType != 1 {
-				return fmt.Errorf("proto: wrong wireType = %d for field JitterVideo", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field AvgDecodeTimeSeconds", wireType)
 			}
 			var v uint64
 			if (iNdEx + 8) > l {
@@ -7637,18 +7723,26 @@ func (m *InboundRtp) UnmarshalVT(dAtA []byte) error {
 			}
 			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
-			m.JitterVideo = float64(math.Float64frombits(v))
+			m.AvgDecodeTimeSeconds = float64(math.Float64frombits(v))
 		case 23:
-			if wireType != 1 {
-				return fmt.Errorf("proto: wrong wireType = %d for field DecodeTime", wireType)
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MinDimensionPx", wireType)
 			}
-			var v uint64
-			if (iNdEx + 8) > l {
-				return io.ErrUnexpectedEOF
+			m.MinDimensionPx = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.MinDimensionPx |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
 			}
-			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
-			iNdEx += 8
-			m.DecodeTime = float64(math.Float64frombits(v))
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])
@@ -7736,7 +7830,7 @@ func (m *OutboundRtp) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 20:
+		case 10:
 			if wireType != 1 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Fps", wireType)
 			}
@@ -7747,9 +7841,9 @@ func (m *OutboundRtp) UnmarshalVT(dAtA []byte) error {
 			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
 			m.Fps = float64(math.Float64frombits(v))
-		case 21:
+		case 11:
 			if wireType != 1 {
-				return fmt.Errorf("proto: wrong wireType = %d for field EncodeTime", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field AvgEncodeTimeSeconds", wireType)
 			}
 			var v uint64
 			if (iNdEx + 8) > l {
@@ -7757,7 +7851,37 @@ func (m *OutboundRtp) UnmarshalVT(dAtA []byte) error {
 			}
 			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
-			m.EncodeTime = float64(math.Float64frombits(v))
+			m.AvgEncodeTimeSeconds = float64(math.Float64frombits(v))
+		case 12:
+			if wireType != 1 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BitrateBps", wireType)
+			}
+			var v uint64
+			if (iNdEx + 8) > l {
+				return io.ErrUnexpectedEOF
+			}
+			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
+			iNdEx += 8
+			m.BitrateBps = float64(math.Float64frombits(v))
+		case 13:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MinDimensionPx", wireType)
+			}
+			m.MinDimensionPx = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.MinDimensionPx |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])
@@ -7847,7 +7971,7 @@ func (m *RemoteInboundRtp) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 1 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Jitter", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field JitterSeconds", wireType)
 			}
 			var v uint64
 			if (iNdEx + 8) > l {
@@ -7855,10 +7979,10 @@ func (m *RemoteInboundRtp) UnmarshalVT(dAtA []byte) error {
 			}
 			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
-			m.Jitter = float64(math.Float64frombits(v))
+			m.JitterSeconds = float64(math.Float64frombits(v))
 		case 3:
 			if wireType != 1 {
-				return fmt.Errorf("proto: wrong wireType = %d for field RoundTripTime", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field RoundTripTimeS", wireType)
 			}
 			var v uint64
 			if (iNdEx + 8) > l {
@@ -7866,7 +7990,7 @@ func (m *RemoteInboundRtp) UnmarshalVT(dAtA []byte) error {
 			}
 			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
-			m.RoundTripTime = float64(math.Float64frombits(v))
+			m.RoundTripTimeS = float64(math.Float64frombits(v))
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])
@@ -7956,7 +8080,7 @@ func (m *RemoteOutboundRtp) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 1 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Jitter", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field JitterSeconds", wireType)
 			}
 			var v uint64
 			if (iNdEx + 8) > l {
@@ -7964,10 +8088,10 @@ func (m *RemoteOutboundRtp) UnmarshalVT(dAtA []byte) error {
 			}
 			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
-			m.Jitter = float64(math.Float64frombits(v))
+			m.JitterSeconds = float64(math.Float64frombits(v))
 		case 3:
 			if wireType != 1 {
-				return fmt.Errorf("proto: wrong wireType = %d for field RoundTripTime", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field RoundTripTimeS", wireType)
 			}
 			var v uint64
 			if (iNdEx + 8) > l {
@@ -7975,7 +8099,7 @@ func (m *RemoteOutboundRtp) UnmarshalVT(dAtA []byte) error {
 			}
 			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
-			m.RoundTripTime = float64(math.Float64frombits(v))
+			m.RoundTripTimeS = float64(math.Float64frombits(v))
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])
