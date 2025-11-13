@@ -456,3 +456,62 @@ enum ClientCapability {
   // Instructs SFU that stats will be sent to the coordinator
   CLIENT_CAPABILITY_COORDINATOR_STATS = 2;
 };
+
+
+// ===================================================================
+// BASE (shared by all RTP directions)
+// ===================================================================
+message RtpBase {
+  uint32 ssrc = 1;        // track identity
+  string kind = 2;        // "audio" or "video"
+  double timestamp = 3;   // metric collection timestamp
+}
+
+// ===================================================================
+// INBOUND (SUBSCRIBER RECEIVING MEDIA)
+// ===================================================================
+message InboundRtp {
+  RtpBase base = 1;
+
+  // -------- AUDIO METRICS --------
+  uint32 concealment_events = 10;       // audio concealment events
+  double concealment_percentage = 11;   // optional precomputed
+  double jitter_audio = 12;
+
+  // -------- VIDEO METRICS --------
+  double fps = 20;                      // inbound decoded FPS
+  double freeze_duration_seconds = 21;  // freeze duration
+  double jitter_video = 22;
+  double decode_time = 23;              // totalDecodeTime from getStats
+}
+
+// ===================================================================
+// OUTBOUND (PUBLISHER SENDING MEDIA)
+// ===================================================================
+message OutboundRtp {
+  RtpBase base = 1;
+
+  // -------- VIDEO METRICS --------
+  double fps = 20;                      // outbound encoded FPS
+  double encode_time = 21;              // totalEncodeTime from getStats
+}
+
+// ===================================================================
+// SFU FEEDBACK: REMOTE-INBOUND (Publisher receives feedback)
+// ===================================================================
+message RemoteInboundRtp {
+  RtpBase base = 1;
+
+  double jitter = 2;
+  double round_trip_time = 3;
+}
+
+// ===================================================================
+// SFU FEEDBACK: REMOTE-OUTBOUND (Subscriber receives feedback)
+// ===================================================================
+message RemoteOutboundRtp {
+  RtpBase base = 1;
+
+  double jitter = 2;
+  double round_trip_time = 3;
+}
