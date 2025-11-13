@@ -456,3 +456,66 @@ enum ClientCapability {
   // Instructs SFU that stats will be sent to the coordinator
   CLIENT_CAPABILITY_COORDINATOR_STATS = 2;
 };
+
+// ===================================================================
+// BASE (shared by all RTP directions)
+// ===================================================================
+message RtpBase {
+  uint32 ssrc         = 1; // raw stat["ssrc"]
+  string kind         = 2; // stat["kind"] ("audio","video")
+  double timestamp_ms = 3; // stat["timestamp"] in milliseconds
+}
+
+// ===================================================================
+// INBOUND (SUBSCRIBER RECEIVING MEDIA)
+// ===================================================================
+message InboundRtp {
+  RtpBase base = 1;
+
+  double jitter_seconds      = 2; // stat["jitter"]
+  uint64 packets_received    = 3; // stat["packetsReceived"]
+  uint64 packets_lost        = 4; // stat["packetsLost"]
+  double packet_loss_percent = 5; // (packets_lost / (packets_received + packets_lost)) * 100;skip if denominator <= 0 or counters decreased
+
+  // -------- AUDIO METRICS --------
+  uint32 concealment_events  = 10; // stat["concealmentEvents"]
+  double concealment_percent = 11; // (concealedSamples / totalSamplesReceived) * 100 when totalSamplesReceived >= 96_000 (≈2 s @ 48 kHz)
+
+  // -------- VIDEO METRICS --------
+  double fps                     = 20; // use delta(framesDecoded)/delta(time) with prev sample
+  double freeze_duration_seconds = 21; // stat["totalFreezesDuration"]
+  double avg_decode_time_seconds = 22; // stat["totalDecodeTime"] / max(1, stat["framesDecoded"])
+  uint32 min_dimension_px        = 23; // min(stat["frameWidth"], stat["frameHeight"]) for video-like tracks
+}
+
+// ===================================================================
+// OUTBOUND (PUBLISHER SENDING MEDIA)
+// ===================================================================
+message OutboundRtp {
+  RtpBase base = 1;
+
+  double fps                     = 10; // delta(framesEncoded)/delta(time) if missing
+  double avg_encode_time_seconds = 11; // stat["totalEncodeTime"] / max(1, stat["framesEncoded"])
+  double bitrate_bps             = 12; // delta(bytesSent)*8 / delta(timeSeconds); requires prev bytes/timestamp; ignore if delta<=0
+  uint32 min_dimension_px        = 13; // min(stat["frameWidth"], stat["frameHeight"])
+}
+
+// ===================================================================
+// SFU FEEDBACK: REMOTE-INBOUND (Publisher receives feedback)
+// ===================================================================
+message RemoteInboundRtp {
+  RtpBase base = 1;
+
+  double jitter_seconds    = 2; // stat["jitter"]
+  double round_trip_time_s = 3; // stat["roundTripTime"]
+}
+
+// ===================================================================
+// SFU FEEDBACK: REMOTE-OUTBOUND (Subscriber receives feedback)
+// ===================================================================
+message RemoteOutboundRtp {
+  RtpBase base = 1;
+
+  double jitter_seconds    = 2; // stat["jitter"] if provided
+  double round_trip_time_s = 3; // stat["roundTripTime"]
+}
