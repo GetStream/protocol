@@ -606,7 +606,7 @@ components:
           type: string
           x-stream-index: "002.001"
         type:
-          default: export.channels.error
+          default: export.bulk_image_moderation.error
           type: string
           x-stream-index: "003.002"
       required:
@@ -1266,12 +1266,28 @@ components:
       - updated_at
       - recording_external_storage
       type: object
+    CampaignChannelMember:
+      nullable: true
+      properties:
+        channel_role:
+          type: string
+          x-stream-index: "002"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "003"
+        user_id:
+          type: string
+          x-stream-index: "001"
+      required:
+      - user_id
+      type: object
     CampaignChannelTemplate:
       properties:
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "005"
+          x-stream-index: "006"
         id:
           type: string
           x-stream-index: "002"
@@ -1281,10 +1297,16 @@ components:
           maximum: 1000
           type: array
           x-stream-index: "003"
+        members_template:
+          items:
+            $ref: '#/components/schemas/CampaignChannelMember'
+          maximum: 1000
+          type: array
+          x-stream-index: "004"
         team:
           maxLength: 1000
           type: string
-          x-stream-index: "004"
+          x-stream-index: "005"
         type:
           maxLength: 64
           type: string
@@ -2200,6 +2222,11 @@ components:
         disabled:
           type: boolean
           x-stream-index: "014"
+        filter_tags:
+          items:
+            type: string
+          type: array
+          x-stream-index: "026"
         frozen:
           description: Freeze or unfreeze the channel
           title: Frozen
@@ -6346,7 +6373,7 @@ components:
         reactions:
           description: List of reactions
           items:
-            $ref: '#/components/schemas/Reaction'
+            $ref: '#/components/schemas/ReactionResponse'
           title: Reactions
           type: array
           x-stream-index: "001"
@@ -7171,17 +7198,24 @@ components:
           title: Message ID
           type: string
           x-stream-index: "001"
+        message_timestamp:
+          description: Timestamp of the message from where the channel is marked unread
+          format: date-time
+          title: Message Timestamp
+          type: string
+          x-stream-index: "004"
         thread_id:
-          description: Mark a thread unread, specify both the thread and message id
+          description: Mark a thread unread, specify one of the thread, message timestamp,
+            or message id
           title: Thread ID
           type: string
           x-stream-index: "003"
         user:
           $ref: '#/components/schemas/UserRequest'
-          x-stream-index: "004.002"
+          x-stream-index: "005.002"
         user_id:
           type: string
-          x-stream-index: "004.001"
+          x-stream-index: "005.001"
       type: object
     MemberAddedEvent:
       properties:
@@ -16802,7 +16836,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v200.1.0
+  version: v202.1.2
 openapi: 3.0.3
 paths:
   /app:
@@ -22255,6 +22289,13 @@ paths:
       description: |
         Fetch unread counts for a single user
       operationId: UnreadCounts
+      parameters:
+      - in: query
+        name: user_id
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
       responses:
         "200":
           content:
