@@ -606,7 +606,7 @@ components:
           type: string
           x-stream-index: "002.001"
         type:
-          default: export.channels.error
+          default: export.users.error
           type: string
           x-stream-index: "003.002"
       required:
@@ -1266,12 +1266,28 @@ components:
       - updated_at
       - recording_external_storage
       type: object
+    CampaignChannelMember:
+      nullable: true
+      properties:
+        channel_role:
+          type: string
+          x-stream-index: "002"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "003"
+        user_id:
+          type: string
+          x-stream-index: "001"
+      required:
+      - user_id
+      type: object
     CampaignChannelTemplate:
       properties:
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "005"
+          x-stream-index: "006"
         id:
           type: string
           x-stream-index: "002"
@@ -1281,10 +1297,16 @@ components:
           maximum: 1000
           type: array
           x-stream-index: "003"
+        members_template:
+          items:
+            $ref: '#/components/schemas/CampaignChannelMember'
+          maximum: 1000
+          type: array
+          x-stream-index: "004"
         team:
           maxLength: 1000
           type: string
-          x-stream-index: "004"
+          x-stream-index: "005"
         type:
           maxLength: 64
           type: string
@@ -1340,6 +1362,9 @@ components:
         poll_id:
           type: string
           x-stream-index: "003"
+        searchable:
+          type: boolean
+          x-stream-index: "005"
         text:
           type: string
           x-stream-index: "001"
@@ -1348,6 +1373,7 @@ components:
       - attachments
       - poll_id
       - custom
+      - searchable
       type: object
     CampaignResponse:
       properties:
@@ -1652,161 +1678,73 @@ components:
       - auto_translation_language
       type: object
     ChannelConfig:
+      description: Channel configuration overrides
       properties:
-        allowed_flag_reasons:
-          items:
-            type: string
-          type: array
-          x-stream-index: "001.028"
-        automod:
-          enum:
-          - disabled
-          - simple
-          - AI
-          type: string
-          x-stream-index: "001.023"
-        automod_behavior:
-          enum:
-          - flag
-          - block
-          - shadow_block
-          type: string
-          x-stream-index: "001.024"
-        automod_thresholds:
-          $ref: '#/components/schemas/Thresholds'
-          x-stream-index: "001.029"
         blocklist:
           type: string
-          x-stream-index: "001.025"
+          x-stream-index: "008"
         blocklist_behavior:
           enum:
           - flag
           - block
-          - shadow_block
           type: string
-          x-stream-index: "001.026"
-        blocklists:
-          items:
-            $ref: '#/components/schemas/BlockListOptions'
-          type: array
-          x-stream-index: "001.027"
+          x-stream-index: "009"
         commands:
+          description: List of commands that channel supports
           items:
             type: string
+          title: Commands
           type: array
-          x-stream-index: "003"
-        connect_events:
-          type: boolean
-          x-stream-index: "001.004"
-        count_messages:
-          type: boolean
-          x-stream-index: "001.020"
-        created_at:
-          format: date-time
-          type: string
-          x-stream-index: "002.003"
-        custom_events:
-          type: boolean
-          x-stream-index: "001.013"
-        delivery_events:
-          type: boolean
-          x-stream-index: "001.005"
-        mark_messages_pending:
-          type: boolean
-          x-stream-index: "001.016"
+          x-stream-index: "011"
+        grants:
+          additionalProperties:
+            items:
+              type: string
+            type: array
+          title: Grants
+          type: object
+          x-stream-index: "010"
+          x-stream-map:
+            description: List of grants modifiers that apply to a role
+            key: role
+            title: Grants
         max_message_length:
+          description: Overrides max message length
           format: int32
           maximum: 20000
+          title: Max Message Length
           type: integer
-          x-stream-index: "001.022"
-        mutes:
-          type: boolean
-          x-stream-index: "001.010"
-        name:
-          type: string
-          x-stream-index: "001.001"
-        partition_size:
-          format: int32
-          type: integer
-          x-stream-index: "001.030"
-        partition_ttl:
-          type: integer
-          x-stream-index: "001.031"
-        polls:
-          type: boolean
-          x-stream-index: "001.017"
-        push_notifications:
-          type: boolean
-          x-stream-index: "001.014"
+          x-stream-index: "007"
         quotes:
+          description: Enables message quotes
+          title: Quotes
           type: boolean
-          x-stream-index: "001.009"
+          x-stream-index: "004"
         reactions:
+          description: Enables or disables reactions
+          title: Reactions
           type: boolean
-          x-stream-index: "001.007"
-        read_events:
-          type: boolean
-          x-stream-index: "001.003"
-        reminders:
-          type: boolean
-          x-stream-index: "001.015"
+          x-stream-index: "002"
         replies:
+          description: Enables message replies (threads)
+          title: Replies
           type: boolean
-          x-stream-index: "001.008"
-        search:
-          type: boolean
-          x-stream-index: "001.006"
-        shared_locations:
-          type: boolean
-          x-stream-index: "001.019"
-        skip_last_msg_update_for_system_msgs:
-          type: boolean
-          x-stream-index: "001.032"
+          x-stream-index: "003"
         typing_events:
+          description: Enables or disables typing events
+          title: Typing events
           type: boolean
-          x-stream-index: "001.002"
-        updated_at:
-          format: date-time
-          type: string
-          x-stream-index: "002.004"
+          x-stream-index: "001"
         uploads:
+          description: Enables or disables file uploads
+          title: Uploads
           type: boolean
-          x-stream-index: "001.011"
+          x-stream-index: "005"
         url_enrichment:
+          description: Enables or disables URL enrichment
+          title: URL Enrichment
           type: boolean
-          x-stream-index: "001.012"
-        user_message_reminders:
-          type: boolean
-          x-stream-index: "001.018"
-      required:
-      - name
-      - typing_events
-      - read_events
-      - connect_events
-      - delivery_events
-      - search
-      - reactions
-      - replies
-      - quotes
-      - mutes
-      - uploads
-      - url_enrichment
-      - custom_events
-      - push_notifications
-      - reminders
-      - mark_messages_pending
-      - polls
-      - user_message_reminders
-      - shared_locations
-      - count_messages
-      - message_retention
-      - max_message_length
-      - automod
-      - automod_behavior
-      - skip_last_msg_update_for_system_msgs
-      - created_at
-      - updated_at
-      - commands
+          x-stream-index: "006"
       type: object
     ChannelConfigWithInfo:
       properties:
@@ -2200,6 +2138,11 @@ components:
         disabled:
           type: boolean
           x-stream-index: "014"
+        filter_tags:
+          items:
+            type: string
+          type: array
+          x-stream-index: "026"
         frozen:
           description: Freeze or unfreeze the channel
           title: Frozen
@@ -2226,6 +2169,46 @@ components:
           type: string
           x-stream-index: "010"
       type: object
+    ChannelInputRequest:
+      properties:
+        auto_translation_enabled:
+          type: boolean
+          x-stream-index: "002"
+        auto_translation_language:
+          type: string
+          x-stream-index: "003"
+        config_overrides:
+          $ref: '#/components/schemas/ConfigOverrides'
+          x-stream-index: "009"
+        created_by:
+          $ref: '#/components/schemas/User'
+          x-stream-index: "010"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "006"
+        disabled:
+          type: boolean
+          x-stream-index: "005"
+        frozen:
+          type: boolean
+          x-stream-index: "004"
+        invites:
+          items:
+            $ref: '#/components/schemas/ChannelMember'
+          maximum: 100
+          type: array
+          x-stream-index: "007"
+        members:
+          items:
+            $ref: '#/components/schemas/ChannelMember'
+          maximum: 100
+          type: array
+          x-stream-index: "008"
+        team:
+          type: string
+          x-stream-index: "001"
+      type: object
     ChannelMember:
       nullable: true
       properties:
@@ -2242,13 +2225,13 @@ components:
           x-stream-index: "016"
         blocked:
           type: boolean
-          x-stream-index: "029"
+          x-stream-index: "031"
         channel:
           $ref: '#/components/schemas/DenormalizedChannelFields'
-          x-stream-index: "027"
+          x-stream-index: "029"
         channel_role:
           type: string
-          x-stream-index: "024"
+          x-stream-index: "026"
         created_at:
           format: date-time
           type: string
@@ -2265,10 +2248,10 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "030"
+          x-stream-index: "032"
         hidden:
           type: boolean
-          x-stream-index: "028"
+          x-stream-index: "030"
         invite_accepted_at:
           format: date-time
           type: string
@@ -2288,7 +2271,7 @@ components:
           x-stream-index: "007"
         notifications_muted:
           type: boolean
-          x-stream-index: "026"
+          x-stream-index: "028"
         pinned_at:
           format: date-time
           type: string
@@ -2309,15 +2292,6 @@ components:
         user_id:
           type: string
           x-stream-index: "004"
-      required:
-      - custom
-      - created_at
-      - updated_at
-      - banned
-      - shadow_banned
-      - is_global_banned
-      - channel_role
-      - notifications_muted
       type: object
     ChannelMemberLookup:
       nullable: true
@@ -2498,6 +2472,17 @@ components:
       title: ChannelOwnCapability
       type: string
     ChannelPushPreferences:
+      nullable: true
+      properties:
+        chat_level:
+          type: string
+          x-stream-index: "001"
+        disabled_until:
+          format: date-time
+          type: string
+          x-stream-index: "002"
+      type: object
+    ChannelPushPreferencesResponse:
       properties:
         chat_level:
           type: string
@@ -2723,7 +2708,7 @@ components:
           type: array
           x-stream-index: "001.003"
         push_preferences:
-          $ref: '#/components/schemas/ChannelPushPreferences'
+          $ref: '#/components/schemas/ChannelPushPreferencesResponse'
           x-stream-index: "001.009"
         read:
           items:
@@ -2812,7 +2797,7 @@ components:
           x-stream-docs-page-id: pinned_messages
           x-stream-index: "003"
         push_preferences:
-          $ref: '#/components/schemas/ChannelPushPreferences'
+          $ref: '#/components/schemas/ChannelPushPreferencesResponse'
           x-stream-index: "009"
         read:
           description: List of read states
@@ -3522,9 +3507,6 @@ components:
         user_message_reminders:
           type: boolean
           x-stream-index: "012"
-      required:
-      - grants
-      - commands
       type: object
     CreateBlockListRequest:
       description: Block list contains restricted words
@@ -3552,6 +3534,7 @@ components:
           - domain
           - domain_allowlist
           - email
+          - email_allowlist
           - word
           title: Type
           type: string
@@ -4692,13 +4675,20 @@ components:
       - task_id
       - duration
       type: object
+    DeliveredMessagePayload:
+      properties:
+        cid:
+          type: string
+          x-stream-index: "001"
+        id:
+          type: string
+          x-stream-index: "002"
+      type: object
     DeliveryReceipts:
       properties:
         enabled:
           type: boolean
           x-stream-index: "001"
-      required:
-      - enabled
       type: object
     DeliveryReceiptsResponse:
       properties:
@@ -5246,6 +5236,29 @@ components:
           type: string
           x-stream-index: "003"
       type: object
+    FeedsPreferencesResponse:
+      properties:
+        comment:
+          type: string
+          x-stream-index: "002"
+        comment_reaction:
+          type: string
+          x-stream-index: "004"
+        custom_activity_types:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "006"
+        follow:
+          type: string
+          x-stream-index: "001"
+        mention:
+          type: string
+          x-stream-index: "005"
+        reaction:
+          type: string
+          x-stream-index: "003"
+      type: object
     Field:
       nullable: true
       properties:
@@ -5500,6 +5513,26 @@ components:
           type: string
           x-stream-index: "001"
       type: object
+    FlagMessageResponse:
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "003.001"
+        flag:
+          $ref: '#/components/schemas/FlagResponse'
+          description: Flag object
+          title: Flag
+          x-stream-index: "001"
+        review_queue_item_id:
+          description: ID of review queue item if moderation v2 is enabled
+          title: Review Queue Item ID
+          type: string
+          x-stream-index: "002"
+      required:
+      - review_queue_item_id
+      - duration
+      type: object
     FlagRequest:
       nullable: true
       properties:
@@ -5529,24 +5562,59 @@ components:
           x-stream-index: "005.001"
       type: object
     FlagResponse:
-      description: Basic response information
-      nullable: true
       properties:
-        duration:
-          description: Duration of the request in milliseconds
-          title: Duration
+        approved_at:
+          format: date-time
           type: string
-          x-stream-index: "003.001"
-        flag:
-          $ref: '#/components/schemas/Flag'
+          x-stream-index: "010"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "006"
+        created_by_automod:
+          type: boolean
           x-stream-index: "001"
-        review_queue_item_id:
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "014"
+        details:
+          $ref: '#/components/schemas/FlagDetails'
+          x-stream-index: "013"
+        reason:
           type: string
+          x-stream-index: "012"
+        rejected_at:
+          format: date-time
+          type: string
+          x-stream-index: "011"
+        reviewed_at:
+          format: date-time
+          type: string
+          x-stream-index: "008"
+        reviewed_by:
+          type: string
+          x-stream-index: "009"
+        target_message:
+          $ref: '#/components/schemas/MessageResponse'
+          x-stream-index: "004"
+        target_message_id:
+          type: string
+          x-stream-index: "003"
+        target_user:
+          $ref: '#/components/schemas/UserResponse'
+          x-stream-index: "005"
+        updated_at:
+          format: date-time
+          type: string
+          x-stream-index: "007"
+        user:
+          $ref: '#/components/schemas/UserResponse'
           x-stream-index: "002"
       required:
-      - review_queue_item_id
-      - duration
-      title: Response
+      - created_by_automod
+      - created_at
+      - updated_at
       type: object
     FlagUpdatedEvent:
       nullable: true
@@ -6346,7 +6414,7 @@ components:
         reactions:
           description: List of reactions
           items:
-            $ref: '#/components/schemas/Reaction'
+            $ref: '#/components/schemas/ReactionResponse'
           title: Reactions
           type: array
           x-stream-index: "001"
@@ -7127,6 +7195,28 @@ components:
           type: string
           x-stream-index: "002.001"
       type: object
+    MarkDeliveredRequest:
+      nullable: true
+      properties:
+        latest_delivered_messages:
+          items:
+            $ref: '#/components/schemas/DeliveredMessagePayload'
+          type: array
+          x-stream-index: "001"
+      type: object
+    MarkDeliveredResponse:
+      description: Basic response information
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      title: Response
+      type: object
     MarkReadRequest:
       nullable: true
       properties:
@@ -7171,17 +7261,24 @@ components:
           title: Message ID
           type: string
           x-stream-index: "001"
+        message_timestamp:
+          description: Timestamp of the message from where the channel is marked unread
+          format: date-time
+          title: Message Timestamp
+          type: string
+          x-stream-index: "004"
         thread_id:
-          description: Mark a thread unread, specify both the thread and message id
+          description: Mark a thread unread, specify one of the thread, message timestamp,
+            or message id
           title: Thread ID
           type: string
           x-stream-index: "003"
         user:
           $ref: '#/components/schemas/UserRequest'
-          x-stream-index: "004.002"
+          x-stream-index: "005.002"
         user_id:
           type: string
-          x-stream-index: "004.001"
+          x-stream-index: "005.001"
       type: object
     MemberAddedEvent:
       properties:
@@ -9009,14 +9106,14 @@ components:
           type: string
           x-stream-index: "005.001"
         mute:
-          $ref: '#/components/schemas/UserMute'
+          $ref: '#/components/schemas/UserMuteResponse'
           description: Object with user mute (if one user was muted)
           title: Mute
           x-stream-index: "001"
         mutes:
           description: Object with mutes (if multiple users were muted)
           items:
-            $ref: '#/components/schemas/UserMute'
+            $ref: '#/components/schemas/UserMuteResponse'
           title: Mutes
           type: array
           x-stream-index: "002"
@@ -9026,7 +9123,7 @@ components:
           type: array
           x-stream-index: "004"
         own_user:
-          $ref: '#/components/schemas/OwnUser'
+          $ref: '#/components/schemas/OwnUserResponse'
           description: Authorized user object with fresh mutes information
           title: Own user
           x-stream-index: "003"
@@ -9183,7 +9280,7 @@ components:
         avg_response_time:
           format: int32
           type: integer
-          x-stream-index: "046"
+          x-stream-index: "047"
         banned:
           type: boolean
           x-stream-index: "016"
@@ -9191,7 +9288,7 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "045"
+          x-stream-index: "046"
         channel_mutes:
           items:
             $ref: '#/components/schemas/ChannelMute'
@@ -9388,7 +9485,7 @@ components:
           $ref: '#/components/schemas/PrivacySettingsResponse'
           x-stream-index: "003"
         push_preferences:
-          $ref: '#/components/schemas/PushPreferences'
+          $ref: '#/components/schemas/PushPreferencesResponse'
           x-stream-index: "002"
         revoke_tokens_issued_before:
           format: date-time
@@ -10295,6 +10392,25 @@ components:
           x-stream-index: "003"
         feeds_preferences:
           $ref: '#/components/schemas/FeedsPreferences'
+          x-stream-index: "004"
+      type: object
+    PushPreferencesResponse:
+      properties:
+        call_level:
+          type: string
+          x-stream-index: "002"
+        chat_level:
+          type: string
+          x-stream-index: "001"
+        disabled_until:
+          format: date-time
+          type: string
+          x-stream-index: "005"
+        feeds_level:
+          type: string
+          x-stream-index: "003"
+        feeds_preferences:
+          $ref: '#/components/schemas/FeedsPreferencesResponse'
           x-stream-index: "004"
       type: object
     PushProvider:
@@ -11848,8 +11964,6 @@ components:
         enabled:
           type: boolean
           x-stream-index: "001"
-      required:
-      - enabled
       type: object
     ReadReceiptsResponse:
       properties:
@@ -12104,7 +12218,7 @@ components:
           type: string
           x-stream-index: "008"
         message:
-          $ref: '#/components/schemas/Message'
+          $ref: '#/components/schemas/MessageResponse'
           x-stream-index: "005"
         message_id:
           type: string
@@ -12118,7 +12232,7 @@ components:
           type: string
           x-stream-index: "009"
         user:
-          $ref: '#/components/schemas/User'
+          $ref: '#/components/schemas/UserResponse'
           x-stream-index: "007"
         user_id:
           type: string
@@ -12900,55 +13014,28 @@ components:
       type: object
     SharedLocation:
       properties:
-        channel:
-          $ref: '#/components/schemas/Channel'
-          x-stream-index: "013"
-        channel_cid:
-          type: string
-          x-stream-index: "003"
-        created_at:
-          format: date-time
-          type: string
-          x-stream-index: "010"
         created_by_device_id:
           type: string
-          x-stream-index: "008"
+          x-stream-index: "003"
         end_at:
           format: date-time
           type: string
-          x-stream-index: "009"
+          x-stream-index: "004"
         latitude:
           format: float
           maximum: 90
           minimum: 1.8446744073709552e+19
           type: number
-          x-stream-index: "006"
+          x-stream-index: "001"
         longitude:
           format: float
           maximum: 180
           minimum: 1.8446744073709552e+19
           type: number
-          x-stream-index: "007"
-        message:
-          $ref: '#/components/schemas/Message'
-          x-stream-index: "012"
-        message_id:
-          type: string
-          x-stream-index: "004"
-        updated_at:
-          format: date-time
-          type: string
-          x-stream-index: "011"
-        user_id:
-          type: string
-          x-stream-index: "005"
+          x-stream-index: "002"
       required:
-      - channel_cid
-      - message_id
-      - user_id
-      - created_by_device_id
-      - created_at
-      - updated_at
+      - latitude
+      - longitude
       type: object
     SharedLocationResponse:
       nullable: true
@@ -13762,8 +13849,6 @@ components:
         enabled:
           type: boolean
           x-stream-index: "001"
-      required:
-      - enabled
       type: object
     TypingIndicatorsResponse:
       properties:
@@ -13844,27 +13929,35 @@ components:
       nullable: true
       properties:
         target_ids:
-          description: User IDs to mute (if multiple users)
+          description: User IDs to unmute (if multiple users)
           items:
             type: string
           maximum: 1000
           title: Target IDs
           type: array
-          x-stream-index: "001.002"
-        timeout:
-          description: Duration of mute in minutes
-          minimum: 0
-          title: Timeout
-          type: integer
-          x-stream-index: "001.003"
+          x-stream-index: "002"
         user:
           $ref: '#/components/schemas/UserRequest'
-          x-stream-index: "002.002"
+          x-stream-index: "003.002"
         user_id:
           type: string
+          x-stream-index: "003.001"
+      type: object
+    UnmuteUserResponse:
+      nullable: true
+      properties:
+        duration:
+          type: string
           x-stream-index: "002.001"
+        non_existing_users:
+          description: List of user IDs that don't exist
+          items:
+            type: string
+          title: Non-existing users
+          type: array
+          x-stream-index: "001"
       required:
-      - timeout
+      - duration
       type: object
     UnreadCountsBatchRequest:
       nullable: true
@@ -14304,7 +14397,7 @@ components:
           type: integer
           x-stream-index: "007"
         data:
-          $ref: '#/components/schemas/ChannelInput'
+          $ref: '#/components/schemas/ChannelInputRequest'
           x-stream-index: "016.001"
         demote_moderators:
           description: List of user IDs to take away moderators status from
@@ -15490,11 +15583,6 @@ components:
       type: object
     User:
       properties:
-        avg_response_time:
-          format: int32
-          readOnly: true
-          type: integer
-          x-stream-index: "046"
         ban_expires:
           format: date-time
           type: string
@@ -15502,25 +15590,10 @@ components:
         banned:
           type: boolean
           x-stream-index: "016"
-        created_at:
-          format: date-time
-          readOnly: true
-          type: string
-          x-stream-index: "008"
         custom:
           additionalProperties: {}
           type: object
           x-stream-index: "006"
-        deactivated_at:
-          format: date-time
-          readOnly: true
-          type: string
-          x-stream-index: "014"
-        deleted_at:
-          format: date-time
-          readOnly: true
-          type: string
-          x-stream-index: "013"
         id:
           type: string
           x-stream-index: "003"
@@ -15530,27 +15603,13 @@ components:
         language:
           type: string
           x-stream-index: "035"
-        last_active:
-          format: date-time
-          readOnly: true
-          type: string
-          x-stream-index: "011"
-        last_engaged_at:
-          format: date-time
-          readOnly: true
-          type: string
-          x-stream-index: "012"
-        online:
-          readOnly: true
-          type: boolean
-          x-stream-index: "022"
         privacy_settings:
           $ref: '#/components/schemas/PrivacySettings'
           x-stream-index: "026"
         revoke_tokens_issued_before:
           format: date-time
           type: string
-          x-stream-index: "042"
+          x-stream-index: "043"
         role:
           type: string
           x-stream-index: "004"
@@ -15564,18 +15623,8 @@ components:
             type: string
           type: object
           x-stream-index: "005"
-        updated_at:
-          format: date-time
-          readOnly: true
-          type: string
-          x-stream-index: "009"
       required:
       - id
-      - role
-      - teams_role
-      - custom
-      - banned
-      - online
       type: object
     UserBannedEvent:
       properties:
@@ -16802,7 +16851,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v200.1.0
+  version: v205.2.0
 openapi: 3.0.3
 paths:
   /app:
@@ -18379,6 +18428,46 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Deletes channels asynchronously
+      tags:
+      - product:chat
+  /channels/delivered:
+    post:
+      description: |
+        Mark the status of a channel message delivered.
+      operationId: MarkDelivered
+      parameters:
+      - in: query
+        name: user_id
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "002.001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarkDeliveredRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarkDeliveredResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Mark channel message delivery status
       tags:
       - product:chat
   /channels/read:
@@ -20541,8 +20630,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FlagResponse'
-          description: Response
+                $ref: '#/components/schemas/FlagMessageResponse'
+          description: Successful response
         "400":
           content:
             application/json:
@@ -20689,8 +20778,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UnmuteResponse'
-          description: Response
+                $ref: '#/components/schemas/UnmuteUserResponse'
+          description: Successful response
         "400":
           content:
             application/json:
@@ -22255,6 +22344,13 @@ paths:
       description: |
         Fetch unread counts for a single user
       operationId: UnreadCounts
+      parameters:
+      - in: query
+        name: user_id
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
       responses:
         "200":
           content:
