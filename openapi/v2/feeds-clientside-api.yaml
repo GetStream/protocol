@@ -1097,6 +1097,11 @@ components:
           title: Search Data
           type: object
           x-stream-index: "013"
+        skip_enrich_url:
+          description: Whether to skip URL enrichment for the activity
+          title: Skip URL Enrichment
+          type: boolean
+          x-stream-index: "020"
         text:
           description: Text content of the activity
           title: Text
@@ -1639,6 +1644,11 @@ components:
           title: Search Data
           type: object
           x-stream-index: "001.013"
+        skip_enrich_url:
+          description: Whether to skip URL enrichment for the activity
+          title: Skip URL Enrichment
+          type: boolean
+          x-stream-index: "001.020"
         text:
           description: Text content of the activity
           title: Text
@@ -1821,26 +1831,29 @@ components:
           type: array
           x-stream-index: "006"
         object_id:
-          description: ID of the object to comment on
+          description: ID of the object to comment on. Required for root comments
           title: Object ID
           type: string
           x-stream-index: "002"
         object_type:
-          description: Type of the object to comment on
+          description: Type of the object to comment on. Required for root comments
           title: Object Type
           type: string
           x-stream-index: "003"
         parent_id:
-          description: ID of parent comment for replies
+          description: ID of parent comment for replies. When provided, object_id
+            and object_type are automatically inherited from the parent comment.
           title: Parent ID
           type: string
           x-stream-index: "007"
+        skip_enrich_url:
+          description: Whether to skip URL enrichment for this comment
+          title: Skip URL Enrichment
+          type: boolean
+          x-stream-index: "011"
         skip_push:
           type: boolean
           x-stream-index: "010"
-      required:
-      - object_id
-      - object_type
       title: Add Comment Request
       type: object
     AddCommentResponse:
@@ -7236,6 +7249,14 @@ components:
           title: Comment Reaction
           type: string
           x-stream-index: "004"
+        comment_reply:
+          description: Push notification preference for replies to comments
+          enum:
+          - all
+          - none
+          title: Comment Reply
+          type: string
+          x-stream-index: "005"
         custom_activity_types:
           additionalProperties:
             type: string
@@ -7243,7 +7264,7 @@ components:
             of activity type to preference (all or none)
           title: Custom Activity Types
           type: object
-          x-stream-index: "006"
+          x-stream-index: "007"
         follow:
           description: Push notification preference for new followers
           enum:
@@ -7260,7 +7281,7 @@ components:
           - none
           title: Mention
           type: string
-          x-stream-index: "005"
+          x-stream-index: "006"
         reaction:
           description: Push notification preference for reactions on user's activities
             or comments
@@ -7446,6 +7467,13 @@ components:
           x-stream-index: "001"
       required:
       - llm_labels
+      type: object
+    FlagCountRuleParameters:
+      properties:
+        threshold:
+          format: int32
+          type: integer
+          x-stream-index: "001"
       type: object
     FlagRequest:
       nullable: true
@@ -9798,6 +9826,27 @@ components:
       required:
       - mode
       type: object
+    NotificationComment:
+      properties:
+        attachments:
+          items:
+            $ref: '#/components/schemas/Attachment'
+          type: array
+          x-stream-index: "004"
+        comment:
+          type: string
+          x-stream-index: "003"
+        id:
+          type: string
+          x-stream-index: "001"
+        user_id:
+          type: string
+          x-stream-index: "002"
+      required:
+      - id
+      - user_id
+      - comment
+      type: object
     NotificationConfig:
       properties:
         deduplication_window:
@@ -9935,6 +9984,12 @@ components:
           title: Attachments
           type: array
           x-stream-index: "005"
+        comment:
+          $ref: '#/components/schemas/NotificationComment'
+          description: Information about the comment related to the notification (for
+            reactions to comments and comments on comments)
+          title: Comment
+          x-stream-index: "007"
         id:
           description: The ID of the target (activity ID or user ID)
           title: Target ID
@@ -12655,15 +12710,18 @@ components:
         content_count_rule_params:
           $ref: '#/components/schemas/ContentCountRuleParameters'
           x-stream-index: "007"
+        content_flag_count_rule_params:
+          $ref: '#/components/schemas/FlagCountRuleParameters'
+          x-stream-index: "009"
         image_content_params:
           $ref: '#/components/schemas/ImageContentParameters'
-          x-stream-index: "009"
+          x-stream-index: "011"
         image_rule_params:
           $ref: '#/components/schemas/ImageRuleParameters'
           x-stream-index: "004"
         text_content_params:
           $ref: '#/components/schemas/TextContentParameters'
-          x-stream-index: "008"
+          x-stream-index: "010"
         text_rule_params:
           $ref: '#/components/schemas/TextRuleParameters'
           x-stream-index: "003"
@@ -12672,16 +12730,19 @@ components:
           x-stream-index: "001"
         user_created_within_params:
           $ref: '#/components/schemas/UserCreatedWithinParameters'
-          x-stream-index: "011"
+          x-stream-index: "013"
         user_custom_property_params:
           $ref: '#/components/schemas/UserCustomPropertyParameters'
-          x-stream-index: "012"
+          x-stream-index: "014"
+        user_flag_count_rule_params:
+          $ref: '#/components/schemas/FlagCountRuleParameters'
+          x-stream-index: "008"
         user_rule_params:
           $ref: '#/components/schemas/UserRuleParameters'
           x-stream-index: "006"
         video_content_params:
           $ref: '#/components/schemas/VideoContentParameters'
-          x-stream-index: "010"
+          x-stream-index: "012"
         video_rule_params:
           $ref: '#/components/schemas/VideoRuleParameters'
           x-stream-index: "005"
@@ -13724,6 +13785,11 @@ components:
           title: string
           type: string
           x-stream-index: "006"
+        skip_enrich_url:
+          description: Whether to skip URL enrichment for the activity
+          title: Skip URL Enrichment
+          type: boolean
+          x-stream-index: "014"
         text:
           description: The text content of the activity
           title: string
@@ -13938,6 +14004,11 @@ components:
           title: Custom Data
           type: object
           x-stream-index: "003"
+        skip_enrich_url:
+          description: Whether to skip URL enrichment for this comment
+          title: Skip URL Enrichment
+          type: boolean
+          x-stream-index: "005"
         skip_push:
           type: boolean
           x-stream-index: "004"
@@ -15651,7 +15722,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v205.3.0
+  version: v205.16.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
