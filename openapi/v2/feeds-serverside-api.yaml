@@ -2551,7 +2551,7 @@ components:
           type: string
           x-stream-index: "002.001"
         type:
-          default: export.moderation_logs.error
+          default: export.bulk_image_moderation.error
           type: string
           x-stream-index: "003.002"
       required:
@@ -7927,6 +7927,60 @@ components:
       - activity_id
       - user_id
       type: object
+    EnrichmentOptions:
+      properties:
+        skip_activity:
+          type: boolean
+          x-stream-index: "001"
+        skip_activity_collections:
+          type: boolean
+          x-stream-index: "008"
+        skip_activity_comments:
+          type: boolean
+          x-stream-index: "005"
+        skip_activity_current_feed:
+          type: boolean
+          x-stream-index: "010"
+        skip_activity_mentioned_users:
+          type: boolean
+          x-stream-index: "006"
+        skip_activity_own_bookmarks:
+          type: boolean
+          x-stream-index: "004"
+        skip_activity_parents:
+          type: boolean
+          x-stream-index: "002"
+        skip_activity_poll:
+          type: boolean
+          x-stream-index: "007"
+        skip_activity_reactions:
+          type: boolean
+          x-stream-index: "003"
+        skip_activity_refresh_image_urls:
+          type: boolean
+          x-stream-index: "009"
+        skip_all:
+          type: boolean
+          x-stream-index: "017"
+        skip_feed_member_user:
+          type: boolean
+          x-stream-index: "012"
+        skip_followers:
+          type: boolean
+          x-stream-index: "013"
+        skip_following:
+          type: boolean
+          x-stream-index: "014"
+        skip_own_capabilities:
+          type: boolean
+          x-stream-index: "016"
+        skip_own_follows:
+          type: boolean
+          x-stream-index: "015"
+        skip_pins:
+          type: boolean
+          x-stream-index: "011"
+      type: object
     EntityCreatorResponse:
       properties:
         avg_response_time:
@@ -10776,6 +10830,9 @@ components:
         data:
           $ref: '#/components/schemas/FeedInput'
           x-stream-index: "003"
+        enrichment_options:
+          $ref: '#/components/schemas/EnrichmentOptions'
+          x-stream-index: "012"
         external_ranking:
           additionalProperties: {}
           type: object
@@ -10790,6 +10847,9 @@ components:
         following_pagination:
           $ref: '#/components/schemas/PagerRequest'
           x-stream-index: "011"
+        id_around:
+          type: string
+          x-stream-index: "013.004"
         interest_weights:
           additionalProperties:
             format: float
@@ -10801,22 +10861,22 @@ components:
           maximum: 100
           minimum: 0
           type: integer
-          x-stream-index: "012.001"
+          x-stream-index: "013.001"
         member_pagination:
           $ref: '#/components/schemas/PagerRequest'
           x-stream-index: "009"
         next:
           type: string
-          x-stream-index: "012.002"
+          x-stream-index: "013.002"
         prev:
           type: string
-          x-stream-index: "012.003"
+          x-stream-index: "013.003"
         user:
           $ref: '#/components/schemas/UserRequest'
-          x-stream-index: "013.002"
+          x-stream-index: "014.002"
         user_id:
           type: string
-          x-stream-index: "013.001"
+          x-stream-index: "014.001"
         view:
           type: string
           x-stream-index: "005"
@@ -20749,7 +20809,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v207.1.0
+  version: v208.5.1
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -24540,6 +24600,40 @@ paths:
       summary: Create multiple follows at once
       tags:
       - product:feeds
+  /api/v2/feeds/follows/batch/upsert:
+    post:
+      description: |
+        Creates or updates multiple follows at once. Does not return an error if follows already exist. Broadcasts FollowAddedEvent only for newly created follows.
+      operationId: GetOrCreateFollows
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FollowBatchRequest'
+        description: Follow Batch Request
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FollowBatchResponse'
+          description: Follow Batch Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Upsert multiple follows at once
+      tags:
+      - product:feeds
   /api/v2/feeds/follows/query:
     post:
       description: |
@@ -24822,6 +24916,40 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Unfollow multiple feeds at once
+      tags:
+      - product:feeds
+  /api/v2/feeds/unfollow/batch/upsert:
+    post:
+      description: |
+        Removes multiple follows and broadcasts FollowRemovedEvent for each. Does not return an error if follows don't exist.
+      operationId: GetOrCreateUnfollows
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnfollowBatchRequest'
+        description: Unfollow Batch Request
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnfollowBatchResponse'
+          description: Unfollow Batch Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Unfollow multiple feeds (idempotent)
       tags:
       - product:feeds
   /api/v2/feeds/users/{user_id}/delete:
