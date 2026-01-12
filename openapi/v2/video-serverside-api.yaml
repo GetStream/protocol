@@ -3554,6 +3554,10 @@ components:
           format: int32
           type: integer
           x-stream-index: "002"
+        total_participant_duration:
+          format: int64
+          type: integer
+          x-stream-index: "007"
       required:
       - participants
       - sessions
@@ -6561,6 +6565,9 @@ components:
         sns_auth_type:
           type: string
           x-stream-index: "014"
+        sns_event_based_message_group_id_enabled:
+          type: boolean
+          x-stream-index: "020.002"
         sns_key:
           type: string
           x-stream-index: "015"
@@ -10002,6 +10009,40 @@ components:
           type: object
           x-stream-index: "004"
       type: object
+    ParticipantSessionDetails:
+      properties:
+        duration_in_seconds:
+          format: int64
+          type: integer
+          x-stream-index: "007"
+        joined_at:
+          format: date-time
+          type: number
+          x-stream-index: "003"
+        left_at:
+          format: date-time
+          type: number
+          x-stream-index: "004"
+        publisher_type:
+          type: string
+          x-stream-index: "005"
+        roles:
+          items:
+            type: string
+          type: array
+          x-stream-index: "006"
+        user_id:
+          type: string
+          x-stream-index: "001"
+        user_session_id:
+          type: string
+          x-stream-index: "002"
+      required:
+      - user_id
+      - user_session_id
+      - publisher_type
+      - roles
+      type: object
     PerSDKUsageReport:
       nullable: true
       properties:
@@ -11074,6 +11115,57 @@ components:
       required:
       - members
       - duration
+      title: Response
+      type: object
+    QueryCallParticipantSessionsResponse:
+      description: Basic response information
+      nullable: true
+      properties:
+        call_id:
+          type: string
+          x-stream-index: "004"
+        call_session_id:
+          type: string
+          x-stream-index: "005"
+        call_type:
+          type: string
+          x-stream-index: "003"
+        duration:
+          description: Duration of the request in milliseconds
+          format: int64
+          title: Duration
+          type: integer
+          x-stream-index: "007"
+        next:
+          type: string
+          x-stream-index: "002.001"
+        participants_sessions:
+          items:
+            $ref: '#/components/schemas/ParticipantSessionDetails'
+          type: array
+          x-stream-index: "010"
+        prev:
+          type: string
+          x-stream-index: "002.002"
+        session:
+          $ref: '#/components/schemas/CallSessionResponse'
+          x-stream-index: "006"
+        total_participant_duration:
+          format: int64
+          type: integer
+          x-stream-index: "009"
+        total_participant_sessions:
+          format: int32
+          type: integer
+          x-stream-index: "008"
+      required:
+      - call_type
+      - call_id
+      - call_session_id
+      - duration
+      - total_participant_sessions
+      - total_participant_duration
+      - participants_sessions
       title: Response
       type: object
     QueryCallParticipantsRequest:
@@ -16194,7 +16286,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v213.23.0
+  version: v214.2.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -20208,6 +20300,85 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Stop all RTMP broadcasts for a call
+      tags:
+      - product:video
+  /api/v2/video/call/{type}/{id}/session/{session}/participant_sessions:
+    get:
+      description: |2+
+
+      operationId: QueryCallParticipantSessions
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "003.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "003.002"
+      - in: path
+        name: session
+        required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "004"
+      - in: query
+        name: limit
+        schema:
+          format: int32
+          maximum: 100
+          minimum: 0
+          type: integer
+          writeOnly: true
+          x-stream-index: "002.001"
+      - in: query
+        name: prev
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "002.002"
+      - in: query
+        name: next
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "002.003"
+      - in: query
+        name: filter_conditions
+        schema:
+          additionalProperties: {}
+          type: object
+          writeOnly: true
+          x-stream-index: "005"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryCallParticipantSessionsResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Query call participant sessions
       tags:
       - product:video
   /api/v2/video/call/{type}/{id}/start_broadcasting:
