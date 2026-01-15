@@ -1192,7 +1192,8 @@ components:
           type: string
           x-stream-index: "011"
         feeds:
-          description: List of feed IDs to add the activity to
+          description: List of feeds to add the activity to with a default max limit
+            of 25 feeds
           items:
             type: string
           maximum: 255
@@ -1743,7 +1744,8 @@ components:
           type: string
           x-stream-index: "001.011"
         feeds:
-          description: List of feed IDs to add the activity to
+          description: List of feeds to add the activity to with a default max limit
+            of 25 feeds
           items:
             type: string
           maximum: 255
@@ -1948,7 +1950,12 @@ components:
           description: Duration of the request
           title: string
           type: string
-          x-stream-index: "003.001"
+          x-stream-index: "004.001"
+        notification_created:
+          description: Whether a notification activity was successfully created
+          title: boolean
+          type: boolean
+          x-stream-index: "003"
         reaction:
           $ref: '#/components/schemas/FeedsReactionResponse'
           description: The created or updated reaction
@@ -2036,7 +2043,12 @@ components:
           x-stream-index: "001"
         duration:
           type: string
-          x-stream-index: "002.001"
+          x-stream-index: "003.001"
+        notification_created:
+          description: Whether a notification activity was successfully created
+          title: Notification Created
+          type: boolean
+          x-stream-index: "002"
       required:
       - comment
       - duration
@@ -2133,7 +2145,12 @@ components:
           x-stream-index: "001"
         duration:
           type: string
-          x-stream-index: "003.001"
+          x-stream-index: "004.001"
+        notification_created:
+          description: Whether a notification activity was successfully created
+          title: Notification Created
+          type: boolean
+          x-stream-index: "003"
         reaction:
           $ref: '#/components/schemas/FeedsReactionResponse'
           description: The created reaction
@@ -13680,6 +13697,57 @@ components:
       - enable_dtx
       - bitrate
       type: object
+    IngressErrorEvent:
+      description: This event is sent when a critical error occurs that breaks the
+        streaming pipeline
+      nullable: true
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        code:
+          description: Error code
+          title: string
+          type: string
+          x-stream-index: "006"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "001.002"
+        error:
+          description: Human-readable error message
+          title: string
+          type: string
+          x-stream-index: "005"
+        ingress_stream_id:
+          description: Unique identifier for the stream
+          title: string
+          type: string
+          x-stream-index: "003"
+        type:
+          default: ingress.error
+          description: 'The type of event: "ingress.error" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+        user_id:
+          description: User who was streaming
+          title: string
+          type: string
+          x-stream-index: "004"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - ingress_stream_id
+      - user_id
+      - error
+      title: IngressErrorEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: call
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     IngressSettingsRequest:
       properties:
         audio_encoding_options:
@@ -13747,6 +13815,106 @@ components:
       - height
       - fps
       type: object
+    IngressStartedEvent:
+      description: This event is sent when a user begins streaming into a call
+      nullable: true
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        client_ip:
+          description: Client IP address
+          title: string
+          type: string
+          x-stream-index: "008"
+        client_name:
+          description: Streaming client software name (e.g., 'OBS Studio')
+          title: string
+          type: string
+          x-stream-index: "006"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "001.002"
+        ingress_stream_id:
+          description: Unique identifier for this stream
+          title: string
+          type: string
+          x-stream-index: "003"
+        publisher_type:
+          description: Streaming protocol (e.g., 'rtmps', 'srt', 'rtmp', 'rtsp')
+          title: string
+          type: string
+          x-stream-index: "005"
+        type:
+          default: ingress.started
+          description: 'The type of event: "ingress.started" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+        user_id:
+          description: User who started the stream
+          title: string
+          type: string
+          x-stream-index: "004"
+        version:
+          description: Client software version
+          title: string
+          type: string
+          x-stream-index: "007"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - ingress_stream_id
+      - user_id
+      - publisher_type
+      title: IngressStartedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: call
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    IngressStoppedEvent:
+      description: This event is sent when streaming stops due to user action or call
+        ended
+      nullable: true
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "001.002"
+        ingress_stream_id:
+          description: Unique identifier for the stream
+          title: string
+          type: string
+          x-stream-index: "003"
+        type:
+          default: ingress.stopped
+          description: 'The type of event: "ingress.stopped" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+        user_id:
+          description: User who was streaming
+          title: string
+          type: string
+          x-stream-index: "004"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - ingress_stream_id
+      - user_id
+      title: IngressStoppedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: call
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     IngressVideoEncodingOptionsRequest:
       properties:
         layers:
@@ -23312,8 +23480,6 @@ components:
           type: boolean
           x-stream-index: "010"
         force_sql_v2_backend:
-          description: Force usage of SQL v2 search backend
-          title: Force SQL v2 Backend
           type: boolean
           x-stream-index: "011"
         limit:
@@ -23954,12 +24120,17 @@ components:
       properties:
         duration:
           type: string
-          x-stream-index: "002.001"
+          x-stream-index: "003.001"
         follow:
           $ref: '#/components/schemas/FollowResponse'
           description: The created follow relationship
           title: Follow
           x-stream-index: "001"
+        notification_created:
+          description: Whether a notification activity was successfully created
+          title: Notification Created
+          type: boolean
+          x-stream-index: "002"
       required:
       - follow
       - duration
@@ -28768,6 +28939,19 @@ components:
       - token
       title: WSAuthMessage
       type: object
+    WSCallEvent:
+      description: The discriminator object for all websocket call events, it maps
+        events' payload to the final type
+      discriminator:
+        mapping:
+          ingress.error: '#/components/schemas/IngressErrorEvent'
+          ingress.started: '#/components/schemas/IngressStartedEvent'
+          ingress.stopped: '#/components/schemas/IngressStoppedEvent'
+        propertyName: type
+      oneOf:
+      - $ref: '#/components/schemas/IngressErrorEvent'
+      - $ref: '#/components/schemas/IngressStartedEvent'
+      - $ref: '#/components/schemas/IngressStoppedEvent'
     WSClientEvent:
       description: The discriminator object for all websocket client events, it maps
         events' payload to the final type
@@ -29016,6 +29200,9 @@ components:
           feeds.poll.vote_removed: '#/components/schemas/PollVoteRemovedFeedEvent'
           feeds.stories_feed.updated: '#/components/schemas/StoriesFeedUpdatedEvent'
           health.check: '#/components/schemas/HealthCheckEvent'
+          ingress.error: '#/components/schemas/IngressErrorEvent'
+          ingress.started: '#/components/schemas/IngressStartedEvent'
+          ingress.stopped: '#/components/schemas/IngressStoppedEvent'
           member.added: '#/components/schemas/MemberAddedEvent'
           member.removed: '#/components/schemas/MemberRemovedEvent'
           member.updated: '#/components/schemas/MemberUpdatedEvent'
@@ -29173,6 +29360,9 @@ components:
       - $ref: '#/components/schemas/FollowDeletedEvent'
       - $ref: '#/components/schemas/FollowUpdatedEvent'
       - $ref: '#/components/schemas/HealthCheckEvent'
+      - $ref: '#/components/schemas/IngressErrorEvent'
+      - $ref: '#/components/schemas/IngressStartedEvent'
+      - $ref: '#/components/schemas/IngressStoppedEvent'
       - $ref: '#/components/schemas/KickedUserEvent'
       - $ref: '#/components/schemas/MemberAddedEvent'
       - $ref: '#/components/schemas/MemberRemovedEvent'
@@ -29326,7 +29516,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v214.2.0
+  version: v214.7.1
 openapi: 3.0.3
 paths:
   /api/v2/app:
