@@ -4312,6 +4312,57 @@ components:
       - enable_dtx
       - bitrate
       type: object
+    IngressErrorEvent:
+      description: This event is sent when a critical error occurs that breaks the
+        streaming pipeline
+      nullable: true
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        code:
+          description: Error code
+          title: string
+          type: string
+          x-stream-index: "006"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        error:
+          description: Human-readable error message
+          title: string
+          type: string
+          x-stream-index: "005"
+        ingress_stream_id:
+          description: Unique identifier for the stream
+          title: string
+          type: string
+          x-stream-index: "003"
+        type:
+          default: ingress.error
+          description: 'The type of event: "ingress.error" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+        user_id:
+          description: User who was streaming
+          title: string
+          type: string
+          x-stream-index: "004"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - ingress_stream_id
+      - user_id
+      - error
+      title: IngressErrorEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: call
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     IngressSettingsRequest:
       properties:
         audio_encoding_options:
@@ -4379,6 +4430,106 @@ components:
       - height
       - fps
       type: object
+    IngressStartedEvent:
+      description: This event is sent when a user begins streaming into a call
+      nullable: true
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        client_ip:
+          description: Client IP address
+          title: string
+          type: string
+          x-stream-index: "008"
+        client_name:
+          description: Streaming client software name (e.g., 'OBS Studio')
+          title: string
+          type: string
+          x-stream-index: "006"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        ingress_stream_id:
+          description: Unique identifier for this stream
+          title: string
+          type: string
+          x-stream-index: "003"
+        publisher_type:
+          description: Streaming protocol (e.g., 'rtmps', 'srt', 'rtmp', 'rtsp')
+          title: string
+          type: string
+          x-stream-index: "005"
+        type:
+          default: ingress.started
+          description: 'The type of event: "ingress.started" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+        user_id:
+          description: User who started the stream
+          title: string
+          type: string
+          x-stream-index: "004"
+        version:
+          description: Client software version
+          title: string
+          type: string
+          x-stream-index: "007"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - ingress_stream_id
+      - user_id
+      - publisher_type
+      title: IngressStartedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: call
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    IngressStoppedEvent:
+      description: This event is sent when streaming stops due to user action or call
+        ended
+      nullable: true
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        ingress_stream_id:
+          description: Unique identifier for the stream
+          title: string
+          type: string
+          x-stream-index: "003"
+        type:
+          default: ingress.stopped
+          description: 'The type of event: "ingress.stopped" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+        user_id:
+          description: User who was streaming
+          title: string
+          type: string
+          x-stream-index: "004"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - ingress_stream_id
+      - user_id
+      title: IngressStoppedEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: call
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     IngressVideoEncodingOptionsRequest:
       properties:
         layers:
@@ -8572,6 +8723,9 @@ components:
           connection.ok: '#/components/schemas/ConnectedEvent'
           custom: '#/components/schemas/CustomVideoEvent'
           health.check: '#/components/schemas/HealthCheckEvent'
+          ingress.error: '#/components/schemas/IngressErrorEvent'
+          ingress.started: '#/components/schemas/IngressStartedEvent'
+          ingress.stopped: '#/components/schemas/IngressStoppedEvent'
           user.banned: '#/components/schemas/UserBannedEvent'
           user.deactivated: '#/components/schemas/UserDeactivatedEvent'
           user.muted: '#/components/schemas/UserMutedEvent'
@@ -8632,6 +8786,9 @@ components:
       - $ref: '#/components/schemas/ConnectionErrorEvent'
       - $ref: '#/components/schemas/CustomVideoEvent'
       - $ref: '#/components/schemas/HealthCheckEvent'
+      - $ref: '#/components/schemas/IngressErrorEvent'
+      - $ref: '#/components/schemas/IngressStartedEvent'
+      - $ref: '#/components/schemas/IngressStoppedEvent'
       - $ref: '#/components/schemas/KickedUserEvent'
       - $ref: '#/components/schemas/PermissionRequestEvent'
       - $ref: '#/components/schemas/UnblockedUserEvent'
@@ -8743,6 +8900,19 @@ components:
       - token
       title: WSAuthMessage
       type: object
+    WSCallEvent:
+      description: The discriminator object for all websocket call events, it maps
+        events' payload to the final type
+      discriminator:
+        mapping:
+          ingress.error: '#/components/schemas/IngressErrorEvent'
+          ingress.started: '#/components/schemas/IngressStartedEvent'
+          ingress.stopped: '#/components/schemas/IngressStoppedEvent'
+        propertyName: type
+      oneOf:
+      - $ref: '#/components/schemas/IngressErrorEvent'
+      - $ref: '#/components/schemas/IngressStartedEvent'
+      - $ref: '#/components/schemas/IngressStoppedEvent'
   securitySchemes:
     JWT:
       description: |
@@ -8784,7 +8954,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v214.2.0
+  version: v214.7.2
 openapi: 3.0.3
 paths:
   /video/call/{type}/{id}:
