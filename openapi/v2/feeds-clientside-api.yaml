@@ -1425,6 +1425,58 @@ components:
       - preview
       title: Base Activity
       type: object
+    ActivityRestoredEvent:
+      description: Emitted when an activity is restored.
+      nullable: true
+      properties:
+        activity:
+          $ref: '#/components/schemas/ActivityResponse'
+          description: The activity that was restored
+          title: Activity
+          x-stream-index: "001"
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: number
+          x-stream-index: 002.001.003
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 002.001.007
+        feed_visibility:
+          type: string
+          x-stream-index: "002.003"
+        fid:
+          type: string
+          x-stream-index: "002.002"
+        received_at:
+          format: date-time
+          type: number
+          x-stream-index: 002.001.004
+        type:
+          default: feeds.activity.restored
+          description: The type of the event
+          title: Event Type
+          type: string
+          x-stream-index: 002.001.002
+        user:
+          $ref: '#/components/schemas/UserResponseCommonFields'
+          description: The user who restored the activity
+          title: User
+          x-stream-index: "003.001"
+      required:
+      - activity
+      - type
+      - created_at
+      - custom
+      - fid
+      title: ActivityRestoredEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     ActivitySelectorConfig:
       nullable: true
       properties:
@@ -5673,6 +5725,12 @@ components:
     DeleteActivitiesRequest:
       nullable: true
       properties:
+        delete_notification_activity:
+          description: Whether to also delete any notification activities created
+            from mentions in these activities
+          title: boolean
+          type: boolean
+          x-stream-index: "003"
         hard_delete:
           description: Whether to permanently delete the activities
           title: Hard Delete
@@ -8079,6 +8137,8 @@ components:
           type: string
           x-stream-index: "003"
         skip_push:
+          description: Whether to skip push for this follow
+          title: Skip Push
           type: boolean
           x-stream-index: "005"
         source:
@@ -10374,6 +10434,28 @@ components:
       x-stream-event-doc-group: other
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    NotificationParentActivity:
+      properties:
+        attachments:
+          items:
+            $ref: '#/components/schemas/Attachment'
+          type: array
+          x-stream-index: "005"
+        id:
+          type: string
+          x-stream-index: "001"
+        text:
+          type: string
+          x-stream-index: "004"
+        type:
+          type: string
+          x-stream-index: "003"
+        user_id:
+          type: string
+          x-stream-index: "002"
+      required:
+      - id
+      type: object
     NotificationStatusResponse:
       properties:
         last_read_at:
@@ -10440,6 +10522,12 @@ components:
           title: User Name
           type: string
           x-stream-index: "006"
+        parent_activity:
+          $ref: '#/components/schemas/NotificationParentActivity'
+          description: The parent of the target activity (e.g. when target is a share/repost
+            with no text)
+          title: Parent Activity
+          x-stream-index: "008"
         text:
           description: The text content of the target activity (for activity targets)
           title: Activity Text
@@ -13023,6 +13111,26 @@ components:
           type: string
           x-stream-index: "001"
       type: object
+    RestoreActivityRequest:
+      nullable: true
+      title: Restore Activity Request
+      type: object
+    RestoreActivityResponse:
+      nullable: true
+      properties:
+        activity:
+          $ref: '#/components/schemas/ActivityResponse'
+          description: The restored activity with full enrichment
+          title: Activity
+          x-stream-index: "001"
+        duration:
+          type: string
+          x-stream-index: "002.001"
+      required:
+      - activity
+      - duration
+      title: Restore Activity Response
+      type: object
     ReviewQueueItemResponse:
       nullable: true
       properties:
@@ -14254,6 +14362,12 @@ components:
     UnfollowBatchRequest:
       nullable: true
       properties:
+        delete_notification_activity:
+          description: 'Whether to delete the corresponding notification activity
+            (default: false)'
+          title: Delete Notification Activity
+          type: boolean
+          x-stream-index: "002"
         follows:
           description: List of follow relationships to remove
           items:
@@ -14332,6 +14446,12 @@ components:
     UpdateActivityPartialRequest:
       nullable: true
       properties:
+        handle_mention_notifications:
+          description: If true, creates notification activities for newly mentioned
+            users and deletes notifications for users no longer mentioned
+          title: boolean
+          type: boolean
+          x-stream-index: "004"
         set:
           additionalProperties: {}
           description: 'Map of field names to new values. Supported fields: ''text'',
@@ -14411,6 +14531,12 @@ components:
           title: '[]string'
           type: array
           x-stream-index: "010"
+        handle_mention_notifications:
+          description: If true, creates notification activities for newly mentioned
+            users and deletes notifications for users no longer mentioned
+          title: boolean
+          type: boolean
+          x-stream-index: "017"
         interest_tags:
           description: Tags indicating interest categories
           items:
@@ -14683,14 +14809,28 @@ components:
           title: Custom Data
           type: object
           x-stream-index: "004"
+        handle_mention_notifications:
+          description: If true, creates notification activities for newly mentioned
+            users and deletes notifications for users no longer mentioned
+          title: boolean
+          type: boolean
+          x-stream-index: "008"
+        mentioned_user_ids:
+          description: List of user IDs mentioned in the comment
+          items:
+            type: string
+          maximum: 25
+          title: '[]string'
+          type: array
+          x-stream-index: "005"
         skip_enrich_url:
           description: Whether to skip URL enrichment for this comment
           title: Skip URL Enrichment
           type: boolean
-          x-stream-index: "006"
+          x-stream-index: "007"
         skip_push:
           type: boolean
-          x-stream-index: "005"
+          x-stream-index: "006"
       title: Update Comment Request
       type: object
     UpdateCommentResponse:
@@ -14847,6 +14987,8 @@ components:
           type: string
           x-stream-index: "001.003"
         skip_push:
+          description: Whether to skip push for this follow
+          title: Skip Push
           type: boolean
           x-stream-index: "001.005"
         source:
@@ -16211,6 +16353,7 @@ components:
           feeds.activity.reaction.deleted: '#/components/schemas/ActivityReactionDeletedEvent'
           feeds.activity.reaction.updated: '#/components/schemas/ActivityReactionUpdatedEvent'
           feeds.activity.removed_from_feed: '#/components/schemas/ActivityRemovedFromFeedEvent'
+          feeds.activity.restored: '#/components/schemas/ActivityRestoredEvent'
           feeds.activity.unpinned: '#/components/schemas/ActivityUnpinnedEvent'
           feeds.activity.updated: '#/components/schemas/ActivityUpdatedEvent'
           feeds.bookmark.added: '#/components/schemas/BookmarkAddedEvent'
@@ -16258,6 +16401,7 @@ components:
       - $ref: '#/components/schemas/ActivityReactionDeletedEvent'
       - $ref: '#/components/schemas/ActivityReactionUpdatedEvent'
       - $ref: '#/components/schemas/ActivityRemovedFromFeedEvent'
+      - $ref: '#/components/schemas/ActivityRestoredEvent'
       - $ref: '#/components/schemas/ActivityUnpinnedEvent'
       - $ref: '#/components/schemas/ActivityUpdatedEvent'
       - $ref: '#/components/schemas/AppUpdatedEvent'
@@ -16310,6 +16454,7 @@ components:
           feeds.activity.reaction.deleted: '#/components/schemas/ActivityReactionDeletedEvent'
           feeds.activity.reaction.updated: '#/components/schemas/ActivityReactionUpdatedEvent'
           feeds.activity.removed_from_feed: '#/components/schemas/ActivityRemovedFromFeedEvent'
+          feeds.activity.restored: '#/components/schemas/ActivityRestoredEvent'
           feeds.activity.unpinned: '#/components/schemas/ActivityUnpinnedEvent'
           feeds.activity.updated: '#/components/schemas/ActivityUpdatedEvent'
           feeds.bookmark.added: '#/components/schemas/BookmarkAddedEvent'
@@ -16362,6 +16507,7 @@ components:
       - $ref: '#/components/schemas/ActivityReactionDeletedEvent'
       - $ref: '#/components/schemas/ActivityReactionUpdatedEvent'
       - $ref: '#/components/schemas/ActivityRemovedFromFeedEvent'
+      - $ref: '#/components/schemas/ActivityRestoredEvent'
       - $ref: '#/components/schemas/ActivityUnpinnedEvent'
       - $ref: '#/components/schemas/ActivityUpdatedEvent'
       - $ref: '#/components/schemas/AppUpdatedEvent'
@@ -16445,7 +16591,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v215.4.0
+  version: v219.1.2
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -17113,6 +17259,15 @@ paths:
           type: string
           writeOnly: true
           x-stream-index: "002"
+      - in: query
+        name: delete_notification_activity
+        schema:
+          description: 'Whether to delete the corresponding notification activity
+            (default: false)'
+          title: Delete Notification Activity
+          type: boolean
+          writeOnly: true
+          x-stream-index: "003"
       responses:
         "200":
           content:
@@ -17199,6 +17354,15 @@ paths:
           type: boolean
           writeOnly: true
           x-stream-index: "002"
+      - in: query
+        name: delete_notification_activity
+        schema:
+          description: Whether to also delete any notification activities created
+            from mentions in this activity
+          title: boolean
+          type: boolean
+          writeOnly: true
+          x-stream-index: "003"
       responses:
         "200":
           content:
@@ -17341,6 +17505,49 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Full activity update
+      tags:
+      - product:feeds
+  /api/v2/feeds/activities/{id}/restore:
+    post:
+      description: |
+        Restores a soft-deleted activity by its ID. Only the activity owner can restore their own activities.
+      operationId: RestoreActivity
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          maxLength: 255
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestoreActivityRequest'
+        description: Restore Activity Request
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestoreActivityResponse'
+          description: Restore Activity Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Restore a soft-deleted activity
       tags:
       - product:feeds
   /api/v2/feeds/activities/batch:
@@ -17897,6 +18104,15 @@ paths:
           type: boolean
           writeOnly: true
           x-stream-index: "002"
+      - in: query
+        name: delete_notification_activity
+        schema:
+          description: 'Whether to delete the corresponding notification activity
+            (default: false)'
+          title: Delete Notification Activity
+          type: boolean
+          writeOnly: true
+          x-stream-index: "003"
       responses:
         "200":
           content:
@@ -18058,6 +18274,15 @@ paths:
           type: string
           writeOnly: true
           x-stream-index: "002"
+      - in: query
+        name: delete_notification_activity
+        schema:
+          description: 'Whether to delete the corresponding notification activity
+            (default: false)'
+          title: Delete Notification Activity
+          type: boolean
+          writeOnly: true
+          x-stream-index: "003"
       responses:
         "200":
           content:
@@ -19109,6 +19334,15 @@ paths:
           type: string
           writeOnly: true
           x-stream-index: "002"
+      - in: query
+        name: delete_notification_activity
+        schema:
+          description: 'Whether to delete the corresponding notification activity
+            (default: false)'
+          title: Delete Notification Activity
+          type: boolean
+          writeOnly: true
+          x-stream-index: "003"
       responses:
         "200":
           content:
