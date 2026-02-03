@@ -1667,6 +1667,58 @@ components:
       - preview
       title: Base Activity
       type: object
+    ActivityRestoredEvent:
+      description: Emitted when an activity is restored.
+      nullable: true
+      properties:
+        activity:
+          $ref: '#/components/schemas/ActivityResponse'
+          description: The activity that was restored
+          title: Activity
+          x-stream-index: "001"
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: number
+          x-stream-index: 002.001.003
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 002.001.007
+        feed_visibility:
+          type: string
+          x-stream-index: "002.003"
+        fid:
+          type: string
+          x-stream-index: "002.002"
+        received_at:
+          format: date-time
+          type: number
+          x-stream-index: 002.001.004
+        type:
+          default: feeds.activity.restored
+          description: The type of the event
+          title: Event Type
+          type: string
+          x-stream-index: 002.001.002
+        user:
+          $ref: '#/components/schemas/UserResponseCommonFields'
+          description: The user who restored the activity
+          title: User
+          x-stream-index: "003.001"
+      required:
+      - activity
+      - type
+      - created_at
+      - custom
+      - fid
+      title: ActivityRestoredEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     ActivitySelectorConfig:
       properties:
         cutoff_time:
@@ -3048,7 +3100,7 @@ components:
           type: string
           x-stream-index: "002.001"
         type:
-          default: export.bulk_image_moderation.error
+          default: export.users.error
           type: string
           x-stream-index: "003.002"
       required:
@@ -7802,6 +7854,18 @@ components:
       x-stream-event-doc-group: other
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    ChannelBatchMemberRequest:
+      nullable: true
+      properties:
+        channel_role:
+          type: string
+          x-stream-index: "002"
+        user_id:
+          type: string
+          x-stream-index: "001"
+      required:
+      - user_id
+      type: object
     ChannelBatchStartedEvent:
       nullable: true
       properties:
@@ -7864,6 +7928,66 @@ components:
       x-stream-event-doc-group: other
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    ChannelBatchUpdateRequest:
+      nullable: true
+      properties:
+        data:
+          $ref: '#/components/schemas/ChannelDataUpdate'
+          x-stream-index: "005"
+        filter:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "002"
+        filter_tags_update:
+          items:
+            type: string
+          maximum: 10
+          type: array
+          x-stream-index: "004"
+        members:
+          items:
+            $ref: '#/components/schemas/ChannelBatchMemberRequest'
+          maximum: 100
+          type: array
+          x-stream-index: "003"
+        operation:
+          enum:
+          - addMembers
+          - removeMembers
+          - inviteMembers
+          - invites
+          - assignRoles
+          - addModerators
+          - demoteModerators
+          - hide
+          - show
+          - archive
+          - unarchive
+          - updateData
+          - addFilterTags
+          - removeFilterTags
+          type: string
+          x-stream-index: "001"
+      required:
+      - operation
+      - filter
+      type: object
+    ChannelBatchUpdateResponse:
+      description: Basic response information
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        task_id:
+          type: string
+          x-stream-index: "001"
+      required:
+      - duration
+      title: Response
+      type: object
     ChannelConfig:
       nullable: true
       properties:
@@ -8213,6 +8337,31 @@ components:
       x-stream-event-doc-group: other
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    ChannelDataUpdate:
+      properties:
+        auto_translation_enabled:
+          type: boolean
+          x-stream-index: "006"
+        auto_translation_language:
+          type: string
+          x-stream-index: "007"
+        config_overrides:
+          $ref: '#/components/schemas/ChannelConfig'
+          x-stream-index: "005"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "003"
+        disabled:
+          type: boolean
+          x-stream-index: "002"
+        frozen:
+          type: boolean
+          x-stream-index: "001"
+        team:
+          type: string
+          x-stream-index: "004"
+      type: object
     ChannelDeletedEvent:
       properties:
         channel:
@@ -12455,6 +12604,12 @@ components:
     DeleteActivitiesRequest:
       nullable: true
       properties:
+        delete_notification_activity:
+          description: Whether to also delete any notification activities created
+            from mentions in these activities
+          title: boolean
+          type: boolean
+          x-stream-index: "003"
         hard_delete:
           description: Whether to permanently delete the activities
           title: Hard Delete
@@ -12471,10 +12626,10 @@ components:
           x-stream-index: "001"
         user:
           $ref: '#/components/schemas/UserRequest'
-          x-stream-index: "004.002"
+          x-stream-index: "005.002"
         user_id:
           type: string
-          x-stream-index: "004.001"
+          x-stream-index: "005.001"
       required:
       - ids
       title: Delete Activities Request
@@ -16150,6 +16305,8 @@ components:
           type: string
           x-stream-index: "003"
         skip_push:
+          description: Whether to skip push for this follow
+          title: Skip Push
           type: boolean
           x-stream-index: "005"
         source:
@@ -16158,6 +16315,15 @@ components:
           title: Source Feed
           type: string
           x-stream-index: "001.001"
+        status:
+          description: Status of the follow relationship
+          enum:
+          - accepted
+          - pending
+          - rejected
+          title: Status
+          type: string
+          x-stream-index: "006"
         target:
           description: Fully qualified ID of the target feed
           maxLength: 255
@@ -16699,6 +16865,46 @@ components:
       required:
       - blocks
       - duration
+      type: object
+    GetCallParticipantSessionMetricsResponse:
+      description: Basic response information
+      nullable: true
+      properties:
+        client:
+          $ref: '#/components/schemas/SessionClient'
+          x-stream-index: "005"
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+        is_publisher:
+          type: boolean
+          x-stream-index: "007"
+        is_subscriber:
+          type: boolean
+          x-stream-index: "008"
+        joined_at:
+          format: date-time
+          type: number
+          x-stream-index: "006"
+        published_tracks:
+          items:
+            $ref: '#/components/schemas/PublishedTrackMetrics'
+          type: array
+          x-stream-index: "009"
+        publisher_type:
+          type: string
+          x-stream-index: "004"
+        user_id:
+          type: string
+          x-stream-index: "002"
+        user_session_id:
+          type: string
+          x-stream-index: "003"
+      required:
+      - duration
+      title: Response
       type: object
     GetCallReportResponse:
       description: Basic response information
@@ -18541,12 +18747,18 @@ components:
       type: object
     ImportV2TaskSettings:
       properties:
+        mode:
+          type: string
+          x-stream-index: "002"
+        path:
+          type: string
+          x-stream-index: "003"
         s3:
           $ref: '#/components/schemas/ImportV2TaskSettingsS3'
           x-stream-index: "001"
         skip_references_check:
           type: boolean
-          x-stream-index: "002"
+          x-stream-index: "004"
       type: object
     ImportV2TaskSettingsS3:
       properties:
@@ -20725,7 +20937,7 @@ components:
           type: array
           x-stream-index: "001.002"
         type:
-          default: notification.thread_message_new
+          default: message.new
           type: string
           x-stream-index: "004.001"
         user:
@@ -21772,6 +21984,17 @@ components:
       - level
       - operator
       - value
+      type: object
+    MetricTimeSeries:
+      properties:
+        data_points:
+          items:
+            items:
+              format: float
+              type: number
+            type: array
+          type: array
+          x-stream-index: "001"
       type: object
     ModerationActionConfig:
       nullable: true
@@ -23235,6 +23458,24 @@ components:
           type: integer
           x-stream-index: "002"
       type: object
+    ParsedPredefinedFilterResponse:
+      properties:
+        filter:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "002"
+        name:
+          type: string
+          x-stream-index: "001"
+        sort:
+          items:
+            $ref: '#/components/schemas/SortParamRequest'
+          type: array
+          x-stream-index: "003"
+      required:
+      - name
+      - filter
+      type: object
     ParticipantCountByMinuteResponse:
       nullable: true
       properties:
@@ -24415,6 +24656,32 @@ components:
       - audio
       - screenshare
       - screenshare_audio
+      type: object
+    PublishedTrackMetrics:
+      properties:
+        bitrate:
+          $ref: '#/components/schemas/MetricTimeSeries'
+          x-stream-index: "004"
+        codec:
+          type: string
+          x-stream-index: "003"
+        framerate:
+          $ref: '#/components/schemas/MetricTimeSeries'
+          x-stream-index: "005"
+        resolution:
+          $ref: '#/components/schemas/ResolutionMetricsTimeSeries'
+          x-stream-index: "006"
+        track_id:
+          type: string
+          x-stream-index: "001"
+        track_type:
+          type: string
+          x-stream-index: "002"
+        warnings:
+          items:
+            $ref: '#/components/schemas/SessionWarningResponse'
+          type: array
+          x-stream-index: "007"
       type: object
     PublisherAllMetrics:
       properties:
@@ -25868,7 +26135,13 @@ components:
           description: Duration of the request in milliseconds
           title: Duration
           type: string
-          x-stream-index: "002.001"
+          x-stream-index: "003.001"
+        predefined_filter:
+          $ref: '#/components/schemas/ParsedPredefinedFilterResponse'
+          description: The parsed predefined filter with interpolated values, only
+            present when using a predefined filter
+          title: Predefined Filter
+          x-stream-index: "002"
       required:
       - channels
       - duration
@@ -27601,10 +27874,9 @@ components:
           type: string
           x-stream-index: "002"
         type:
-          description: 'Type of ranking algorithm. Required. Must be one of: recency,
-            expression, interest'
+          description: 'Type of ranking algorithm. Required. Must be one of: expression,
+            interest'
           enum:
-          - recency
           - expression
           - interest
           title: Type
@@ -28633,6 +28905,15 @@ components:
       - user_ratings
       - call
       type: object
+    ResolutionMetricsTimeSeries:
+      properties:
+        height:
+          $ref: '#/components/schemas/MetricTimeSeries'
+          x-stream-index: "002"
+        width:
+          $ref: '#/components/schemas/MetricTimeSeries'
+          x-stream-index: "001"
+      type: object
     ResolveSipInboundRequest:
       description: Request to resolve SIP inbound routing using challenge authentication
       nullable: true
@@ -28718,6 +28999,33 @@ components:
         decision_reason:
           type: string
           x-stream-index: "001"
+      type: object
+    RestoreActivityRequest:
+      nullable: true
+      properties:
+        user:
+          $ref: '#/components/schemas/UserRequest'
+          x-stream-index: "003.002"
+        user_id:
+          type: string
+          x-stream-index: "003.001"
+      title: Restore Activity Request
+      type: object
+    RestoreActivityResponse:
+      nullable: true
+      properties:
+        activity:
+          $ref: '#/components/schemas/ActivityResponse'
+          description: The restored activity with full enrichment
+          title: Activity
+          x-stream-index: "001"
+        duration:
+          type: string
+          x-stream-index: "002.001"
+      required:
+      - activity
+      - duration
+      title: Restore Activity Response
       type: object
     RestoreUsersRequest:
       nullable: true
@@ -30558,6 +30866,24 @@ components:
       required:
       - event
       type: object
+    SessionClient:
+      properties:
+        ip:
+          type: string
+          x-stream-index: "003"
+        location:
+          $ref: '#/components/schemas/CallStatsLocation'
+          x-stream-index: "005"
+        name:
+          type: string
+          x-stream-index: "001"
+        network_type:
+          type: string
+          x-stream-index: "004"
+        version:
+          type: string
+          x-stream-index: "002"
+      type: object
     SessionSettings:
       properties:
         inactivity_timeout_seconds:
@@ -30590,6 +30916,22 @@ components:
           x-stream-index: "001"
       required:
       - inactivity_timeout_seconds
+      type: object
+    SessionWarningResponse:
+      properties:
+        code:
+          type: string
+          x-stream-index: "002"
+        time:
+          format: date-time
+          type: number
+          x-stream-index: "001"
+        warning:
+          type: string
+          x-stream-index: "003"
+      required:
+      - code
+      - warning
       type: object
     ShadowBlockActionRequest:
       properties:
@@ -32698,6 +33040,12 @@ components:
     UnfollowBatchRequest:
       nullable: true
       properties:
+        delete_notification_activity:
+          description: 'Whether to delete the corresponding notification activity
+            (default: false)'
+          title: Delete Notification Activity
+          type: boolean
+          x-stream-index: "002"
         follows:
           description: List of follow relationships to remove
           items:
@@ -32995,9 +33343,88 @@ components:
       - last_read_message_id
       - parent_message_id
       type: object
+    UpdateActivitiesPartialBatchRequest:
+      nullable: true
+      properties:
+        changes:
+          description: List of activity changes to apply. Each change specifies an
+            activity ID and the fields to set/unset
+          items:
+            $ref: '#/components/schemas/UpdateActivityPartialChangeRequest'
+          maximum: 100
+          minimum: 1
+          title: Changes
+          type: array
+          x-stream-index: "001"
+      required:
+      - changes
+      title: Update Activities Partial Batch Request
+      type: object
+    UpdateActivitiesPartialBatchResponse:
+      nullable: true
+      properties:
+        activities:
+          description: List of successfully updated activities
+          items:
+            $ref: '#/components/schemas/ActivityResponse'
+          title: Activities
+          type: array
+          x-stream-index: "001"
+        duration:
+          type: string
+          x-stream-index: "002.001"
+      required:
+      - activities
+      - duration
+      title: Update Activities Partial Batch Response
+      type: object
+    UpdateActivityPartialChangeRequest:
+      properties:
+        activity_id:
+          description: ID of the activity to update
+          maxLength: 255
+          title: string
+          type: string
+          x-stream-index: "001"
+        handle_mention_notifications:
+          description: When true and 'mentioned_user_ids' is updated, automatically
+            creates or deletes mention notifications for added/removed users. Only
+            applicable for client-side requests (ignored for server-side requests)
+          title: boolean
+          type: boolean
+          x-stream-index: "004"
+        set:
+          additionalProperties: {}
+          description: 'Map of field names to new values. Supported fields: ''text'',
+            ''attachments'', ''custom'', ''visibility'', ''visibility_tag'', ''restrict_replies''
+            (values: ''everyone'', ''people_i_follow'', ''nobody''), ''location'',
+            ''expires_at'', ''filter_tags'', ''interest_tags'', ''poll_id'', ''feeds'',
+            ''mentioned_user_ids''. For custom fields, use dot-notation (e.g., ''custom.field_name'')'
+          title: object
+          type: object
+          x-stream-index: "002"
+        unset:
+          description: 'List of field names to remove. Supported fields: ''custom'',
+            ''location'', ''expires_at'', ''filter_tags'', ''interest_tags'', ''attachments'',
+            ''poll_id'', ''mentioned_user_ids''. Use dot-notation for nested custom
+            fields (e.g., ''custom.field_name'')'
+          items:
+            type: string
+          title: '[]string'
+          type: array
+          x-stream-index: "003"
+      required:
+      - activity_id
+      type: object
     UpdateActivityPartialRequest:
       nullable: true
       properties:
+        handle_mention_notifications:
+          description: If true, creates notification activities for newly mentioned
+            users and deletes notifications for users no longer mentioned
+          title: boolean
+          type: boolean
+          x-stream-index: "004"
         set:
           additionalProperties: {}
           description: 'Map of field names to new values. Supported fields: ''text'',
@@ -33020,10 +33447,10 @@ components:
           x-stream-index: "003"
         user:
           $ref: '#/components/schemas/UserRequest'
-          x-stream-index: "005.002"
+          x-stream-index: "006.002"
         user_id:
           type: string
-          x-stream-index: "005.001"
+          x-stream-index: "006.001"
       type: object
     UpdateActivityPartialResponse:
       nullable: true
@@ -33083,6 +33510,12 @@ components:
           title: '[]string'
           type: array
           x-stream-index: "010"
+        handle_mention_notifications:
+          description: If true, creates notification activities for newly mentioned
+            users and deletes notifications for users no longer mentioned
+          title: boolean
+          type: boolean
+          x-stream-index: "017"
         interest_tags:
           description: Tags indicating interest categories
           items:
@@ -33131,10 +33564,10 @@ components:
           x-stream-index: "002"
         user:
           $ref: '#/components/schemas/UserRequest'
-          x-stream-index: "018.002"
+          x-stream-index: "019.002"
         user_id:
           type: string
-          x-stream-index: "018.001"
+          x-stream-index: "019.001"
         visibility:
           description: Visibility setting for the activity
           enum:
@@ -34282,20 +34715,34 @@ components:
           title: Custom Data
           type: object
           x-stream-index: "004"
+        handle_mention_notifications:
+          description: If true, creates notification activities for newly mentioned
+            users and deletes notifications for users no longer mentioned
+          title: boolean
+          type: boolean
+          x-stream-index: "008"
+        mentioned_user_ids:
+          description: List of user IDs mentioned in the comment
+          items:
+            type: string
+          maximum: 25
+          title: '[]string'
+          type: array
+          x-stream-index: "005"
         skip_enrich_url:
           description: Whether to skip URL enrichment for this comment
           title: Skip URL Enrichment
           type: boolean
-          x-stream-index: "006"
+          x-stream-index: "007"
         skip_push:
           type: boolean
-          x-stream-index: "005"
+          x-stream-index: "006"
         user:
           $ref: '#/components/schemas/UserRequest'
-          x-stream-index: "007.002"
+          x-stream-index: "009.002"
         user_id:
           type: string
-          x-stream-index: "007.001"
+          x-stream-index: "009.001"
       title: Update Comment Request
       type: object
     UpdateCommentResponse:
@@ -34673,6 +35120,8 @@ components:
           type: string
           x-stream-index: "001.003"
         skip_push:
+          description: Whether to skip push for this follow
+          title: Skip Push
           type: boolean
           x-stream-index: "001.005"
         source:
@@ -34681,6 +35130,15 @@ components:
           title: Source Feed
           type: string
           x-stream-index: 001.001.001
+        status:
+          description: Status of the follow relationship
+          enum:
+          - accepted
+          - pending
+          - rejected
+          title: Status
+          type: string
+          x-stream-index: "001.006"
         target:
           description: Fully qualified ID of the target feed
           maxLength: 255
@@ -37375,6 +37833,7 @@ components:
           feeds.activity.reaction.deleted: '#/components/schemas/ActivityReactionDeletedEvent'
           feeds.activity.reaction.updated: '#/components/schemas/ActivityReactionUpdatedEvent'
           feeds.activity.removed_from_feed: '#/components/schemas/ActivityRemovedFromFeedEvent'
+          feeds.activity.restored: '#/components/schemas/ActivityRestoredEvent'
           feeds.activity.unpinned: '#/components/schemas/ActivityUnpinnedEvent'
           feeds.activity.updated: '#/components/schemas/ActivityUpdatedEvent'
           feeds.bookmark.added: '#/components/schemas/BookmarkAddedEvent'
@@ -37455,6 +37914,7 @@ components:
       - $ref: '#/components/schemas/ActivityReactionDeletedEvent'
       - $ref: '#/components/schemas/ActivityReactionUpdatedEvent'
       - $ref: '#/components/schemas/ActivityRemovedFromFeedEvent'
+      - $ref: '#/components/schemas/ActivityRestoredEvent'
       - $ref: '#/components/schemas/ActivityUnpinnedEvent'
       - $ref: '#/components/schemas/ActivityUpdatedEvent'
       - $ref: '#/components/schemas/AnyEvent'
@@ -37717,7 +38177,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v215.4.0
+  version: v218.4.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -39264,6 +39724,49 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Get or create channel
+      tags:
+      - product:chat
+  /api/v2/chat/channels/batch:
+    put:
+      description: |
+        Update channels in batch
+
+        Sends events:
+        - channel.frozen
+        - channel.hidden
+        - channel.unfrozen
+        - channel.updated
+        - channel.visible
+        - member.added
+        - member.removed
+        - member.updated
+      operationId: ChannelBatchUpdate
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChannelBatchUpdateRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelBatchUpdateResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Update channels in batch
       tags:
       - product:chat
   /api/v2/chat/channels/delete:
@@ -42379,11 +42882,20 @@ paths:
           writeOnly: true
           x-stream-index: "002"
       - in: query
+        name: delete_notification_activity
+        schema:
+          description: 'Whether to delete the corresponding notification activity
+            (default: false)'
+          title: Delete Notification Activity
+          type: boolean
+          writeOnly: true
+          x-stream-index: "003"
+      - in: query
         name: user_id
         schema:
           type: string
           writeOnly: true
-          x-stream-index: "003.001"
+          x-stream-index: "004.001"
       responses:
         "200":
           content:
@@ -42470,6 +42982,15 @@ paths:
           type: boolean
           writeOnly: true
           x-stream-index: "002"
+      - in: query
+        name: delete_notification_activity
+        schema:
+          description: Whether to also delete any notification activities created
+            from mentions in this activity
+          title: boolean
+          type: boolean
+          writeOnly: true
+          x-stream-index: "003"
       responses:
         "200":
           content:
@@ -42614,6 +43135,49 @@ paths:
       summary: Full activity update
       tags:
       - product:feeds
+  /api/v2/feeds/activities/{id}/restore:
+    post:
+      description: |
+        Restores a soft-deleted activity by its ID. Only the activity owner can restore their own activities.
+      operationId: RestoreActivity
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          maxLength: 255
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestoreActivityRequest'
+        description: Restore Activity Request
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestoreActivityResponse'
+          description: Restore Activity Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Restore a soft-deleted activity
+      tags:
+      - product:feeds
   /api/v2/feeds/activities/batch:
     post:
       description: |
@@ -42646,6 +43210,43 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Upsert multiple activities
+      tags:
+      - product:feeds
+  /api/v2/feeds/activities/batch/partial:
+    patch:
+      description: |
+        Updates certain fields of multiple activities in a batch. Use 'set' to update specific fields and 'unset' to remove fields. Activities that fail due to not found, permission denied, or no changes detected are silently skipped and not included in the response. However, validation errors (e.g., updating reserved fields, invalid field values) will fail the entire batch request.
+
+        Sends events:
+        - feeds.activity.updated
+      operationId: UpdateActivitiesPartialBatch
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateActivitiesPartialBatchRequest'
+        description: Update Activities Partial Batch Request
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateActivitiesPartialBatchResponse'
+          description: Update Activities Partial Batch Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Batch partial activity update
       tags:
       - product:feeds
   /api/v2/feeds/activities/delete:
@@ -43216,6 +43817,15 @@ paths:
           type: boolean
           writeOnly: true
           x-stream-index: "002"
+      - in: query
+        name: delete_notification_activity
+        schema:
+          description: 'Whether to delete the corresponding notification activity
+            (default: false)'
+          title: Delete Notification Activity
+          type: boolean
+          writeOnly: true
+          x-stream-index: "003"
       responses:
         "200":
           content:
@@ -43378,11 +43988,20 @@ paths:
           writeOnly: true
           x-stream-index: "002"
       - in: query
+        name: delete_notification_activity
+        schema:
+          description: 'Whether to delete the corresponding notification activity
+            (default: false)'
+          title: Delete Notification Activity
+          type: boolean
+          writeOnly: true
+          x-stream-index: "003"
+      - in: query
         name: user_id
         schema:
           type: string
           writeOnly: true
-          x-stream-index: "003.001"
+          x-stream-index: "004.001"
       responses:
         "200":
           content:
@@ -45062,6 +45681,15 @@ paths:
           type: string
           writeOnly: true
           x-stream-index: "002"
+      - in: query
+        name: delete_notification_activity
+        schema:
+          description: 'Whether to delete the corresponding notification activity
+            (default: false)'
+          title: Delete Notification Activity
+          type: boolean
+          writeOnly: true
+          x-stream-index: "003"
       responses:
         "200":
           content:
@@ -49571,6 +50199,137 @@ paths:
       summary: List recordings
       tags:
       - product:video
+  /api/v2/video/call/{type}/{id}/recordings/{recording_type}/start:
+    post:
+      description: |
+        Starts recording
+
+        Sends events:
+        - call.recording_started
+      operationId: StartRecording
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          description: The type of call
+          maxLength: 64
+          title: Type
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Call ID
+          maxLength: 64
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
+      - in: path
+        name: recording_type
+        required: true
+        schema:
+          enum:
+          - composite
+          - individual
+          - raw
+          type: string
+          x-stream-index: "004"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartRecordingRequest'
+        description: StartRecordingRequest
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartRecordingResponse'
+          description: StartRecordingResponse
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Start recording
+      tags:
+      - product:video
+  /api/v2/video/call/{type}/{id}/recordings/{recording_type}/stop:
+    post:
+      description: |
+        Stops recording
+
+        Sends events:
+        - call.recording_stopped
+      operationId: StopRecording
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
+      - in: path
+        name: recording_type
+        required: true
+        schema:
+          enum:
+          - composite
+          - individual
+          - raw
+          type: string
+          x-stream-index: "003"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StopRecordingRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StopRecordingResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Stop recording
+      tags:
+      - product:video
   /api/v2/video/call/{type}/{id}/report:
     get:
       description: |2+
@@ -49844,6 +50603,88 @@ paths:
       summary: Stop all RTMP broadcasts for a call
       tags:
       - product:video
+  /api/v2/video/call/{type}/{id}/session/{session}/participant/{user}/{user_session}/details/track:
+    get:
+      description: |2+
+
+      operationId: GetCallParticipantSessionMetrics
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "002.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "002.002"
+      - in: path
+        name: session
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "003"
+      - in: path
+        name: user
+        required: true
+        schema:
+          maxLength: 256
+          type: string
+          writeOnly: true
+          x-stream-index: "004"
+      - in: path
+        name: user_session
+        required: true
+        schema:
+          maxLength: 256
+          type: string
+          writeOnly: true
+          x-stream-index: "005"
+      - in: query
+        name: since
+        schema:
+          format: date-time
+          type: number
+          writeOnly: true
+          x-stream-index: "006"
+      - in: query
+        name: until
+        schema:
+          format: date-time
+          type: number
+          writeOnly: true
+          x-stream-index: "007"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCallParticipantSessionMetricsResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get call participant session metrics
+      tags:
+      - product:video
   /api/v2/video/call/{type}/{id}/session/{session}/participant_sessions:
     get:
       description: |2+
@@ -50081,64 +50922,6 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Start frame recording
-      tags:
-      - product:video
-  /api/v2/video/call/{type}/{id}/start_recording:
-    post:
-      description: |
-        Starts recording
-
-        Sends events:
-        - call.recording_started
-      operationId: StartRecording
-      parameters:
-      - in: path
-        name: type
-        required: true
-        schema:
-          description: The type of call
-          maxLength: 64
-          title: Type
-          type: string
-          writeOnly: true
-          x-stream-index: "001.001"
-      - in: path
-        name: id
-        required: true
-        schema:
-          description: Call ID
-          maxLength: 64
-          title: ID
-          type: string
-          writeOnly: true
-          x-stream-index: "001.002"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/StartRecordingRequest'
-        description: StartRecordingRequest
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StartRecordingResponse'
-          description: StartRecordingResponse
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Start recording
       tags:
       - product:video
   /api/v2/video/call/{type}/{id}/start_transcription:
@@ -50395,59 +51178,6 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Set call as not live
-      tags:
-      - product:video
-  /api/v2/video/call/{type}/{id}/stop_recording:
-    post:
-      description: |
-        Stops recording
-
-        Sends events:
-        - call.recording_stopped
-      operationId: StopRecording
-      parameters:
-      - in: path
-        name: type
-        required: true
-        schema:
-          maxLength: 64
-          type: string
-          writeOnly: true
-          x-stream-index: "001.001"
-      - in: path
-        name: id
-        required: true
-        schema:
-          maxLength: 64
-          type: string
-          writeOnly: true
-          x-stream-index: "001.002"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/StopRecordingRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StopRecordingResponse'
-          description: Response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Stop recording
       tags:
       - product:video
   /api/v2/video/call/{type}/{id}/stop_transcription:
@@ -50997,29 +51727,13 @@ paths:
       operationId: QueryCallSessionParticipantStats
       parameters:
       - in: path
-        name: call_type
-        required: true
-        schema:
-          maxLength: 64
-          type: string
-          writeOnly: true
-          x-stream-index: "002"
-      - in: path
-        name: call_id
-        required: true
-        schema:
-          maxLength: 64
-          type: string
-          writeOnly: true
-          x-stream-index: "003"
-      - in: path
         name: session
         required: true
         schema:
           maxLength: 64
           type: string
           writeOnly: true
-          x-stream-index: "004"
+          x-stream-index: "003"
       - in: query
         name: sort
         schema:
@@ -51028,14 +51742,14 @@ paths:
           maximum: 1
           type: array
           writeOnly: true
-          x-stream-index: "005"
+          x-stream-index: "004"
       - in: query
         name: filter_conditions
         schema:
           additionalProperties: {}
           type: object
           writeOnly: true
-          x-stream-index: "006"
+          x-stream-index: "005"
       - in: query
         name: limit
         schema:
@@ -51044,19 +51758,19 @@ paths:
           minimum: 0
           type: integer
           writeOnly: true
-          x-stream-index: "007.001"
+          x-stream-index: "006.001"
       - in: query
         name: prev
         schema:
           type: string
           writeOnly: true
-          x-stream-index: "007.002"
+          x-stream-index: "006.002"
       - in: query
         name: next
         schema:
           type: string
           writeOnly: true
-          x-stream-index: "007.003"
+          x-stream-index: "006.003"
       responses:
         "200":
           content:
