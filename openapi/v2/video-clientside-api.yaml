@@ -890,6 +890,68 @@ components:
       x-stream-event-doc-group: call
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    CallDTMFEvent:
+      description: This event is sent asynchronously when a single DTMF digit is received
+        from a SIP participant. The event is broadcast after the digit press ends.
+        Use seq_number for ordering within a session and timestamp for the actual
+        detection time.
+      nullable: true
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "001.002"
+        digit:
+          description: 'The DTMF digit (0-9, *, #, A-D)'
+          title: Digit
+          type: string
+          x-stream-index: "003"
+        duration_ms:
+          description: Duration of the digit press in milliseconds
+          title: Duration (ms)
+          type: integer
+          x-stream-index: "004"
+        seq_number:
+          description: Monotonically increasing sequence number for ordering DTMF
+            events within a session
+          title: Sequence Number
+          type: integer
+          x-stream-index: "005"
+        timestamp:
+          description: When the digit press ended and was detected
+          format: date-time
+          title: Timestamp
+          type: number
+          x-stream-index: "006"
+        type:
+          default: call.dtmf
+          description: 'The type of event: "call.dtmf" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          description: The user who sent the DTMF digit
+          title: User
+          x-stream-index: "007"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - digit
+      - duration_ms
+      - seq_number
+      - timestamp
+      - user
+      title: CallDTMFEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: call
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     CallDeletedEvent:
       description: This event is sent when a call is deleted. Clients receiving this
         event should leave the call screen
@@ -5326,6 +5388,46 @@ components:
       - blocks
       - duration
       type: object
+    GetCallParticipantSessionMetricsResponse:
+      description: Basic response information
+      nullable: true
+      properties:
+        client:
+          $ref: '#/components/schemas/SessionClient'
+          x-stream-index: "005"
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+        is_publisher:
+          type: boolean
+          x-stream-index: "007"
+        is_subscriber:
+          type: boolean
+          x-stream-index: "008"
+        joined_at:
+          format: date-time
+          type: number
+          x-stream-index: "006"
+        published_tracks:
+          items:
+            $ref: '#/components/schemas/PublishedTrackMetrics'
+          type: array
+          x-stream-index: "009"
+        publisher_type:
+          type: string
+          x-stream-index: "004"
+        user_id:
+          type: string
+          x-stream-index: "002"
+        user_session_id:
+          type: string
+          x-stream-index: "003"
+      required:
+      - duration
+      title: Response
+      type: object
     GetCallReportResponse:
       description: Basic response information
       nullable: true
@@ -7036,6 +7138,17 @@ components:
       - operator
       - value
       type: object
+    MetricTimeSeries:
+      properties:
+        data_points:
+          items:
+            items:
+              format: float
+              type: number
+            type: array
+          type: array
+          x-stream-index: "001"
+      type: object
     ModerationV2Response:
       properties:
         action:
@@ -8026,6 +8139,32 @@ components:
       - audio
       - screenshare
       - screenshare_audio
+      type: object
+    PublishedTrackMetrics:
+      properties:
+        bitrate:
+          $ref: '#/components/schemas/MetricTimeSeries'
+          x-stream-index: "004"
+        codec:
+          type: string
+          x-stream-index: "003"
+        framerate:
+          $ref: '#/components/schemas/MetricTimeSeries'
+          x-stream-index: "005"
+        resolution:
+          $ref: '#/components/schemas/ResolutionMetricsTimeSeries'
+          x-stream-index: "006"
+        track_id:
+          type: string
+          x-stream-index: "001"
+        track_type:
+          type: string
+          x-stream-index: "002"
+        warnings:
+          items:
+            $ref: '#/components/schemas/SessionWarningResponse'
+          type: array
+          x-stream-index: "007"
       type: object
     PublisherStatsResponse:
       properties:
@@ -9196,6 +9335,15 @@ components:
       - duration
       title: RequestPermissionResponse
       type: object
+    ResolutionMetricsTimeSeries:
+      properties:
+        height:
+          $ref: '#/components/schemas/MetricTimeSeries'
+          x-stream-index: "002"
+        width:
+          $ref: '#/components/schemas/MetricTimeSeries'
+          x-stream-index: "001"
+      type: object
     ResolveSipInboundRequest:
       description: Request to resolve SIP inbound routing using challenge authentication
       nullable: true
@@ -9824,6 +9972,24 @@ components:
       - duration
       title: Response
       type: object
+    SessionClient:
+      properties:
+        ip:
+          type: string
+          x-stream-index: "003"
+        location:
+          $ref: '#/components/schemas/CallStatsLocation'
+          x-stream-index: "005"
+        name:
+          type: string
+          x-stream-index: "001"
+        network_type:
+          type: string
+          x-stream-index: "004"
+        version:
+          type: string
+          x-stream-index: "002"
+      type: object
     SessionSettingsRequest:
       properties:
         inactivity_timeout_seconds:
@@ -9845,6 +10011,22 @@ components:
           x-stream-index: "001"
       required:
       - inactivity_timeout_seconds
+      type: object
+    SessionWarningResponse:
+      properties:
+        code:
+          type: string
+          x-stream-index: "002"
+        time:
+          format: date-time
+          type: number
+          x-stream-index: "001"
+        warning:
+          type: string
+          x-stream-index: "003"
+      required:
+      - code
+      - warning
       type: object
     SharedLocationResponse:
       nullable: true
@@ -11994,11 +12176,13 @@ components:
         events' payload to the final type
       discriminator:
         mapping:
+          call.dtmf: '#/components/schemas/CallDTMFEvent'
           ingress.error: '#/components/schemas/IngressErrorEvent'
           ingress.started: '#/components/schemas/IngressStartedEvent'
           ingress.stopped: '#/components/schemas/IngressStoppedEvent'
         propertyName: type
       oneOf:
+      - $ref: '#/components/schemas/CallDTMFEvent'
       - $ref: '#/components/schemas/IngressErrorEvent'
       - $ref: '#/components/schemas/IngressStartedEvent'
       - $ref: '#/components/schemas/IngressStoppedEvent'
@@ -12029,6 +12213,7 @@ components:
           call.closed_captions_stopped: '#/components/schemas/CallClosedCaptionsStoppedEvent'
           call.created: '#/components/schemas/CallCreatedEvent'
           call.deleted: '#/components/schemas/CallDeletedEvent'
+          call.dtmf: '#/components/schemas/CallDTMFEvent'
           call.ended: '#/components/schemas/CallEndedEvent'
           call.frame_recording_failed: '#/components/schemas/CallFrameRecordingFailedEvent'
           call.frame_recording_ready: '#/components/schemas/CallFrameRecordingFrameReadyEvent'
@@ -12094,6 +12279,7 @@ components:
       - $ref: '#/components/schemas/CallClosedCaptionsStartedEvent'
       - $ref: '#/components/schemas/CallClosedCaptionsStoppedEvent'
       - $ref: '#/components/schemas/CallCreatedEvent'
+      - $ref: '#/components/schemas/CallDTMFEvent'
       - $ref: '#/components/schemas/CallDeletedEvent'
       - $ref: '#/components/schemas/CallEndedEvent'
       - $ref: '#/components/schemas/CallFrameRecordingFailedEvent'
@@ -12193,7 +12379,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v215.4.0
+  version: v219.2.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -14660,6 +14846,137 @@ paths:
       summary: List recordings
       tags:
       - product:video
+  /api/v2/video/call/{type}/{id}/recordings/{recording_type}/start:
+    post:
+      description: |
+        Starts recording
+
+        Sends events:
+        - call.recording_started
+      operationId: StartRecording
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          description: The type of call
+          maxLength: 64
+          title: Type
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Call ID
+          maxLength: 64
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
+      - in: path
+        name: recording_type
+        required: true
+        schema:
+          enum:
+          - composite
+          - individual
+          - raw
+          type: string
+          x-stream-index: "004"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartRecordingRequest'
+        description: StartRecordingRequest
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartRecordingResponse'
+          description: StartRecordingResponse
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Start recording
+      tags:
+      - product:video
+  /api/v2/video/call/{type}/{id}/recordings/{recording_type}/stop:
+    post:
+      description: |
+        Stops recording
+
+        Sends events:
+        - call.recording_stopped
+      operationId: StopRecording
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
+      - in: path
+        name: recording_type
+        required: true
+        schema:
+          enum:
+          - composite
+          - individual
+          - raw
+          type: string
+          x-stream-index: "003"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StopRecordingRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StopRecordingResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Stop recording
+      tags:
+      - product:video
   /api/v2/video/call/{type}/{id}/reject:
     post:
       description: |2
@@ -15049,6 +15366,88 @@ paths:
       summary: Stop all RTMP broadcasts for a call
       tags:
       - product:video
+  /api/v2/video/call/{type}/{id}/session/{session}/participant/{user}/{user_session}/details/track:
+    get:
+      description: |2+
+
+      operationId: GetCallParticipantSessionMetrics
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "002.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "002.002"
+      - in: path
+        name: session
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "003"
+      - in: path
+        name: user
+        required: true
+        schema:
+          maxLength: 256
+          type: string
+          writeOnly: true
+          x-stream-index: "004"
+      - in: path
+        name: user_session
+        required: true
+        schema:
+          maxLength: 256
+          type: string
+          writeOnly: true
+          x-stream-index: "005"
+      - in: query
+        name: since
+        schema:
+          format: date-time
+          type: number
+          writeOnly: true
+          x-stream-index: "006"
+      - in: query
+        name: until
+        schema:
+          format: date-time
+          type: number
+          writeOnly: true
+          x-stream-index: "007"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCallParticipantSessionMetricsResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get call participant session metrics
+      tags:
+      - product:video
   /api/v2/video/call/{type}/{id}/session/{session}/participant_sessions:
     get:
       description: |2+
@@ -15286,64 +15685,6 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Start frame recording
-      tags:
-      - product:video
-  /api/v2/video/call/{type}/{id}/start_recording:
-    post:
-      description: |
-        Starts recording
-
-        Sends events:
-        - call.recording_started
-      operationId: StartRecording
-      parameters:
-      - in: path
-        name: type
-        required: true
-        schema:
-          description: The type of call
-          maxLength: 64
-          title: Type
-          type: string
-          writeOnly: true
-          x-stream-index: "001.001"
-      - in: path
-        name: id
-        required: true
-        schema:
-          description: Call ID
-          maxLength: 64
-          title: ID
-          type: string
-          writeOnly: true
-          x-stream-index: "001.002"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/StartRecordingRequest'
-        description: StartRecordingRequest
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StartRecordingResponse'
-          description: StartRecordingResponse
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Start recording
       tags:
       - product:video
   /api/v2/video/call/{type}/{id}/start_transcription:
@@ -15600,59 +15941,6 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Set call as not live
-      tags:
-      - product:video
-  /api/v2/video/call/{type}/{id}/stop_recording:
-    post:
-      description: |
-        Stops recording
-
-        Sends events:
-        - call.recording_stopped
-      operationId: StopRecording
-      parameters:
-      - in: path
-        name: type
-        required: true
-        schema:
-          maxLength: 64
-          type: string
-          writeOnly: true
-          x-stream-index: "001.001"
-      - in: path
-        name: id
-        required: true
-        schema:
-          maxLength: 64
-          type: string
-          writeOnly: true
-          x-stream-index: "001.002"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/StopRecordingRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StopRecordingResponse'
-          description: Response
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Bad request
-        "429":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
-          description: Too many requests
-      summary: Stop recording
       tags:
       - product:video
   /api/v2/video/call/{type}/{id}/stop_transcription:
