@@ -8,7 +8,7 @@ MAKEFLAGS += -j$(NPROCS)
 
 CURRENT_VERSION_MAJOR = 1
 CURRENT_VERSION_MINOR = 46
-CURRENT_VERSION_BUG = 0
+CURRENT_VERSION_BUG = 1
 
 GIT_DESCRIBE := $(shell git describe)
 GITHUB_HEAD_REF ?= $(shell git branch --show-current)
