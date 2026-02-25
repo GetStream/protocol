@@ -1242,6 +1242,7 @@ components:
           description: Tags for filtering activities
           items:
             type: string
+          maximum: 50
           title: Filter Tags
           type: array
           x-stream-index: "014"
@@ -1883,6 +1884,7 @@ components:
           description: Tags for filtering activities
           items:
             type: string
+          maximum: 50
           title: Filter Tags
           type: array
           x-stream-index: "001.014"
@@ -3852,6 +3854,31 @@ components:
       x-stream-is-event: true
       x-stream-throttle-group: critical
       x-stream-ws-base-event-name: VideoEvent
+    CallActionOptions:
+      properties:
+        duration:
+          format: int32
+          type: integer
+          x-stream-index: "003"
+        flag_reason:
+          type: string
+          x-stream-index: "006"
+        kick_reason:
+          type: string
+          x-stream-index: "005"
+        mute_audio:
+          type: boolean
+          x-stream-index: "001"
+        mute_video:
+          type: boolean
+          x-stream-index: "002"
+        reason:
+          type: string
+          x-stream-index: "004"
+        warning_text:
+          type: string
+          x-stream-index: "007"
+      type: object
     CallClosedCaption:
       description: CallClosedCaption represents a closed caption of a call.
       properties:
@@ -4029,6 +4056,15 @@ components:
       x-stream-is-event: true
       x-stream-throttle-group: critical
       x-stream-ws-base-event-name: VideoEvent
+    CallCustomPropertyParameters:
+      properties:
+        operator:
+          type: string
+          x-stream-index: "002"
+        property_key:
+          type: string
+          x-stream-index: "001"
+      type: object
     CallDTMFEvent:
       description: This event is sent asynchronously when a single DTMF digit is received
         from a SIP participant. The event is broadcast after the digit press ends.
@@ -5573,6 +5609,21 @@ components:
       x-stream-is-event: true
       x-stream-throttle-group: critical
       x-stream-ws-base-event-name: VideoEvent
+    CallRuleActionSequence:
+      properties:
+        actions:
+          items:
+            type: string
+          type: array
+          x-stream-index: "002"
+        call_options:
+          $ref: '#/components/schemas/CallActionOptions'
+          x-stream-index: "003"
+        violation_number:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+      type: object
     CallSessionEndedEvent:
       description: This event is sent when a call session ends
       properties:
@@ -6506,6 +6557,12 @@ components:
       x-stream-is-event: true
       x-stream-throttle-group: critical
       x-stream-ws-base-event-name: VideoEvent
+    CallTypeRuleParameters:
+      properties:
+        call_type:
+          type: string
+          x-stream-index: "001"
+      type: object
     CallUpdatedEvent:
       description: |-
         This event is sent when a call is updated, clients should use this update the local state of the call.
@@ -8349,6 +8406,23 @@ components:
       x-stream-is-event: true
       x-stream-throttle-group: critical
       x-stream-ws-base-event-name: VideoEvent
+    ClosedCaptionRuleParameters:
+      properties:
+        harm_labels:
+          items:
+            type: string
+          type: array
+          x-stream-index: "001"
+        llm_harm_labels:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "002"
+        threshold:
+          format: int32
+          type: integer
+          x-stream-index: "003"
+      type: object
     CollectUserFeedbackRequest:
       nullable: true
       properties:
@@ -14747,6 +14821,22 @@ components:
       - duration
       title: JoinCallResponse
       type: object
+    KeyframeRuleParameters:
+      properties:
+        harm_labels:
+          items:
+            type: string
+          type: array
+          x-stream-index: "001"
+        min_confidence:
+          format: float
+          type: number
+          x-stream-index: "003"
+        threshold:
+          format: int32
+          type: integer
+          x-stream-index: "002"
+      type: object
     KickUserRequest:
       description: KickUserRequest is the payload for kicking a user from a call.
         Optionally block the user as well.
@@ -17576,6 +17666,11 @@ components:
         blocklist_matched:
           type: string
           x-stream-index: "005"
+        blocklists_matched:
+          items:
+            type: string
+          type: array
+          x-stream-index: "006"
         image_harms:
           items:
             type: string
@@ -17586,10 +17681,10 @@ components:
           x-stream-index: "002"
         platform_circumvented:
           type: boolean
-          x-stream-index: "007"
+          x-stream-index: "008"
         semantic_filter_matched:
           type: string
-          x-stream-index: "006"
+          x-stream-index: "007"
         text_harms:
           items:
             type: string
@@ -21135,13 +21230,13 @@ components:
           maximum: 100
           minimum: 0
           type: integer
-          x-stream-index: "004.001"
+          x-stream-index: "005.001"
         next:
           type: string
-          x-stream-index: "004.002"
+          x-stream-index: "005.002"
         prev:
           type: string
-          x-stream-index: "004.003"
+          x-stream-index: "005.003"
         sort:
           description: Sorting parameters for the query
           items:
@@ -24662,6 +24757,9 @@ components:
         ban_options:
           $ref: '#/components/schemas/BanOptions'
           x-stream-index: "002"
+        call_options:
+          $ref: '#/components/schemas/CallActionOptions'
+          x-stream-index: "004"
         flag_user_options:
           $ref: '#/components/schemas/FlagUserOptions'
           x-stream-index: "003"
@@ -24675,13 +24773,29 @@ components:
           - bounce_flag_content
           - bounce_content
           - bounce_remove_content
+          - mute_video
+          - mute_audio
+          - blur
+          - call_blur
+          - end_call
+          - kick_user
+          - warning
+          - call_warning
+          - webhook_only
           type: string
           x-stream-index: "001"
-      required:
-      - type
       type: object
     RuleBuilderCondition:
       properties:
+        call_custom_property_params:
+          $ref: '#/components/schemas/CallCustomPropertyParameters'
+          x-stream-index: "020"
+        call_type_rule_params:
+          $ref: '#/components/schemas/CallTypeRuleParameters'
+          x-stream-index: "019"
+        closed_caption_rule_params:
+          $ref: '#/components/schemas/ClosedCaptionRuleParameters'
+          x-stream-index: "018"
         confidence:
           format: float
           type: number
@@ -24698,6 +24812,9 @@ components:
         image_rule_params:
           $ref: '#/components/schemas/ImageRuleParameters'
           x-stream-index: "004"
+        keyframe_rule_params:
+          $ref: '#/components/schemas/KeyframeRuleParameters'
+          x-stream-index: "017"
         text_content_params:
           $ref: '#/components/schemas/TextContentParameters'
           x-stream-index: "011"
@@ -24759,6 +24876,11 @@ components:
         action:
           $ref: '#/components/schemas/RuleBuilderAction'
           x-stream-index: "006"
+        action_sequences:
+          items:
+            $ref: '#/components/schemas/CallRuleActionSequence'
+          type: array
+          x-stream-index: "007"
         conditions:
           items:
             $ref: '#/components/schemas/RuleBuilderCondition'
@@ -24766,7 +24888,7 @@ components:
           x-stream-index: "003"
         cooldown_period:
           type: string
-          x-stream-index: "007"
+          x-stream-index: "008"
         groups:
           items:
             $ref: '#/components/schemas/RuleBuilderConditionGroup'
@@ -24783,7 +24905,6 @@ components:
           x-stream-index: "002"
       required:
       - rule_type
-      - action
       type: object
     SDKUsageReport:
       properties:
@@ -28187,6 +28308,7 @@ components:
           description: Tags used for filtering the activity
           items:
             type: string
+          maximum: 50
           title: '[]string'
           type: array
           x-stream-index: "010"
@@ -31863,7 +31985,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v219.23.1
+  version: v219.28.1
 openapi: 3.0.3
 paths:
   /api/v2/app:
