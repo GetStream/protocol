@@ -402,6 +402,9 @@ components:
           format: int32
           type: integer
           x-stream-index: "052"
+        moderation_audio_call_moderation_enabled:
+          type: boolean
+          x-stream-index: "054"
         moderation_dashboard_preferences:
           $ref: '#/components/schemas/ModerationDashboardPreferences'
           x-stream-index: "047"
@@ -414,6 +417,9 @@ components:
         moderation_multitenant_blocklist_enabled:
           type: boolean
           x-stream-index: "045"
+        moderation_video_call_moderation_enabled:
+          type: boolean
+          x-stream-index: "053"
         moderation_webhook_url:
           type: string
           x-stream-index: "007"
@@ -539,6 +545,8 @@ components:
       - user_response_time_enabled
       - moderation_llm_configurability_enabled
       - max_aggregated_activities_length
+      - moderation_video_call_moderation_enabled
+      - moderation_audio_call_moderation_enabled
       type: object
     AsyncExportChannelsEvent:
       nullable: true
@@ -617,7 +625,7 @@ components:
           type: string
           x-stream-index: "002.001"
         type:
-          default: export.users.error
+          default: export.channels.error
           type: string
           x-stream-index: "003.002"
       required:
@@ -2675,7 +2683,7 @@ components:
         members:
           items:
             $ref: '#/components/schemas/MemberRequest'
-          maximum: 100
+          maxItems: 100
           type: array
           x-stream-index: "005"
         settings_override:
@@ -3729,6 +3737,19 @@ components:
           format: date-time
           type: number
           x-stream-index: "001.002"
+        is_trimmed:
+          description: Whether participants_overview is truncated by the server-side
+            limit
+          title: Is Trimmed
+          type: boolean
+          x-stream-index: "005"
+        participants_overview:
+          description: Top participant sessions overview
+          items:
+            $ref: '#/components/schemas/CallStatsParticipant'
+          title: Participants Overview
+          type: array
+          x-stream-index: "004"
         session_id:
           description: Call session ID
           title: Session ID
@@ -5621,6 +5642,9 @@ components:
     CreateImportRequest:
       nullable: true
       properties:
+        merge_custom:
+          type: boolean
+          x-stream-index: "003"
         mode:
           enum:
           - insert
@@ -5819,7 +5843,7 @@ components:
         options:
           items:
             $ref: '#/components/schemas/PollOptionInput'
-          maximum: 100
+          maxItems: 100
           type: array
           x-stream-index: "004"
         user:
@@ -5882,8 +5906,8 @@ components:
           description: Phone numbers associated with this SIP trunk
           items:
             type: string
-          maximum: 50
-          minimum: 1
+          maxItems: 50
+          minItems: 1
           title: '[]string'
           type: array
           x-stream-index: "002"
@@ -6081,8 +6105,8 @@ components:
           description: User IDs to deactivate
           items:
             type: string
-          maximum: 100
-          minimum: 1
+          maxItems: 100
+          minItems: 1
           title: User IDs
           type: array
           x-stream-index: "001"
@@ -6291,8 +6315,8 @@ components:
           description: IDs of users to delete
           items:
             type: string
-          maximum: 100
-          minimum: 1
+          maxItems: 100
+          minItems: 1
           title: User IDs
           type: array
           x-stream-index: "001.001"
@@ -6813,8 +6837,8 @@ components:
         user_ids:
           items:
             type: string
-          maximum: 25
-          minimum: 1
+          maxItems: 25
+          minItems: 1
           type: array
           x-stream-index: "001"
       required:
@@ -8124,9 +8148,20 @@ components:
             portrait-360x640, portrait-480x854, portrait-720x1280, portrait-1080x1920,
             portrait-1440x2560'
           items:
+            enum:
+            - 360p
+            - 480p
+            - 720p
+            - 1080p
+            - 1440p
+            - portrait-360x640
+            - portrait-480x854
+            - portrait-720x1280
+            - portrait-1080x1920
+            - portrait-1440x2560
             type: string
-          maximum: 3
-          minimum: 1
+          maxItems: 3
+          minItems: 1
           title: Quality Tracks
           type: array
           x-stream-index: "003"
@@ -8407,6 +8442,9 @@ components:
       type: object
     ImportV2TaskSettings:
       properties:
+        merge_custom:
+          type: boolean
+          x-stream-index: "005"
         mode:
           type: string
           x-stream-index: "002"
@@ -8441,6 +8479,11 @@ components:
           - auto-on
           type: string
           x-stream-index: "001"
+        output_types:
+          items:
+            type: string
+          type: array
+          x-stream-index: "002"
       required:
       - mode
       type: object
@@ -8463,6 +8506,22 @@ components:
           title: Mode
           type: string
           x-stream-index: "001"
+        output_types:
+          description: 'Output types to include: audio_only, video_only, audio_video,
+            screenshare_audio_only, screenshare_video_only, screenshare_audio_video'
+          items:
+            enum:
+            - audio_only
+            - video_only
+            - audio_video
+            - screenshare_audio_only
+            - screenshare_video_only
+            - screenshare_audio_video
+            type: string
+          minItems: 1
+          title: OutputTypes
+          type: array
+          x-stream-index: "002"
       required:
       - mode
       title: IndividualRecordingSettingsRequest
@@ -8476,6 +8535,11 @@ components:
           - auto-on
           type: string
           x-stream-index: "001"
+        output_types:
+          items:
+            type: string
+          type: array
+          x-stream-index: "002"
       required:
       - mode
       type: object
@@ -8799,7 +8863,7 @@ components:
         layers:
           items:
             $ref: '#/components/schemas/IngressVideoLayer'
-          minimum: 1
+          minItems: 1
           type: array
           x-stream-index: "002"
         source:
@@ -8813,7 +8877,7 @@ components:
         layers:
           items:
             $ref: '#/components/schemas/IngressVideoLayerRequest'
-          minimum: 1
+          minItems: 1
           type: array
           x-stream-index: "002"
         source:
@@ -9599,14 +9663,14 @@ components:
           x-stream-index: "027"
         deleted_for_me:
           type: boolean
-          x-stream-index: "047"
+          x-stream-index: "049"
         deleted_reply_count:
           format: int32
           type: integer
           x-stream-index: "020"
         draft:
           $ref: '#/components/schemas/DraftResponse'
-          x-stream-index: "044"
+          x-stream-index: "046"
         html:
           description: Contains HTML markup of the message. Can only be set when using
             server-side API
@@ -9621,7 +9685,7 @@ components:
           title: Internationalization info
           type: object
           x-stream-docs-page-id: translation
-          x-stream-index: "033"
+          x-stream-index: "035"
         id:
           description: Message ID is unique string identifier of the message
           title: ID
@@ -9653,6 +9717,20 @@ components:
           description: Whether the message mentioned the channel tag
           title: Mentioned Channel
           type: boolean
+          x-stream-index: "033"
+        mentioned_here:
+          description: Whether the message mentioned online users with @here tag
+          title: Mentioned Here
+          type: boolean
+          x-stream-index: "034"
+        mentioned_roles:
+          description: List of roles mentioned in the message (e.g. admin, channel_moderator,
+            custom roles). Members with matching roles will receive push notifications
+            based on their push preferences. Max 10 roles
+          items:
+            type: string
+          title: Mentioned Roles
+          type: array
           x-stream-index: "032"
         mentioned_users:
           description: List of mentioned users
@@ -9664,7 +9742,7 @@ components:
         message_text_updated_at:
           format: date-time
           type: number
-          x-stream-index: "039"
+          x-stream-index: "041"
         mml:
           description: Should be empty if `text` is provided. Can only be set when
             using server-side API
@@ -9674,7 +9752,7 @@ components:
           x-stream-index: "003"
         moderation:
           $ref: '#/components/schemas/ModerationV2Response'
-          x-stream-index: "042"
+          x-stream-index: "044"
         own_reactions:
           description: List of 10 latest reactions of authenticated user to this message
           items:
@@ -9694,34 +9772,34 @@ components:
           title: Pin expiration date
           type: number
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "038"
+          x-stream-index: "040"
         pinned:
           description: Whether message is pinned or not
           title: Pinned
           type: boolean
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "035"
+          x-stream-index: "037"
         pinned_at:
           description: Date when message got pinned
           format: date-time
           title: Pinned at
           type: number
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "036"
+          x-stream-index: "038"
         pinned_by:
           $ref: '#/components/schemas/UserResponse'
           description: Contains user who pinned the message
           title: Pinned by
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "037"
+          x-stream-index: "039"
         poll:
           $ref: '#/components/schemas/PollResponseData'
-          x-stream-index: "041"
+          x-stream-index: "043"
         poll_id:
           description: Identifier of the poll to include in the message
           title: Poll ID
           type: string
-          x-stream-index: "040"
+          x-stream-index: "042"
         quoted_message:
           $ref: '#/components/schemas/MessageResponse'
           description: Contains quoted message
@@ -9758,7 +9836,7 @@ components:
           x-stream-index: "013"
         reminder:
           $ref: '#/components/schemas/ReminderResponseData'
-          x-stream-index: "045"
+          x-stream-index: "047"
         reply_count:
           description: Number of replies to this message
           format: int32
@@ -9773,7 +9851,7 @@ components:
             type: string
           title: Restricted visibility
           type: array
-          x-stream-index: "043"
+          x-stream-index: "045"
         shadowed:
           description: Whether the message was shadowed or not
           title: Shadowed
@@ -9784,7 +9862,7 @@ components:
           $ref: '#/components/schemas/SharedLocationResponseData'
           description: Contains shared location data
           title: Shared Location
-          x-stream-index: "046"
+          x-stream-index: "048"
         show_in_channel:
           description: Whether thread reply should be shown in the channel as well
           title: Show in channel
@@ -9795,7 +9873,7 @@ components:
           description: Whether message is silent or not
           title: Silent
           type: boolean
-          x-stream-index: "034"
+          x-stream-index: "036"
         text:
           description: Text of the message. Should be empty if `mml` is provided
           title: Text
@@ -9847,6 +9925,7 @@ components:
       - shadowed
       - mentioned_users
       - mentioned_channel
+      - mentioned_here
       - silent
       - pinned
       - restricted_visibility
@@ -9944,6 +10023,11 @@ components:
         blocklist_matched:
           type: string
           x-stream-index: "005"
+        blocklists_matched:
+          items:
+            type: string
+          type: array
+          x-stream-index: "006"
         image_harms:
           items:
             type: string
@@ -9954,10 +10038,10 @@ components:
           x-stream-index: "002"
         platform_circumvented:
           type: boolean
-          x-stream-index: "007"
+          x-stream-index: "008"
         semantic_filter_matched:
           type: string
-          x-stream-index: "006"
+          x-stream-index: "007"
         text_harms:
           items:
             type: string
@@ -11683,7 +11767,7 @@ components:
         sort:
           items:
             $ref: '#/components/schemas/SortParamRequest'
-          maximum: 1
+          maxItems: 1
           type: array
           x-stream-index: "003"
         type:
@@ -11991,7 +12075,7 @@ components:
         sort:
           items:
             $ref: '#/components/schemas/SortParamRequest'
-          maximum: 2
+          maxItems: 2
           type: array
           x-stream-index: "002"
       type: object
@@ -12044,7 +12128,7 @@ components:
           description: Array of sort parameters
           items:
             $ref: '#/components/schemas/SortParamRequest'
-          maximum: 2
+          maxItems: 2
           title: Sort
           type: array
           x-stream-index: "004"
@@ -12100,7 +12184,7 @@ components:
           description: Array of sort parameters
           items:
             $ref: '#/components/schemas/SortParamRequest'
-          maximum: 5
+          maxItems: 5
           title: Sort
           type: array
           x-stream-index: "004"
@@ -12130,7 +12214,7 @@ components:
           description: Array of sort parameters
           items:
             $ref: '#/components/schemas/SortParamRequest'
-          maximum: 5
+          maxItems: 5
           title: Sort
           type: array
           x-stream-index: "003"
@@ -12182,7 +12266,7 @@ components:
         sort:
           items:
             $ref: '#/components/schemas/SortParamRequest'
-          maximum: 2
+          maxItems: 2
           type: array
           x-stream-index: "002"
       type: object
@@ -12239,7 +12323,7 @@ components:
         sort:
           items:
             $ref: '#/components/schemas/SortParamRequest'
-          maximum: 5
+          maxItems: 5
           type: array
           x-stream-index: "002"
         user:
@@ -12617,8 +12701,8 @@ components:
           description: User IDs to reactivate
           items:
             type: string
-          maximum: 100
-          minimum: 1
+          maxItems: 100
+          minItems: 1
           title: User IDs
           type: array
           x-stream-index: "001"
@@ -12909,8 +12993,8 @@ components:
         user_ids:
           items:
             type: string
-          maximum: 100
-          minimum: 1
+          maxItems: 100
+          minItems: 1
           type: array
           x-stream-index: "001"
       required:
@@ -12924,7 +13008,7 @@ components:
             all call members who are not already in the call will receive ring notifications.
           items:
             type: string
-          maximum: 25
+          maxItems: 25
           title: Members IDs
           type: array
           x-stream-index: "003"
@@ -13408,7 +13492,7 @@ components:
           description: List of called numbers
           items:
             type: string
-          maximum: 50
+          maxItems: 50
           title: '[]string'
           type: array
           x-stream-index: "003"
@@ -13421,7 +13505,7 @@ components:
           description: List of caller numbers (optional)
           items:
             type: string
-          maximum: 50
+          maxItems: 50
           title: '[]string'
           type: array
           x-stream-index: "004"
@@ -13451,8 +13535,8 @@ components:
           description: List of SIP trunk IDs
           items:
             type: string
-          maximum: 50
-          minimum: 1
+          maxItems: 50
+          minItems: 1
           title: '[]string'
           type: array
           x-stream-index: "002"
@@ -14215,8 +14299,8 @@ components:
           description: List of broadcasts to start
           items:
             $ref: '#/components/schemas/RTMPBroadcastRequest'
-          maximum: 1
-          minimum: 1
+          maxItems: 1
+          minItems: 1
           title: Broadcasts
           type: array
           x-stream-index: "002"
@@ -14862,6 +14946,39 @@ components:
           x-stream-index: "001"
         languages:
           items:
+            enum:
+            - en
+            - fr
+            - es
+            - de
+            - it
+            - nl
+            - pt
+            - pl
+            - ca
+            - cs
+            - da
+            - el
+            - fi
+            - id
+            - ja
+            - ru
+            - sv
+            - ta
+            - th
+            - tr
+            - hu
+            - ro
+            - zh
+            - ar
+            - tl
+            - he
+            - hi
+            - hr
+            - ko
+            - ms
+            - "no"
+            - uk
             type: string
           type: array
           x-stream-index: "002"
@@ -15000,37 +15117,37 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "001.017"
+          x-stream-index: "001.018"
         apn_config:
           $ref: '#/components/schemas/APNConfig'
           x-stream-index: "001.003"
         async_moderation_config:
           $ref: '#/components/schemas/AsyncModerationConfiguration'
-          x-stream-index: "001.039"
+          x-stream-index: "001.040"
         async_url_enrich_enabled:
           type: boolean
-          x-stream-index: "001.019"
+          x-stream-index: "001.020"
         auto_translation_enabled:
           type: boolean
-          x-stream-index: "001.018"
+          x-stream-index: "001.019"
         before_message_send_hook_url:
           type: string
-          x-stream-index: "001.020"
+          x-stream-index: "001.021"
         cdn_expiration_seconds:
           format: int32
           maximum: 1209600
           minimum: 14400
           type: integer
-          x-stream-index: "001.038"
+          x-stream-index: "001.039"
         channel_hide_members_only:
           type: boolean
-          x-stream-index: "001.033"
+          x-stream-index: "001.034"
         custom_action_handler_url:
           type: string
-          x-stream-index: "001.021"
+          x-stream-index: "001.022"
         datadog_info:
           $ref: '#/components/schemas/DataDogInfo'
-          x-stream-index: "001.040"
+          x-stream-index: "001.041"
         disable_auth_checks:
           type: boolean
           x-stream-index: "001.001"
@@ -15043,21 +15160,21 @@ components:
           - app
           - team
           type: string
-          x-stream-index: "001.022"
+          x-stream-index: "001.023"
         event_hooks:
           items:
             $ref: '#/components/schemas/EventHook'
           type: array
-          x-stream-index: "001.046"
+          x-stream-index: "001.047"
         feeds_moderation_enabled:
           type: boolean
-          x-stream-index: "001.042"
+          x-stream-index: "001.043"
         feeds_v2_region:
           type: string
-          x-stream-index: "001.041"
+          x-stream-index: "001.042"
         file_upload_config:
           $ref: '#/components/schemas/FileUploadConfig'
-          x-stream-index: "001.030"
+          x-stream-index: "001.031"
         firebase_config:
           $ref: '#/components/schemas/FirebaseConfig'
           x-stream-index: "001.004"
@@ -15067,10 +15184,10 @@ components:
               type: string
             type: array
           type: object
-          x-stream-index: "001.034"
+          x-stream-index: "001.035"
         guest_user_creation_disabled:
           type: boolean
-          x-stream-index: "001.043"
+          x-stream-index: "001.044"
         huawei_config:
           $ref: '#/components/schemas/HuaweiConfig'
           x-stream-index: "001.005"
@@ -15078,43 +15195,46 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "001.015"
+          x-stream-index: "001.016"
         image_moderation_enabled:
           type: boolean
-          x-stream-index: "001.016"
+          x-stream-index: "001.017"
         image_moderation_labels:
           items:
             type: string
           type: array
-          x-stream-index: "001.014"
+          x-stream-index: "001.015"
         image_upload_config:
           $ref: '#/components/schemas/FileUploadConfig'
-          x-stream-index: "001.029"
+          x-stream-index: "001.030"
         max_aggregated_activities_length:
           format: int32
           type: integer
-          x-stream-index: "001.049"
+          x-stream-index: "001.050"
         migrate_permissions_to_v2:
           type: boolean
-          x-stream-index: "001.035"
+          x-stream-index: "001.036"
+        moderation_analytics_enabled:
+          type: boolean
+          x-stream-index: "001.010"
         moderation_dashboard_preferences:
           $ref: '#/components/schemas/ModerationDashboardPreferences'
-          x-stream-index: "001.044"
+          x-stream-index: "001.045"
         moderation_enabled:
           type: boolean
           x-stream-index: "001.009"
         moderation_webhook_url:
           type: string
-          x-stream-index: "001.010"
+          x-stream-index: "001.011"
         multi_tenant_enabled:
           type: boolean
-          x-stream-index: "001.013"
+          x-stream-index: "001.014"
         permission_version:
           enum:
           - v1
           - v2
           type: string
-          x-stream-index: "001.011"
+          x-stream-index: "001.012"
         push_config:
           $ref: '#/components/schemas/PushConfig'
           x-stream-index: "001.007"
@@ -15123,48 +15243,48 @@ components:
           maximum: 86400
           minimum: 60
           type: integer
-          x-stream-index: "001.036"
+          x-stream-index: "001.037"
         reminders_max_members:
           format: int32
           minimum: 2
           type: integer
-          x-stream-index: "001.037"
+          x-stream-index: "001.038"
         revoke_tokens_issued_before:
           format: date-time
           type: number
-          x-stream-index: "001.031"
+          x-stream-index: "001.032"
         sns_key:
           type: string
-          x-stream-index: "001.027"
+          x-stream-index: "001.028"
         sns_secret:
           type: string
-          x-stream-index: "001.028"
+          x-stream-index: "001.029"
         sns_topic_arn:
           type: string
-          x-stream-index: "001.026"
+          x-stream-index: "001.027"
         sqs_key:
           type: string
-          x-stream-index: "001.024"
+          x-stream-index: "001.025"
         sqs_secret:
           type: string
-          x-stream-index: "001.025"
+          x-stream-index: "001.026"
         sqs_url:
           type: string
-          x-stream-index: "001.023"
+          x-stream-index: "001.024"
         user_response_time_enabled:
           type: boolean
-          x-stream-index: "001.048"
+          x-stream-index: "001.049"
         user_search_disallowed_roles:
           items:
             type: string
-          maximum: 10
+          maxItems: 10
           type: array
-          x-stream-index: "001.012"
+          x-stream-index: "001.013"
         webhook_events:
           items:
             type: string
           type: array
-          x-stream-index: "001.032"
+          x-stream-index: "001.033"
         webhook_url:
           type: string
           x-stream-index: "001.008"
@@ -15218,7 +15338,7 @@ components:
           description: List of userID to remove
           items:
             type: string
-          maximum: 100
+          maxItems: 100
           title: Remove Members
           type: array
           x-stream-index: "003"
@@ -15226,7 +15346,7 @@ components:
           description: List of members to update or insert
           items:
             $ref: '#/components/schemas/MemberRequest'
-          maximum: 100
+          maxItems: 100
           title: Update Members
           type: array
           x-stream-index: "004"
@@ -15600,7 +15720,7 @@ components:
           description: Poll options
           items:
             $ref: '#/components/schemas/PollOptionRequest'
-          maximum: 100
+          maxItems: 100
           title: PollOptions
           type: array
           x-stream-index: "004"
@@ -15635,7 +15755,7 @@ components:
           description: List of called numbers
           items:
             type: string
-          minimum: 1
+          minItems: 1
           title: '[]string'
           type: array
           x-stream-index: "004"
@@ -15676,7 +15796,7 @@ components:
           description: List of SIP trunk IDs
           items:
             type: string
-          minimum: 1
+          minItems: 1
           title: '[]string'
           type: array
           x-stream-index: "003"
@@ -15718,8 +15838,8 @@ components:
           description: Phone numbers associated with this SIP trunk
           items:
             type: string
-          maximum: 50
-          minimum: 1
+          maxItems: 50
+          minItems: 1
           title: '[]string'
           type: array
           x-stream-index: "003"
@@ -15768,11 +15888,19 @@ components:
       properties:
         grant_permissions:
           items:
+            enum:
+            - screenshare
+            - send-audio
+            - send-video
             type: string
           type: array
           x-stream-index: "002"
         revoke_permissions:
           items:
+            enum:
+            - screenshare
+            - send-audio
+            - send-video
             type: string
           type: array
           x-stream-index: "003"
@@ -17011,18 +17139,7 @@ components:
       - camera_default_on
       - camera_facing
       type: object
-    WHIPIngress:
-      properties:
-        address:
-          description: URL for a new whip input, every time a new link is created
-          title: Address
-          type: string
-          x-stream-index: "001"
-      required:
-      - address
-      title: WHIPIngress
-      type: object
-    WebhookEvent:
+    WHEvent:
       description: The discriminator object for all webhook events, it maps events'
         payload to the final type
       discriminator:
@@ -17163,6 +17280,17 @@ components:
       - $ref: '#/components/schemas/UserReactivatedEvent'
       - $ref: '#/components/schemas/UserUnbannedEvent'
       - $ref: '#/components/schemas/UserUpdatedEvent'
+    WHIPIngress:
+      properties:
+        address:
+          description: URL for a new whip input, every time a new link is created
+          title: Address
+          type: string
+          x-stream-index: "001"
+      required:
+      - address
+      title: WHIPIngress
+      type: object
     XiaomiConfig:
       properties:
         Disabled:
@@ -17231,7 +17359,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v219.23.1
+  version: v221.12.1
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -22533,7 +22661,7 @@ paths:
         schema:
           items:
             $ref: '#/components/schemas/SortParamRequest'
-          maximum: 1
+          maxItems: 1
           type: array
           writeOnly: true
           x-stream-index: "005"
