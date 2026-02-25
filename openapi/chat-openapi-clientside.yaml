@@ -351,6 +351,8 @@ components:
       - user_response_time_enabled
       - moderation_llm_configurability_enabled
       - max_aggregated_activities_length
+      - moderation_video_call_moderation_enabled
+      - moderation_audio_call_moderation_enabled
       type: object
     AppUpdatedEvent:
       description: Emitted when app settings are updated
@@ -1368,7 +1370,7 @@ components:
         filter_tags:
           items:
             type: string
-          maximum: 10
+          maxItems: 10
           type: array
           x-stream-index: "026"
         frozen:
@@ -1379,13 +1381,13 @@ components:
         invites:
           items:
             $ref: '#/components/schemas/ChannelMemberRequest'
-          maximum: 100
+          maxItems: 100
           type: array
           x-stream-index: "016"
         members:
           items:
             $ref: '#/components/schemas/ChannelMemberRequest'
-          maximum: 100
+          maxItems: 100
           type: array
           x-stream-index: "018"
         team:
@@ -1424,13 +1426,13 @@ components:
         invites:
           items:
             $ref: '#/components/schemas/ChannelMemberRequest'
-          maximum: 100
+          maxItems: 100
           type: array
           x-stream-index: "007"
         members:
           items:
             $ref: '#/components/schemas/ChannelMemberRequest'
-          maximum: 100
+          maxItems: 100
           type: array
           x-stream-index: "008"
         team:
@@ -2636,7 +2638,7 @@ components:
         options:
           items:
             $ref: '#/components/schemas/PollOptionInput'
-          maximum: 100
+          maxItems: 100
           type: array
           x-stream-index: "004"
         voting_visibility:
@@ -2710,8 +2712,8 @@ components:
           description: All channels that should be deleted
           items:
             type: string
-          maximum: 100
-          minimum: 1
+          maxItems: 100
+          minItems: 1
           title: Channels CID
           type: array
           x-stream-index: "001"
@@ -4213,12 +4215,56 @@ components:
           type: string
           x-stream-index: "002.001"
         event:
-          $ref: '#/components/schemas/MessageReadEvent'
+          $ref: '#/components/schemas/MarkReadResponseEvent'
           description: Mark read event
           title: Event
           x-stream-index: "001"
       required:
       - duration
+      type: object
+    MarkReadResponseEvent:
+      properties:
+        channel:
+          $ref: '#/components/schemas/ChannelResponse'
+          x-stream-index: "011"
+        channel_id:
+          type: string
+          x-stream-index: "003"
+        channel_last_message_at:
+          format: date-time
+          type: string
+          x-stream-index: "005"
+        channel_type:
+          type: string
+          x-stream-index: "004"
+        cid:
+          type: string
+          x-stream-index: "002"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "009"
+        last_read_message_id:
+          type: string
+          x-stream-index: "010"
+        team:
+          type: string
+          x-stream-index: "006"
+        thread:
+          $ref: '#/components/schemas/ThreadResponse'
+          x-stream-index: "008"
+        type:
+          type: string
+          x-stream-index: "001"
+        user:
+          $ref: '#/components/schemas/UserResponseCommonFields'
+          x-stream-index: "007"
+      required:
+      - type
+      - cid
+      - channel_id
+      - channel_type
+      - created_at
       type: object
     MarkUnreadRequest:
       nullable: true
@@ -5142,51 +5188,94 @@ components:
           x-stream-index: "001"
       type: object
     MessageReadEvent:
+      description: Emitted when a channel or thread is marked as read.
+      nullable: true
       properties:
         channel:
           $ref: '#/components/schemas/ChannelResponse'
-          x-stream-index: "011"
+          x-stream-index: "003.001"
+        channel_custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.006
         channel_id:
+          description: The ID of the channel where the message was read
+          title: Channel ID
           type: string
-          x-stream-index: "003"
-        channel_last_message_at:
+          x-stream-index: 001.002.002
+        channel_member_count:
+          description: The number of members in the channel
+          format: int32
+          title: Channel Member Count
+          type: integer
+          x-stream-index: 001.001.004
+        channel_message_count:
+          description: The number of messages in the channel
+          format: int64
+          title: Channel Message Count
+          type: integer
+          x-stream-index: 001.001.005
+        channel_type:
+          description: The type of the channel where the message was read
+          title: Channel Type
+          type: string
+          x-stream-index: 001.002.001
+        cid:
+          description: The CID of the channel where the message was read
+          title: Channel CID
+          type: string
+          x-stream-index: 001.001.001.002
+        created_at:
+          description: Date/time of creation
           format: date-time
+          title: Created at
+          type: string
+          x-stream-index: 001.001.001.001.003
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.001.001.007
+        last_read_message_id:
+          description: The ID of the last read message
+          title: Last Read Message ID
           type: string
           x-stream-index: "005"
-        channel_type:
-          type: string
-          x-stream-index: "004"
-        cid:
-          type: string
-          x-stream-index: "002"
-        created_at:
+        received_at:
           format: date-time
           type: string
-          x-stream-index: "009"
-        last_read_message_id:
-          type: string
-          x-stream-index: "010"
+          x-stream-index: 001.001.001.001.004
         team:
+          description: The team ID
+          title: Team
           type: string
-          x-stream-index: "006"
+          x-stream-index: 001.001.003
         thread:
           $ref: '#/components/schemas/ThreadResponse'
-          x-stream-index: "008"
+          description: The thread where the message was read
+          title: Thread
+          x-stream-index: "004"
         type:
           default: message.read
+          description: 'The type of event: "message.read" in this case'
+          title: Event Type
           type: string
-          x-stream-index: "001"
+          x-stream-index: 001.001.001.001.002
         user:
           $ref: '#/components/schemas/UserResponseCommonFields'
-          x-stream-index: "007"
+          description: The user that read the message
+          title: User
+          x-stream-index: "002.001"
       required:
       - type
-      - cid
-      - channel_id
-      - channel_type
       - created_at
+      - custom
+      title: MessageReadEvent
       type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
       x-stream-throttle-group: ordered
+      x-stream-ws-base-event-name: VideoEvent
     MessageRequest:
       description: Message data for creating or updating a message
       properties:
@@ -5194,7 +5283,7 @@ components:
           description: Array of message attachments
           items:
             $ref: '#/components/schemas/Attachment'
-          maximum: 30
+          maxItems: 30
           title: Message attachments
           type: array
           x-stream-docs-page-id: message_format#attachment-format
@@ -5211,12 +5300,21 @@ components:
           x-stream-index: "001"
         mentioned_channel:
           type: boolean
+          x-stream-index: "010"
+        mentioned_here:
+          type: boolean
+          x-stream-index: "011"
+        mentioned_roles:
+          items:
+            type: string
+          maxItems: 10
+          type: array
           x-stream-index: "009"
         mentioned_users:
           description: Array of user IDs to mention
           items:
             type: string
-          maximum: 100
+          maxItems: 100
           title: Mentioned User IDs
           type: array
           x-stream-index: "008"
@@ -5239,13 +5337,13 @@ components:
           title: Pin expiration date
           type: string
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "016"
+          x-stream-index: "018"
         pinned:
           description: Whether message is pinned or not
           title: Pinned
           type: boolean
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "014"
+          x-stream-index: "016"
         pinned_at:
           description: Date when message got pinned
           format: date-time
@@ -5253,30 +5351,30 @@ components:
           title: Pinned at
           type: string
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "015"
+          x-stream-index: "017"
         poll_id:
           description: Identifier of the poll to include in the message
           title: Poll ID
           type: string
-          x-stream-index: "040"
+          x-stream-index: "042"
         quoted_message_id:
           title: ID of quoted message
           type: string
           x-stream-docs-page-id: threads#quote-message
-          x-stream-index: "010"
+          x-stream-index: "012"
         restricted_visibility:
           description: A list of user ids that have restricted visibility to the message
           items:
             type: string
-          maximum: 10
+          maxItems: 10
           title: Restricted visibility
           type: array
-          x-stream-index: "017"
+          x-stream-index: "019"
         shared_location:
           $ref: '#/components/schemas/SharedLocation'
           description: Contains shared location data
           title: Shared Location
-          x-stream-index: "041"
+          x-stream-index: "043"
         show_in_channel:
           description: Whether thread reply should be shown in the channel as well
           title: Show in channel
@@ -5287,7 +5385,7 @@ components:
           description: Whether message is silent or not
           title: Silent
           type: boolean
-          x-stream-index: "013"
+          x-stream-index: "015"
         text:
           description: Text of the message. Should be empty if `mml` is provided
           title: Text
@@ -5302,7 +5400,7 @@ components:
           title: Message Type
           type: string
           x-stream-docs-page-id: message_format#message-types
-          x-stream-index: "012"
+          x-stream-index: "014"
       title: Message Request
       type: object
     MessageResponse:
@@ -5345,14 +5443,14 @@ components:
           x-stream-index: "027"
         deleted_for_me:
           type: boolean
-          x-stream-index: "047"
+          x-stream-index: "049"
         deleted_reply_count:
           format: int32
           type: integer
           x-stream-index: "020"
         draft:
           $ref: '#/components/schemas/DraftResponse'
-          x-stream-index: "044"
+          x-stream-index: "046"
         html:
           description: Contains HTML markup of the message. Can only be set when using
             server-side API
@@ -5367,7 +5465,7 @@ components:
           title: Internationalization info
           type: object
           x-stream-docs-page-id: translation
-          x-stream-index: "033"
+          x-stream-index: "035"
         id:
           description: Message ID is unique string identifier of the message
           title: ID
@@ -5399,6 +5497,20 @@ components:
           description: Whether the message mentioned the channel tag
           title: Mentioned Channel
           type: boolean
+          x-stream-index: "033"
+        mentioned_here:
+          description: Whether the message mentioned online users with @here tag
+          title: Mentioned Here
+          type: boolean
+          x-stream-index: "034"
+        mentioned_roles:
+          description: List of roles mentioned in the message (e.g. admin, channel_moderator,
+            custom roles). Members with matching roles will receive push notifications
+            based on their push preferences. Max 10 roles
+          items:
+            type: string
+          title: Mentioned Roles
+          type: array
           x-stream-index: "032"
         mentioned_users:
           description: List of mentioned users
@@ -5410,7 +5522,7 @@ components:
         message_text_updated_at:
           format: date-time
           type: string
-          x-stream-index: "039"
+          x-stream-index: "041"
         mml:
           description: Should be empty if `text` is provided. Can only be set when
             using server-side API
@@ -5420,7 +5532,7 @@ components:
           x-stream-index: "003"
         moderation:
           $ref: '#/components/schemas/ModerationV2Response'
-          x-stream-index: "042"
+          x-stream-index: "044"
         own_reactions:
           description: List of 10 latest reactions of authenticated user to this message
           items:
@@ -5440,34 +5552,34 @@ components:
           title: Pin expiration date
           type: string
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "038"
+          x-stream-index: "040"
         pinned:
           description: Whether message is pinned or not
           title: Pinned
           type: boolean
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "035"
+          x-stream-index: "037"
         pinned_at:
           description: Date when message got pinned
           format: date-time
           title: Pinned at
           type: string
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "036"
+          x-stream-index: "038"
         pinned_by:
           $ref: '#/components/schemas/UserResponse'
           description: Contains user who pinned the message
           title: Pinned by
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "037"
+          x-stream-index: "039"
         poll:
           $ref: '#/components/schemas/PollResponseData'
-          x-stream-index: "041"
+          x-stream-index: "043"
         poll_id:
           description: Identifier of the poll to include in the message
           title: Poll ID
           type: string
-          x-stream-index: "040"
+          x-stream-index: "042"
         quoted_message:
           $ref: '#/components/schemas/MessageResponse'
           description: Contains quoted message
@@ -5504,7 +5616,7 @@ components:
           x-stream-index: "013"
         reminder:
           $ref: '#/components/schemas/ReminderResponseData'
-          x-stream-index: "045"
+          x-stream-index: "047"
         reply_count:
           description: Number of replies to this message
           format: int32
@@ -5519,7 +5631,7 @@ components:
             type: string
           title: Restricted visibility
           type: array
-          x-stream-index: "043"
+          x-stream-index: "045"
         shadowed:
           description: Whether the message was shadowed or not
           title: Shadowed
@@ -5530,7 +5642,7 @@ components:
           $ref: '#/components/schemas/SharedLocationResponseData'
           description: Contains shared location data
           title: Shared Location
-          x-stream-index: "046"
+          x-stream-index: "048"
         show_in_channel:
           description: Whether thread reply should be shown in the channel as well
           title: Show in channel
@@ -5541,7 +5653,7 @@ components:
           description: Whether message is silent or not
           title: Silent
           type: boolean
-          x-stream-index: "034"
+          x-stream-index: "036"
         text:
           description: Text of the message. Should be empty if `mml` is provided
           title: Text
@@ -5593,6 +5705,7 @@ components:
       - shadowed
       - mentioned_users
       - mentioned_channel
+      - mentioned_here
       - silent
       - pinned
       - restricted_visibility
@@ -5826,14 +5939,14 @@ components:
           x-stream-index: "001.027"
         deleted_for_me:
           type: boolean
-          x-stream-index: "001.047"
+          x-stream-index: "001.049"
         deleted_reply_count:
           format: int32
           type: integer
           x-stream-index: "001.020"
         draft:
           $ref: '#/components/schemas/DraftResponse'
-          x-stream-index: "001.044"
+          x-stream-index: "001.046"
         html:
           description: Contains HTML markup of the message. Can only be set when using
             server-side API
@@ -5848,7 +5961,7 @@ components:
           title: Internationalization info
           type: object
           x-stream-docs-page-id: translation
-          x-stream-index: "001.033"
+          x-stream-index: "001.035"
         id:
           description: Message ID is unique string identifier of the message
           title: ID
@@ -5880,6 +5993,20 @@ components:
           description: Whether the message mentioned the channel tag
           title: Mentioned Channel
           type: boolean
+          x-stream-index: "001.033"
+        mentioned_here:
+          description: Whether the message mentioned online users with @here tag
+          title: Mentioned Here
+          type: boolean
+          x-stream-index: "001.034"
+        mentioned_roles:
+          description: List of roles mentioned in the message (e.g. admin, channel_moderator,
+            custom roles). Members with matching roles will receive push notifications
+            based on their push preferences. Max 10 roles
+          items:
+            type: string
+          title: Mentioned Roles
+          type: array
           x-stream-index: "001.032"
         mentioned_users:
           description: List of mentioned users
@@ -5891,7 +6018,7 @@ components:
         message_text_updated_at:
           format: date-time
           type: string
-          x-stream-index: "001.039"
+          x-stream-index: "001.041"
         mml:
           description: Should be empty if `text` is provided. Can only be set when
             using server-side API
@@ -5901,7 +6028,7 @@ components:
           x-stream-index: "001.003"
         moderation:
           $ref: '#/components/schemas/ModerationV2Response'
-          x-stream-index: "001.042"
+          x-stream-index: "001.044"
         own_reactions:
           description: List of 10 latest reactions of authenticated user to this message
           items:
@@ -5921,34 +6048,34 @@ components:
           title: Pin expiration date
           type: string
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "001.038"
+          x-stream-index: "001.040"
         pinned:
           description: Whether message is pinned or not
           title: Pinned
           type: boolean
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "001.035"
+          x-stream-index: "001.037"
         pinned_at:
           description: Date when message got pinned
           format: date-time
           title: Pinned at
           type: string
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "001.036"
+          x-stream-index: "001.038"
         pinned_by:
           $ref: '#/components/schemas/UserResponse'
           description: Contains user who pinned the message
           title: Pinned by
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "001.037"
+          x-stream-index: "001.039"
         poll:
           $ref: '#/components/schemas/PollResponseData'
-          x-stream-index: "001.041"
+          x-stream-index: "001.043"
         poll_id:
           description: Identifier of the poll to include in the message
           title: Poll ID
           type: string
-          x-stream-index: "001.040"
+          x-stream-index: "001.042"
         quoted_message:
           $ref: '#/components/schemas/MessageResponse'
           description: Contains quoted message
@@ -5985,7 +6112,7 @@ components:
           x-stream-index: "001.013"
         reminder:
           $ref: '#/components/schemas/ReminderResponseData'
-          x-stream-index: "001.045"
+          x-stream-index: "001.047"
         reply_count:
           description: Number of replies to this message
           format: int32
@@ -6000,7 +6127,7 @@ components:
             type: string
           title: Restricted visibility
           type: array
-          x-stream-index: "001.043"
+          x-stream-index: "001.045"
         shadowed:
           description: Whether the message was shadowed or not
           title: Shadowed
@@ -6011,7 +6138,7 @@ components:
           $ref: '#/components/schemas/SharedLocationResponseData'
           description: Contains shared location data
           title: Shared Location
-          x-stream-index: "001.046"
+          x-stream-index: "001.048"
         show_in_channel:
           description: Whether thread reply should be shown in the channel as well
           title: Show in channel
@@ -6022,7 +6149,7 @@ components:
           description: Whether message is silent or not
           title: Silent
           type: boolean
-          x-stream-index: "001.034"
+          x-stream-index: "001.036"
         text:
           description: Text of the message. Should be empty if `mml` is provided
           title: Text
@@ -6074,6 +6201,7 @@ components:
       - shadowed
       - mentioned_users
       - mentioned_channel
+      - mentioned_here
       - silent
       - pinned
       - restricted_visibility
@@ -6113,6 +6241,11 @@ components:
         blocklist_matched:
           type: string
           x-stream-index: "005"
+        blocklists_matched:
+          items:
+            type: string
+          type: array
+          x-stream-index: "006"
         image_harms:
           items:
             type: string
@@ -6123,10 +6256,10 @@ components:
           x-stream-index: "002"
         platform_circumvented:
           type: boolean
-          x-stream-index: "007"
+          x-stream-index: "008"
         semantic_filter_matched:
           type: string
-          x-stream-index: "006"
+          x-stream-index: "007"
         text_harms:
           items:
             type: string
@@ -6143,7 +6276,7 @@ components:
           description: Channel CIDs to mute (if multiple channels)
           items:
             type: string
-          maximum: 25
+          maxItems: 25
           title: Channel CIDs
           type: array
           x-stream-index: "002"
@@ -6186,7 +6319,7 @@ components:
           description: User IDs to mute (if multiple users)
           items:
             type: string
-          maximum: 1000
+          maxItems: 1000
           title: Target IDs
           type: array
           x-stream-index: "002"
@@ -8450,7 +8583,7 @@ components:
           description: Array of sort parameters
           items:
             $ref: '#/components/schemas/SortParamRequest'
-          maximum: 1
+          maxItems: 1
           title: Sort
           type: array
           x-stream-index: "002"
@@ -8530,7 +8663,7 @@ components:
           description: List of sort parameters
           items:
             $ref: '#/components/schemas/SortParamRequest'
-          maximum: 5
+          maxItems: 5
           title: Sort
           type: array
           x-stream-index: "002"
@@ -8603,7 +8736,7 @@ components:
           description: Array of sort parameters
           items:
             $ref: '#/components/schemas/SortParamRequest'
-          maximum: 5
+          maxItems: 5
           title: Sort
           type: array
           x-stream-index: "002"
@@ -8710,7 +8843,7 @@ components:
         sort:
           items:
             $ref: '#/components/schemas/SortParamRequest'
-          maximum: 1
+          maxItems: 1
           type: array
           x-stream-index: "005"
         type:
@@ -8747,7 +8880,7 @@ components:
         sort:
           items:
             $ref: '#/components/schemas/SortParamRequest'
-          maximum: 5
+          maxItems: 5
           type: array
           x-stream-index: "003.005"
       type: object
@@ -8797,7 +8930,7 @@ components:
           description: Array of sort parameters
           items:
             $ref: '#/components/schemas/SortParamRequest'
-          maximum: 5
+          maxItems: 5
           title: Sort
           type: array
           x-stream-index: "004"
@@ -8827,7 +8960,7 @@ components:
           description: Array of sort parameters
           items:
             $ref: '#/components/schemas/SortParamRequest'
-          maximum: 5
+          maxItems: 5
           title: Sort
           type: array
           x-stream-index: "003"
@@ -8878,7 +9011,7 @@ components:
         sort:
           items:
             $ref: '#/components/schemas/SortParamRequest'
-          maximum: 2
+          maxItems: 2
           type: array
           x-stream-index: "003"
       type: object
@@ -8931,7 +9064,7 @@ components:
           description: Array of sort parameters
           items:
             $ref: '#/components/schemas/SortParamRequest'
-          maximum: 5
+          maxItems: 5
           title: Sort
           type: array
           x-stream-index: "002"
@@ -9008,7 +9141,7 @@ components:
           description: Sort conditions to apply to threads
           items:
             $ref: '#/components/schemas/SortParamRequest'
-          maximum: 5
+          maxItems: 5
           title: Sort
           type: array
           x-stream-index: "007"
@@ -9071,7 +9204,7 @@ components:
         sort:
           items:
             $ref: '#/components/schemas/SortParamRequest'
-          maximum: 5
+          maxItems: 5
           type: array
           x-stream-index: "002"
       required:
@@ -10013,14 +10146,14 @@ components:
           x-stream-index: "001.027"
         deleted_for_me:
           type: boolean
-          x-stream-index: "001.047"
+          x-stream-index: "001.049"
         deleted_reply_count:
           format: int32
           type: integer
           x-stream-index: "001.020"
         draft:
           $ref: '#/components/schemas/DraftResponse'
-          x-stream-index: "001.044"
+          x-stream-index: "001.046"
         html:
           type: string
           x-stream-index: "001.005"
@@ -10028,7 +10161,7 @@ components:
           additionalProperties:
             type: string
           type: object
-          x-stream-index: "001.033"
+          x-stream-index: "001.035"
         id:
           type: string
           x-stream-index: "001.001"
@@ -10049,6 +10182,14 @@ components:
           x-stream-index: "001.008"
         mentioned_channel:
           type: boolean
+          x-stream-index: "001.033"
+        mentioned_here:
+          type: boolean
+          x-stream-index: "001.034"
+        mentioned_roles:
+          items:
+            type: string
+          type: array
           x-stream-index: "001.032"
         mentioned_users:
           items:
@@ -10058,13 +10199,13 @@ components:
         message_text_updated_at:
           format: date-time
           type: string
-          x-stream-index: "001.039"
+          x-stream-index: "001.041"
         mml:
           type: string
           x-stream-index: "001.003"
         moderation:
           $ref: '#/components/schemas/ModerationV2Response'
-          x-stream-index: "001.042"
+          x-stream-index: "001.044"
         own_reactions:
           items:
             $ref: '#/components/schemas/ReactionResponse'
@@ -10076,23 +10217,23 @@ components:
         pin_expires:
           format: date-time
           type: string
-          x-stream-index: "001.038"
+          x-stream-index: "001.040"
         pinned:
           type: boolean
-          x-stream-index: "001.035"
+          x-stream-index: "001.037"
         pinned_at:
           format: date-time
           type: string
-          x-stream-index: "001.036"
+          x-stream-index: "001.038"
         pinned_by:
           $ref: '#/components/schemas/UserResponse'
-          x-stream-index: "001.037"
+          x-stream-index: "001.039"
         poll:
           $ref: '#/components/schemas/PollResponseData'
-          x-stream-index: "001.041"
+          x-stream-index: "001.043"
         poll_id:
           type: string
-          x-stream-index: "001.040"
+          x-stream-index: "001.042"
         quoted_message:
           $ref: '#/components/schemas/MessageResponse'
           x-stream-index: "001.022"
@@ -10118,7 +10259,7 @@ components:
           x-stream-index: "001.013"
         reminder:
           $ref: '#/components/schemas/ReminderResponseData'
-          x-stream-index: "001.045"
+          x-stream-index: "001.047"
         reply_count:
           format: int32
           type: integer
@@ -10127,19 +10268,19 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "001.043"
+          x-stream-index: "001.045"
         shadowed:
           type: boolean
           x-stream-index: "001.029"
         shared_location:
           $ref: '#/components/schemas/SharedLocationResponseData'
-          x-stream-index: "001.046"
+          x-stream-index: "001.048"
         show_in_channel:
           type: boolean
           x-stream-index: "001.018"
         silent:
           type: boolean
-          x-stream-index: "001.034"
+          x-stream-index: "001.036"
         text:
           type: string
           x-stream-index: "001.002"
@@ -10178,6 +10319,7 @@ components:
       - shadowed
       - mentioned_users
       - mentioned_channel
+      - mentioned_here
       - silent
       - pinned
       - restricted_visibility
@@ -10512,8 +10654,8 @@ components:
           description: List of channel CIDs to sync
           items:
             type: string
-          maximum: 255
-          minimum: 1
+          maxItems: 255
+          minItems: 1
           title: Channel CIDs
           type: array
           x-stream-index: "001"
@@ -10980,7 +11122,7 @@ components:
             the channel for all members
           items:
             type: string
-          maximum: 100
+          maxItems: 100
           title: Member IDs
           type: array
           x-stream-index: "007"
@@ -11182,7 +11324,7 @@ components:
           description: Channel CIDs to mute (if multiple channels)
           items:
             type: string
-          maximum: 25
+          maxItems: 25
           title: Channel CIDs
           type: array
           x-stream-index: "001.002"
@@ -11217,7 +11359,7 @@ components:
           description: User IDs to unmute (if multiple users)
           items:
             type: string
-          maximum: 1000
+          maxItems: 1000
           title: Target IDs
           type: array
           x-stream-index: "002"
@@ -11384,7 +11526,7 @@ components:
           description: List of filter tags to add to the channel
           items:
             type: string
-          maximum: 10
+          maxItems: 10
           title: Add filter tags
           type: array
           x-stream-index: "014"
@@ -11392,7 +11534,7 @@ components:
           description: List of user IDs to add to the channel
           items:
             $ref: '#/components/schemas/ChannelMemberRequest'
-          maximum: 100
+          maxItems: 100
           title: Add members
           type: array
           x-stream-index: "001"
@@ -11400,7 +11542,7 @@ components:
           description: List of user IDs to make channel moderators
           items:
             type: string
-          maximum: 100
+          maxItems: 100
           title: Add moderators
           type: array
           x-stream-index: "003"
@@ -11409,7 +11551,7 @@ components:
             is not part of the channel, the request will fail
           items:
             $ref: '#/components/schemas/ChannelMemberRequest'
-          maximum: 100
+          maxItems: 100
           title: Assign roles
           type: array
           x-stream-index: "006"
@@ -11428,7 +11570,7 @@ components:
           description: List of user IDs to take away moderators status from
           items:
             type: string
-          maximum: 100
+          maxItems: 100
           title: Demote moderators
           type: array
           x-stream-index: "004"
@@ -11449,7 +11591,7 @@ components:
           description: List of user IDs to invite to the channel
           items:
             $ref: '#/components/schemas/ChannelMemberRequest'
-          maximum: 100
+          maxItems: 100
           title: Invites
           type: array
           x-stream-index: "005"
@@ -11474,7 +11616,7 @@ components:
           description: List of user IDs to remove from the channel
           items:
             type: string
-          maximum: 100
+          maxItems: 100
           title: Remove members
           type: array
           x-stream-index: "002"
@@ -11769,7 +11911,7 @@ components:
           description: Poll options
           items:
             $ref: '#/components/schemas/PollOptionRequest'
-          maximum: 100
+          maxItems: 100
           title: PollOptions
           type: array
           x-stream-index: "004"
@@ -13571,7 +13713,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v219.23.1
+  version: v221.12.1
 openapi: 3.0.3
 paths:
   /app:
@@ -14557,8 +14699,8 @@ paths:
           description: List of comma-separated IDs
           items:
             type: string
-          maximum: 50
-          minimum: 1
+          maxItems: 50
+          minItems: 1
           title: IDs
           type: array
           writeOnly: true
@@ -16068,7 +16210,7 @@ paths:
         schema:
           items:
             $ref: '#/components/schemas/SortParamRequest'
-          maximum: 1
+          maxItems: 1
           type: array
           writeOnly: true
           x-stream-index: "002"
