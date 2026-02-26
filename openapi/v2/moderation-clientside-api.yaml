@@ -148,6 +148,11 @@ components:
           minimum: 0
           type: number
           x-stream-index: "003"
+        subclassifications:
+          additionalProperties:
+            type: boolean
+          type: object
+          x-stream-index: "004"
       required:
       - label
       - action
@@ -509,6 +514,10 @@ components:
         restrict_replies:
           description: 'Controls who can add comments/replies to this activity. One
             of: everyone, people_i_follow, nobody'
+          enum:
+          - everyone
+          - people_i_follow
+          - nobody
           title: Restrict Replies
           type: string
           x-stream-index: "007"
@@ -683,7 +692,7 @@ components:
           description: Array of Attachment URLs(e.g., images)
           items:
             type: string
-          maximum: 10
+          maxItems: 10
           title: Attachments
           type: array
           x-stream-index: "004"
@@ -1349,6 +1358,40 @@ components:
       - rtmp
       title: BroadcastSettingsResponse
       type: object
+    CallActionOptions:
+      properties:
+        duration:
+          format: int32
+          type: integer
+          x-stream-index: "003"
+        flag_reason:
+          type: string
+          x-stream-index: "006"
+        kick_reason:
+          type: string
+          x-stream-index: "005"
+        mute_audio:
+          type: boolean
+          x-stream-index: "001"
+        mute_video:
+          type: boolean
+          x-stream-index: "002"
+        reason:
+          type: string
+          x-stream-index: "004"
+        warning_text:
+          type: string
+          x-stream-index: "007"
+      type: object
+    CallCustomPropertyParameters:
+      properties:
+        operator:
+          type: string
+          x-stream-index: "002"
+        property_key:
+          type: string
+          x-stream-index: "001"
+      type: object
     CallIngressResponse:
       description: CallIngressResponse is the payload for ingress settings
       properties:
@@ -1516,6 +1559,21 @@ components:
       - egress
       title: CallResponse
       type: object
+    CallRuleActionSequence:
+      properties:
+        actions:
+          items:
+            type: string
+          type: array
+          x-stream-index: "002"
+        call_options:
+          $ref: '#/components/schemas/CallActionOptions'
+          x-stream-index: "003"
+        violation_number:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+      type: object
     CallSessionResponse:
       properties:
         accepted_by:
@@ -1649,6 +1707,22 @@ components:
       - thumbnails
       - limits
       - session
+      type: object
+    CallTypeRuleParameters:
+      properties:
+        call_type:
+          type: string
+          x-stream-index: "001"
+      type: object
+    CallViolationCountParameters:
+      properties:
+        threshold:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+        time_window:
+          type: string
+          x-stream-index: "002"
       type: object
     ChannelConfigWithInfo:
       properties:
@@ -2179,6 +2253,23 @@ components:
       - custom
       title: Channel
       type: object
+    ClosedCaptionRuleParameters:
+      properties:
+        harm_labels:
+          items:
+            type: string
+          type: array
+          x-stream-index: "001"
+        llm_harm_labels:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "002"
+        threshold:
+          format: int32
+          type: integer
+          x-stream-index: "003"
+      type: object
     Command:
       description: Represents custom chat command
       nullable: true
@@ -2348,6 +2439,12 @@ components:
           x-stream-index: "022"
         status:
           description: 'Status of the comment. One of: active, deleted, removed, hidden'
+          enum:
+          - active
+          - deleted
+          - removed
+          - hidden
+          - shadow_blocked
           title: Status
           type: string
           x-stream-index: "013"
@@ -2406,6 +2503,16 @@ components:
           description: Configuration for AI image analysis
           title: AI Image Config
           x-stream-index: "010"
+        ai_image_subclassifications:
+          additionalProperties:
+            items:
+              type: string
+            type: array
+          description: Available L2 subclassifications per L1 image moderation label,
+            based on the active provider
+          title: AI Image Subclassifications
+          type: object
+          x-stream-index: "017"
         ai_text_config:
           $ref: '#/components/schemas/AITextConfig'
           description: Configuration for AI text analysis
@@ -2526,6 +2633,17 @@ components:
     DeleteActivityRequestPayload:
       description: Configuration for activity deletion action
       properties:
+        entity_id:
+          description: ID of the activity to delete (alternative to item_id)
+          title: Entity ID
+          type: string
+          x-stream-index: "003"
+        entity_type:
+          description: Type of the entity (required for delete_activity to distinguish
+            v2 vs v3)
+          title: Entity Type
+          type: string
+          x-stream-index: "004"
         hard_delete:
           description: Whether to permanently delete the activity
           title: Hard Delete
@@ -2541,6 +2659,16 @@ components:
     DeleteCommentRequestPayload:
       description: Configuration for comment deletion action
       properties:
+        entity_id:
+          description: ID of the comment to delete (alternative to item_id)
+          title: Entity ID
+          type: string
+          x-stream-index: "003"
+        entity_type:
+          description: Type of the entity
+          title: Entity Type
+          type: string
+          x-stream-index: "004"
         hard_delete:
           description: Whether to permanently delete the comment
           title: Hard Delete
@@ -2556,6 +2684,16 @@ components:
     DeleteMessageRequestPayload:
       description: Configuration for message deletion action
       properties:
+        entity_id:
+          description: ID of the message to delete (alternative to item_id)
+          title: Entity ID
+          type: string
+          x-stream-index: "003"
+        entity_type:
+          description: Type of the entity
+          title: Entity Type
+          type: string
+          x-stream-index: "004"
         hard_delete:
           description: Whether to permanently delete the message
           title: Hard Delete
@@ -2580,6 +2718,16 @@ components:
     DeleteReactionRequestPayload:
       description: Configuration for reaction deletion action
       properties:
+        entity_id:
+          description: ID of the reaction to delete (alternative to item_id)
+          title: Entity ID
+          type: string
+          x-stream-index: "003"
+        entity_type:
+          description: Type of the entity
+          title: Entity Type
+          type: string
+          x-stream-index: "004"
         hard_delete:
           description: Whether to permanently delete the reaction
           title: Hard Delete
@@ -2605,6 +2753,16 @@ components:
           title: Delete Feeds Content
           type: boolean
           x-stream-index: "005"
+        entity_id:
+          description: ID of the user to delete (alternative to item_id)
+          title: Entity ID
+          type: string
+          x-stream-index: "006"
+        entity_type:
+          description: Type of the entity
+          title: Entity Type
+          type: string
+          x-stream-index: "007"
         hard_delete:
           description: Whether to permanently delete the user
           title: Hard Delete
@@ -3338,6 +3496,12 @@ components:
           x-stream-index: "020"
         visibility:
           description: Visibility setting for the feed
+          enum:
+          - public
+          - visible
+          - followers
+          - members
+          - private
           title: Visibility
           type: string
           x-stream-index: "008"
@@ -3852,6 +4016,11 @@ components:
           - auto-on
           type: string
           x-stream-index: "001"
+        output_types:
+          items:
+            type: string
+          type: array
+          x-stream-index: "002"
       required:
       - mode
       type: object
@@ -3943,6 +4112,22 @@ components:
       - min_dimension
       - max_dimension
       - frame_rate_limit
+      type: object
+    KeyframeRuleParameters:
+      properties:
+        harm_labels:
+          items:
+            type: string
+          type: array
+          x-stream-index: "001"
+        min_confidence:
+          format: float
+          type: number
+          x-stream-index: "003"
+        threshold:
+          format: int32
+          type: integer
+          x-stream-index: "002"
       type: object
     LLMConfig:
       properties:
@@ -4158,14 +4343,14 @@ components:
           x-stream-index: "027"
         deleted_for_me:
           type: boolean
-          x-stream-index: "047"
+          x-stream-index: "049"
         deleted_reply_count:
           format: int32
           type: integer
           x-stream-index: "020"
         draft:
           $ref: '#/components/schemas/DraftResponse'
-          x-stream-index: "044"
+          x-stream-index: "046"
         html:
           description: Contains HTML markup of the message. Can only be set when using
             server-side API
@@ -4180,7 +4365,7 @@ components:
           title: Internationalization info
           type: object
           x-stream-docs-page-id: translation
-          x-stream-index: "033"
+          x-stream-index: "035"
         id:
           description: Message ID is unique string identifier of the message
           title: ID
@@ -4212,6 +4397,20 @@ components:
           description: Whether the message mentioned the channel tag
           title: Mentioned Channel
           type: boolean
+          x-stream-index: "033"
+        mentioned_here:
+          description: Whether the message mentioned online users with @here tag
+          title: Mentioned Here
+          type: boolean
+          x-stream-index: "034"
+        mentioned_roles:
+          description: List of roles mentioned in the message (e.g. admin, channel_moderator,
+            custom roles). Members with matching roles will receive push notifications
+            based on their push preferences. Max 10 roles
+          items:
+            type: string
+          title: Mentioned Roles
+          type: array
           x-stream-index: "032"
         mentioned_users:
           description: List of mentioned users
@@ -4223,7 +4422,7 @@ components:
         message_text_updated_at:
           format: date-time
           type: number
-          x-stream-index: "039"
+          x-stream-index: "041"
         mml:
           description: Should be empty if `text` is provided. Can only be set when
             using server-side API
@@ -4233,7 +4432,7 @@ components:
           x-stream-index: "003"
         moderation:
           $ref: '#/components/schemas/ModerationV2Response'
-          x-stream-index: "042"
+          x-stream-index: "044"
         own_reactions:
           description: List of 10 latest reactions of authenticated user to this message
           items:
@@ -4253,34 +4452,34 @@ components:
           title: Pin expiration date
           type: number
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "038"
+          x-stream-index: "040"
         pinned:
           description: Whether message is pinned or not
           title: Pinned
           type: boolean
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "035"
+          x-stream-index: "037"
         pinned_at:
           description: Date when message got pinned
           format: date-time
           title: Pinned at
           type: number
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "036"
+          x-stream-index: "038"
         pinned_by:
           $ref: '#/components/schemas/UserResponse'
           description: Contains user who pinned the message
           title: Pinned by
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "037"
+          x-stream-index: "039"
         poll:
           $ref: '#/components/schemas/PollResponseData'
-          x-stream-index: "041"
+          x-stream-index: "043"
         poll_id:
           description: Identifier of the poll to include in the message
           title: Poll ID
           type: string
-          x-stream-index: "040"
+          x-stream-index: "042"
         quoted_message:
           $ref: '#/components/schemas/MessageResponse'
           description: Contains quoted message
@@ -4317,7 +4516,7 @@ components:
           x-stream-index: "013"
         reminder:
           $ref: '#/components/schemas/ReminderResponseData'
-          x-stream-index: "045"
+          x-stream-index: "047"
         reply_count:
           description: Number of replies to this message
           format: int32
@@ -4332,7 +4531,7 @@ components:
             type: string
           title: Restricted visibility
           type: array
-          x-stream-index: "043"
+          x-stream-index: "045"
         shadowed:
           description: Whether the message was shadowed or not
           title: Shadowed
@@ -4343,7 +4542,7 @@ components:
           $ref: '#/components/schemas/SharedLocationResponseData'
           description: Contains shared location data
           title: Shared Location
-          x-stream-index: "046"
+          x-stream-index: "048"
         show_in_channel:
           description: Whether thread reply should be shown in the channel as well
           title: Show in channel
@@ -4354,7 +4553,7 @@ components:
           description: Whether message is silent or not
           title: Silent
           type: boolean
-          x-stream-index: "034"
+          x-stream-index: "036"
         text:
           description: Text of the message. Should be empty if `mml` is provided
           title: Text
@@ -4406,6 +4605,7 @@ components:
       - shadowed
       - mentioned_users
       - mentioned_channel
+      - mentioned_here
       - silent
       - pinned
       - restricted_visibility
@@ -4669,7 +4869,7 @@ components:
         images:
           items:
             type: string
-          maximum: 30
+          maxItems: 30
           type: array
           x-stream-index: "002"
         texts:
@@ -4723,6 +4923,11 @@ components:
         blocklist_matched:
           type: string
           x-stream-index: "005"
+        blocklists_matched:
+          items:
+            type: string
+          type: array
+          x-stream-index: "006"
         image_harms:
           items:
             type: string
@@ -4733,10 +4938,10 @@ components:
           x-stream-index: "002"
         platform_circumvented:
           type: boolean
-          x-stream-index: "007"
+          x-stream-index: "008"
         semantic_filter_matched:
           type: string
-          x-stream-index: "006"
+          x-stream-index: "007"
         text_harms:
           items:
             type: string
@@ -6017,6 +6222,9 @@ components:
         ban_options:
           $ref: '#/components/schemas/BanOptions'
           x-stream-index: "002"
+        call_options:
+          $ref: '#/components/schemas/CallActionOptions'
+          x-stream-index: "004"
         flag_user_options:
           $ref: '#/components/schemas/FlagUserOptions'
           x-stream-index: "003"
@@ -6030,13 +6238,32 @@ components:
           - bounce_flag_content
           - bounce_content
           - bounce_remove_content
+          - mute_video
+          - mute_audio
+          - blur
+          - call_blur
+          - end_call
+          - kick_user
+          - warning
+          - call_warning
+          - webhook_only
           type: string
           x-stream-index: "001"
-      required:
-      - type
       type: object
     RuleBuilderCondition:
       properties:
+        call_custom_property_params:
+          $ref: '#/components/schemas/CallCustomPropertyParameters'
+          x-stream-index: "020"
+        call_type_rule_params:
+          $ref: '#/components/schemas/CallTypeRuleParameters'
+          x-stream-index: "019"
+        call_violation_count_params:
+          $ref: '#/components/schemas/CallViolationCountParameters'
+          x-stream-index: "021"
+        closed_caption_rule_params:
+          $ref: '#/components/schemas/ClosedCaptionRuleParameters'
+          x-stream-index: "018"
         confidence:
           format: float
           type: number
@@ -6053,6 +6280,9 @@ components:
         image_rule_params:
           $ref: '#/components/schemas/ImageRuleParameters'
           x-stream-index: "004"
+        keyframe_rule_params:
+          $ref: '#/components/schemas/KeyframeRuleParameters'
+          x-stream-index: "017"
         text_content_params:
           $ref: '#/components/schemas/TextContentParameters'
           x-stream-index: "011"
@@ -6114,6 +6344,11 @@ components:
         action:
           $ref: '#/components/schemas/RuleBuilderAction'
           x-stream-index: "006"
+        action_sequences:
+          items:
+            $ref: '#/components/schemas/CallRuleActionSequence'
+          type: array
+          x-stream-index: "007"
         conditions:
           items:
             $ref: '#/components/schemas/RuleBuilderCondition'
@@ -6121,7 +6356,7 @@ components:
           x-stream-index: "003"
         cooldown_period:
           type: string
-          x-stream-index: "007"
+          x-stream-index: "008"
         groups:
           items:
             $ref: '#/components/schemas/RuleBuilderConditionGroup'
@@ -6138,7 +6373,6 @@ components:
           x-stream-index: "002"
       required:
       - rule_type
-      - action
       type: object
     SRTIngress:
       properties:
@@ -6607,6 +6841,39 @@ components:
           x-stream-index: "001"
         languages:
           items:
+            enum:
+            - en
+            - fr
+            - es
+            - de
+            - it
+            - nl
+            - pt
+            - pl
+            - ca
+            - cs
+            - da
+            - el
+            - fi
+            - id
+            - ja
+            - ru
+            - sv
+            - ta
+            - th
+            - tr
+            - hu
+            - ro
+            - zh
+            - ar
+            - tl
+            - he
+            - hi
+            - hr
+            - ko
+            - ms
+            - "no"
+            - uk
             type: string
           type: array
           x-stream-index: "002"
@@ -7244,7 +7511,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v219.23.1
+  version: v221.15.0
 openapi: 3.0.3
 paths:
   /api/v2/moderation/appeal:
