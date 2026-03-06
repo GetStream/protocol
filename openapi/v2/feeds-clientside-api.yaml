@@ -1182,7 +1182,7 @@ components:
           description: Enriched collection data referenced by this activity
           title: Collections
           type: object
-          x-stream-index: "038"
+          x-stream-index: "039"
         comment_count:
           description: Number of comments on the activity
           format: int32
@@ -1208,7 +1208,7 @@ components:
             only to one feed, it's always set. If an activity is added to multiple
             feeds, it's only set when calling the GetOrCreateFeed endpoint.
           title: Current Feed
-          x-stream-index: "041"
+          x-stream-index: "042"
         custom:
           additionalProperties: {}
           description: Custom data for the activity
@@ -1252,7 +1252,7 @@ components:
           format: int32
           title: Friend Reaction Count
           type: integer
-          x-stream-index: "040"
+          x-stream-index: "041"
         friend_reactions:
           description: Reactions from users the current user follows or has mutual
             follows with
@@ -1260,12 +1260,12 @@ components:
             $ref: '#/components/schemas/FeedsReactionResponse'
           title: Friend Reactions
           type: array
-          x-stream-index: "039"
+          x-stream-index: "040"
         hidden:
           description: If this activity is hidden by this user (using activity feedback)
           title: Hidden
           type: boolean
-          x-stream-index: "042"
+          x-stream-index: "043"
         id:
           description: Unique identifier for the activity
           title: ID
@@ -1278,16 +1278,28 @@ components:
           title: Interest Tags
           type: array
           x-stream-index: "027"
+        is_read:
+          description: Whether this activity has been read. Only set for feed groups
+            with notification config (track_seen/track_read enabled).
+          title: Is Read
+          type: boolean
+          x-stream-index: "047"
+        is_seen:
+          description: Whether this activity has been seen. Only set for feed groups
+            with notification config (track_seen/track_read enabled).
+          title: Is Seen
+          type: boolean
+          x-stream-index: "046"
         is_watched:
           type: boolean
-          x-stream-index: "044"
+          x-stream-index: "045"
         latest_reactions:
           description: Recent reactions to the activity
           items:
             $ref: '#/components/schemas/FeedsReactionResponse'
           title: Latest Reactions
           type: array
-          x-stream-index: "034"
+          x-stream-index: "035"
         location:
           $ref: '#/components/schemas/ActivityLocation'
           description: Geographic location related to the activity
@@ -1300,6 +1312,12 @@ components:
           title: Mentioned Users
           type: array
           x-stream-index: "011"
+        metrics:
+          additionalProperties:
+            format: int64
+            type: integer
+          type: object
+          x-stream-index: "034"
         moderation:
           $ref: '#/components/schemas/ModerationV2Response'
           description: Moderation information
@@ -1320,14 +1338,14 @@ components:
             $ref: '#/components/schemas/BookmarkResponse'
           title: Own Bookmarks
           type: array
-          x-stream-index: "037"
+          x-stream-index: "038"
         own_reactions:
           description: Current user's reactions to this activity
           items:
             $ref: '#/components/schemas/FeedsReactionResponse'
           title: Own Reactions
           type: array
-          x-stream-index: "036"
+          x-stream-index: "037"
         parent:
           $ref: '#/components/schemas/ActivityResponse'
           description: Parent activity (if this is a reply/comment)
@@ -1349,7 +1367,7 @@ components:
             where you want to show a preview
           title: Preview
           type: boolean
-          x-stream-index: "043"
+          x-stream-index: "044"
         reaction_count:
           description: Number of reactions to the activity
           format: int32
@@ -1362,7 +1380,7 @@ components:
           description: Grouped reactions by type
           title: Reaction Groups
           type: object
-          x-stream-index: "035"
+          x-stream-index: "036"
         restrict_replies:
           description: 'Controls who can add comments/replies to this activity. One
             of: everyone, people_i_follow, nobody'
@@ -1691,6 +1709,9 @@ components:
           title: Custom Data
           type: object
           x-stream-index: "001.019"
+        enrich_own_fields:
+          type: boolean
+          x-stream-index: "002"
         expires_at:
           description: Expiration time for the activity
           title: Expires At
@@ -2148,6 +2169,43 @@ components:
       - duration
       title: Add Reaction Response
       type: object
+    AddUserGroupMembersRequest:
+      description: Request body for adding members to a user group
+      nullable: true
+      properties:
+        member_ids:
+          description: List of user IDs to add as members
+          items:
+            type: string
+          maxItems: 100
+          minItems: 1
+          title: Member IDs
+          type: array
+          x-stream-index: "002"
+        team_id:
+          maxLength: 255
+          type: string
+          x-stream-index: "003"
+      required:
+      - member_ids
+      title: AddUserGroupMembersRequest
+      type: object
+    AddUserGroupMembersResponse:
+      description: Response for adding members to a user group
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "002.001"
+        user_group:
+          $ref: '#/components/schemas/UserGroupResponse'
+          description: The updated user group
+          title: UserGroup
+          x-stream-index: "001"
+      required:
+      - duration
+      title: AddUserGroupMembersResponse
+      type: object
     AggregatedActivityResponse:
       properties:
         activities:
@@ -2174,6 +2232,18 @@ components:
           title: Group
           type: string
           x-stream-index: "005"
+        is_read:
+          description: Whether this aggregated group has been read. Only set for feed
+            groups with notification config (track_seen/track_read enabled).
+          title: Is Read
+          type: boolean
+          x-stream-index: "011"
+        is_seen:
+          description: Whether this aggregated group has been seen. Only set for feed
+            groups with notification config (track_seen/track_read enabled).
+          title: Is Seen
+          type: boolean
+          x-stream-index: "010"
         is_watched:
           type: boolean
           x-stream-index: "009"
@@ -2723,6 +2793,9 @@ components:
           title: Channel Ban Only
           type: boolean
           x-stream-index: "004"
+        channel_cid:
+          type: string
+          x-stream-index: "005"
         delete_messages:
           description: 'Message deletion mode: soft, pruning, or hard'
           enum:
@@ -2731,12 +2804,12 @@ components:
           - hard
           title: Delete Messages
           type: string
-          x-stream-index: "006"
+          x-stream-index: "007"
         ip_ban:
           description: Whether to ban by IP address
           title: IP Ban
           type: boolean
-          x-stream-index: "005"
+          x-stream-index: "006"
         reason:
           description: Reason for the ban
           title: Reason
@@ -2757,7 +2830,7 @@ components:
           format: int32
           title: Timeout
           type: integer
-          x-stream-index: "007"
+          x-stream-index: "008"
       title: BanActionRequest
       type: object
     BanInfoResponse:
@@ -2903,12 +2976,15 @@ components:
           x-stream-index: "001"
         enabled:
           type: boolean
+          x-stream-index: "003"
+        match_substring:
+          type: boolean
           x-stream-index: "002"
         rules:
           items:
             $ref: '#/components/schemas/BlockListRule'
           type: array
-          x-stream-index: "003"
+          x-stream-index: "004"
       required:
       - enabled
       - rules
@@ -5301,6 +5377,13 @@ components:
     CreateFeedsBatchRequest:
       nullable: true
       properties:
+        enrich_own_fields:
+          description: If true, enriches the created feeds with own_* fields (own_follows,
+            own_followings, own_capabilities, own_membership). Defaults to false for
+            performance.
+          title: boolean
+          type: boolean
+          x-stream-index: "002"
         feeds:
           description: List of feeds to create
           items:
@@ -5445,6 +5528,64 @@ components:
       required:
       - name
       title: Create Poll Request
+      type: object
+    CreateUserGroupRequest:
+      description: Request body for creating a user group
+      nullable: true
+      properties:
+        description:
+          description: An optional description for the group
+          maxLength: 1024
+          title: Description
+          type: string
+          x-stream-index: "003"
+        id:
+          description: Optional user group ID. If not provided, a UUID v7 will be
+            generated
+          maxLength: 255
+          title: ID
+          type: string
+          x-stream-index: "001"
+        member_ids:
+          description: Optional initial list of user IDs to add as members
+          items:
+            type: string
+          maxItems: 100
+          title: Member IDs
+          type: array
+          x-stream-index: "005"
+        name:
+          description: The user friendly name of the user group
+          maxLength: 255
+          minLength: 1
+          title: Name
+          type: string
+          x-stream-index: "002"
+        team_id:
+          description: Optional team ID to scope the group to a team
+          maxLength: 255
+          title: Team ID
+          type: string
+          x-stream-index: "004"
+      required:
+      - name
+      title: CreateUserGroupRequest
+      type: object
+    CreateUserGroupResponse:
+      description: Response for creating a user group
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "002.001"
+        user_group:
+          $ref: '#/components/schemas/UserGroupResponse'
+          description: The created user group
+          title: UserGroup
+          x-stream-index: "001"
+      required:
+      - duration
+      title: CreateUserGroupResponse
       type: object
     CustomActionRequestPayload:
       description: Configuration for custom moderation action
@@ -6702,6 +6843,54 @@ components:
       x-stream-is-event: true
       x-stream-throttle-group: ordered
       x-stream-ws-base-event-name: VideoEvent
+    FeedGroupRestoredEvent:
+      description: Emitted when a feed group is restored.
+      nullable: true
+      properties:
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: number
+          x-stream-index: 002.001.003
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 002.001.007
+        feed_visibility:
+          type: string
+          x-stream-index: "002.003"
+        fid:
+          type: string
+          x-stream-index: "002.002"
+        group_id:
+          description: The ID of the feed group that was restored
+          title: Group ID
+          type: string
+          x-stream-index: "001"
+        received_at:
+          format: date-time
+          type: number
+          x-stream-index: 002.001.004
+        type:
+          default: feeds.feed_group.restored
+          description: 'The type of event: "feeds.feed_group.restored" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: 002.001.002
+      required:
+      - group_id
+      - type
+      - created_at
+      - custom
+      - fid
+      title: FeedGroupRestoredEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-throttle-group: ordered
+      x-stream-ws-base-event-name: VideoEvent
     FeedInput:
       properties:
         custom:
@@ -6993,7 +7182,8 @@ components:
       x-stream-throttle-group: ordered
       x-stream-ws-base-event-name: VideoEvent
     FeedOwnCapability:
-      description: All possibility of string to use
+      description: Represents a feed capability value and enumerates all possible
+        capability strings.
       enum:
       - add-activity
       - add-activity-bookmark
@@ -7432,7 +7622,7 @@ components:
       title: Feed
       type: object
     FeedUpdatedEvent:
-      description: Emitted when a feed is created.
+      description: Emitted when a feed is updated.
       nullable: true
       properties:
         created_at:
@@ -7445,7 +7635,7 @@ components:
           x-stream-index: 002.001.007
         feed:
           $ref: '#/components/schemas/FeedResponse'
-          description: The feed that was created
+          description: The feed that was updated
           title: Feed
           x-stream-index: "001"
         feed_visibility:
@@ -7466,7 +7656,7 @@ components:
           x-stream-index: 002.001.002
         user:
           $ref: '#/components/schemas/UserResponseCommonFields'
-          description: The user who created the feed
+          description: The user who updated the feed
           title: User
           x-stream-index: "003.001"
       required:
@@ -7822,6 +8012,13 @@ components:
     FollowBatchRequest:
       nullable: true
       properties:
+        enrich_own_fields:
+          description: If true, enriches the follow's source_feed and target_feed
+            with own_* fields (own_follows, own_followings, own_capabilities, own_membership).
+            Defaults to false for performance.
+          title: boolean
+          type: boolean
+          x-stream-index: "002"
         follows:
           description: List of follow relationships to create
           items:
@@ -7992,6 +8189,13 @@ components:
           title: Custom Data
           type: object
           x-stream-index: "002"
+        enrich_own_fields:
+          description: If true, enriches the follow's source_feed and target_feed
+            with own_* fields (own_follows, own_followings, own_capabilities, own_membership).
+            Defaults to false for performance.
+          title: boolean
+          type: boolean
+          x-stream-index: "008"
         push_preference:
           description: Push preference for the follow relationship
           enum:
@@ -8769,6 +8973,22 @@ components:
       - duration
       title: Response
       type: object
+    GetUserGroupResponse:
+      description: Response for getting a user group
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "002.001"
+        user_group:
+          $ref: '#/components/schemas/UserGroupResponse'
+          description: The user group
+          title: UserGroup
+          x-stream-index: "001"
+      required:
+      - duration
+      title: GetUserGroupResponse
+      type: object
     GoogleVisionConfig:
       properties:
         enabled:
@@ -9278,6 +9498,25 @@ components:
       - duration
       title: ListDevicesResponse
       type: object
+    ListUserGroupsResponse:
+      description: Response for listing user groups
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "002.001"
+        user_groups:
+          description: List of user groups
+          items:
+            $ref: '#/components/schemas/UserGroupResponse'
+          title: UserGroups
+          type: array
+          x-stream-index: "001"
+      required:
+      - user_groups
+      - duration
+      title: ListUserGroupsResponse
+      type: object
     MarkActivityRequest:
       nullable: true
       properties:
@@ -9433,14 +9672,14 @@ components:
           x-stream-index: "027"
         deleted_for_me:
           type: boolean
-          x-stream-index: "049"
+          x-stream-index: "050"
         deleted_reply_count:
           format: int32
           type: integer
           x-stream-index: "020"
         draft:
           $ref: '#/components/schemas/DraftResponse'
-          x-stream-index: "046"
+          x-stream-index: "047"
         html:
           description: Contains HTML markup of the message. Can only be set when using
             server-side API
@@ -9455,7 +9694,7 @@ components:
           title: Internationalization info
           type: object
           x-stream-docs-page-id: translation
-          x-stream-index: "035"
+          x-stream-index: "036"
         id:
           description: Message ID is unique string identifier of the message
           title: ID
@@ -9487,12 +9726,21 @@ components:
           description: Whether the message mentioned the channel tag
           title: Mentioned Channel
           type: boolean
+          x-stream-index: "034"
+        mentioned_group_ids:
+          description: List of user group IDs mentioned in the message. Group members
+            who are also channel members will receive push notifications based on
+            their push preferences. Max 10 groups
+          items:
+            type: string
+          title: Mentioned Groups
+          type: array
           x-stream-index: "033"
         mentioned_here:
           description: Whether the message mentioned online users with @here tag
           title: Mentioned Here
           type: boolean
-          x-stream-index: "034"
+          x-stream-index: "035"
         mentioned_roles:
           description: List of roles mentioned in the message (e.g. admin, channel_moderator,
             custom roles). Members with matching roles will receive push notifications
@@ -9512,7 +9760,7 @@ components:
         message_text_updated_at:
           format: date-time
           type: number
-          x-stream-index: "041"
+          x-stream-index: "042"
         mml:
           description: Should be empty if `text` is provided. Can only be set when
             using server-side API
@@ -9522,7 +9770,7 @@ components:
           x-stream-index: "003"
         moderation:
           $ref: '#/components/schemas/ModerationV2Response'
-          x-stream-index: "044"
+          x-stream-index: "045"
         own_reactions:
           description: List of 10 latest reactions of authenticated user to this message
           items:
@@ -9542,34 +9790,34 @@ components:
           title: Pin expiration date
           type: number
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "040"
+          x-stream-index: "041"
         pinned:
           description: Whether message is pinned or not
           title: Pinned
           type: boolean
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "037"
+          x-stream-index: "038"
         pinned_at:
           description: Date when message got pinned
           format: date-time
           title: Pinned at
           type: number
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "038"
+          x-stream-index: "039"
         pinned_by:
           $ref: '#/components/schemas/UserResponse'
           description: Contains user who pinned the message
           title: Pinned by
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "039"
+          x-stream-index: "040"
         poll:
           $ref: '#/components/schemas/PollResponseData'
-          x-stream-index: "043"
+          x-stream-index: "044"
         poll_id:
           description: Identifier of the poll to include in the message
           title: Poll ID
           type: string
-          x-stream-index: "042"
+          x-stream-index: "043"
         quoted_message:
           $ref: '#/components/schemas/MessageResponse'
           description: Contains quoted message
@@ -9606,7 +9854,7 @@ components:
           x-stream-index: "013"
         reminder:
           $ref: '#/components/schemas/ReminderResponseData'
-          x-stream-index: "047"
+          x-stream-index: "048"
         reply_count:
           description: Number of replies to this message
           format: int32
@@ -9621,7 +9869,7 @@ components:
             type: string
           title: Restricted visibility
           type: array
-          x-stream-index: "045"
+          x-stream-index: "046"
         shadowed:
           description: Whether the message was shadowed or not
           title: Shadowed
@@ -9632,7 +9880,7 @@ components:
           $ref: '#/components/schemas/SharedLocationResponseData'
           description: Contains shared location data
           title: Shared Location
-          x-stream-index: "048"
+          x-stream-index: "049"
         show_in_channel:
           description: Whether thread reply should be shown in the channel as well
           title: Show in channel
@@ -9643,7 +9891,7 @@ components:
           description: Whether message is silent or not
           title: Silent
           type: boolean
-          x-stream-index: "036"
+          x-stream-index: "037"
         text:
           description: Text of the message. Should be empty if `mml` is provided
           title: Text
@@ -10237,7 +10485,9 @@ components:
     NotificationStatusResponse:
       properties:
         last_read_at:
+          description: When notifications were last read
           format: date-time
+          title: Last Read At
           type: number
           x-stream-index: "006"
         last_seen_at:
@@ -10247,15 +10497,21 @@ components:
           type: number
           x-stream-index: "005"
         read_activities:
-          description: IDs of activities that have been read
+          description: 'Deprecated: use is_read on each activity/group instead. IDs
+            of activities that have been read. Capped at ~101 entries for aggregated
+            feeds.'
           items:
             type: string
           title: Read Activities
           type: array
           x-stream-index: "003"
         seen_activities:
+          description: 'Deprecated: use is_seen on each activity/group instead. IDs
+            of activities that have been seen. Capped at ~101 entries for aggregated
+            feeds.'
           items:
             type: string
+          title: Seen Activities
           type: array
           x-stream-index: "004"
         unread:
@@ -10590,6 +10846,14 @@ components:
       type: object
     PinActivityRequest:
       nullable: true
+      properties:
+        enrich_own_fields:
+          description: If true, enriches the activity's current_feed with own_* fields
+            (own_follows, own_followings, own_capabilities, own_membership). Defaults
+            to false for performance.
+          title: boolean
+          type: boolean
+          x-stream-index: "004"
       title: Pin Activity Request
       type: object
     PinActivityResponse:
@@ -11268,6 +11532,9 @@ components:
     QueryActivitiesRequest:
       nullable: true
       properties:
+        enrich_own_fields:
+          type: boolean
+          x-stream-index: "005"
         filter:
           additionalProperties: {}
           description: Filters to apply to the query. Supports location-based queries
@@ -11280,13 +11547,13 @@ components:
           maximum: 100
           minimum: 0
           type: integer
-          x-stream-index: "005.001"
+          x-stream-index: "006.001"
         next:
           type: string
-          x-stream-index: "005.002"
+          x-stream-index: "006.002"
         prev:
           type: string
-          x-stream-index: "005.003"
+          x-stream-index: "006.003"
         sort:
           description: Sorting parameters for the query
           items:
@@ -11489,6 +11756,9 @@ components:
     QueryBookmarksRequest:
       nullable: true
       properties:
+        enrich_own_fields:
+          type: boolean
+          x-stream-index: "003"
         filter:
           additionalProperties: {}
           description: Filters to apply to the query
@@ -11500,13 +11770,13 @@ components:
           maximum: 100
           minimum: 0
           type: integer
-          x-stream-index: "003.001"
+          x-stream-index: "004.001"
         next:
           type: string
-          x-stream-index: "003.002"
+          x-stream-index: "004.002"
         prev:
           type: string
-          x-stream-index: "003.003"
+          x-stream-index: "004.003"
         sort:
           description: Sorting parameters for the query
           items:
@@ -11544,6 +11814,64 @@ components:
       - bookmarks
       - duration
       title: Query Bookmarks Response
+      type: object
+    QueryCollectionsRequest:
+      nullable: true
+      properties:
+        filter:
+          additionalProperties: {}
+          description: Filters to apply to the query
+          title: Filter
+          type: object
+          x-stream-index: "001"
+        limit:
+          format: int32
+          maximum: 100
+          minimum: 0
+          type: integer
+          x-stream-index: "003.001"
+        next:
+          type: string
+          x-stream-index: "003.002"
+        prev:
+          type: string
+          x-stream-index: "003.003"
+        sort:
+          description: Sorting parameters for the query
+          items:
+            $ref: '#/components/schemas/SortParamRequest'
+          title: Sort
+          type: array
+          x-stream-index: "002"
+      title: Query Collections Request
+      type: object
+    QueryCollectionsResponse:
+      nullable: true
+      properties:
+        collections:
+          description: List of collections matching the query
+          items:
+            $ref: '#/components/schemas/CollectionResponse'
+          title: Collections
+          type: array
+          x-stream-index: "001"
+        duration:
+          type: string
+          x-stream-index: "003.001"
+        next:
+          description: Cursor for next page
+          title: Next
+          type: string
+          x-stream-index: "002.001"
+        prev:
+          description: Cursor for previous page
+          title: Previous
+          type: string
+          x-stream-index: "002.002"
+      required:
+      - collections
+      - duration
+      title: Query Collections Response
       type: object
     QueryCommentReactionsRequest:
       nullable: true
@@ -11605,6 +11933,12 @@ components:
           title: Filter
           type: object
           x-stream-index: "001"
+        id_around:
+          description: Returns the comment with the specified ID along with surrounding
+            comments for context
+          title: ID Around
+          type: string
+          x-stream-index: "003"
         limit:
           description: Maximum number of comments to return
           format: int32
@@ -11612,13 +11946,13 @@ components:
           minimum: 0
           title: Limit
           type: integer
-          x-stream-index: "003.001"
+          x-stream-index: "004.001"
         next:
           type: string
-          x-stream-index: "003.002"
+          x-stream-index: "004.002"
         prev:
           type: string
-          x-stream-index: "003.003"
+          x-stream-index: "004.003"
         sort:
           description: 'first (oldest), last (newest) or top. One of: first, last,
             top, best, controversial'
@@ -11723,6 +12057,9 @@ components:
     QueryFeedsRequest:
       nullable: true
       properties:
+        enrich_own_fields:
+          type: boolean
+          x-stream-index: "004"
         filter:
           additionalProperties: {}
           description: Filters to apply to the query
@@ -11734,13 +12071,13 @@ components:
           maximum: 100
           minimum: 0
           type: integer
-          x-stream-index: "004.001"
+          x-stream-index: "005.001"
         next:
           type: string
-          x-stream-index: "004.002"
+          x-stream-index: "005.002"
         prev:
           type: string
-          x-stream-index: "004.003"
+          x-stream-index: "005.003"
         sort:
           description: Sorting parameters for the query
           items:
@@ -11898,6 +12235,9 @@ components:
     QueryPinnedActivitiesRequest:
       nullable: true
       properties:
+        enrich_own_fields:
+          type: boolean
+          x-stream-index: "005"
         filter:
           additionalProperties: {}
           description: Filters to apply to the query
@@ -11909,13 +12249,13 @@ components:
           maximum: 100
           minimum: 0
           type: integer
-          x-stream-index: "005.001"
+          x-stream-index: "006.001"
         next:
           type: string
-          x-stream-index: "005.002"
+          x-stream-index: "006.002"
         prev:
           type: string
-          x-stream-index: "005.003"
+          x-stream-index: "006.003"
         sort:
           description: Sorting parameters for the query
           items:
@@ -12437,7 +12777,7 @@ components:
       nullable: true
       properties:
         collections:
-          description: List of collections matching the query
+          description: List of collections matching the references
           items:
             $ref: '#/components/schemas/CollectionResponse'
           title: Collections
@@ -12587,6 +12927,43 @@ components:
       - user_id
       - created_at
       - updated_at
+      type: object
+    RemoveUserGroupMembersRequest:
+      description: Request body for removing members from a user group
+      nullable: true
+      properties:
+        member_ids:
+          description: List of user IDs to remove
+          items:
+            type: string
+          maxItems: 100
+          minItems: 1
+          title: Member IDs
+          type: array
+          x-stream-index: "002"
+        team_id:
+          maxLength: 255
+          type: string
+          x-stream-index: "003"
+      required:
+      - member_ids
+      title: RemoveUserGroupMembersRequest
+      type: object
+    RemoveUserGroupMembersResponse:
+      description: Response for removing members from a user group
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "002.001"
+        user_group:
+          $ref: '#/components/schemas/UserGroupResponse'
+          description: The updated user group
+          title: UserGroup
+          x-stream-index: "001"
+      required:
+      - duration
+      title: RemoveUserGroupMembersResponse
       type: object
     RepliesMeta:
       description: Cursor & depth information for a comment's direct replies. Mirrors
@@ -13047,6 +13424,25 @@ components:
       required:
       - enabled
       - access_request_enabled
+      type: object
+    SearchUserGroupsResponse:
+      description: Response for searching user groups
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "002.001"
+        user_groups:
+          description: List of matching user groups
+          items:
+            $ref: '#/components/schemas/UserGroupResponse'
+          title: UserGroups
+          type: array
+          x-stream-index: "001"
+      required:
+      - user_groups
+      - duration
+      title: SearchUserGroupsResponse
       type: object
     SessionSettingsResponse:
       properties:
@@ -13754,6 +14150,100 @@ components:
       type: object
     Time:
       type: object
+    TrackActivityMetricsEvent:
+      description: A single metric event to track for an activity
+      properties:
+        activity_id:
+          description: The ID of the activity to track the metric for
+          maxLength: 255
+          title: Activity ID
+          type: string
+          x-stream-index: "001"
+        delta:
+          description: The amount to increment (positive) or decrement (negative).
+            Defaults to 1. The absolute value counts against rate limits.
+          format: int64
+          title: Delta
+          type: integer
+          x-stream-index: "003"
+        metric:
+          description: The metric name (e.g. views, clicks, impressions). Alphanumeric
+            and underscores only.
+          maxLength: 64
+          title: Metric
+          type: string
+          x-stream-index: "002"
+      required:
+      - activity_id
+      - metric
+      title: Track Activity Metrics Event
+      type: object
+    TrackActivityMetricsEventResult:
+      description: Result of tracking a single metric event
+      properties:
+        activity_id:
+          description: The activity ID from the request
+          title: Activity ID
+          type: string
+          x-stream-index: "001"
+        allowed:
+          description: Whether the metric was counted (false if rate-limited)
+          title: Allowed
+          type: boolean
+          x-stream-index: "003"
+        error:
+          description: Error message if processing failed
+          title: Error
+          type: string
+          x-stream-index: "004"
+        metric:
+          description: The metric name from the request
+          title: Metric
+          type: string
+          x-stream-index: "002"
+      required:
+      - activity_id
+      - metric
+      - allowed
+      title: Track Activity Metrics Event Result
+      type: object
+    TrackActivityMetricsRequest:
+      description: Batch request to track metric events for activities. Rate-limited
+        per user/IP per activity per metric.
+      nullable: true
+      properties:
+        events:
+          description: List of metric events to track (max 100 per request)
+          items:
+            $ref: '#/components/schemas/TrackActivityMetricsEvent'
+          maxItems: 100
+          minItems: 1
+          title: Events
+          type: array
+          x-stream-index: "001"
+      required:
+      - events
+      title: Track Activity Metrics Request
+      type: object
+    TrackActivityMetricsResponse:
+      description: Response containing results for each tracked metric event
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "002.001"
+        results:
+          description: Results for each event in the request, in the same order
+          items:
+            $ref: '#/components/schemas/TrackActivityMetricsEventResult'
+          title: Results
+          type: array
+          x-stream-index: "001"
+      required:
+      - results
+      - duration
+      title: Track Activity Metrics Response
+      type: object
     TranscriptionSettingsResponse:
       properties:
         closed_caption_mode:
@@ -13932,6 +14422,13 @@ components:
           title: Delete Notification Activity
           type: boolean
           x-stream-index: "002"
+        enrich_own_fields:
+          description: If true, enriches the follow's source_feed and target_feed
+            with own_* fields (own_follows, own_followings, own_capabilities, own_membership).
+            Defaults to false for performance.
+          title: boolean
+          type: boolean
+          x-stream-index: "003"
         follows:
           description: List of follow relationships to remove
           items:
@@ -14016,6 +14513,13 @@ components:
           title: boolean
           type: boolean
           x-stream-index: "005"
+        enrich_own_fields:
+          description: If true, enriches the activity's current_feed with own_* fields
+            (own_follows, own_followings, own_capabilities, own_membership). Defaults
+            to false for performance.
+          title: boolean
+          type: boolean
+          x-stream-index: "007"
         handle_mention_notifications:
           description: If true, creates notification activities for newly mentioned
             users and deletes notifications for users no longer mentioned
@@ -14095,6 +14599,13 @@ components:
           title: object
           type: object
           x-stream-index: "004"
+        enrich_own_fields:
+          description: If true, enriches the activity's current_feed with own_* fields
+            (own_follows, own_followings, own_capabilities, own_membership). Defaults
+            to false for performance.
+          title: boolean
+          type: boolean
+          x-stream-index: "021"
         expires_at:
           description: Time when the activity will expire
           format: date-time
@@ -14534,6 +15045,13 @@ components:
           title: Description
           type: string
           x-stream-index: "005"
+        enrich_own_fields:
+          description: If true, enriches the feed with own_* fields (own_follows,
+            own_followings, own_capabilities, own_membership). Defaults to false for
+            performance.
+          title: boolean
+          type: boolean
+          x-stream-index: "008"
         filter_tags:
           description: Tags used for filtering feeds
           items:
@@ -14585,6 +15103,13 @@ components:
           title: Custom Data
           type: object
           x-stream-index: "001.002"
+        enrich_own_fields:
+          description: If true, enriches the follow's source_feed and target_feed
+            with own_* fields (own_follows, own_followings, own_capabilities, own_membership).
+            Defaults to false for performance.
+          title: boolean
+          type: boolean
+          x-stream-index: "001.008"
         follower_role:
           type: string
           x-stream-index: "002"
@@ -14782,6 +15307,45 @@ components:
       - id
       - name
       type: object
+    UpdateUserGroupRequest:
+      description: Request body for updating a user group
+      nullable: true
+      properties:
+        description:
+          description: The new description for the group
+          maxLength: 1024
+          title: Description
+          type: string
+          x-stream-index: "003"
+        name:
+          description: The new name of the user group
+          maxLength: 255
+          minLength: 1
+          title: Name
+          type: string
+          x-stream-index: "002"
+        team_id:
+          maxLength: 255
+          type: string
+          x-stream-index: "004"
+      title: UpdateUserGroupRequest
+      type: object
+    UpdateUserGroupResponse:
+      description: Response for updating a user group
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "002.001"
+        user_group:
+          $ref: '#/components/schemas/UserGroupResponse'
+          description: The updated user group
+          title: UserGroup
+          x-stream-index: "001"
+      required:
+      - duration
+      title: UpdateUserGroupResponse
+      type: object
     UpdateUserPartialRequest:
       properties:
         id:
@@ -14864,6 +15428,13 @@ components:
           title: Activities
           type: array
           x-stream-index: "001"
+        enrich_own_fields:
+          description: If true, enriches the activities' current_feed with own_* fields
+            (own_follows, own_followings, own_capabilities, own_membership). Defaults
+            to false for performance.
+          title: boolean
+          type: boolean
+          x-stream-index: "002"
       required:
       - activities
       title: Upsert Activities Request
@@ -15211,6 +15782,69 @@ components:
       x-stream-is-event: true
       x-stream-throttle-group: critical
       x-stream-ws-base-event-name: VideoEvent
+    UserGroupMember:
+      nullable: true
+      properties:
+        app_pk:
+          format: int64
+          type: integer
+          x-stream-index: "002"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "006"
+        group_id:
+          type: string
+          x-stream-index: "003"
+        is_admin:
+          type: boolean
+          x-stream-index: "005"
+        user_id:
+          type: string
+          x-stream-index: "004"
+      required:
+      - app_pk
+      - group_id
+      - user_id
+      - is_admin
+      - created_at
+      type: object
+    UserGroupResponse:
+      properties:
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "006"
+        created_by:
+          type: string
+          x-stream-index: "008"
+        description:
+          type: string
+          x-stream-index: "003"
+        id:
+          type: string
+          x-stream-index: "001"
+        members:
+          items:
+            $ref: '#/components/schemas/UserGroupMember'
+          type: array
+          x-stream-index: "005"
+        name:
+          type: string
+          x-stream-index: "002"
+        team_id:
+          type: string
+          x-stream-index: "004"
+        updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "007"
+      required:
+      - id
+      - name
+      - created_at
+      - updated_at
+      type: object
     UserIdenticalContentCountParameters:
       properties:
         threshold:
@@ -16031,6 +16665,7 @@ components:
           feeds.feed.updated: '#/components/schemas/FeedUpdatedEvent'
           feeds.feed_group.changed: '#/components/schemas/FeedGroupChangedEvent'
           feeds.feed_group.deleted: '#/components/schemas/FeedGroupDeletedEvent'
+          feeds.feed_group.restored: '#/components/schemas/FeedGroupRestoredEvent'
           feeds.feed_member.added: '#/components/schemas/FeedMemberAddedEvent'
           feeds.feed_member.removed: '#/components/schemas/FeedMemberRemovedEvent'
           feeds.feed_member.updated: '#/components/schemas/FeedMemberUpdatedEvent'
@@ -16084,6 +16719,7 @@ components:
       - $ref: '#/components/schemas/FeedDeletedEvent'
       - $ref: '#/components/schemas/FeedGroupChangedEvent'
       - $ref: '#/components/schemas/FeedGroupDeletedEvent'
+      - $ref: '#/components/schemas/FeedGroupRestoredEvent'
       - $ref: '#/components/schemas/FeedMemberAddedEvent'
       - $ref: '#/components/schemas/FeedMemberRemovedEvent'
       - $ref: '#/components/schemas/FeedMemberUpdatedEvent'
@@ -16142,6 +16778,7 @@ components:
           feeds.feed.updated: '#/components/schemas/FeedUpdatedEvent'
           feeds.feed_group.changed: '#/components/schemas/FeedGroupChangedEvent'
           feeds.feed_group.deleted: '#/components/schemas/FeedGroupDeletedEvent'
+          feeds.feed_group.restored: '#/components/schemas/FeedGroupRestoredEvent'
           feeds.feed_member.added: '#/components/schemas/FeedMemberAddedEvent'
           feeds.feed_member.removed: '#/components/schemas/FeedMemberRemovedEvent'
           feeds.feed_member.updated: '#/components/schemas/FeedMemberUpdatedEvent'
@@ -16195,6 +16832,7 @@ components:
       - $ref: '#/components/schemas/FeedDeletedEvent'
       - $ref: '#/components/schemas/FeedGroupChangedEvent'
       - $ref: '#/components/schemas/FeedGroupDeletedEvent'
+      - $ref: '#/components/schemas/FeedGroupRestoredEvent'
       - $ref: '#/components/schemas/FeedMemberAddedEvent'
       - $ref: '#/components/schemas/FeedMemberRemovedEvent'
       - $ref: '#/components/schemas/FeedMemberUpdatedEvent'
@@ -16260,7 +16898,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v221.12.1
+  version: v223.13.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -17190,6 +17828,12 @@ paths:
           type: string
           writeOnly: true
           x-stream-index: "001"
+      - in: query
+        name: enrich_own_fields
+        schema:
+          type: boolean
+          writeOnly: true
+          x-stream-index: "002"
       requestBody:
         content:
           application/json:
@@ -17285,6 +17929,40 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Remove multiple activities
+      tags:
+      - product:feeds
+  /api/v2/feeds/activities/metrics/track:
+    post:
+      description: |
+        Track metric events (views, clicks, impressions) for activities. Supports batching up to 100 events per request. Each event is independently rate-limited per user per activity per metric. Server-side calls must include user_id.
+      operationId: TrackActivityMetrics
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrackActivityMetricsRequest'
+        description: Track Activity Metrics Request
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrackActivityMetricsResponse'
+          description: Track Activity Metrics Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Track activity metrics
       tags:
       - product:feeds
   /api/v2/feeds/activities/query:
@@ -17510,18 +18188,16 @@ paths:
       - product:feeds
     get:
       description: |
-        Read collections with optional filtering by user ID and collection name. By default, users can only read their own collections.
+        Read collections by their references. By default, users can only read their own collections.
       operationId: ReadCollections
       parameters:
       - in: query
         name: collection_refs
-        required: true
         schema:
-          description: List of collection references in format 'name:id' (1-100 items)
+          description: List of collection references in format 'name:id'
           items:
             type: string
           maxItems: 100
-          minItems: 1
           title: Collection References
           type: array
           writeOnly: true
@@ -17612,6 +18288,40 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Create multiple collections
+      tags:
+      - product:feeds
+  /api/v2/feeds/collections/query:
+    post:
+      description: |
+        Query collections with filter query
+      operationId: QueryCollections
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryCollectionsRequest'
+        description: Query Collections Request
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryCollectionsResponse'
+          description: Query Collections Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Query collections
       tags:
       - product:feeds
   /api/v2/feeds/comments:
@@ -18366,6 +19076,16 @@ paths:
           type: string
           writeOnly: true
           x-stream-index: "003"
+      - in: query
+        name: enrich_own_fields
+        schema:
+          description: If true, enriches the activity's current_feed with own_* fields
+            (own_follows, own_followings, own_capabilities, own_membership). Defaults
+            to false for performance.
+          title: boolean
+          type: boolean
+          writeOnly: true
+          x-stream-index: "004"
       responses:
         "200":
           content:
@@ -18932,7 +19652,7 @@ paths:
         name: connection_id
         schema:
           type: string
-          x-stream-index: "005.003"
+          x-stream-index: "006.003"
       requestBody:
         content:
           application/json:
@@ -19064,6 +19784,16 @@ paths:
           type: boolean
           writeOnly: true
           x-stream-index: "003"
+      - in: query
+        name: enrich_own_fields
+        schema:
+          description: If true, enriches the follow's source_feed and target_feed
+            with own_* fields (own_follows, own_followings, own_capabilities, own_membership).
+            Defaults to false for performance.
+          title: boolean
+          type: boolean
+          writeOnly: true
+          x-stream-index: "004"
       responses:
         "200":
           content:
@@ -20486,6 +21216,368 @@ paths:
       summary: Upload image
       tags:
       - product:common
+  /api/v2/usergroups:
+    get:
+      description: |
+        Lists user groups with cursor-based pagination
+      operationId: ListUserGroups
+      parameters:
+      - in: query
+        name: limit
+        schema:
+          format: int32
+          maximum: 100
+          minimum: 1
+          type: integer
+          writeOnly: true
+          x-stream-index: "001"
+      - in: query
+        name: id_gt
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "002"
+      - in: query
+        name: created_at_gt
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "003"
+      - in: query
+        name: team_id
+        schema:
+          maxLength: 255
+          type: string
+          writeOnly: true
+          x-stream-index: "004"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListUserGroupsResponse'
+          description: ListUserGroupsResponse
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: List user groups
+      tags:
+      - product:common
+    post:
+      description: |
+        Creates a new user group, optionally with initial members
+      operationId: CreateUserGroup
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserGroupRequest'
+        description: CreateUserGroupRequest
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateUserGroupResponse'
+          description: CreateUserGroupResponse
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Create user group
+      tags:
+      - product:common
+  /api/v2/usergroups/{id}:
+    delete:
+      description: |
+        Deletes a user group and all its members
+      operationId: DeleteUserGroup
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      - in: query
+        name: team_id
+        schema:
+          maxLength: 255
+          type: string
+          writeOnly: true
+          x-stream-index: "002"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Delete user group
+      tags:
+      - product:common
+    get:
+      description: |
+        Gets a user group by ID, including its members
+      operationId: GetUserGroup
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      - in: query
+        name: team_id
+        schema:
+          maxLength: 255
+          type: string
+          writeOnly: true
+          x-stream-index: "002"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetUserGroupResponse'
+          description: GetUserGroupResponse
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get user group
+      tags:
+      - product:common
+    put:
+      description: |
+        Updates a user group's name and/or description. team_id is immutable.
+      operationId: UpdateUserGroup
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserGroupRequest'
+        description: UpdateUserGroupRequest
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateUserGroupResponse'
+          description: UpdateUserGroupResponse
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Update user group
+      tags:
+      - product:common
+  /api/v2/usergroups/{id}/members:
+    post:
+      description: |
+        Adds members to a user group. All user IDs must exist. The operation is all-or-nothing.
+      operationId: AddUserGroupMembers
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddUserGroupMembersRequest'
+        description: AddUserGroupMembersRequest
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddUserGroupMembersResponse'
+          description: AddUserGroupMembersResponse
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Add user group members
+      tags:
+      - product:common
+  /api/v2/usergroups/{id}/members/delete:
+    post:
+      description: |
+        Removes members from a user group. Users already not in the group are silently ignored.
+      operationId: RemoveUserGroupMembers
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveUserGroupMembersRequest'
+        description: RemoveUserGroupMembersRequest
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RemoveUserGroupMembersResponse'
+          description: RemoveUserGroupMembersResponse
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Remove user group members
+      tags:
+      - product:common
+  /api/v2/usergroups/search:
+    get:
+      description: |
+        Searches user groups by name prefix for autocomplete
+      operationId: SearchUserGroups
+      parameters:
+      - in: query
+        name: query
+        required: true
+        schema:
+          maxLength: 255
+          minLength: 1
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      - in: query
+        name: limit
+        schema:
+          format: int32
+          maximum: 25
+          minimum: 1
+          type: integer
+          writeOnly: true
+          x-stream-index: "002"
+      - in: query
+        name: name_gt
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "003"
+      - in: query
+        name: id_gt
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "004"
+      - in: query
+        name: team_id
+        schema:
+          maxLength: 255
+          type: string
+          writeOnly: true
+          x-stream-index: "005"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchUserGroupsResponse'
+          description: SearchUserGroupsResponse
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Search user groups
+      tags:
+      - product:common
   /api/v2/users:
     get:
       description: |
@@ -20528,7 +21620,6 @@ paths:
         Sends events:
         - user.presence.changed
         - user.updated
-        - user.presence.changed
       operationId: UpdateUsersPartial
       requestBody:
         content:
