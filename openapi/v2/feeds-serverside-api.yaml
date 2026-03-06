@@ -236,6 +236,11 @@ components:
           minimum: 0
           type: number
           x-stream-index: "003"
+        subclassifications:
+          additionalProperties:
+            type: boolean
+          type: object
+          x-stream-index: "004"
       required:
       - label
       - action
@@ -1130,7 +1135,7 @@ components:
             of 25 feeds
           items:
             type: string
-          minimum: 1
+          minItems: 1
           title: Feed IDs
           type: array
           x-stream-index: "004"
@@ -1138,6 +1143,7 @@ components:
           description: Tags for filtering activities
           items:
             type: string
+          maxItems: 50
           title: Filter Tags
           type: array
           x-stream-index: "014"
@@ -1446,6 +1452,10 @@ components:
         restrict_replies:
           description: 'Controls who can add comments/replies to this activity. One
             of: everyone, people_i_follow, nobody'
+          enum:
+          - everyone
+          - people_i_follow
+          - nobody
           title: Restrict Replies
           type: string
           x-stream-index: "007"
@@ -1692,6 +1702,14 @@ components:
           x-stream-index: "003"
         type:
           description: Type of selector
+          enum:
+          - popular
+          - proximity
+          - following
+          - current_feed
+          - query
+          - interest
+          - follow_suggestion
           title: Type
           type: string
           x-stream-index: "001"
@@ -1847,7 +1865,7 @@ components:
             of 25 feeds
           items:
             type: string
-          minimum: 1
+          minItems: 1
           title: Feed IDs
           type: array
           x-stream-index: "001.004"
@@ -1855,6 +1873,7 @@ components:
           description: Tags for filtering activities
           items:
             type: string
+          maxItems: 50
           title: Filter Tags
           type: array
           x-stream-index: "001.014"
@@ -2323,6 +2342,43 @@ components:
       - duration
       title: Add Reaction Response
       type: object
+    AddUserGroupMembersRequest:
+      description: Request body for adding members to a user group
+      nullable: true
+      properties:
+        member_ids:
+          description: List of user IDs to add as members
+          items:
+            type: string
+          maxItems: 100
+          minItems: 1
+          title: Member IDs
+          type: array
+          x-stream-index: "002"
+        team_id:
+          maxLength: 255
+          type: string
+          x-stream-index: "003"
+      required:
+      - member_ids
+      title: AddUserGroupMembersRequest
+      type: object
+    AddUserGroupMembersResponse:
+      description: Response for adding members to a user group
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "002.001"
+        user_group:
+          $ref: '#/components/schemas/UserGroupResponse'
+          description: The updated user group
+          title: UserGroup
+          x-stream-index: "001"
+      required:
+      - duration
+      title: AddUserGroupMembersResponse
+      type: object
     AggregatedActivityResponse:
       properties:
         activities:
@@ -2490,6 +2546,9 @@ components:
           format: int32
           type: integer
           x-stream-index: "052"
+        moderation_audio_call_moderation_enabled:
+          type: boolean
+          x-stream-index: "054"
         moderation_dashboard_preferences:
           $ref: '#/components/schemas/ModerationDashboardPreferences'
           x-stream-index: "047"
@@ -2502,6 +2561,9 @@ components:
         moderation_multitenant_blocklist_enabled:
           type: boolean
           x-stream-index: "045"
+        moderation_video_call_moderation_enabled:
+          type: boolean
+          x-stream-index: "053"
         moderation_webhook_url:
           type: string
           x-stream-index: "007"
@@ -2627,6 +2689,8 @@ components:
       - user_response_time_enabled
       - moderation_llm_configurability_enabled
       - max_aggregated_activities_length
+      - moderation_video_call_moderation_enabled
+      - moderation_audio_call_moderation_enabled
       type: object
     AppealAcceptedEvent:
       description: This event is sent when an appeal is accepted
@@ -2812,7 +2876,7 @@ components:
           description: Array of Attachment URLs(e.g., images)
           items:
             type: string
-          maximum: 10
+          maxItems: 10
           title: Attachments
           type: array
           x-stream-index: "004"
@@ -4118,6 +4182,40 @@ components:
       - task_id
       - duration
       type: object
+    CallActionOptions:
+      properties:
+        duration:
+          format: int32
+          type: integer
+          x-stream-index: "003"
+        flag_reason:
+          type: string
+          x-stream-index: "006"
+        kick_reason:
+          type: string
+          x-stream-index: "005"
+        mute_audio:
+          type: boolean
+          x-stream-index: "001"
+        mute_video:
+          type: boolean
+          x-stream-index: "002"
+        reason:
+          type: string
+          x-stream-index: "004"
+        warning_text:
+          type: string
+          x-stream-index: "007"
+      type: object
+    CallCustomPropertyParameters:
+      properties:
+        operator:
+          type: string
+          x-stream-index: "002"
+        property_key:
+          type: string
+          x-stream-index: "001"
+      type: object
     CallIngressResponse:
       description: CallIngressResponse is the payload for ingress settings
       properties:
@@ -4284,6 +4382,21 @@ components:
       - ingress
       - egress
       title: CallResponse
+      type: object
+    CallRuleActionSequence:
+      properties:
+        actions:
+          items:
+            type: string
+          type: array
+          x-stream-index: "002"
+        call_options:
+          $ref: '#/components/schemas/CallActionOptions'
+          x-stream-index: "003"
+        violation_number:
+          format: int32
+          type: integer
+          x-stream-index: "001"
       type: object
     CallSessionResponse:
       properties:
@@ -4508,6 +4621,22 @@ components:
       - created_at
       - updated_at
       - recording_external_storage
+      type: object
+    CallTypeRuleParameters:
+      properties:
+        call_type:
+          type: string
+          x-stream-index: "001"
+      type: object
+    CallViolationCountParameters:
+      properties:
+        threshold:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+        time_window:
+          type: string
+          x-stream-index: "002"
       type: object
     CastPollVoteRequest:
       nullable: true
@@ -5545,6 +5674,23 @@ components:
       - status
       - duration
       type: object
+    ClosedCaptionRuleParameters:
+      properties:
+        harm_labels:
+          items:
+            type: string
+          type: array
+          x-stream-index: "001"
+        llm_harm_labels:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "002"
+        threshold:
+          format: int32
+          type: integer
+          x-stream-index: "003"
+      type: object
     CollectionRequest:
       properties:
         custom:
@@ -6064,6 +6210,12 @@ components:
           x-stream-index: "022"
         status:
           description: 'Status of the comment. One of: active, deleted, removed, hidden'
+          enum:
+          - active
+          - deleted
+          - removed
+          - hidden
+          - shadow_blocked
           title: Status
           type: string
           x-stream-index: "013"
@@ -6174,6 +6326,16 @@ components:
           description: Configuration for AI image analysis
           title: AI Image Config
           x-stream-index: "010"
+        ai_image_subclassifications:
+          additionalProperties:
+            items:
+              type: string
+            type: array
+          description: Available L2 subclassifications per L1 image moderation label,
+            based on the active provider
+          title: AI Image Subclassifications
+          type: object
+          x-stream-index: "017"
         ai_text_config:
           $ref: '#/components/schemas/AITextConfig'
           description: Configuration for AI text analysis
@@ -6335,8 +6497,8 @@ components:
           description: List of collections to create
           items:
             $ref: '#/components/schemas/CollectionRequest'
-          maximum: 100
-          minimum: 1
+          maxItems: 100
+          minItems: 1
           title: Collections
           type: array
           x-stream-index: "001"
@@ -6479,7 +6641,7 @@ components:
           description: Configuration for activity processors
           items:
             $ref: '#/components/schemas/ActivityProcessorConfig'
-          maximum: 10
+          maxItems: 10
           title: Activity Processors
           type: array
           x-stream-index: "002.006"
@@ -6611,8 +6773,8 @@ components:
           description: List of feeds to create
           items:
             $ref: '#/components/schemas/FeedRequest'
-          maximum: 1000
-          minimum: 1
+          maxItems: 1000
+          minItems: 1
           title: Feeds
           type: array
           x-stream-index: "001"
@@ -6675,6 +6837,9 @@ components:
     CreateImportRequest:
       nullable: true
       properties:
+        merge_custom:
+          type: boolean
+          x-stream-index: "003"
         mode:
           enum:
           - insert
@@ -6935,7 +7100,7 @@ components:
         options:
           items:
             $ref: '#/components/schemas/PollOptionInput'
-          maximum: 100
+          maxItems: 100
           type: array
           x-stream-index: "004"
         user:
@@ -6982,6 +7147,64 @@ components:
       - duration
       - role
       title: Response
+      type: object
+    CreateUserGroupRequest:
+      description: Request body for creating a user group
+      nullable: true
+      properties:
+        description:
+          description: An optional description for the group
+          maxLength: 1024
+          title: Description
+          type: string
+          x-stream-index: "003"
+        id:
+          description: Optional user group ID. If not provided, a UUID v7 will be
+            generated
+          maxLength: 255
+          title: ID
+          type: string
+          x-stream-index: "001"
+        member_ids:
+          description: Optional initial list of user IDs to add as members
+          items:
+            type: string
+          maxItems: 100
+          title: Member IDs
+          type: array
+          x-stream-index: "005"
+        name:
+          description: The user friendly name of the user group
+          maxLength: 255
+          minLength: 1
+          title: Name
+          type: string
+          x-stream-index: "002"
+        team_id:
+          description: Optional team ID to scope the group to a team
+          maxLength: 255
+          title: Team ID
+          type: string
+          x-stream-index: "004"
+      required:
+      - name
+      title: CreateUserGroupRequest
+      type: object
+    CreateUserGroupResponse:
+      description: Response for creating a user group
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "002.001"
+        user_group:
+          $ref: '#/components/schemas/UserGroupResponse'
+          description: The created user group
+          title: UserGroup
+          x-stream-index: "001"
+      required:
+      - duration
+      title: CreateUserGroupResponse
       type: object
     CustomActionRequestPayload:
       description: Configuration for custom moderation action
@@ -7051,8 +7274,8 @@ components:
           description: List of custom check flags (1-10 flags required)
           items:
             $ref: '#/components/schemas/CustomCheckFlag'
-          maximum: 10
-          minimum: 1
+          maxItems: 10
+          minItems: 1
           title: Flags
           type: array
           x-stream-index: "005"
@@ -7205,8 +7428,8 @@ components:
           description: User IDs to deactivate
           items:
             type: string
-          maximum: 100
-          minimum: 1
+          maxItems: 100
+          minItems: 1
           title: User IDs
           type: array
           x-stream-index: "001"
@@ -7283,8 +7506,8 @@ components:
           description: List of activity IDs to delete
           items:
             type: string
-          maximum: 100
-          minimum: 1
+          maxItems: 100
+          minItems: 1
           title: Activity IDs
           type: array
           x-stream-index: "001"
@@ -7337,6 +7560,17 @@ components:
     DeleteActivityRequestPayload:
       description: Configuration for activity deletion action
       properties:
+        entity_id:
+          description: ID of the activity to delete (alternative to item_id)
+          title: Entity ID
+          type: string
+          x-stream-index: "003"
+        entity_type:
+          description: Type of the entity (required for delete_activity to distinguish
+            v2 vs v3)
+          title: Entity Type
+          type: string
+          x-stream-index: "004"
         hard_delete:
           description: Whether to permanently delete the activity
           title: Hard Delete
@@ -7420,6 +7654,16 @@ components:
     DeleteCommentRequestPayload:
       description: Configuration for comment deletion action
       properties:
+        entity_id:
+          description: ID of the comment to delete (alternative to item_id)
+          title: Entity ID
+          type: string
+          x-stream-index: "003"
+        entity_type:
+          description: Type of the entity
+          title: Entity Type
+          type: string
+          x-stream-index: "004"
         hard_delete:
           description: Whether to permanently delete the comment
           title: Hard Delete
@@ -7541,8 +7785,8 @@ components:
             to delete'
           items:
             type: string
-          maximum: 100
-          minimum: 1
+          maxItems: 100
+          minItems: 1
           title: Feed IDs
           type: array
           x-stream-index: "001"
@@ -7588,6 +7832,16 @@ components:
     DeleteMessageRequestPayload:
       description: Configuration for message deletion action
       properties:
+        entity_id:
+          description: ID of the message to delete (alternative to item_id)
+          title: Entity ID
+          type: string
+          x-stream-index: "003"
+        entity_type:
+          description: Type of the entity
+          title: Entity Type
+          type: string
+          x-stream-index: "004"
         hard_delete:
           description: Whether to permanently delete the message
           title: Hard Delete
@@ -7634,6 +7888,16 @@ components:
     DeleteReactionRequestPayload:
       description: Configuration for reaction deletion action
       properties:
+        entity_id:
+          description: ID of the reaction to delete (alternative to item_id)
+          title: Entity ID
+          type: string
+          x-stream-index: "003"
+        entity_type:
+          description: Type of the entity
+          title: Entity Type
+          type: string
+          x-stream-index: "004"
         hard_delete:
           description: Whether to permanently delete the reaction
           title: Hard Delete
@@ -7659,6 +7923,16 @@ components:
           title: Delete Feeds Content
           type: boolean
           x-stream-index: "005"
+        entity_id:
+          description: ID of the user to delete (alternative to item_id)
+          title: Entity ID
+          type: string
+          x-stream-index: "006"
+        entity_type:
+          description: Type of the entity
+          title: Entity Type
+          type: string
+          x-stream-index: "007"
         hard_delete:
           description: Whether to permanently delete the user
           title: Hard Delete
@@ -7754,8 +8028,8 @@ components:
           description: IDs of users to delete
           items:
             type: string
-          maximum: 100
-          minimum: 1
+          maxItems: 100
+          minItems: 1
           title: User IDs
           type: array
           x-stream-index: "001.001"
@@ -8594,8 +8868,8 @@ components:
         user_ids:
           items:
             type: string
-          maximum: 25
-          minimum: 1
+          maxItems: 25
+          minItems: 1
           type: array
           x-stream-index: "001"
       required:
@@ -8960,6 +9234,12 @@ components:
         default_visibility:
           description: 'Default visibility for activities. One of: public, visible,
             followers, members, private'
+          enum:
+          - public
+          - visible
+          - followers
+          - members
+          - private
           title: Default Visibility
           type: string
           x-stream-index: "004"
@@ -9004,6 +9284,53 @@ components:
       - updated_at
       title: Feed Group
       type: object
+    FeedGroupRestoredEvent:
+      description: Emitted when a feed group is restored.
+      nullable: true
+      properties:
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: number
+          x-stream-index: 002.001.003
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 002.001.007
+        feed_visibility:
+          type: string
+          x-stream-index: "002.003"
+        fid:
+          type: string
+          x-stream-index: "002.002"
+        group_id:
+          description: The ID of the feed group that was restored
+          title: Group ID
+          type: string
+          x-stream-index: "001"
+        received_at:
+          format: date-time
+          type: number
+          x-stream-index: 002.001.004
+        type:
+          default: feeds.feed_group.restored
+          description: 'The type of event: "feeds.feed_group.restored" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: 002.001.002
+      required:
+      - group_id
+      - type
+      - created_at
+      - custom
+      - fid
+      title: FeedGroupRestoredEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     FeedInput:
       properties:
         custom:
@@ -9546,6 +9873,12 @@ components:
           x-stream-index: "020"
         visibility:
           description: Visibility setting for the feed
+          enum:
+          - public
+          - visible
+          - followers
+          - members
+          - private
           title: Visibility
           type: string
           x-stream-index: "008"
@@ -9699,6 +10032,12 @@ components:
           x-stream-index: "001.020"
         visibility:
           description: Visibility setting for the feed
+          enum:
+          - public
+          - visible
+          - followers
+          - members
+          - private
           title: Visibility
           type: string
           x-stream-index: "001.008"
@@ -10241,8 +10580,8 @@ components:
           description: List of follow relationships to create
           items:
             $ref: '#/components/schemas/FollowRequest'
-          maximum: 1000
-          minimum: 1
+          maxItems: 1000
+          minItems: 1
           title: Follows
           type: array
           x-stream-index: "001"
@@ -10922,15 +11261,21 @@ components:
           x-stream-index: "001"
         duration:
           type: string
-          x-stream-index: "003.001"
+          x-stream-index: "004.001"
         next:
           type: string
-          x-stream-index: "002.001"
+          x-stream-index: "003.001"
         prev:
           type: string
-          x-stream-index: "002.002"
+          x-stream-index: "003.002"
+        sort:
+          description: Sort order used for the replies (first, last, top, best, controversial)
+          title: Sort Order
+          type: string
+          x-stream-index: "002"
       required:
       - comments
+      - sort
       - duration
       title: Get Comment Replies Response
       type: object
@@ -10962,15 +11307,21 @@ components:
           x-stream-index: "001"
         duration:
           type: string
-          x-stream-index: "003.001"
+          x-stream-index: "004.001"
         next:
           type: string
-          x-stream-index: "002.001"
+          x-stream-index: "003.001"
         prev:
           type: string
-          x-stream-index: "002.002"
+          x-stream-index: "003.002"
+        sort:
+          description: Sort order used for the comments (first, last, top, best, controversial)
+          title: Sort Order
+          type: string
+          x-stream-index: "002"
       required:
       - comments
+      - sort
       - duration
       title: Get  Comments Response
       type: object
@@ -11301,7 +11652,7 @@ components:
           description: Configuration for activity processors
           items:
             $ref: '#/components/schemas/ActivityProcessorConfig'
-          maximum: 10
+          maxItems: 10
           title: Activity Processors
           type: array
           x-stream-index: "002.006"
@@ -11696,6 +12047,22 @@ components:
       title: Get Task Response
       type: object
       x-stream-docs-page-id: tasks
+    GetUserGroupResponse:
+      description: Response for getting a user group
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "002.001"
+        user_group:
+          $ref: '#/components/schemas/UserGroupResponse'
+          description: The user group
+          title: UserGroup
+          x-stream-index: "001"
+      required:
+      - duration
+      title: GetUserGroupResponse
+      type: object
     GoogleVisionConfig:
       properties:
         enabled:
@@ -12043,6 +12410,9 @@ components:
       type: object
     ImportV2TaskSettings:
       properties:
+        merge_custom:
+          type: boolean
+          x-stream-index: "005"
         mode:
           type: string
           x-stream-index: "002"
@@ -12077,6 +12447,11 @@ components:
           - auto-on
           type: string
           x-stream-index: "001"
+        output_types:
+          items:
+            type: string
+          type: array
+          x-stream-index: "002"
       required:
       - mode
       type: object
@@ -12097,6 +12472,11 @@ components:
           - auto-on
           type: string
           x-stream-index: "001"
+        output_types:
+          items:
+            type: string
+          type: array
+          x-stream-index: "002"
       required:
       - mode
       type: object
@@ -12213,7 +12593,7 @@ components:
         layers:
           items:
             $ref: '#/components/schemas/IngressVideoLayer'
-          minimum: 1
+          minItems: 1
           type: array
           x-stream-index: "002"
         source:
@@ -12293,6 +12673,22 @@ components:
       - min_dimension
       - max_dimension
       - frame_rate_limit
+      type: object
+    KeyframeRuleParameters:
+      properties:
+        harm_labels:
+          items:
+            type: string
+          type: array
+          x-stream-index: "001"
+        min_confidence:
+          format: float
+          type: number
+          x-stream-index: "003"
+        threshold:
+          format: int32
+          type: integer
+          x-stream-index: "002"
       type: object
     LLMConfig:
       properties:
@@ -12703,6 +13099,25 @@ components:
       - duration
       title: Response
       type: object
+    ListUserGroupsResponse:
+      description: Response for listing user groups
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "002.001"
+        user_groups:
+          description: List of user groups
+          items:
+            $ref: '#/components/schemas/UserGroupResponse'
+          title: UserGroups
+          type: array
+          x-stream-index: "001"
+      required:
+      - user_groups
+      - duration
+      title: ListUserGroupsResponse
+      type: object
     MarkActivityRequest:
       nullable: true
       properties:
@@ -12864,14 +13279,14 @@ components:
           x-stream-index: "027"
         deleted_for_me:
           type: boolean
-          x-stream-index: "047"
+          x-stream-index: "049"
         deleted_reply_count:
           format: int32
           type: integer
           x-stream-index: "020"
         draft:
           $ref: '#/components/schemas/DraftResponse'
-          x-stream-index: "044"
+          x-stream-index: "046"
         html:
           description: Contains HTML markup of the message. Can only be set when using
             server-side API
@@ -12886,7 +13301,7 @@ components:
           title: Internationalization info
           type: object
           x-stream-docs-page-id: translation
-          x-stream-index: "033"
+          x-stream-index: "035"
         id:
           description: Message ID is unique string identifier of the message
           title: ID
@@ -12918,6 +13333,20 @@ components:
           description: Whether the message mentioned the channel tag
           title: Mentioned Channel
           type: boolean
+          x-stream-index: "033"
+        mentioned_here:
+          description: Whether the message mentioned online users with @here tag
+          title: Mentioned Here
+          type: boolean
+          x-stream-index: "034"
+        mentioned_roles:
+          description: List of roles mentioned in the message (e.g. admin, channel_moderator,
+            custom roles). Members with matching roles will receive push notifications
+            based on their push preferences. Max 10 roles
+          items:
+            type: string
+          title: Mentioned Roles
+          type: array
           x-stream-index: "032"
         mentioned_users:
           description: List of mentioned users
@@ -12929,7 +13358,7 @@ components:
         message_text_updated_at:
           format: date-time
           type: number
-          x-stream-index: "039"
+          x-stream-index: "041"
         mml:
           description: Should be empty if `text` is provided. Can only be set when
             using server-side API
@@ -12939,7 +13368,7 @@ components:
           x-stream-index: "003"
         moderation:
           $ref: '#/components/schemas/ModerationV2Response'
-          x-stream-index: "042"
+          x-stream-index: "044"
         own_reactions:
           description: List of 10 latest reactions of authenticated user to this message
           items:
@@ -12959,34 +13388,34 @@ components:
           title: Pin expiration date
           type: number
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "038"
+          x-stream-index: "040"
         pinned:
           description: Whether message is pinned or not
           title: Pinned
           type: boolean
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "035"
+          x-stream-index: "037"
         pinned_at:
           description: Date when message got pinned
           format: date-time
           title: Pinned at
           type: number
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "036"
+          x-stream-index: "038"
         pinned_by:
           $ref: '#/components/schemas/UserResponse'
           description: Contains user who pinned the message
           title: Pinned by
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "037"
+          x-stream-index: "039"
         poll:
           $ref: '#/components/schemas/PollResponseData'
-          x-stream-index: "041"
+          x-stream-index: "043"
         poll_id:
           description: Identifier of the poll to include in the message
           title: Poll ID
           type: string
-          x-stream-index: "040"
+          x-stream-index: "042"
         quoted_message:
           $ref: '#/components/schemas/MessageResponse'
           description: Contains quoted message
@@ -13023,7 +13452,7 @@ components:
           x-stream-index: "013"
         reminder:
           $ref: '#/components/schemas/ReminderResponseData'
-          x-stream-index: "045"
+          x-stream-index: "047"
         reply_count:
           description: Number of replies to this message
           format: int32
@@ -13038,7 +13467,7 @@ components:
             type: string
           title: Restricted visibility
           type: array
-          x-stream-index: "043"
+          x-stream-index: "045"
         shadowed:
           description: Whether the message was shadowed or not
           title: Shadowed
@@ -13049,7 +13478,7 @@ components:
           $ref: '#/components/schemas/SharedLocationResponseData'
           description: Contains shared location data
           title: Shared Location
-          x-stream-index: "046"
+          x-stream-index: "048"
         show_in_channel:
           description: Whether thread reply should be shown in the channel as well
           title: Show in channel
@@ -13060,7 +13489,7 @@ components:
           description: Whether message is silent or not
           title: Silent
           type: boolean
-          x-stream-index: "034"
+          x-stream-index: "036"
         text:
           description: Text of the message. Should be empty if `mml` is provided
           title: Text
@@ -13112,6 +13541,7 @@ components:
       - shadowed
       - mentioned_users
       - mentioned_channel
+      - mentioned_here
       - silent
       - pinned
       - restricted_visibility
@@ -13513,7 +13943,7 @@ components:
         images:
           items:
             type: string
-          maximum: 30
+          maxItems: 30
           type: array
           x-stream-index: "002"
         texts:
@@ -13540,7 +13970,7 @@ components:
           description: Image URLs to moderate (max 30)
           items:
             type: string
-          maximum: 30
+          maxItems: 30
           title: Images
           type: array
           x-stream-index: "002"
@@ -13592,11 +14022,36 @@ components:
           x-stream-index: "003"
       title: ModerationPayload
       type: object
+    ModerationRuleInfo:
+      properties:
+        description:
+          type: string
+          x-stream-index: "004"
+        id:
+          type: string
+          x-stream-index: "001"
+        name:
+          type: string
+          x-stream-index: "002"
+        type:
+          type: string
+          x-stream-index: "003"
+      required:
+      - id
+      - name
+      - type
+      - description
+      type: object
     ModerationRuleV2Response:
       properties:
         action:
           $ref: '#/components/schemas/RuleBuilderAction'
           x-stream-index: "010"
+        action_sequences:
+          items:
+            $ref: '#/components/schemas/CallRuleActionSequence'
+          type: array
+          x-stream-index: "011"
         conditions:
           items:
             $ref: '#/components/schemas/RuleBuilderCondition'
@@ -13609,17 +14064,17 @@ components:
           x-stream-index: "004"
         cooldown_period:
           type: string
-          x-stream-index: "011"
+          x-stream-index: "012"
         created_at:
           format: date-time
           type: number
-          x-stream-index: "013"
+          x-stream-index: "014"
         description:
           type: string
           x-stream-index: "003"
         enabled:
           type: boolean
-          x-stream-index: "012"
+          x-stream-index: "013"
         groups:
           items:
             $ref: '#/components/schemas/RuleBuilderConditionGroup'
@@ -13643,7 +14098,7 @@ components:
         updated_at:
           format: date-time
           type: number
-          x-stream-index: "014"
+          x-stream-index: "015"
       required:
       - id
       - name
@@ -13651,11 +14106,84 @@ components:
       - config_keys
       - team
       - rule_type
-      - action
       - enabled
       - created_at
       - updated_at
       type: object
+    ModerationRulesTriggeredEvent:
+      description: This event is sent automatically whenever a rule builder rule is
+        triggered
+      nullable: true
+      properties:
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "001.003"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "001.007"
+        entity_id:
+          description: The ID of the entity that triggered the rule
+          title: EntityID
+          type: string
+          x-stream-index: "004"
+        entity_type:
+          description: The type of the entity (call, user, message, etc.)
+          title: EntityType
+          type: string
+          x-stream-index: "005"
+        received_at:
+          format: date-time
+          type: number
+          x-stream-index: "001.004"
+        review_queue_item_id:
+          description: The review queue item ID if applicable
+          title: ReviewQueueItemID
+          type: string
+          x-stream-index: "008"
+        rule:
+          $ref: '#/components/schemas/ModerationRuleInfo'
+          description: The rule that was triggered
+          title: Rule
+          x-stream-index: "002"
+        triggered_actions:
+          description: Array of action types that were triggered
+          items:
+            type: string
+          title: TriggeredActions
+          type: array
+          x-stream-index: "007"
+        type:
+          default: moderation_rule.triggered
+          type: string
+          x-stream-index: "001.002"
+        user_id:
+          description: The ID of the user who triggered the rule
+          title: UserID
+          type: string
+          x-stream-index: "006"
+        violation_number:
+          description: The violation number for call rules (optional)
+          format: int32
+          title: ViolationNumber
+          type: integer
+          x-stream-index: "003"
+      required:
+      - type
+      - created_at
+      - custom
+      - rule
+      - entity_id
+      - entity_type
+      - user_id
+      - triggered_actions
+      title: ModerationRulesTriggeredEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     ModerationV2Response:
       properties:
         action:
@@ -13664,6 +14192,11 @@ components:
         blocklist_matched:
           type: string
           x-stream-index: "005"
+        blocklists_matched:
+          items:
+            type: string
+          type: array
+          x-stream-index: "006"
         image_harms:
           items:
             type: string
@@ -13674,10 +14207,10 @@ components:
           x-stream-index: "002"
         platform_circumvented:
           type: boolean
-          x-stream-index: "007"
+          x-stream-index: "008"
         semantic_filter_matched:
           type: string
-          x-stream-index: "006"
+          x-stream-index: "007"
         text_harms:
           items:
             type: string
@@ -14087,8 +14620,8 @@ components:
           description: List of feed IDs to get own fields for
           items:
             type: string
-          maximum: 100
-          minimum: 1
+          maxItems: 100
+          minItems: 1
           title: Feed IDs
           type: array
           x-stream-index: "001"
@@ -15264,6 +15797,12 @@ components:
           title: Filter
           type: object
           x-stream-index: "001"
+        include_expired_activities:
+          description: When true, include both expired and non-expired activities
+            in the result.
+          title: Include Expired Activities
+          type: boolean
+          x-stream-index: "004"
         include_private_activities:
           type: boolean
           x-stream-index: "003"
@@ -15272,27 +15811,27 @@ components:
           maximum: 100
           minimum: 0
           type: integer
-          x-stream-index: "004.001"
+          x-stream-index: "005.001"
         next:
           type: string
-          x-stream-index: "004.002"
+          x-stream-index: "005.002"
         prev:
           type: string
-          x-stream-index: "004.003"
+          x-stream-index: "005.003"
         sort:
           description: Sorting parameters for the query
           items:
             $ref: '#/components/schemas/SortParamRequest'
-          maximum: 5
+          maxItems: 5
           title: Sort
           type: array
           x-stream-index: "002"
         user:
           $ref: '#/components/schemas/UserRequest'
-          x-stream-index: "006.002"
+          x-stream-index: "007.002"
         user_id:
           type: string
-          x-stream-index: "006.001"
+          x-stream-index: "007.001"
       title: Query Activities Request
       type: object
     QueryActivitiesResponse:
@@ -15345,7 +15884,7 @@ components:
         sort:
           items:
             $ref: '#/components/schemas/SortParamRequest'
-          maximum: 5
+          maxItems: 5
           type: array
           x-stream-index: "003"
       type: object
@@ -15515,7 +16054,7 @@ components:
           description: Sorting parameters for the query
           items:
             $ref: '#/components/schemas/SortParamRequest'
-          maximum: 5
+          maxItems: 5
           title: Sort
           type: array
           x-stream-index: "002"
@@ -15571,7 +16110,7 @@ components:
         sort:
           items:
             $ref: '#/components/schemas/SortParamRequest'
-          maximum: 5
+          maxItems: 5
           type: array
           x-stream-index: "003"
       type: object
@@ -15692,7 +16231,7 @@ components:
           description: Sort parameters for the query
           items:
             $ref: '#/components/schemas/SortParamRequest'
-          maximum: 5
+          maxItems: 5
           title: array
           type: array
           x-stream-index: "004"
@@ -15795,7 +16334,7 @@ components:
           description: Sorting parameters for the query
           items:
             $ref: '#/components/schemas/SortParamRequest'
-          maximum: 5
+          maxItems: 5
           title: Sort
           type: array
           x-stream-index: "003"
@@ -15907,7 +16446,7 @@ components:
           description: Sorting parameters for the query
           items:
             $ref: '#/components/schemas/SortParamRequest'
-          maximum: 5
+          maxItems: 5
           title: Sort
           type: array
           x-stream-index: "002"
@@ -15966,7 +16505,7 @@ components:
           description: Sorting parameters for the query
           items:
             $ref: '#/components/schemas/SortParamRequest'
-          maximum: 5
+          maxItems: 5
           title: Sort
           type: array
           x-stream-index: "002"
@@ -16202,6 +16741,13 @@ components:
     QueryModerationRulesResponse:
       nullable: true
       properties:
+        closed_caption_labels:
+          description: Available harm labels for closed caption rules
+          items:
+            type: string
+          title: ClosedCaptionLabels
+          type: array
+          x-stream-index: "004"
         default_llm_labels:
           additionalProperties:
             type: string
@@ -16211,13 +16757,20 @@ components:
           x-stream-index: "002"
         duration:
           type: string
-          x-stream-index: "004.001"
+          x-stream-index: "006.001"
+        keyframe_labels:
+          description: Available harm labels for keyframe rules
+          items:
+            type: string
+          title: KeyframeLabels
+          type: array
+          x-stream-index: "003"
         next:
           type: string
-          x-stream-index: "003.001"
+          x-stream-index: "005.001"
         prev:
           type: string
-          x-stream-index: "003.002"
+          x-stream-index: "005.002"
         rules:
           description: List of moderation rules
           items:
@@ -16228,7 +16781,68 @@ components:
       required:
       - rules
       - default_llm_labels
+      - keyframe_labels
+      - closed_caption_labels
       - duration
+      type: object
+    QueryPinnedActivitiesRequest:
+      nullable: true
+      properties:
+        filter:
+          additionalProperties: {}
+          description: Filters to apply to the query
+          title: Filter
+          type: object
+          x-stream-index: "003"
+        limit:
+          format: int32
+          maximum: 100
+          minimum: 0
+          type: integer
+          x-stream-index: "005.001"
+        next:
+          type: string
+          x-stream-index: "005.002"
+        prev:
+          type: string
+          x-stream-index: "005.003"
+        sort:
+          description: Sorting parameters for the query
+          items:
+            $ref: '#/components/schemas/SortParamRequest'
+          maxItems: 5
+          title: Sort
+          type: array
+          x-stream-index: "004"
+      title: Query Pinned Activities Request
+      type: object
+    QueryPinnedActivitiesResponse:
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "003.001"
+        next:
+          description: Cursor for next page
+          title: Next
+          type: string
+          x-stream-index: "002.001"
+        pinned_activities:
+          description: List of pinned activities matching the query
+          items:
+            $ref: '#/components/schemas/ActivityPinResponse'
+          title: Pinned Activities
+          type: array
+          x-stream-index: "001"
+        prev:
+          description: Cursor for previous page
+          title: Previous
+          type: string
+          x-stream-index: "002.002"
+      required:
+      - pinned_activities
+      - duration
+      title: Query Pinned Activities Response
       type: object
     QueryPollVotesRequest:
       nullable: true
@@ -16255,7 +16869,7 @@ components:
           description: Array of sort parameters
           items:
             $ref: '#/components/schemas/SortParamRequest'
-          maximum: 5
+          maxItems: 5
           title: Sort
           type: array
           x-stream-index: "004"
@@ -16285,7 +16899,7 @@ components:
           description: Array of sort parameters
           items:
             $ref: '#/components/schemas/SortParamRequest'
-          maximum: 5
+          maxItems: 5
           title: Sort
           type: array
           x-stream-index: "003"
@@ -16447,7 +17061,7 @@ components:
         sort:
           items:
             $ref: '#/components/schemas/SortParamRequest'
-          maximum: 5
+          maxItems: 5
           type: array
           x-stream-index: "002"
         user:
@@ -16840,8 +17454,8 @@ components:
           description: User IDs to reactivate
           items:
             type: string
-          maximum: 100
-          minimum: 1
+          maxItems: 100
+          minItems: 1
           title: User IDs
           type: array
           x-stream-index: "001"
@@ -16878,7 +17492,17 @@ components:
           x-stream-index: "001"
         duration:
           type: string
+          x-stream-index: "003.001"
+        next:
+          description: Cursor for next page (when listing without collection_refs)
+          title: Next
+          type: string
           x-stream-index: "002.001"
+        prev:
+          description: Cursor for previous page (when listing without collection_refs)
+          title: Previous
+          type: string
+          x-stream-index: "002.002"
       required:
       - collections
       - duration
@@ -17047,6 +17671,22 @@ components:
       - created_at
       - updated_at
       type: object
+    RemoveUserGroupMembersResponse:
+      description: Response for removing members from a user group
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "002.001"
+        user_group:
+          $ref: '#/components/schemas/UserGroupResponse'
+          description: The updated user group
+          title: UserGroup
+          x-stream-index: "001"
+      required:
+      - duration
+      title: RemoveUserGroupMembersResponse
+      type: object
     RepliesMeta:
       description: Cursor & depth information for a comment's direct replies. Mirrors
         Reddit's 'load more replies' semantics.
@@ -17129,14 +17769,34 @@ components:
       - duration
       title: Restore Activity Response
       type: object
+    RestoreFeedGroupRequest:
+      nullable: true
+      title: Restore Feed Group Request
+      type: object
+    RestoreFeedGroupResponse:
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "002.001"
+        feed_group:
+          $ref: '#/components/schemas/FeedGroupResponse'
+          description: The restored feed group
+          title: Feed Group
+          x-stream-index: "001"
+      required:
+      - feed_group
+      - duration
+      title: Restore Feed Group Response
+      type: object
     RestoreUsersRequest:
       nullable: true
       properties:
         user_ids:
           items:
             type: string
-          maximum: 100
-          minimum: 1
+          maxItems: 100
+          minItems: 1
           type: array
           x-stream-index: "001"
       required:
@@ -17503,6 +18163,9 @@ components:
         ban_options:
           $ref: '#/components/schemas/BanOptions'
           x-stream-index: "002"
+        call_options:
+          $ref: '#/components/schemas/CallActionOptions'
+          x-stream-index: "004"
         flag_user_options:
           $ref: '#/components/schemas/FlagUserOptions'
           x-stream-index: "003"
@@ -17516,13 +18179,32 @@ components:
           - bounce_flag_content
           - bounce_content
           - bounce_remove_content
+          - mute_video
+          - mute_audio
+          - blur
+          - call_blur
+          - end_call
+          - kick_user
+          - warning
+          - call_warning
+          - webhook_only
           type: string
           x-stream-index: "001"
-      required:
-      - type
       type: object
     RuleBuilderCondition:
       properties:
+        call_custom_property_params:
+          $ref: '#/components/schemas/CallCustomPropertyParameters'
+          x-stream-index: "020"
+        call_type_rule_params:
+          $ref: '#/components/schemas/CallTypeRuleParameters'
+          x-stream-index: "019"
+        call_violation_count_params:
+          $ref: '#/components/schemas/CallViolationCountParameters'
+          x-stream-index: "021"
+        closed_caption_rule_params:
+          $ref: '#/components/schemas/ClosedCaptionRuleParameters'
+          x-stream-index: "018"
         confidence:
           format: float
           type: number
@@ -17539,6 +18221,9 @@ components:
         image_rule_params:
           $ref: '#/components/schemas/ImageRuleParameters'
           x-stream-index: "004"
+        keyframe_rule_params:
+          $ref: '#/components/schemas/KeyframeRuleParameters'
+          x-stream-index: "017"
         text_content_params:
           $ref: '#/components/schemas/TextContentParameters'
           x-stream-index: "011"
@@ -17600,6 +18285,11 @@ components:
         action:
           $ref: '#/components/schemas/RuleBuilderAction'
           x-stream-index: "006"
+        action_sequences:
+          items:
+            $ref: '#/components/schemas/CallRuleActionSequence'
+          type: array
+          x-stream-index: "007"
         conditions:
           items:
             $ref: '#/components/schemas/RuleBuilderCondition'
@@ -17607,7 +18297,7 @@ components:
           x-stream-index: "003"
         cooldown_period:
           type: string
-          x-stream-index: "007"
+          x-stream-index: "008"
         groups:
           items:
             $ref: '#/components/schemas/RuleBuilderConditionGroup'
@@ -17624,7 +18314,6 @@ components:
           x-stream-index: "002"
       required:
       - rule_type
-      - action
       type: object
     S3Request:
       description: Config for creating Amazon S3 storage.
@@ -17695,6 +18384,25 @@ components:
       required:
       - enabled
       - access_request_enabled
+      type: object
+    SearchUserGroupsResponse:
+      description: Response for searching user groups
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "002.001"
+        user_groups:
+          description: List of matching user groups
+          items:
+            $ref: '#/components/schemas/UserGroupResponse'
+          title: UserGroups
+          type: array
+          x-stream-index: "001"
+      required:
+      - user_groups
+      - duration
+      title: SearchUserGroupsResponse
       type: object
     SessionSettings:
       properties:
@@ -18325,6 +19033,12 @@ components:
           x-stream-index: "001.022"
         status:
           description: 'Status of the comment. One of: active, deleted, removed, hidden'
+          enum:
+          - active
+          - deleted
+          - removed
+          - hidden
+          - shadow_blocked
           title: Status
           type: string
           x-stream-index: "001.013"
@@ -18556,6 +19270,39 @@ components:
           x-stream-index: "001"
         languages:
           items:
+            enum:
+            - en
+            - fr
+            - es
+            - de
+            - it
+            - nl
+            - pt
+            - pl
+            - ca
+            - cs
+            - da
+            - el
+            - fi
+            - id
+            - ja
+            - ru
+            - sv
+            - ta
+            - th
+            - tr
+            - hu
+            - ro
+            - zh
+            - ar
+            - tl
+            - he
+            - hi
+            - hr
+            - ko
+            - ms
+            - "no"
+            - uk
             type: string
           type: array
           x-stream-index: "002"
@@ -18656,8 +19403,8 @@ components:
           description: List of follow relationships to remove
           items:
             $ref: '#/components/schemas/FollowPair'
-          maximum: 100
-          minimum: 1
+          maxItems: 100
+          minItems: 1
           title: Follows
           type: array
           x-stream-index: "001"
@@ -18773,8 +19520,8 @@ components:
             activity ID and the fields to set/unset
           items:
             $ref: '#/components/schemas/UpdateActivityPartialChangeRequest'
-          maximum: 100
-          minimum: 1
+          maxItems: 100
+          minItems: 1
           title: Changes
           type: array
           x-stream-index: "001"
@@ -18955,6 +19702,7 @@ components:
           description: Tags used for filtering the activity
           items:
             type: string
+          maxItems: 50
           title: '[]string'
           type: array
           x-stream-index: "010"
@@ -18980,7 +19728,7 @@ components:
           description: List of user IDs mentioned in the activity
           items:
             type: string
-          maximum: 25
+          maxItems: 25
           title: '[]string'
           type: array
           x-stream-index: "016"
@@ -19066,37 +19814,37 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "001.017"
+          x-stream-index: "001.018"
         apn_config:
           $ref: '#/components/schemas/APNConfig'
           x-stream-index: "001.003"
         async_moderation_config:
           $ref: '#/components/schemas/AsyncModerationConfiguration'
-          x-stream-index: "001.039"
+          x-stream-index: "001.040"
         async_url_enrich_enabled:
           type: boolean
-          x-stream-index: "001.019"
+          x-stream-index: "001.020"
         auto_translation_enabled:
           type: boolean
-          x-stream-index: "001.018"
+          x-stream-index: "001.019"
         before_message_send_hook_url:
           type: string
-          x-stream-index: "001.020"
+          x-stream-index: "001.021"
         cdn_expiration_seconds:
           format: int32
           maximum: 1209600
           minimum: 14400
           type: integer
-          x-stream-index: "001.038"
+          x-stream-index: "001.039"
         channel_hide_members_only:
           type: boolean
-          x-stream-index: "001.033"
+          x-stream-index: "001.034"
         custom_action_handler_url:
           type: string
-          x-stream-index: "001.021"
+          x-stream-index: "001.022"
         datadog_info:
           $ref: '#/components/schemas/DataDogInfo'
-          x-stream-index: "001.040"
+          x-stream-index: "001.041"
         disable_auth_checks:
           type: boolean
           x-stream-index: "001.001"
@@ -19109,21 +19857,21 @@ components:
           - app
           - team
           type: string
-          x-stream-index: "001.022"
+          x-stream-index: "001.023"
         event_hooks:
           items:
             $ref: '#/components/schemas/EventHook'
           type: array
-          x-stream-index: "001.046"
+          x-stream-index: "001.047"
         feeds_moderation_enabled:
           type: boolean
-          x-stream-index: "001.042"
+          x-stream-index: "001.043"
         feeds_v2_region:
           type: string
-          x-stream-index: "001.041"
+          x-stream-index: "001.042"
         file_upload_config:
           $ref: '#/components/schemas/FileUploadConfig'
-          x-stream-index: "001.030"
+          x-stream-index: "001.031"
         firebase_config:
           $ref: '#/components/schemas/FirebaseConfig'
           x-stream-index: "001.004"
@@ -19133,10 +19881,10 @@ components:
               type: string
             type: array
           type: object
-          x-stream-index: "001.034"
+          x-stream-index: "001.035"
         guest_user_creation_disabled:
           type: boolean
-          x-stream-index: "001.043"
+          x-stream-index: "001.044"
         huawei_config:
           $ref: '#/components/schemas/HuaweiConfig'
           x-stream-index: "001.005"
@@ -19144,43 +19892,46 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "001.015"
+          x-stream-index: "001.016"
         image_moderation_enabled:
           type: boolean
-          x-stream-index: "001.016"
+          x-stream-index: "001.017"
         image_moderation_labels:
           items:
             type: string
           type: array
-          x-stream-index: "001.014"
+          x-stream-index: "001.015"
         image_upload_config:
           $ref: '#/components/schemas/FileUploadConfig'
-          x-stream-index: "001.029"
+          x-stream-index: "001.030"
         max_aggregated_activities_length:
           format: int32
           type: integer
-          x-stream-index: "001.049"
+          x-stream-index: "001.050"
         migrate_permissions_to_v2:
           type: boolean
-          x-stream-index: "001.035"
+          x-stream-index: "001.036"
+        moderation_analytics_enabled:
+          type: boolean
+          x-stream-index: "001.010"
         moderation_dashboard_preferences:
           $ref: '#/components/schemas/ModerationDashboardPreferences'
-          x-stream-index: "001.044"
+          x-stream-index: "001.045"
         moderation_enabled:
           type: boolean
           x-stream-index: "001.009"
         moderation_webhook_url:
           type: string
-          x-stream-index: "001.010"
+          x-stream-index: "001.011"
         multi_tenant_enabled:
           type: boolean
-          x-stream-index: "001.013"
+          x-stream-index: "001.014"
         permission_version:
           enum:
           - v1
           - v2
           type: string
-          x-stream-index: "001.011"
+          x-stream-index: "001.012"
         push_config:
           $ref: '#/components/schemas/PushConfig'
           x-stream-index: "001.007"
@@ -19189,48 +19940,48 @@ components:
           maximum: 86400
           minimum: 60
           type: integer
-          x-stream-index: "001.036"
+          x-stream-index: "001.037"
         reminders_max_members:
           format: int32
           minimum: 2
           type: integer
-          x-stream-index: "001.037"
+          x-stream-index: "001.038"
         revoke_tokens_issued_before:
           format: date-time
           type: number
-          x-stream-index: "001.031"
+          x-stream-index: "001.032"
         sns_key:
           type: string
-          x-stream-index: "001.027"
+          x-stream-index: "001.028"
         sns_secret:
           type: string
-          x-stream-index: "001.028"
+          x-stream-index: "001.029"
         sns_topic_arn:
           type: string
-          x-stream-index: "001.026"
+          x-stream-index: "001.027"
         sqs_key:
           type: string
-          x-stream-index: "001.024"
+          x-stream-index: "001.025"
         sqs_secret:
           type: string
-          x-stream-index: "001.025"
+          x-stream-index: "001.026"
         sqs_url:
           type: string
-          x-stream-index: "001.023"
+          x-stream-index: "001.024"
         user_response_time_enabled:
           type: boolean
-          x-stream-index: "001.048"
+          x-stream-index: "001.049"
         user_search_disallowed_roles:
           items:
             type: string
-          maximum: 10
+          maxItems: 10
           type: array
-          x-stream-index: "001.012"
+          x-stream-index: "001.013"
         webhook_events:
           items:
             type: string
           type: array
-          x-stream-index: "001.032"
+          x-stream-index: "001.033"
         webhook_url:
           type: string
           x-stream-index: "001.008"
@@ -19396,8 +20147,8 @@ components:
           description: List of collections to update (only custom data is updatable)
           items:
             $ref: '#/components/schemas/UpdateCollectionRequest'
-          maximum: 100
-          minimum: 1
+          maxItems: 100
+          minItems: 1
           title: Collections
           type: array
           x-stream-index: "001"
@@ -19467,7 +20218,7 @@ components:
           description: List of user IDs mentioned in the comment
           items:
             type: string
-          maximum: 25
+          maxItems: 25
           title: '[]string'
           type: array
           x-stream-index: "005"
@@ -19584,7 +20335,7 @@ components:
           description: Configuration for activity processors
           items:
             $ref: '#/components/schemas/ActivityProcessorConfig'
-          maximum: 10
+          maxItems: 10
           title: Activity Processors
           type: array
           x-stream-index: "002.006"
@@ -20115,7 +20866,7 @@ components:
           description: Poll options
           items:
             $ref: '#/components/schemas/PollOptionRequest'
-          maximum: 100
+          maxItems: 100
           title: PollOptions
           type: array
           x-stream-index: "004"
@@ -20136,6 +20887,45 @@ components:
       required:
       - id
       - name
+      type: object
+    UpdateUserGroupRequest:
+      description: Request body for updating a user group
+      nullable: true
+      properties:
+        description:
+          description: The new description for the group
+          maxLength: 1024
+          title: Description
+          type: string
+          x-stream-index: "003"
+        name:
+          description: The new name of the user group
+          maxLength: 255
+          minLength: 1
+          title: Name
+          type: string
+          x-stream-index: "002"
+        team_id:
+          maxLength: 255
+          type: string
+          x-stream-index: "004"
+      title: UpdateUserGroupRequest
+      type: object
+    UpdateUserGroupResponse:
+      description: Response for updating a user group
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "002.001"
+        user_group:
+          $ref: '#/components/schemas/UserGroupResponse'
+          description: The updated user group
+          title: UserGroup
+          x-stream-index: "001"
+      required:
+      - duration
+      title: UpdateUserGroupResponse
       type: object
     UpdateUserPartialRequest:
       properties:
@@ -20214,8 +21004,8 @@ components:
           description: List of activities to create or update
           items:
             $ref: '#/components/schemas/ActivityRequest'
-          maximum: 100
-          minimum: 1
+          maxItems: 100
+          minItems: 1
           title: Activities
           type: array
           x-stream-index: "001"
@@ -20255,8 +21045,8 @@ components:
           description: List of collections to upsert (insert if new, update if existing)
           items:
             $ref: '#/components/schemas/CollectionRequest'
-          maximum: 100
-          minimum: 1
+          maxItems: 100
+          minItems: 1
           title: Collections
           type: array
           x-stream-index: "001"
@@ -20396,6 +21186,11 @@ components:
         action:
           $ref: '#/components/schemas/RuleBuilderAction'
           x-stream-index: "009"
+        action_sequences:
+          items:
+            $ref: '#/components/schemas/CallRuleActionSequence'
+          type: array
+          x-stream-index: "010"
         conditions:
           items:
             $ref: '#/components/schemas/RuleBuilderCondition'
@@ -20408,13 +21203,13 @@ components:
           x-stream-index: "003"
         cooldown_period:
           type: string
-          x-stream-index: "010"
+          x-stream-index: "011"
         description:
           type: string
           x-stream-index: "002"
         enabled:
           type: boolean
-          x-stream-index: "011"
+          x-stream-index: "012"
         groups:
           items:
             $ref: '#/components/schemas/RuleBuilderConditionGroup'
@@ -20435,7 +21230,6 @@ components:
       required:
       - name
       - rule_type
-      - action
       type: object
     UpsertModerationRuleResponse:
       description: Basic response information
@@ -20809,6 +21603,69 @@ components:
       x-stream-event-doc-group: other
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    UserGroupMember:
+      nullable: true
+      properties:
+        app_pk:
+          format: int64
+          type: integer
+          x-stream-index: "002"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "006"
+        group_id:
+          type: string
+          x-stream-index: "003"
+        is_admin:
+          type: boolean
+          x-stream-index: "005"
+        user_id:
+          type: string
+          x-stream-index: "004"
+      required:
+      - app_pk
+      - group_id
+      - user_id
+      - is_admin
+      - created_at
+      type: object
+    UserGroupResponse:
+      properties:
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "006"
+        created_by:
+          type: string
+          x-stream-index: "008"
+        description:
+          type: string
+          x-stream-index: "003"
+        id:
+          type: string
+          x-stream-index: "001"
+        members:
+          items:
+            $ref: '#/components/schemas/UserGroupMember'
+          type: array
+          x-stream-index: "005"
+        name:
+          type: string
+          x-stream-index: "002"
+        team_id:
+          type: string
+          x-stream-index: "004"
+        updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "007"
+      required:
+      - id
+      - name
+      - created_at
+      - updated_at
+      type: object
     UserIdenticalContentCountParameters:
       properties:
         threshold:
@@ -21277,6 +22134,89 @@ components:
           type: string
           x-stream-index: "001"
       type: object
+    UserUnbannedEvent:
+      description: This event is sent when a user gets unbanned. The event contains
+        information about the user that was unbanned.
+      nullable: true
+      properties:
+        channel_custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.006
+        channel_id:
+          description: The ID of the channel where the target user was unbanned
+          title: Channel ID
+          type: string
+          x-stream-index: 001.002.002
+        channel_member_count:
+          format: int32
+          type: integer
+          x-stream-index: 001.001.004
+        channel_message_count:
+          format: int64
+          type: integer
+          x-stream-index: 001.001.005
+        channel_type:
+          description: The type of the channel where the target user was unbanned
+          title: Channel Type
+          type: string
+          x-stream-index: 001.002.001
+        cid:
+          description: The CID of the channel where the target user was unbanned
+          title: Channel CID
+          type: string
+          x-stream-index: 001.001.001.002
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: number
+          x-stream-index: 001.001.001.001.003
+        created_by:
+          $ref: '#/components/schemas/UserResponseCommonFields'
+          description: The user who unbanned the target user
+          title: Created by
+          x-stream-index: "003"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.001.001.007
+        received_at:
+          format: date-time
+          type: number
+          x-stream-index: 001.001.001.001.004
+        shadow:
+          description: Whether the target user was shadow unbanned
+          title: Shadow
+          type: boolean
+          x-stream-index: "004"
+        team:
+          description: The team of the channel where the target user was unbanned
+          title: Team
+          type: string
+          x-stream-index: 001.001.003
+        type:
+          default: user.unbanned
+          description: 'The type of event: "user.unbanned" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: 001.001.001.001.002
+        user:
+          $ref: '#/components/schemas/UserResponseCommonFields'
+          description: The target user that was unbanned
+          title: User
+          x-stream-index: "002.001"
+      required:
+      - type
+      - created_at
+      - custom
+      - user
+      title: UserUnbannedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     UserUpdatedEvent:
       description: This event is sent when a user gets updated. The event contains
         information about the updated user.
@@ -21523,18 +22463,7 @@ components:
           type: string
           x-stream-index: "001"
       type: object
-    WHIPIngress:
-      properties:
-        address:
-          description: URL for a new whip input, every time a new link is created
-          title: Address
-          type: string
-          x-stream-index: "001"
-      required:
-      - address
-      title: WHIPIngress
-      type: object
-    WebhookEvent:
+    WHEvent:
       description: The discriminator object for all webhook events, it maps events'
         payload to the final type
       discriminator:
@@ -21574,6 +22503,7 @@ components:
           feeds.feed.updated: '#/components/schemas/FeedUpdatedEvent'
           feeds.feed_group.changed: '#/components/schemas/FeedGroupChangedEvent'
           feeds.feed_group.deleted: '#/components/schemas/FeedGroupDeletedEvent'
+          feeds.feed_group.restored: '#/components/schemas/FeedGroupRestoredEvent'
           feeds.feed_member.added: '#/components/schemas/FeedMemberAddedEvent'
           feeds.feed_member.removed: '#/components/schemas/FeedMemberRemovedEvent'
           feeds.feed_member.updated: '#/components/schemas/FeedMemberUpdatedEvent'
@@ -21586,11 +22516,13 @@ components:
           moderation.flagged: '#/components/schemas/ModerationFlaggedEvent'
           moderation.mark_reviewed: '#/components/schemas/ModerationMarkReviewedEvent'
           moderation_check.completed: '#/components/schemas/ModerationCheckCompletedEvent'
+          moderation_rule.triggered: '#/components/schemas/ModerationRulesTriggeredEvent'
           review_queue_item.new: '#/components/schemas/ReviewQueueItemNewEvent'
           review_queue_item.updated: '#/components/schemas/ReviewQueueItemUpdatedEvent'
           user.banned: '#/components/schemas/UserBannedEvent'
           user.deactivated: '#/components/schemas/UserDeactivatedEvent'
           user.reactivated: '#/components/schemas/UserReactivatedEvent'
+          user.unbanned: '#/components/schemas/UserUnbannedEvent'
           user.updated: '#/components/schemas/UserUpdatedEvent'
         propertyName: type
       oneOf:
@@ -21628,6 +22560,7 @@ components:
       - $ref: '#/components/schemas/FeedDeletedEvent'
       - $ref: '#/components/schemas/FeedGroupChangedEvent'
       - $ref: '#/components/schemas/FeedGroupDeletedEvent'
+      - $ref: '#/components/schemas/FeedGroupRestoredEvent'
       - $ref: '#/components/schemas/FeedMemberAddedEvent'
       - $ref: '#/components/schemas/FeedMemberRemovedEvent'
       - $ref: '#/components/schemas/FeedMemberUpdatedEvent'
@@ -21639,6 +22572,7 @@ components:
       - $ref: '#/components/schemas/ModerationCustomActionEvent'
       - $ref: '#/components/schemas/ModerationFlaggedEvent'
       - $ref: '#/components/schemas/ModerationMarkReviewedEvent'
+      - $ref: '#/components/schemas/ModerationRulesTriggeredEvent'
       - $ref: '#/components/schemas/NotificationFeedUpdatedEvent'
       - $ref: '#/components/schemas/ReviewQueueItemNewEvent'
       - $ref: '#/components/schemas/ReviewQueueItemUpdatedEvent'
@@ -21646,7 +22580,19 @@ components:
       - $ref: '#/components/schemas/UserBannedEvent'
       - $ref: '#/components/schemas/UserDeactivatedEvent'
       - $ref: '#/components/schemas/UserReactivatedEvent'
+      - $ref: '#/components/schemas/UserUnbannedEvent'
       - $ref: '#/components/schemas/UserUpdatedEvent'
+    WHIPIngress:
+      properties:
+        address:
+          description: URL for a new whip input, every time a new link is created
+          title: Address
+          type: string
+          x-stream-index: "001"
+      required:
+      - address
+      title: WHIPIngress
+      type: object
     XiaomiConfig:
       properties:
         Disabled:
@@ -21715,7 +22661,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v219.23.1
+  version: v221.15.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -23379,8 +24325,8 @@ paths:
           description: List of collections to delete
           items:
             type: string
-          maximum: 100
-          minimum: 1
+          maxItems: 100
+          minItems: 1
           title: Collection references
           type: array
           writeOnly: true
@@ -23414,13 +24360,12 @@ paths:
       parameters:
       - in: query
         name: collection_refs
-        required: true
         schema:
-          description: List of collection references in format 'name:id' (1-100 items)
+          description: Optional list of collection references in format 'name:id'.
+            When omitted, returns paginated list of all collections.
           items:
             type: string
-          maximum: 100
-          minimum: 1
+          maxItems: 100
           title: Collection References
           type: array
           writeOnly: true
@@ -23430,7 +24375,7 @@ paths:
         schema:
           type: string
           writeOnly: true
-          x-stream-index: "002.001"
+          x-stream-index: "003.001"
       responses:
         "200":
           content:
@@ -24726,6 +25671,57 @@ paths:
       summary: Reject an invite to become a feed member
       tags:
       - product:feeds
+  /api/v2/feeds/feed_groups/{feed_group_id}/feeds/{feed_id}/pinned_activities/query:
+    post:
+      description: |
+        Query pinned activities for a feed with filter query
+      operationId: QueryPinnedActivities
+      parameters:
+      - in: path
+        name: feed_group_id
+        required: true
+        schema:
+          maxLength: 255
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      - in: path
+        name: feed_id
+        required: true
+        schema:
+          maxLength: 255
+          type: string
+          writeOnly: true
+          x-stream-index: "002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryPinnedActivitiesRequest'
+        description: Query Pinned Activities Request
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryPinnedActivitiesResponse'
+          description: Query Pinned Activities Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Query pinned activities
+      tags:
+      - product:feeds
   /api/v2/feeds/feed_groups/{feed_group_id}/follow_suggestions:
     get:
       description: |
@@ -24782,6 +25778,42 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Get follow suggestions
+      tags:
+      - product:feeds
+  /api/v2/feeds/feed_groups/{feed_group_id}/restore:
+    post:
+      description: |
+        Restores a soft-deleted feed group by its ID. Only clears DeletedAt in the database; no other fields are updated.
+      operationId: RestoreFeedGroup
+      parameters:
+      - in: path
+        name: feed_group_id
+        required: true
+        schema:
+          maxLength: 255
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestoreFeedGroupResponse'
+          description: Restore Feed Group Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Restore a feed group
       tags:
       - product:feeds
   /api/v2/feeds/feed_groups/{id}:
@@ -28488,6 +29520,360 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Upload image
+      tags:
+      - product:common
+  /api/v2/usergroups:
+    get:
+      description: |
+        Lists user groups with cursor-based pagination
+      operationId: ListUserGroups
+      parameters:
+      - in: query
+        name: limit
+        schema:
+          format: int32
+          maximum: 100
+          minimum: 1
+          type: integer
+          writeOnly: true
+          x-stream-index: "001"
+      - in: query
+        name: id_gt
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "002"
+      - in: query
+        name: created_at_gt
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "003"
+      - in: query
+        name: team_id
+        schema:
+          maxLength: 255
+          type: string
+          writeOnly: true
+          x-stream-index: "004"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListUserGroupsResponse'
+          description: ListUserGroupsResponse
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: List user groups
+      tags:
+      - product:common
+    post:
+      description: |
+        Creates a new user group, optionally with initial members
+      operationId: CreateUserGroup
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserGroupRequest'
+        description: CreateUserGroupRequest
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateUserGroupResponse'
+          description: CreateUserGroupResponse
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Create user group
+      tags:
+      - product:common
+  /api/v2/usergroups/{id}:
+    delete:
+      description: |
+        Deletes a user group and all its members
+      operationId: DeleteUserGroup
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      - in: query
+        name: team_id
+        schema:
+          maxLength: 255
+          type: string
+          writeOnly: true
+          x-stream-index: "002"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Delete user group
+      tags:
+      - product:common
+    get:
+      description: |
+        Gets a user group by ID, including its members
+      operationId: GetUserGroup
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      - in: query
+        name: team_id
+        schema:
+          maxLength: 255
+          type: string
+          writeOnly: true
+          x-stream-index: "002"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetUserGroupResponse'
+          description: GetUserGroupResponse
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get user group
+      tags:
+      - product:common
+    put:
+      description: |
+        Updates a user group's name and/or description. team_id is immutable.
+      operationId: UpdateUserGroup
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserGroupRequest'
+        description: UpdateUserGroupRequest
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateUserGroupResponse'
+          description: UpdateUserGroupResponse
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Update user group
+      tags:
+      - product:common
+  /api/v2/usergroups/{id}/members:
+    delete:
+      description: |
+        Removes members from a user group. Users already not in the group are silently ignored.
+      operationId: RemoveUserGroupMembers
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RemoveUserGroupMembersResponse'
+          description: RemoveUserGroupMembersResponse
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Remove user group members
+      tags:
+      - product:common
+    post:
+      description: |
+        Adds members to a user group. All user IDs must exist. The operation is all-or-nothing.
+      operationId: AddUserGroupMembers
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddUserGroupMembersRequest'
+        description: AddUserGroupMembersRequest
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddUserGroupMembersResponse'
+          description: AddUserGroupMembersResponse
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Add user group members
+      tags:
+      - product:common
+  /api/v2/usergroups/search:
+    get:
+      description: |
+        Searches user groups by name prefix for autocomplete
+      operationId: SearchUserGroups
+      parameters:
+      - in: query
+        name: query
+        required: true
+        schema:
+          maxLength: 255
+          minLength: 1
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      - in: query
+        name: limit
+        schema:
+          format: int32
+          maximum: 25
+          minimum: 1
+          type: integer
+          writeOnly: true
+          x-stream-index: "002"
+      - in: query
+        name: name_gt
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "003"
+      - in: query
+        name: id_gt
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "004"
+      - in: query
+        name: team_id
+        schema:
+          maxLength: 255
+          type: string
+          writeOnly: true
+          x-stream-index: "005"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchUserGroupsResponse'
+          description: SearchUserGroupsResponse
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Search user groups
       tags:
       - product:common
   /api/v2/users:
