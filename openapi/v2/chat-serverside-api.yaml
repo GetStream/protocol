@@ -2316,6 +2316,40 @@ components:
       - task_id
       - duration
       type: object
+    CallActionOptions:
+      properties:
+        duration:
+          format: int32
+          type: integer
+          x-stream-index: "003"
+        flag_reason:
+          type: string
+          x-stream-index: "006"
+        kick_reason:
+          type: string
+          x-stream-index: "005"
+        mute_audio:
+          type: boolean
+          x-stream-index: "001"
+        mute_video:
+          type: boolean
+          x-stream-index: "002"
+        reason:
+          type: string
+          x-stream-index: "004"
+        warning_text:
+          type: string
+          x-stream-index: "007"
+      type: object
+    CallCustomPropertyParameters:
+      properties:
+        operator:
+          type: string
+          x-stream-index: "002"
+        property_key:
+          type: string
+          x-stream-index: "001"
+      type: object
     CallIngressResponse:
       description: CallIngressResponse is the payload for ingress settings
       properties:
@@ -2482,6 +2516,21 @@ components:
       - ingress
       - egress
       title: CallResponse
+      type: object
+    CallRuleActionSequence:
+      properties:
+        actions:
+          items:
+            type: string
+          type: array
+          x-stream-index: "002"
+        call_options:
+          $ref: '#/components/schemas/CallActionOptions'
+          x-stream-index: "003"
+        violation_number:
+          format: int32
+          type: integer
+          x-stream-index: "001"
       type: object
     CallSessionResponse:
       properties:
@@ -2706,6 +2755,12 @@ components:
       - created_at
       - updated_at
       - recording_external_storage
+      type: object
+    CallTypeRuleParameters:
+      properties:
+        call_type:
+          type: string
+          x-stream-index: "001"
       type: object
     CampaignChannelMember:
       nullable: true
@@ -5400,6 +5455,23 @@ components:
       required:
       - status
       - duration
+      type: object
+    ClosedCaptionRuleParameters:
+      properties:
+        harm_labels:
+          items:
+            type: string
+          type: array
+          x-stream-index: "001"
+        llm_harm_labels:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "002"
+        threshold:
+          format: int32
+          type: integer
+          x-stream-index: "003"
       type: object
     Command:
       description: Represents custom chat command
@@ -10670,6 +10742,22 @@ components:
       - max_dimension
       - frame_rate_limit
       type: object
+    KeyframeRuleParameters:
+      properties:
+        harm_labels:
+          items:
+            type: string
+          type: array
+          x-stream-index: "001"
+        min_confidence:
+          format: float
+          type: number
+          x-stream-index: "003"
+        threshold:
+          format: int32
+          type: integer
+          x-stream-index: "002"
+      type: object
     LLMConfig:
       properties:
         app_context:
@@ -13723,11 +13811,36 @@ components:
       - action
       - automod_response
       type: object
+    ModerationRuleInfo:
+      properties:
+        description:
+          type: string
+          x-stream-index: "004"
+        id:
+          type: string
+          x-stream-index: "001"
+        name:
+          type: string
+          x-stream-index: "002"
+        type:
+          type: string
+          x-stream-index: "003"
+      required:
+      - id
+      - name
+      - type
+      - description
+      type: object
     ModerationRuleV2Response:
       properties:
         action:
           $ref: '#/components/schemas/RuleBuilderAction'
           x-stream-index: "010"
+        action_sequences:
+          items:
+            $ref: '#/components/schemas/CallRuleActionSequence'
+          type: array
+          x-stream-index: "011"
         conditions:
           items:
             $ref: '#/components/schemas/RuleBuilderCondition'
@@ -13740,17 +13853,17 @@ components:
           x-stream-index: "004"
         cooldown_period:
           type: string
-          x-stream-index: "011"
+          x-stream-index: "012"
         created_at:
           format: date-time
           type: number
-          x-stream-index: "013"
+          x-stream-index: "014"
         description:
           type: string
           x-stream-index: "003"
         enabled:
           type: boolean
-          x-stream-index: "012"
+          x-stream-index: "013"
         groups:
           items:
             $ref: '#/components/schemas/RuleBuilderConditionGroup'
@@ -13774,7 +13887,7 @@ components:
         updated_at:
           format: date-time
           type: number
-          x-stream-index: "014"
+          x-stream-index: "015"
       required:
       - id
       - name
@@ -13782,11 +13895,84 @@ components:
       - config_keys
       - team
       - rule_type
-      - action
       - enabled
       - created_at
       - updated_at
       type: object
+    ModerationRulesTriggeredEvent:
+      description: This event is sent automatically whenever a rule builder rule is
+        triggered
+      nullable: true
+      properties:
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "001.003"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "001.007"
+        entity_id:
+          description: The ID of the entity that triggered the rule
+          title: EntityID
+          type: string
+          x-stream-index: "004"
+        entity_type:
+          description: The type of the entity (call, user, message, etc.)
+          title: EntityType
+          type: string
+          x-stream-index: "005"
+        received_at:
+          format: date-time
+          type: number
+          x-stream-index: "001.004"
+        review_queue_item_id:
+          description: The review queue item ID if applicable
+          title: ReviewQueueItemID
+          type: string
+          x-stream-index: "008"
+        rule:
+          $ref: '#/components/schemas/ModerationRuleInfo'
+          description: The rule that was triggered
+          title: Rule
+          x-stream-index: "002"
+        triggered_actions:
+          description: Array of action types that were triggered
+          items:
+            type: string
+          title: TriggeredActions
+          type: array
+          x-stream-index: "007"
+        type:
+          default: moderation_rule.triggered
+          type: string
+          x-stream-index: "001.002"
+        user_id:
+          description: The ID of the user who triggered the rule
+          title: UserID
+          type: string
+          x-stream-index: "006"
+        violation_number:
+          description: The violation number for call rules (optional)
+          format: int32
+          title: ViolationNumber
+          type: integer
+          x-stream-index: "003"
+      required:
+      - type
+      - created_at
+      - custom
+      - rule
+      - entity_id
+      - entity_type
+      - user_id
+      - triggered_actions
+      title: ModerationRulesTriggeredEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     ModerationV2Response:
       properties:
         action:
@@ -13795,6 +13981,11 @@ components:
         blocklist_matched:
           type: string
           x-stream-index: "005"
+        blocklists_matched:
+          items:
+            type: string
+          type: array
+          x-stream-index: "006"
         image_harms:
           items:
             type: string
@@ -13805,10 +13996,10 @@ components:
           x-stream-index: "002"
         platform_circumvented:
           type: boolean
-          x-stream-index: "007"
+          x-stream-index: "008"
         semantic_filter_matched:
           type: string
-          x-stream-index: "006"
+          x-stream-index: "007"
         text_harms:
           items:
             type: string
@@ -16393,6 +16584,13 @@ components:
     QueryModerationRulesResponse:
       nullable: true
       properties:
+        closed_caption_labels:
+          description: Available harm labels for closed caption rules
+          items:
+            type: string
+          title: ClosedCaptionLabels
+          type: array
+          x-stream-index: "004"
         default_llm_labels:
           additionalProperties:
             type: string
@@ -16402,13 +16600,20 @@ components:
           x-stream-index: "002"
         duration:
           type: string
-          x-stream-index: "004.001"
+          x-stream-index: "006.001"
+        keyframe_labels:
+          description: Available harm labels for keyframe rules
+          items:
+            type: string
+          title: KeyframeLabels
+          type: array
+          x-stream-index: "003"
         next:
           type: string
-          x-stream-index: "003.001"
+          x-stream-index: "005.001"
         prev:
           type: string
-          x-stream-index: "003.002"
+          x-stream-index: "005.002"
         rules:
           description: List of moderation rules
           items:
@@ -16419,6 +16624,8 @@ components:
       required:
       - rules
       - default_llm_labels
+      - keyframe_labels
+      - closed_caption_labels
       - duration
       type: object
     QueryPollVotesRequest:
@@ -18453,6 +18660,9 @@ components:
         ban_options:
           $ref: '#/components/schemas/BanOptions'
           x-stream-index: "002"
+        call_options:
+          $ref: '#/components/schemas/CallActionOptions'
+          x-stream-index: "004"
         flag_user_options:
           $ref: '#/components/schemas/FlagUserOptions'
           x-stream-index: "003"
@@ -18466,13 +18676,29 @@ components:
           - bounce_flag_content
           - bounce_content
           - bounce_remove_content
+          - mute_video
+          - mute_audio
+          - blur
+          - call_blur
+          - end_call
+          - kick_user
+          - warning
+          - call_warning
+          - webhook_only
           type: string
           x-stream-index: "001"
-      required:
-      - type
       type: object
     RuleBuilderCondition:
       properties:
+        call_custom_property_params:
+          $ref: '#/components/schemas/CallCustomPropertyParameters'
+          x-stream-index: "020"
+        call_type_rule_params:
+          $ref: '#/components/schemas/CallTypeRuleParameters'
+          x-stream-index: "019"
+        closed_caption_rule_params:
+          $ref: '#/components/schemas/ClosedCaptionRuleParameters'
+          x-stream-index: "018"
         confidence:
           format: float
           type: number
@@ -18489,6 +18715,9 @@ components:
         image_rule_params:
           $ref: '#/components/schemas/ImageRuleParameters'
           x-stream-index: "004"
+        keyframe_rule_params:
+          $ref: '#/components/schemas/KeyframeRuleParameters'
+          x-stream-index: "017"
         text_content_params:
           $ref: '#/components/schemas/TextContentParameters'
           x-stream-index: "011"
@@ -18550,6 +18779,11 @@ components:
         action:
           $ref: '#/components/schemas/RuleBuilderAction'
           x-stream-index: "006"
+        action_sequences:
+          items:
+            $ref: '#/components/schemas/CallRuleActionSequence'
+          type: array
+          x-stream-index: "007"
         conditions:
           items:
             $ref: '#/components/schemas/RuleBuilderCondition'
@@ -18557,7 +18791,7 @@ components:
           x-stream-index: "003"
         cooldown_period:
           type: string
-          x-stream-index: "007"
+          x-stream-index: "008"
         groups:
           items:
             $ref: '#/components/schemas/RuleBuilderConditionGroup'
@@ -18574,7 +18808,6 @@ components:
           x-stream-index: "002"
       required:
       - rule_type
-      - action
       type: object
     S3Request:
       description: Config for creating Amazon S3 storage.
@@ -22157,6 +22390,11 @@ components:
         action:
           $ref: '#/components/schemas/RuleBuilderAction'
           x-stream-index: "009"
+        action_sequences:
+          items:
+            $ref: '#/components/schemas/CallRuleActionSequence'
+          type: array
+          x-stream-index: "010"
         conditions:
           items:
             $ref: '#/components/schemas/RuleBuilderCondition'
@@ -22169,13 +22407,13 @@ components:
           x-stream-index: "003"
         cooldown_period:
           type: string
-          x-stream-index: "010"
+          x-stream-index: "011"
         description:
           type: string
           x-stream-index: "002"
         enabled:
           type: boolean
-          x-stream-index: "011"
+          x-stream-index: "012"
         groups:
           items:
             $ref: '#/components/schemas/RuleBuilderConditionGroup'
@@ -22196,7 +22434,6 @@ components:
       required:
       - name
       - rule_type
-      - action
       type: object
     UpsertModerationRuleResponse:
       description: Basic response information
@@ -23913,6 +24150,7 @@ components:
           moderation.flagged: '#/components/schemas/ModerationFlaggedEvent'
           moderation.mark_reviewed: '#/components/schemas/ModerationMarkReviewedEvent'
           moderation_check.completed: '#/components/schemas/ModerationCheckCompletedEvent'
+          moderation_rule.triggered: '#/components/schemas/ModerationRulesTriggeredEvent'
           notification.mark_unread: '#/components/schemas/NotificationMarkUnreadEvent'
           notification.reminder_due: '#/components/schemas/ReminderNotificationEvent'
           notification.thread_message_new: '#/components/schemas/NotificationThreadMessageNewEvent'
@@ -23980,6 +24218,7 @@ components:
       - $ref: '#/components/schemas/ModerationCustomActionEvent'
       - $ref: '#/components/schemas/ModerationFlaggedEvent'
       - $ref: '#/components/schemas/ModerationMarkReviewedEvent'
+      - $ref: '#/components/schemas/ModerationRulesTriggeredEvent'
       - $ref: '#/components/schemas/NotificationMarkUnreadEvent'
       - $ref: '#/components/schemas/NotificationThreadMessageNewEvent'
       - $ref: '#/components/schemas/PendingMessageEvent'
@@ -24119,7 +24358,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v219.23.1
+  version: v219.28.1
 openapi: 3.0.3
 paths:
   /api/v2/app:
