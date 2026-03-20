@@ -222,6 +222,12 @@ components:
       type: object
     AppResponseFields:
       properties:
+        activity_metrics_config:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "056"
         allow_multi_user_devices:
           type: boolean
           x-stream-index: "018"
@@ -586,7 +592,7 @@ components:
           type: string
           x-stream-index: "002.001"
         type:
-          default: export.users.error
+          default: export.moderation_logs.error
           type: string
           x-stream-index: "003.002"
       required:
@@ -1757,6 +1763,9 @@ components:
           - block
           type: string
           x-stream-index: "009"
+        chat_preferences:
+          $ref: '#/components/schemas/ChatPreferences'
+          x-stream-index: "013"
         commands:
           description: List of commands that channel supports
           items:
@@ -1864,6 +1873,9 @@ components:
             $ref: '#/components/schemas/BlockListOptions'
           type: array
           x-stream-index: 001.002.027
+        chat_preferences:
+          $ref: '#/components/schemas/ChatPreferences'
+          x-stream-index: 001.002.034
         commands:
           items:
             $ref: '#/components/schemas/Command'
@@ -2505,8 +2517,12 @@ components:
         channel_role:
           type: string
           x-stream-index: "001"
+        notifications_muted:
+          type: boolean
+          x-stream-index: "002"
       required:
       - channel_role
+      - notifications_muted
       type: object
     ChannelMessagesResponse:
       description: Response containing channel and its messages
@@ -3132,6 +3148,9 @@ components:
             $ref: '#/components/schemas/BlockListOptions'
           type: array
           x-stream-index: 003.002.027
+        chat_preferences:
+          $ref: '#/components/schemas/ChatPreferences'
+          x-stream-index: 003.002.034
         commands:
           items:
             $ref: '#/components/schemas/Command'
@@ -3540,6 +3559,102 @@ components:
       x-stream-event-doc-group: other
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    ChatPreferences:
+      properties:
+        channel_mentions:
+          type: string
+          x-stream-index: "007"
+        default_preference:
+          type: string
+          x-stream-index: "001"
+        direct_mentions:
+          type: string
+          x-stream-index: "002"
+        distinct_channel_messages:
+          type: string
+          x-stream-index: "008"
+        group_mentions:
+          type: string
+          x-stream-index: "004"
+        here_mentions:
+          type: string
+          x-stream-index: "006"
+        role_mentions:
+          type: string
+          x-stream-index: "003"
+        thread_replies:
+          type: string
+          x-stream-index: "005"
+      type: object
+    ChatPreferencesInput:
+      properties:
+        channel_mentions:
+          enum:
+          - all
+          - none
+          type: string
+          x-stream-index: "007"
+        default_preference:
+          enum:
+          - all
+          - none
+          type: string
+          x-stream-index: "001"
+        direct_mentions:
+          enum:
+          - all
+          - none
+          type: string
+          x-stream-index: "002"
+        group_mentions:
+          enum:
+          - all
+          - none
+          type: string
+          x-stream-index: "004"
+        here_mentions:
+          enum:
+          - all
+          - none
+          type: string
+          x-stream-index: "006"
+        role_mentions:
+          enum:
+          - all
+          - none
+          type: string
+          x-stream-index: "003"
+        thread_replies:
+          enum:
+          - all
+          - none
+          type: string
+          x-stream-index: "005"
+      type: object
+    ChatPreferencesResponse:
+      properties:
+        channel_mentions:
+          type: string
+          x-stream-index: "007"
+        default_preference:
+          type: string
+          x-stream-index: "001"
+        direct_mentions:
+          type: string
+          x-stream-index: "002"
+        group_mentions:
+          type: string
+          x-stream-index: "004"
+        here_mentions:
+          type: string
+          x-stream-index: "006"
+        role_mentions:
+          type: string
+          x-stream-index: "003"
+        thread_replies:
+          type: string
+          x-stream-index: "005"
+      type: object
     CheckExternalStorageResponse:
       description: Basic response information
       nullable: true
@@ -3822,6 +3937,9 @@ components:
           title: Blocklist behavior
           type: string
           x-stream-index: "009"
+        chat_preferences:
+          $ref: '#/components/schemas/ChatPreferences'
+          x-stream-index: "016"
         commands:
           description: List of available commands
           items:
@@ -3850,6 +3968,15 @@ components:
           title: Max message length
           type: integer
           x-stream-index: "007"
+        push_level:
+          enum:
+          - all
+          - all_mentions
+          - mentions
+          - direct_mentions
+          - none
+          type: string
+          x-stream-index: "015"
         quotes:
           description: Enable/disable quotes
           title: Quotes
@@ -3994,6 +4121,9 @@ components:
           title: Blocklists
           type: array
           x-stream-index: "028"
+        chat_preferences:
+          $ref: '#/components/schemas/ChatPreferences'
+          x-stream-index: "033"
         commands:
           description: List of commands that channel supports
           items:
@@ -4191,6 +4321,9 @@ components:
             $ref: '#/components/schemas/BlockListOptions'
           type: array
           x-stream-index: 001.001.027
+        chat_preferences:
+          $ref: '#/components/schemas/ChatPreferences'
+          x-stream-index: 001.001.034
         commands:
           items:
             type: string
@@ -5137,6 +5270,26 @@ components:
       title: Response
       type: object
     DeleteReminderResponse:
+      description: Basic response information
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      title: Response
+      type: object
+    DeleteRetentionPolicyRequest:
+      nullable: true
+      properties:
+        policy:
+          type: string
+          x-stream-index: "001"
+      type: object
+    DeleteRetentionPolicyResponse:
       description: Basic response information
       nullable: true
       properties:
@@ -6524,6 +6677,9 @@ components:
             $ref: '#/components/schemas/BlockListOptions'
           type: array
           x-stream-index: 003.002.027
+        chat_preferences:
+          $ref: '#/components/schemas/ChatPreferences'
+          x-stream-index: 003.002.034
         commands:
           items:
             $ref: '#/components/schemas/Command'
@@ -7056,6 +7212,44 @@ components:
           x-stream-index: "001"
       required:
       - messages
+      - duration
+      title: Response
+      type: object
+    GetRetentionPolicyResponse:
+      description: Basic response information
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        policies:
+          items:
+            $ref: '#/components/schemas/RetentionPolicy'
+          type: array
+          x-stream-index: "001"
+      required:
+      - policies
+      - duration
+      title: Response
+      type: object
+    GetRetentionPolicyRunsResponse:
+      description: Basic response information
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        runs:
+          items:
+            $ref: '#/components/schemas/RetentionCleanupRun'
+          type: array
+          x-stream-index: "001"
+      required:
+      - runs
       - duration
       title: Response
       type: object
@@ -11041,6 +11235,15 @@ components:
       - created_at
       - updated_at
       type: object
+    PolicyConfig:
+      properties:
+        max_age_hours:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+      required:
+      - max_age_hours
+      type: object
     PolicyRequest:
       description: Policy request
       properties:
@@ -11444,7 +11647,7 @@ components:
           - default
           title: Call Level
           type: string
-          x-stream-index: "004"
+          x-stream-index: "005"
         channel_cid:
           description: Set the push preferences for a specific channel. If empty it
             sets the default for the user
@@ -11465,12 +11668,15 @@ components:
           title: Chat Level
           type: string
           x-stream-index: "003"
+        chat_preferences:
+          $ref: '#/components/schemas/ChatPreferencesInput'
+          x-stream-index: "004"
         disabled_until:
           description: Disable push notifications till a certain time
           format: date-time
           title: Disabled Until
           type: string
-          x-stream-index: "007"
+          x-stream-index: "008"
         feeds_level:
           description: 'Set the level of feeds push notifications for the user. One
             of: all, none, default'
@@ -11480,18 +11686,18 @@ components:
           - default
           title: Feeds Level
           type: string
-          x-stream-index: "005"
+          x-stream-index: "006"
         feeds_preferences:
           $ref: '#/components/schemas/FeedsPreferences'
           description: Set granular feeds preferences for reactions, comments, new
             followers, mentions, and custom activity types
           title: Feeds Preferences
-          x-stream-index: "006"
+          x-stream-index: "007"
         remove_disable:
           description: Remove the disabled until time. (IE stop snoozing notifications)
           title: Remove Disable
           type: boolean
-          x-stream-index: "008"
+          x-stream-index: "009"
         user_id:
           description: The user id for which to set the push preferences. Required
             when using server side auths, defaults to current user with client side
@@ -11504,20 +11710,23 @@ components:
       properties:
         call_level:
           type: string
-          x-stream-index: "002"
+          x-stream-index: "003"
         chat_level:
           type: string
           x-stream-index: "001"
+        chat_preferences:
+          $ref: '#/components/schemas/ChatPreferencesResponse'
+          x-stream-index: "002"
         disabled_until:
           format: date-time
           type: string
-          x-stream-index: "005"
+          x-stream-index: "006"
         feeds_level:
           type: string
-          x-stream-index: "003"
+          x-stream-index: "004"
         feeds_preferences:
           $ref: '#/components/schemas/FeedsPreferencesResponse'
-          x-stream-index: "004"
+          x-stream-index: "005"
       type: object
     PushProvider:
       nullable: true
@@ -13864,6 +14073,73 @@ components:
       required:
       - user_ids
       type: object
+    RetentionCleanupRun:
+      properties:
+        app_pk:
+          format: int64
+          type: integer
+          x-stream-index: "002"
+        cursor_id:
+          type: string
+          x-stream-index: "009"
+        cursor_ts:
+          format: date-time
+          type: string
+          x-stream-index: "008"
+        date:
+          format: date-time
+          type: string
+          x-stream-index: "004"
+        error:
+          type: string
+          x-stream-index: "011"
+        finished_at:
+          format: date-time
+          type: string
+          x-stream-index: "006"
+        policy:
+          type: string
+          x-stream-index: "003"
+        started_at:
+          format: date-time
+          type: string
+          x-stream-index: "005"
+        stats:
+          $ref: '#/components/schemas/RunStats'
+          x-stream-index: "010"
+        status:
+          type: string
+          x-stream-index: "007"
+      required:
+      - app_pk
+      - policy
+      - date
+      - started_at
+      - status
+      - stats
+      type: object
+    RetentionPolicy:
+      properties:
+        app_pk:
+          format: int64
+          type: integer
+          x-stream-index: "002"
+        config:
+          $ref: '#/components/schemas/PolicyConfig'
+          x-stream-index: "004"
+        enabled_at:
+          format: date-time
+          type: string
+          x-stream-index: "005"
+        policy:
+          type: string
+          x-stream-index: "003"
+      required:
+      - app_pk
+      - policy
+      - config
+      - enabled_at
+      type: object
     RingSettings:
       properties:
         auto_cancel_timeout_ms:
@@ -13921,6 +14197,17 @@ components:
       - scopes
       - created_at
       - updated_at
+      type: object
+    RunStats:
+      properties:
+        channels_deleted:
+          format: int64
+          type: integer
+          x-stream-index: "001"
+        messages_deleted:
+          format: int64
+          type: integer
+          x-stream-index: "002"
       type: object
     S3Request:
       description: Config for creating Amazon S3 storage.
@@ -14585,6 +14872,34 @@ components:
           x-stream-index: "001"
       required:
       - inactivity_timeout_seconds
+      type: object
+    SetRetentionPolicyRequest:
+      nullable: true
+      properties:
+        max_age_hours:
+          format: int32
+          type: integer
+          x-stream-index: "002"
+        policy:
+          type: string
+          x-stream-index: "001"
+      type: object
+    SetRetentionPolicyResponse:
+      description: Basic response information
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        policy:
+          $ref: '#/components/schemas/RetentionPolicy'
+          x-stream-index: "001"
+      required:
+      - policy
+      - duration
+      title: Response
       type: object
     SharedLocation:
       properties:
@@ -15840,6 +16155,12 @@ components:
     UpdateAppRequest:
       nullable: true
       properties:
+        activity_metrics_config:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "001.052"
         allowed_flag_reasons:
           items:
             type: string
@@ -16293,6 +16614,9 @@ components:
             $ref: '#/components/schemas/BlockListOptions'
           type: array
           x-stream-index: 009.001.027
+        chat_preferences:
+          $ref: '#/components/schemas/ChatPreferences'
+          x-stream-index: 009.001.034
         commands:
           description: List of commands that channel supports
           items:
@@ -16442,6 +16766,9 @@ components:
             $ref: '#/components/schemas/BlockListOptions'
           type: array
           x-stream-index: 003.001.027
+        chat_preferences:
+          $ref: '#/components/schemas/ChatPreferences'
+          x-stream-index: 003.001.034
         commands:
           items:
             type: string
@@ -19222,7 +19549,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v223.14.1
+  version: v223.35.0
 openapi: 3.0.3
 paths:
   /app:
@@ -24355,6 +24682,143 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Query reminders
+      tags:
+      - product:chat
+  /retention_policy:
+    get:
+      description: |
+        Returns all retention policies configured for the app. Server-side only.
+      operationId: GetRetentionPolicy
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetRetentionPolicyResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get retention policy
+      tags:
+      - product:chat
+    post:
+      description: |
+        Creates or updates a retention policy for the app. Server-side only.
+      operationId: SetRetentionPolicy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetRetentionPolicyRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetRetentionPolicyResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Set retention policy
+      tags:
+      - product:chat
+  /retention_policy/delete:
+    post:
+      description: |
+        Removes a retention policy for the app. Server-side only.
+      operationId: DeleteRetentionPolicy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteRetentionPolicyRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteRetentionPolicyResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Delete retention policy
+      tags:
+      - product:chat
+  /retention_policy/runs:
+    get:
+      description: |
+        Returns paginated retention cleanup run history for the app. Server-side only.
+      operationId: GetRetentionPolicyRuns
+      parameters:
+      - in: query
+        name: limit
+        schema:
+          format: int32
+          maximum: 100
+          minimum: 0
+          type: integer
+          writeOnly: true
+          x-stream-index: "001"
+      - in: query
+        name: offset
+        schema:
+          format: int32
+          minimum: 0
+          type: integer
+          writeOnly: true
+          x-stream-index: "002"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetRetentionPolicyRunsResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get retention policy runs
       tags:
       - product:chat
   /roles:
