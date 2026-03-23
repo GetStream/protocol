@@ -348,6 +348,12 @@ components:
       type: object
     AppResponseFields:
       properties:
+        activity_metrics_config:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "056"
         allow_multi_user_devices:
           type: boolean
           x-stream-index: "018"
@@ -665,7 +671,7 @@ components:
           type: string
           x-stream-index: "002.001"
         type:
-          default: export.users.error
+          default: export.channels.error
           type: string
           x-stream-index: "003.002"
       required:
@@ -1638,6 +1644,13 @@ components:
           format: date-time
           type: number
           x-stream-index: "001.002"
+        members:
+          description: The list of members in the call
+          items:
+            $ref: '#/components/schemas/MemberResponse'
+          title: Members
+          type: array
+          x-stream-index: "006"
         reason:
           description: The reason why the call ended, if available
           title: CallEndedReason
@@ -4311,6 +4324,9 @@ components:
             $ref: '#/components/schemas/BlockListOptions'
           type: array
           x-stream-index: "001.027"
+        chat_preferences:
+          $ref: '#/components/schemas/ChatPreferences'
+          x-stream-index: "001.034"
         commands:
           description: List of commands that channel supports
           items:
@@ -4482,6 +4498,9 @@ components:
             $ref: '#/components/schemas/BlockListOptions'
           type: array
           x-stream-index: 001.002.027
+        chat_preferences:
+          $ref: '#/components/schemas/ChatPreferences'
+          x-stream-index: 001.002.034
         commands:
           items:
             $ref: '#/components/schemas/Command'
@@ -4810,10 +4829,13 @@ components:
         chat_level:
           type: string
           x-stream-index: "001"
+        chat_preferences:
+          $ref: '#/components/schemas/ChatPreferencesResponse'
+          x-stream-index: "002"
         disabled_until:
           format: date-time
           type: number
-          x-stream-index: "002"
+          x-stream-index: "003"
       type: object
     ChannelResponse:
       description: Represents channel in chat
@@ -4988,6 +5010,102 @@ components:
         Messages:
           $ref: '#/components/schemas/MessageStatsResponse'
           x-stream-index: "001"
+      type: object
+    ChatPreferences:
+      properties:
+        channel_mentions:
+          type: string
+          x-stream-index: "007"
+        default_preference:
+          type: string
+          x-stream-index: "001"
+        direct_mentions:
+          type: string
+          x-stream-index: "002"
+        distinct_channel_messages:
+          type: string
+          x-stream-index: "008"
+        group_mentions:
+          type: string
+          x-stream-index: "004"
+        here_mentions:
+          type: string
+          x-stream-index: "006"
+        role_mentions:
+          type: string
+          x-stream-index: "003"
+        thread_replies:
+          type: string
+          x-stream-index: "005"
+      type: object
+    ChatPreferencesInput:
+      properties:
+        channel_mentions:
+          enum:
+          - all
+          - none
+          type: string
+          x-stream-index: "007"
+        default_preference:
+          enum:
+          - all
+          - none
+          type: string
+          x-stream-index: "001"
+        direct_mentions:
+          enum:
+          - all
+          - none
+          type: string
+          x-stream-index: "002"
+        group_mentions:
+          enum:
+          - all
+          - none
+          type: string
+          x-stream-index: "004"
+        here_mentions:
+          enum:
+          - all
+          - none
+          type: string
+          x-stream-index: "006"
+        role_mentions:
+          enum:
+          - all
+          - none
+          type: string
+          x-stream-index: "003"
+        thread_replies:
+          enum:
+          - all
+          - none
+          type: string
+          x-stream-index: "005"
+      type: object
+    ChatPreferencesResponse:
+      properties:
+        channel_mentions:
+          type: string
+          x-stream-index: "007"
+        default_preference:
+          type: string
+          x-stream-index: "001"
+        direct_mentions:
+          type: string
+          x-stream-index: "002"
+        group_mentions:
+          type: string
+          x-stream-index: "004"
+        here_mentions:
+          type: string
+          x-stream-index: "006"
+        role_mentions:
+          type: string
+          x-stream-index: "003"
+        thread_replies:
+          type: string
+          x-stream-index: "005"
       type: object
     CheckExternalStorageResponse:
       description: Basic response information
@@ -5935,6 +6053,14 @@ components:
       description: Request to create a new SIP trunk
       nullable: true
       properties:
+        allowed_ips:
+          description: Optional list of allowed IPv4/IPv6 addresses or CIDR blocks
+          items:
+            type: string
+          maxItems: 50
+          title: '[]string'
+          type: array
+          x-stream-index: "004"
         name:
           description: Name of the SIP trunk
           maxLength: 100
@@ -5951,6 +6077,12 @@ components:
           title: '[]string'
           type: array
           x-stream-index: "002"
+        password:
+          description: Optional password for SIP trunk authentication
+          maxLength: 255
+          title: string
+          type: string
+          x-stream-index: "003"
       required:
       - name
       - numbers
@@ -11387,7 +11519,7 @@ components:
           - default
           title: Call Level
           type: string
-          x-stream-index: "004"
+          x-stream-index: "005"
         channel_cid:
           description: Set the push preferences for a specific channel. If empty it
             sets the default for the user
@@ -11408,12 +11540,15 @@ components:
           title: Chat Level
           type: string
           x-stream-index: "003"
+        chat_preferences:
+          $ref: '#/components/schemas/ChatPreferencesInput'
+          x-stream-index: "004"
         disabled_until:
           description: Disable push notifications till a certain time
           format: date-time
           title: Disabled Until
           type: number
-          x-stream-index: "007"
+          x-stream-index: "008"
         feeds_level:
           description: 'Set the level of feeds push notifications for the user. One
             of: all, none, default'
@@ -11423,18 +11558,18 @@ components:
           - default
           title: Feeds Level
           type: string
-          x-stream-index: "005"
+          x-stream-index: "006"
         feeds_preferences:
           $ref: '#/components/schemas/FeedsPreferences'
           description: Set granular feeds preferences for reactions, comments, new
             followers, mentions, and custom activity types
           title: Feeds Preferences
-          x-stream-index: "006"
+          x-stream-index: "007"
         remove_disable:
           description: Remove the disabled until time. (IE stop snoozing notifications)
           title: Remove Disable
           type: boolean
-          x-stream-index: "008"
+          x-stream-index: "009"
         user_id:
           description: The user id for which to set the push preferences. Required
             when using server side auths, defaults to current user with client side
@@ -11448,20 +11583,23 @@ components:
       properties:
         call_level:
           type: string
-          x-stream-index: "002"
+          x-stream-index: "003"
         chat_level:
           type: string
           x-stream-index: "001"
+        chat_preferences:
+          $ref: '#/components/schemas/ChatPreferencesResponse'
+          x-stream-index: "002"
         disabled_until:
           format: date-time
           type: number
-          x-stream-index: "005"
+          x-stream-index: "006"
         feeds_level:
           type: string
-          x-stream-index: "003"
+          x-stream-index: "004"
         feeds_preferences:
           $ref: '#/components/schemas/FeedsPreferencesResponse'
-          x-stream-index: "004"
+          x-stream-index: "005"
       type: object
     PushProvider:
       nullable: true
@@ -13093,6 +13231,67 @@ components:
           $ref: '#/components/schemas/MetricTimeSeries'
           x-stream-index: "001"
       type: object
+    ResolveSipAuthRequest:
+      description: Request to determine SIP trunk authentication requirements
+      nullable: true
+      properties:
+        from_host:
+          description: Host from the SIP From header
+          title: string
+          type: string
+          x-stream-index: "004"
+        sip_caller_number:
+          description: SIP caller number
+          title: string
+          type: string
+          x-stream-index: "002"
+        sip_trunk_number:
+          description: SIP trunk number to look up
+          title: string
+          type: string
+          x-stream-index: "001"
+        source_ip:
+          description: Transport-layer source IP address of the SIP request
+          title: string
+          type: string
+          x-stream-index: "003"
+      required:
+      - sip_trunk_number
+      - sip_caller_number
+      title: ResolveSipAuthRequest
+      type: object
+    ResolveSipAuthResponse:
+      description: Response containing the pre-authentication decision for a SIP trunk
+      nullable: true
+      properties:
+        auth_result:
+          description: 'Authentication result: password, accept, or no_trunk_found'
+          title: string
+          type: string
+          x-stream-index: "001"
+        duration:
+          type: string
+          x-stream-index: "005.001"
+        password:
+          description: Password for digest authentication (when auth_result is password)
+          title: string
+          type: string
+          x-stream-index: "003"
+        trunk_id:
+          description: ID of the matched SIP trunk
+          title: string
+          type: string
+          x-stream-index: "004"
+        username:
+          description: Username for digest authentication (when auth_result is password)
+          title: string
+          type: string
+          x-stream-index: "002"
+      required:
+      - auth_result
+      - duration
+      title: ResolveSipAuthResponse
+      type: object
     ResolveSipInboundRequest:
       description: Request to resolve SIP inbound routing using challenge authentication
       nullable: true
@@ -13109,7 +13308,7 @@ components:
           minLength: 3
           title: string
           type: string
-          x-stream-index: "005"
+          x-stream-index: "006"
         sip_caller_number:
           description: SIP caller number
           title: string
@@ -13121,16 +13320,20 @@ components:
           description: Optional SIP headers as key-value pairs
           title: map[string]string
           type: object
-          x-stream-index: "004"
+          x-stream-index: "005"
         sip_trunk_number:
           description: SIP trunk number to resolve
           title: string
           type: string
           x-stream-index: "001"
+        trunk_id:
+          description: Optional pre-authenticated trunk ID (from PreAuth no-auth flow)
+          title: string
+          type: string
+          x-stream-index: "004"
       required:
       - sip_trunk_number
       - sip_caller_number
-      - challenge
       title: ResolveSipInboundRequest
       type: object
     ResolveSipInboundResponse:
@@ -13882,12 +14085,19 @@ components:
     SIPTrunkResponse:
       description: SIP trunk information
       properties:
+        allowed_ips:
+          description: Allowed IPv4/IPv6 addresses or CIDR blocks
+          items:
+            type: string
+          title: '[]string'
+          type: array
+          x-stream-index: "007"
         created_at:
           description: Creation timestamp
           format: date-time
           title: string
           type: number
-          x-stream-index: "007"
+          x-stream-index: "008"
         id:
           description: Unique identifier for the SIP trunk
           title: string
@@ -13915,7 +14125,7 @@ components:
           format: date-time
           title: string
           type: number
-          x-stream-index: "008"
+          x-stream-index: "009"
         uri:
           description: The URI for the SIP trunk
           title: string
@@ -13933,6 +14143,7 @@ components:
       - uri
       - username
       - password
+      - allowed_ips
       - created_at
       - updated_at
       title: SIPTrunkResponse
@@ -15318,6 +15529,12 @@ components:
     UpdateAppRequest:
       nullable: true
       properties:
+        activity_metrics_config:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "001.052"
         allowed_flag_reasons:
           items:
             type: string
@@ -15963,7 +16180,6 @@ components:
           description: List of called numbers
           items:
             type: string
-          minItems: 1
           title: '[]string'
           type: array
           x-stream-index: "004"
@@ -16011,7 +16227,6 @@ components:
       required:
       - name
       - trunk_ids
-      - called_numbers
       - caller_configs
       title: UpdateSIPInboundRoutingRuleRequest
       type: object
@@ -16035,6 +16250,13 @@ components:
       description: Request to update a SIP trunk
       nullable: true
       properties:
+        allowed_ips:
+          description: Optional list of allowed IPv4/IPv6 addresses or CIDR blocks
+          items:
+            type: string
+          title: '[]string'
+          type: array
+          x-stream-index: "005"
         name:
           description: Name of the SIP trunk
           maxLength: 100
@@ -16051,6 +16273,12 @@ components:
           title: '[]string'
           type: array
           x-stream-index: "003"
+        password:
+          description: Optional password for SIP trunk authentication
+          maxLength: 255
+          title: string
+          type: string
+          x-stream-index: "004"
       required:
       - name
       - numbers
@@ -17669,7 +17897,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v223.14.1
+  version: v223.37.1
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -23702,6 +23930,40 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Get Edges
+      tags:
+      - product:video
+  /api/v2/video/sip/auth:
+    post:
+      description: |
+        Determine authentication requirements for an inbound SIP call before sending a digest challenge
+      operationId: ResolveSipAuth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResolveSipAuthRequest'
+        description: ResolveSipAuthRequest
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolveSipAuthResponse'
+          description: ResolveSipAuthResponse
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Resolve SIP Auth
       tags:
       - product:video
   /api/v2/video/sip/inbound_routing_rules:
