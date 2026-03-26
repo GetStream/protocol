@@ -104,6 +104,11 @@ components:
       description: Request body for adding members to a user group
       nullable: true
       properties:
+        as_admin:
+          description: Whether to add the members as group admins. Defaults to false
+          title: As Admin
+          type: boolean
+          x-stream-index: "003"
         member_ids:
           description: List of user IDs to add as members
           items:
@@ -116,7 +121,7 @@ components:
         team_id:
           maxLength: 255
           type: string
-          x-stream-index: "003"
+          x-stream-index: "004"
       required:
       - member_ids
       title: AddUserGroupMembersRequest
@@ -3080,6 +3085,10 @@ components:
       type: object
     CallStatsParticipantCounts:
       properties:
+        cq_score:
+          format: int32
+          type: integer
+          x-stream-index: "005"
         live_sessions:
           format: int32
           type: integer
@@ -3091,11 +3100,11 @@ components:
         peak_concurrent_sessions:
           format: int32
           type: integer
-          x-stream-index: "006"
+          x-stream-index: "007"
         peak_concurrent_users:
           format: int32
           type: integer
-          x-stream-index: "005"
+          x-stream-index: "006"
         publishers:
           format: int32
           type: integer
@@ -3107,7 +3116,7 @@ components:
         total_participant_duration:
           format: int64
           type: integer
-          x-stream-index: "007"
+          x-stream-index: "008"
       required:
       - participants
       - sessions
@@ -5279,6 +5288,15 @@ components:
           title: Comment
           type: string
           x-stream-index: "002"
+        comment_mention:
+          description: 'Push notification preference for mentions in comments. One
+            of: all, none'
+          enum:
+          - all
+          - none
+          title: Comment Mention
+          type: string
+          x-stream-index: "006"
         comment_reaction:
           description: 'Push notification preference for reactions on comments. One
             of: all, none'
@@ -5304,7 +5322,7 @@ components:
             of activity type to preference (all or none)
           title: Custom Activity Types
           type: object
-          x-stream-index: "007"
+          x-stream-index: "008"
         follow:
           description: 'Push notification preference for new followers. One of: all,
             none'
@@ -5315,14 +5333,14 @@ components:
           type: string
           x-stream-index: "001"
         mention:
-          description: 'Push notification preference for mentions in activities or
-            comments. One of: all, none'
+          description: 'Push notification preference for mentions in activities. One
+            of: all, none'
           enum:
           - all
           - none
           title: Mention
           type: string
-          x-stream-index: "006"
+          x-stream-index: "007"
         reaction:
           description: 'Push notification preference for reactions on user''s activities
             or comments. One of: all, none'
@@ -5339,6 +5357,9 @@ components:
         comment:
           type: string
           x-stream-index: "002"
+        comment_mention:
+          type: string
+          x-stream-index: "006"
         comment_reaction:
           type: string
           x-stream-index: "004"
@@ -5349,13 +5370,13 @@ components:
           additionalProperties:
             type: string
           type: object
-          x-stream-index: "007"
+          x-stream-index: "008"
         follow:
           type: string
           x-stream-index: "001"
         mention:
           type: string
-          x-stream-index: "006"
+          x-stream-index: "007"
         reaction:
           type: string
           x-stream-index: "003"
@@ -9500,6 +9521,14 @@ components:
           title: LastReactionAt
           type: number
           x-stream-index: "004"
+        latest_reactions_by:
+          description: The most recent users who reacted with this type, ordered by
+            most recent first.
+          items:
+            $ref: '#/components/schemas/ReactionGroupUserResponse'
+          title: LatestReactionsBy
+          type: array
+          x-stream-index: "005"
         sum_scores:
           description: 'SumScores is the sum of all scores of reactions of this type.
             Medium allows you to clap articles more than once and shows the sum of
@@ -9514,7 +9543,33 @@ components:
       - sum_scores
       - first_reaction_at
       - last_reaction_at
+      - latest_reactions_by
       title: ReactionGroupResponse
+      type: object
+    ReactionGroupUserResponse:
+      description: Contains information about a user who reacted with this reaction
+        type.
+      properties:
+        created_at:
+          description: The time when the user reacted.
+          format: date-time
+          title: CreatedAt
+          type: number
+          x-stream-index: "003"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          description: The full user object.
+          title: User
+          x-stream-index: "002"
+        user_id:
+          description: The ID of the user who reacted.
+          title: UserID
+          type: string
+          x-stream-index: "001"
+      required:
+      - user_id
+      - created_at
+      title: ReactionGroupUserResponse
       type: object
     ReactionResponse:
       properties:
@@ -13430,7 +13485,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v223.38.0
+  version: v223.47.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
