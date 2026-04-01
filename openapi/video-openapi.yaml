@@ -1220,6 +1220,27 @@ components:
       - srt
       title: CallIngressResponse
       type: object
+    CallLevelEventPayload:
+      properties:
+        event_type:
+          type: string
+          x-stream-index: "003"
+        payload:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "004"
+        timestamp:
+          format: int64
+          type: integer
+          x-stream-index: "001"
+        user_id:
+          type: string
+          x-stream-index: "002"
+      required:
+      - timestamp
+      - user_id
+      - event_type
+      type: object
     CallLiveStartedEvent:
       description: This event is sent when a call is started. Clients receiving this
         event should start the call.
@@ -2893,6 +2914,14 @@ components:
       type: object
     CallStatsParticipantCounts:
       properties:
+        call_event_count:
+          format: int32
+          type: integer
+          x-stream-index: "009"
+        cq_score:
+          format: int32
+          type: integer
+          x-stream-index: "005"
         live_sessions:
           format: int32
           type: integer
@@ -2904,11 +2933,11 @@ components:
         peak_concurrent_sessions:
           format: int32
           type: integer
-          x-stream-index: "006"
+          x-stream-index: "007"
         peak_concurrent_users:
           format: int32
           type: integer
-          x-stream-index: "005"
+          x-stream-index: "006"
         publishers:
           format: int32
           type: integer
@@ -2920,7 +2949,7 @@ components:
         total_participant_duration:
           format: int64
           type: integer
-          x-stream-index: "007"
+          x-stream-index: "008"
       required:
       - participants
       - sessions
@@ -6518,7 +6547,70 @@ components:
       properties:
         filter_conditions:
           additionalProperties: {}
+          description: Filter conditions to apply to the query
+          title: Filter
           type: object
+          x-stream-filter-fields:
+            call_cid:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
+            created_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: date
+            custom:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: object
+            role:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
+            updated_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: date
+            user_id:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
           x-stream-index: "002"
         id:
           maxLength: 64
@@ -6537,11 +6629,18 @@ components:
           type: string
           x-stream-index: "004.003"
         sort:
+          description: Array of sort parameters
           items:
             $ref: '#/components/schemas/SortParamRequest'
           maxItems: 1
+          title: Sort
           type: array
           x-stream-index: "003"
+          x-stream-sort-combinations:
+          - - created_at
+            - user_id
+          - - created_at
+          - - user_id
         type:
           maxLength: 64
           type: string
@@ -6631,7 +6730,20 @@ components:
       properties:
         filter_conditions:
           additionalProperties: {}
+          description: Filter conditions to apply to the query
+          title: Filter
           type: object
+          x-stream-filter-fields:
+            published_tracks:
+              operators:
+              - $eq
+              - $in
+              type: string
+            user_id:
+              operators:
+              - $eq
+              - $in
+              type: string
           x-stream-index: "003"
       type: object
     QueryCallParticipantsResponse:
@@ -6681,6 +6793,11 @@ components:
           format: date-time
           type: string
           x-stream-index: "007"
+        call_events:
+          items:
+            $ref: '#/components/schemas/CallLevelEventPayload'
+          type: array
+          x-stream-index: "010"
         call_id:
           type: string
           x-stream-index: "004"
@@ -6715,7 +6832,7 @@ components:
           x-stream-index: "002.002"
         tmp_data_source:
           type: string
-          x-stream-index: "010"
+          x-stream-index: "011"
       required:
       - duration
       - call_type
@@ -6830,7 +6947,49 @@ components:
       properties:
         filter_conditions:
           additionalProperties: {}
+          description: Filter conditions to apply to the query
+          title: Filter
           type: object
+          x-stream-filter-fields:
+            call_cid:
+              operators:
+              - $eq
+              type: string
+            created_at:
+              operators:
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              type: date
+            first_stats:
+              operators:
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              type: date
+            min_user_rating:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              - $ne
+              type: number
+            quality_score:
+              operators:
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              - $ne
+              type: number
           x-stream-index: "001"
         limit:
           format: int32
@@ -6845,11 +7004,22 @@ components:
           type: string
           x-stream-index: "004.003"
         sort:
+          description: Array of sort parameters
           items:
             $ref: '#/components/schemas/SortParamRequest'
           maxItems: 2
+          title: Sort
           type: array
           x-stream-index: "002"
+          x-stream-sort-combinations:
+          - - first_stats
+            - call_cid
+          - - created_at
+            - call_cid
+          x-stream-sort-fields:
+          - call_cid
+          - created_at
+          - first_stats
       type: object
     QueryCallStatsResponse:
       description: Basic response information
@@ -6881,8 +7051,122 @@ components:
       properties:
         filter_conditions:
           additionalProperties: {}
-          title: Filters
+          description: Filter conditions to apply to the query
+          title: Filter
           type: object
+          x-stream-filter-fields:
+            backstage:
+              operators:
+              - $eq
+              type: boolean
+            cid:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
+            created_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: date
+            created_by_user_id:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
+            ended_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: date
+            id:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
+            members:
+              operators:
+              - $in
+              type: string
+            ongoing:
+              operators:
+              - $eq
+              type: boolean
+            parent_call_cid:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
+            starts_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: date
+            team:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
+            type:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
+            updated_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: date
           x-stream-index: "003"
         limit:
           format: int32
@@ -6904,6 +7188,16 @@ components:
           title: Sort
           type: array
           x-stream-index: "004"
+          x-stream-sort-combinations:
+          - - starts_at
+          - - created_at
+          - - starts_at
+            - created_at
+          - - updated_at
+          - - ended_at
+          - - type
+          - - id
+          - - cid
       title: QueryCallsRequest
       type: object
     QueryCallsResponse:
@@ -6936,7 +7230,42 @@ components:
       properties:
         filter_conditions:
           additionalProperties: {}
+          description: Filter conditions to apply to the query
+          title: Filter
           type: object
+          x-stream-filter-fields:
+            call_cid:
+              operators:
+              - $eq
+              - $in
+              type: string
+            call_session_id:
+              operators:
+              - $eq
+              - $in
+              type: string
+            created_at:
+              operators:
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              type: date
+            rating:
+              operators:
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              - $ne
+              type: number
+            user_id:
+              operators:
+              - $eq
+              - $in
+              type: string
           x-stream-index: "001"
         limit:
           format: int32
@@ -6951,11 +7280,17 @@ components:
           type: string
           x-stream-index: "005.003"
         sort:
+          description: Array of sort parameters
           items:
             $ref: '#/components/schemas/SortParamRequest'
           maxItems: 2
+          title: Sort
           type: array
           x-stream-index: "002"
+          x-stream-sort-combinations:
+          - - created_at
+          x-stream-sort-fields:
+          - created_at
       type: object
     QueryUserFeedbackResponse:
       description: Basic response information
@@ -10030,12 +10365,15 @@ components:
           format: date-time
           title: Ban expires
           type: string
-          x-stream-index: "003"
+          x-stream-index: "004"
         blocked_user_ids:
           items:
             type: string
           type: array
           x-stream-index: "001.017"
+        bypass_moderation:
+          type: boolean
+          x-stream-index: "003"
         created_at:
           description: Date/time of creation
           format: date-time
@@ -10066,7 +10404,7 @@ components:
             $ref: '#/components/schemas/DeviceResponse'
           title: Devices
           type: array
-          x-stream-index: "006"
+          x-stream-index: "007"
         id:
           description: Unique user identifier
           title: ID
@@ -10078,7 +10416,7 @@ components:
           x-stream-index: "001.003"
         invisible:
           type: boolean
-          x-stream-index: "007"
+          x-stream-index: "008"
         language:
           description: Preferred language of a user
           title: Language
@@ -10099,12 +10437,12 @@ components:
           $ref: '#/components/schemas/PrivacySettingsResponse'
           description: User privacy settings
           title: Privacy settings
-          x-stream-index: "005"
+          x-stream-index: "006"
         push_notifications:
           $ref: '#/components/schemas/PushNotificationSettingsResponse'
           description: User push notification settings
           title: Push notifications
-          x-stream-index: "004"
+          x-stream-index: "005"
         revoke_tokens_issued_before:
           description: Revocation date for tokens
           format: date-time
@@ -10718,7 +11056,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v223.38.0
+  version: v225.0.1
 openapi: 3.0.3
 paths:
   /video/active_calls_status:
@@ -12327,8 +12665,39 @@ paths:
         name: filter_conditions
         schema:
           additionalProperties: {}
+          description: Filter conditions to apply to the query
+          title: Filter
           type: object
           writeOnly: true
+          x-stream-filter-fields:
+            is_live:
+              operators:
+              - $eq
+              type: boolean
+            is_tech_user:
+              operators:
+              - $eq
+              type: boolean
+            published_tracks:
+              operators:
+              - $eq
+              - $in
+              type: string
+            publisher_type:
+              operators:
+              - $eq
+              - $in
+              type: string
+            session_id:
+              operators:
+              - $eq
+              - $in
+              type: string
+            user_id:
+              operators:
+              - $eq
+              - $in
+              type: string
           x-stream-index: "005"
       responses:
         "200":
@@ -13341,9 +13710,11 @@ paths:
       - in: query
         name: sort
         schema:
+          description: Array of sort parameters
           items:
             $ref: '#/components/schemas/SortParamRequest'
           maxItems: 1
+          title: Sort
           type: array
           writeOnly: true
           x-stream-index: "005"
@@ -13351,8 +13722,39 @@ paths:
         name: filter_conditions
         schema:
           additionalProperties: {}
+          description: Filter conditions to apply to the query
+          title: Filter
           type: object
           writeOnly: true
+          x-stream-filter-fields:
+            is_live:
+              operators:
+              - $eq
+              type: boolean
+            is_tech_user:
+              operators:
+              - $eq
+              type: boolean
+            published_tracks:
+              operators:
+              - $eq
+              - $in
+              type: string
+            publisher_type:
+              operators:
+              - $eq
+              - $in
+              type: string
+            session_id:
+              operators:
+              - $eq
+              - $in
+              type: string
+            user_id:
+              operators:
+              - $eq
+              - $in
+              type: string
           x-stream-index: "006"
       - in: query
         name: limit
