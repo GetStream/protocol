@@ -313,6 +313,11 @@ components:
       description: Request body for adding members to a user group
       nullable: true
       properties:
+        as_admin:
+          description: Whether to add the members as group admins. Defaults to false
+          title: As Admin
+          type: boolean
+          x-stream-index: "003"
         member_ids:
           description: List of user IDs to add as members
           items:
@@ -325,7 +330,7 @@ components:
         team_id:
           maxLength: 255
           type: string
-          x-stream-index: "003"
+          x-stream-index: "004"
       required:
       - member_ids
       title: AddUserGroupMembersRequest
@@ -1954,6 +1959,27 @@ components:
       - whip
       - srt
       title: CallIngressResponse
+      type: object
+    CallLevelEventPayload:
+      properties:
+        event_type:
+          type: string
+          x-stream-index: "003"
+        payload:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "004"
+        timestamp:
+          format: int64
+          type: integer
+          x-stream-index: "001"
+        user_id:
+          type: string
+          x-stream-index: "002"
+      required:
+      - timestamp
+      - user_id
+      - event_type
       type: object
     CallLiveStartedEvent:
       description: This event is sent when a call is started. Clients receiving this
@@ -3679,6 +3705,14 @@ components:
       type: object
     CallStatsParticipantCounts:
       properties:
+        call_event_count:
+          format: int32
+          type: integer
+          x-stream-index: "009"
+        cq_score:
+          format: int32
+          type: integer
+          x-stream-index: "005"
         live_sessions:
           format: int32
           type: integer
@@ -3690,11 +3724,11 @@ components:
         peak_concurrent_sessions:
           format: int32
           type: integer
-          x-stream-index: "006"
+          x-stream-index: "007"
         peak_concurrent_users:
           format: int32
           type: integer
-          x-stream-index: "005"
+          x-stream-index: "006"
         publishers:
           format: int32
           type: integer
@@ -3706,7 +3740,7 @@ components:
         total_participant_duration:
           format: int64
           type: integer
-          x-stream-index: "007"
+          x-stream-index: "008"
       required:
       - participants
       - sessions
@@ -7140,6 +7174,15 @@ components:
           title: Comment
           type: string
           x-stream-index: "002"
+        comment_mention:
+          description: 'Push notification preference for mentions in comments. One
+            of: all, none'
+          enum:
+          - all
+          - none
+          title: Comment Mention
+          type: string
+          x-stream-index: "006"
         comment_reaction:
           description: 'Push notification preference for reactions on comments. One
             of: all, none'
@@ -7165,7 +7208,7 @@ components:
             of activity type to preference (all or none)
           title: Custom Activity Types
           type: object
-          x-stream-index: "007"
+          x-stream-index: "008"
         follow:
           description: 'Push notification preference for new followers. One of: all,
             none'
@@ -7176,14 +7219,14 @@ components:
           type: string
           x-stream-index: "001"
         mention:
-          description: 'Push notification preference for mentions in activities or
-            comments. One of: all, none'
+          description: 'Push notification preference for mentions in activities. One
+            of: all, none'
           enum:
           - all
           - none
           title: Mention
           type: string
-          x-stream-index: "006"
+          x-stream-index: "007"
         reaction:
           description: 'Push notification preference for reactions on user''s activities
             or comments. One of: all, none'
@@ -7200,6 +7243,9 @@ components:
         comment:
           type: string
           x-stream-index: "002"
+        comment_mention:
+          type: string
+          x-stream-index: "006"
         comment_reaction:
           type: string
           x-stream-index: "004"
@@ -7210,13 +7256,13 @@ components:
           additionalProperties:
             type: string
           type: object
-          x-stream-index: "007"
+          x-stream-index: "008"
         follow:
           type: string
           x-stream-index: "001"
         mention:
           type: string
-          x-stream-index: "006"
+          x-stream-index: "007"
         reaction:
           type: string
           x-stream-index: "003"
@@ -7440,7 +7486,7 @@ components:
         ban_expires:
           format: date-time
           type: number
-          x-stream-index: "015"
+          x-stream-index: "016"
         banned:
           type: boolean
           x-stream-index: "001.012"
@@ -7448,6 +7494,9 @@ components:
           items:
             type: string
           type: array
+          x-stream-index: "015"
+        bypass_moderation:
+          type: boolean
           x-stream-index: "014"
         channel_mutes:
           items:
@@ -7930,6 +7979,55 @@ components:
       - duration
       title: Response
       type: object
+    GetExternalStorageAWSS3Response:
+      properties:
+        bucket:
+          type: string
+          x-stream-index: "002"
+        path_prefix:
+          type: string
+          x-stream-index: "004"
+        region:
+          type: string
+          x-stream-index: "003"
+        role_arn:
+          type: string
+          x-stream-index: "001"
+      required:
+      - role_arn
+      - bucket
+      - region
+      type: object
+    GetExternalStorageResponse:
+      description: Basic response information
+      nullable: true
+      properties:
+        aws_s3:
+          $ref: '#/components/schemas/GetExternalStorageAWSS3Response'
+          x-stream-index: "002"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "003"
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "005.001"
+        type:
+          type: string
+          x-stream-index: "001"
+        updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "004"
+      required:
+      - type
+      - created_at
+      - updated_at
+      - duration
+      title: Response
+      type: object
     GetImportResponse:
       description: Basic response information
       nullable: true
@@ -7957,18 +8055,22 @@ components:
         created_at:
           format: date-time
           type: number
-          x-stream-index: "006"
+          x-stream-index: "007"
         duration:
           description: Duration of the request in milliseconds
           title: Duration
           type: string
-          x-stream-index: "008.001"
+          x-stream-index: "009.001"
         id:
           type: string
           x-stream-index: "001"
         product:
           type: string
           x-stream-index: "003"
+        result:
+          readOnly: true
+          type: object
+          x-stream-index: "006"
         settings:
           $ref: '#/components/schemas/ImportV2TaskSettings'
           x-stream-index: "005"
@@ -7978,7 +8080,7 @@ components:
         updated_at:
           format: date-time
           type: number
-          x-stream-index: "007"
+          x-stream-index: "008"
       required:
       - id
       - app_pk
@@ -8660,13 +8762,17 @@ components:
         created_at:
           format: date-time
           type: number
-          x-stream-index: "006"
+          x-stream-index: "007"
         id:
           type: string
           x-stream-index: "001"
         product:
           type: string
           x-stream-index: "003"
+        result:
+          readOnly: true
+          type: object
+          x-stream-index: "006"
         settings:
           $ref: '#/components/schemas/ImportV2TaskSettings'
           x-stream-index: "005"
@@ -8676,7 +8782,7 @@ components:
         updated_at:
           format: date-time
           type: number
-          x-stream-index: "007"
+          x-stream-index: "008"
       required:
       - id
       - app_pk
@@ -10279,6 +10385,14 @@ components:
         disable_flagging_reviewed_entity:
           type: boolean
           x-stream-index: "003"
+        escalation_queue_enabled:
+          type: boolean
+          x-stream-index: "010"
+        escalation_reasons:
+          items:
+            type: string
+          type: array
+          x-stream-index: "009"
         flag_user_on_flagged_content:
           type: boolean
           x-stream-index: "002"
@@ -12033,7 +12147,70 @@ components:
       properties:
         filter_conditions:
           additionalProperties: {}
+          description: Filter conditions to apply to the query
+          title: Filter
           type: object
+          x-stream-filter-fields:
+            call_cid:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
+            created_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: date
+            custom:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: object
+            role:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
+            updated_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: date
+            user_id:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
           x-stream-index: "002"
         id:
           maxLength: 64
@@ -12052,11 +12229,18 @@ components:
           type: string
           x-stream-index: "004.003"
         sort:
+          description: Array of sort parameters
           items:
             $ref: '#/components/schemas/SortParamRequest'
           maxItems: 1
+          title: Sort
           type: array
           x-stream-index: "003"
+          x-stream-sort-combinations:
+          - - created_at
+            - user_id
+          - - created_at
+          - - user_id
         type:
           maxLength: 64
           type: string
@@ -12146,7 +12330,20 @@ components:
       properties:
         filter_conditions:
           additionalProperties: {}
+          description: Filter conditions to apply to the query
+          title: Filter
           type: object
+          x-stream-filter-fields:
+            published_tracks:
+              operators:
+              - $eq
+              - $in
+              type: string
+            user_id:
+              operators:
+              - $eq
+              - $in
+              type: string
           x-stream-index: "003"
       type: object
     QueryCallParticipantsResponse:
@@ -12196,6 +12393,11 @@ components:
           format: date-time
           type: number
           x-stream-index: "007"
+        call_events:
+          items:
+            $ref: '#/components/schemas/CallLevelEventPayload'
+          type: array
+          x-stream-index: "010"
         call_id:
           type: string
           x-stream-index: "004"
@@ -12230,7 +12432,7 @@ components:
           x-stream-index: "002.002"
         tmp_data_source:
           type: string
-          x-stream-index: "010"
+          x-stream-index: "011"
       required:
       - duration
       - call_type
@@ -12345,7 +12547,49 @@ components:
       properties:
         filter_conditions:
           additionalProperties: {}
+          description: Filter conditions to apply to the query
+          title: Filter
           type: object
+          x-stream-filter-fields:
+            call_cid:
+              operators:
+              - $eq
+              type: string
+            created_at:
+              operators:
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              type: date
+            first_stats:
+              operators:
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              type: date
+            min_user_rating:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              - $ne
+              type: number
+            quality_score:
+              operators:
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              - $ne
+              type: number
           x-stream-index: "001"
         limit:
           format: int32
@@ -12360,11 +12604,22 @@ components:
           type: string
           x-stream-index: "004.003"
         sort:
+          description: Array of sort parameters
           items:
             $ref: '#/components/schemas/SortParamRequest'
           maxItems: 2
+          title: Sort
           type: array
           x-stream-index: "002"
+          x-stream-sort-combinations:
+          - - first_stats
+            - call_cid
+          - - created_at
+            - call_cid
+          x-stream-sort-fields:
+          - call_cid
+          - created_at
+          - first_stats
       type: object
     QueryCallStatsResponse:
       description: Basic response information
@@ -12396,8 +12651,122 @@ components:
       properties:
         filter_conditions:
           additionalProperties: {}
-          title: Filters
+          description: Filter conditions to apply to the query
+          title: Filter
           type: object
+          x-stream-filter-fields:
+            backstage:
+              operators:
+              - $eq
+              type: boolean
+            cid:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
+            created_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: date
+            created_by_user_id:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
+            ended_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: date
+            id:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
+            members:
+              operators:
+              - $in
+              type: string
+            ongoing:
+              operators:
+              - $eq
+              type: boolean
+            parent_call_cid:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
+            starts_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: date
+            team:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
+            type:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
+            updated_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: date
           x-stream-index: "003"
         limit:
           format: int32
@@ -12419,6 +12788,16 @@ components:
           title: Sort
           type: array
           x-stream-index: "004"
+          x-stream-sort-combinations:
+          - - starts_at
+          - - created_at
+          - - starts_at
+            - created_at
+          - - updated_at
+          - - ended_at
+          - - type
+          - - id
+          - - cid
       title: QueryCallsRequest
       type: object
     QueryCallsResponse:
@@ -12536,7 +12915,42 @@ components:
       properties:
         filter_conditions:
           additionalProperties: {}
+          description: Filter conditions to apply to the query
+          title: Filter
           type: object
+          x-stream-filter-fields:
+            call_cid:
+              operators:
+              - $eq
+              - $in
+              type: string
+            call_session_id:
+              operators:
+              - $eq
+              - $in
+              type: string
+            created_at:
+              operators:
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              type: date
+            rating:
+              operators:
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              - $ne
+              type: number
+            user_id:
+              operators:
+              - $eq
+              - $in
+              type: string
           x-stream-index: "001"
         limit:
           format: int32
@@ -12551,11 +12965,17 @@ components:
           type: string
           x-stream-index: "005.003"
         sort:
+          description: Array of sort parameters
           items:
             $ref: '#/components/schemas/SortParamRequest'
           maxItems: 2
+          title: Sort
           type: array
           x-stream-index: "002"
+          x-stream-sort-combinations:
+          - - created_at
+          x-stream-sort-fields:
+          - created_at
       type: object
     QueryUserFeedbackResponse:
       description: Basic response information
@@ -12583,11 +13003,115 @@ components:
       title: Response
       type: object
     QueryUsersPayload:
-      description: Client request
       properties:
         filter_conditions:
           additionalProperties: {}
+          description: Filter conditions to apply to the query
+          title: Filter
           type: object
+          x-stream-filter-fields:
+            banned:
+              operators:
+              - $eq
+              type: boolean
+            bypass_moderation:
+              operators:
+              - $eq
+              - $ne
+              type: boolean
+            created_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: date
+            email:
+              operators:
+              - $eq
+              - $in
+              type: string
+            id:
+              operators:
+              - $autocomplete
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: string
+            language:
+              operators:
+              - $eq
+              - $ne
+              type: string
+            last_active:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: date
+            name:
+              operators:
+              - $autocomplete
+              - $eq
+              type: string
+            role:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: string
+            shadow_banned:
+              operators:
+              - $eq
+              - $ne
+              type: boolean
+            teams:
+              operators:
+              - $_none
+              - $contains
+              - $eq
+              - $in
+              type: string
+            updated_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: date
+            username:
+              operators:
+              - $autocomplete
+              - $eq
+              type: string
           x-stream-index: "001"
         include_deactivated_users:
           type: boolean
@@ -12608,9 +13132,11 @@ components:
           type: boolean
           x-stream-index: "003"
         sort:
+          description: Array of sort parameters
           items:
             $ref: '#/components/schemas/SortParamRequest'
           maxItems: 5
+          title: Sort
           type: array
           x-stream-index: "002"
         user:
@@ -12621,7 +13147,6 @@ components:
           x-stream-index: "006.001"
       required:
       - filter_conditions
-      title: ClientRequest
       type: object
     QueryUsersResponse:
       nullable: true
@@ -12789,6 +13314,9 @@ components:
       type: object
     RawRecordSettings:
       properties:
+        audio_only:
+          type: boolean
+          x-stream-index: "002"
         mode:
           enum:
           - available
@@ -12809,6 +13337,11 @@ components:
       type: object
     RawRecordingSettingsRequest:
       properties:
+        audio_only:
+          description: If true, only audio tracks will be recorded
+          title: AudioOnly
+          type: boolean
+          x-stream-index: "002"
         mode:
           description: 'Recording mode. One of: available, disabled, auto-on'
           enum:
@@ -12824,6 +13357,9 @@ components:
       type: object
     RawRecordingSettingsResponse:
       properties:
+        audio_only:
+          type: boolean
+          x-stream-index: "002"
         mode:
           enum:
           - available
@@ -12860,6 +13396,14 @@ components:
           title: LastReactionAt
           type: number
           x-stream-index: "004"
+        latest_reactions_by:
+          description: The most recent users who reacted with this type, ordered by
+            most recent first.
+          items:
+            $ref: '#/components/schemas/ReactionGroupUserResponse'
+          title: LatestReactionsBy
+          type: array
+          x-stream-index: "005"
         sum_scores:
           description: 'SumScores is the sum of all scores of reactions of this type.
             Medium allows you to clap articles more than once and shows the sum of
@@ -12874,7 +13418,33 @@ components:
       - sum_scores
       - first_reaction_at
       - last_reaction_at
+      - latest_reactions_by
       title: ReactionGroupResponse
+      type: object
+    ReactionGroupUserResponse:
+      description: Contains information about a user who reacted with this reaction
+        type.
+      properties:
+        created_at:
+          description: The time when the user reacted.
+          format: date-time
+          title: CreatedAt
+          type: number
+          x-stream-index: "003"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          description: The full user object.
+          title: User
+          x-stream-index: "002"
+        user_id:
+          description: The ID of the user who reacted.
+          title: UserID
+          type: string
+          x-stream-index: "001"
+      required:
+      - user_id
+      - created_at
+      title: ReactionGroupUserResponse
       type: object
     ReactionResponse:
       properties:
@@ -16490,6 +17060,52 @@ components:
       x-stream-event-doc-group: call
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    UpsertExternalStorageAWSS3Request:
+      properties:
+        bucket:
+          type: string
+          x-stream-index: "002"
+        path_prefix:
+          type: string
+          x-stream-index: "004"
+        region:
+          type: string
+          x-stream-index: "003"
+        role_arn:
+          type: string
+          x-stream-index: "001"
+      required:
+      - role_arn
+      - bucket
+      - region
+      type: object
+    UpsertExternalStorageRequest:
+      nullable: true
+      properties:
+        aws_s3:
+          $ref: '#/components/schemas/UpsertExternalStorageAWSS3Request'
+          x-stream-index: "002"
+        type:
+          enum:
+          - aws_s3
+          type: string
+          x-stream-index: "001"
+      required:
+      - type
+      type: object
+    UpsertExternalStorageResponse:
+      description: Basic response information
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      title: Response
+      type: object
     UpsertPushPreferencesRequest:
       nullable: true
       properties:
@@ -17132,7 +17748,7 @@ components:
           format: date-time
           title: Ban expires
           type: number
-          x-stream-index: "003"
+          x-stream-index: "004"
         banned:
           description: Whether a user is banned or not
           title: Banned
@@ -17143,6 +17759,9 @@ components:
             type: string
           type: array
           x-stream-index: "001.017"
+        bypass_moderation:
+          type: boolean
+          x-stream-index: "003"
         created_at:
           description: Date/time of creation
           format: date-time
@@ -17173,7 +17792,7 @@ components:
             $ref: '#/components/schemas/DeviceResponse'
           title: Devices
           type: array
-          x-stream-index: "006"
+          x-stream-index: "007"
         id:
           description: Unique user identifier
           title: ID
@@ -17185,7 +17804,7 @@ components:
           x-stream-index: "001.003"
         invisible:
           type: boolean
-          x-stream-index: "007"
+          x-stream-index: "008"
         language:
           description: Preferred language of a user
           title: Language
@@ -17211,12 +17830,12 @@ components:
           $ref: '#/components/schemas/PrivacySettingsResponse'
           description: User privacy settings
           title: Privacy settings
-          x-stream-index: "005"
+          x-stream-index: "006"
         push_notifications:
           $ref: '#/components/schemas/PushNotificationSettingsResponse'
           description: User push notification settings
           title: Push notifications
-          x-stream-index: "004"
+          x-stream-index: "005"
         revoke_tokens_issued_before:
           description: Revocation date for tokens
           format: date-time
@@ -17560,6 +18179,19 @@ components:
       x-stream-event-doc-group: other
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    ValidateExternalStorageResponse:
+      description: Basic response information
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      title: Response
+      type: object
     VideoReactionOverTimeResponse:
       properties:
         by_minute:
@@ -17897,7 +18529,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v223.38.0
+  version: v225.3.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -18863,6 +19495,118 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Get import v2 task
+      tags:
+      - product:common
+  /api/v2/imports/v2/external-storage:
+    delete:
+      description: |
+        Removes the external storage configuration for the app. Idempotent: succeeds even if no configuration exists.
+      operationId: DeleteImporterExternalStorage
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteExternalStorageResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Delete external storage
+      tags:
+      - product:common
+    get:
+      description: |
+        Returns the current external storage configuration for the app. Returns 404 if no configuration exists.
+      operationId: GetImporterExternalStorage
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetExternalStorageResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get external storage
+      tags:
+      - product:common
+    put:
+      description: |
+        Creates or updates the external storage configuration for the app. Currently only AWS S3 (via cross-account IAM role assumption) is supported.
+      operationId: UpsertImporterExternalStorage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertExternalStorageRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpsertExternalStorageResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Upsert external storage
+      tags:
+      - product:common
+  /api/v2/imports/v2/external-storage/validate:
+    post:
+      description: |
+        Validates the configured external S3 storage by performing a live STS AssumeRole and S3 ListObjectsV2 check.
+      operationId: ValidateImporterExternalStorage
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateExternalStorageResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Validate external storage
       tags:
       - product:common
   /api/v2/og:
@@ -22543,8 +23287,39 @@ paths:
         name: filter_conditions
         schema:
           additionalProperties: {}
+          description: Filter conditions to apply to the query
+          title: Filter
           type: object
           writeOnly: true
+          x-stream-filter-fields:
+            is_live:
+              operators:
+              - $eq
+              type: boolean
+            is_tech_user:
+              operators:
+              - $eq
+              type: boolean
+            published_tracks:
+              operators:
+              - $eq
+              - $in
+              type: string
+            publisher_type:
+              operators:
+              - $eq
+              - $in
+              type: string
+            session_id:
+              operators:
+              - $eq
+              - $in
+              type: string
+            user_id:
+              operators:
+              - $eq
+              - $in
+              type: string
           x-stream-index: "005"
       responses:
         "200":
@@ -23557,9 +24332,11 @@ paths:
       - in: query
         name: sort
         schema:
+          description: Array of sort parameters
           items:
             $ref: '#/components/schemas/SortParamRequest'
           maxItems: 1
+          title: Sort
           type: array
           writeOnly: true
           x-stream-index: "005"
@@ -23567,8 +24344,39 @@ paths:
         name: filter_conditions
         schema:
           additionalProperties: {}
+          description: Filter conditions to apply to the query
+          title: Filter
           type: object
           writeOnly: true
+          x-stream-filter-fields:
+            is_live:
+              operators:
+              - $eq
+              type: boolean
+            is_tech_user:
+              operators:
+              - $eq
+              type: boolean
+            published_tracks:
+              operators:
+              - $eq
+              - $in
+              type: string
+            publisher_type:
+              operators:
+              - $eq
+              - $in
+              type: string
+            session_id:
+              operators:
+              - $eq
+              - $in
+              type: string
+            user_id:
+              operators:
+              - $eq
+              - $in
+              type: string
           x-stream-index: "006"
       - in: query
         name: limit
