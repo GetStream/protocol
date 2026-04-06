@@ -1128,8 +1128,10 @@ components:
           type: array
           x-stream-index: "016"
         copy_custom_to_notification:
-          description: Whether to copy custom data to the notification activity (only
-            applies when create_notification_activity is true)
+          deprecated: true
+          description: 'Whether to copy custom data to the notification activity (only
+            applies when create_notification_activity is true) Deprecated: use notification_context.trigger.custom
+            and notification_context.target.custom instead'
           title: Copy Custom To Notification
           type: boolean
           x-stream-index: "022"
@@ -1883,8 +1885,10 @@ components:
           type: array
           x-stream-index: "001.016"
         copy_custom_to_notification:
-          description: Whether to copy custom data to the notification activity (only
-            applies when create_notification_activity is true)
+          deprecated: true
+          description: 'Whether to copy custom data to the notification activity (only
+            applies when create_notification_activity is true) Deprecated: use notification_context.trigger.custom
+            and notification_context.target.custom instead'
           title: Copy Custom To Notification
           type: boolean
           x-stream-index: "001.022"
@@ -2095,8 +2099,10 @@ components:
       nullable: true
       properties:
         copy_custom_to_notification:
-          description: Whether to copy custom data to the notification activity (only
-            applies when create_notification_activity is true)
+          deprecated: true
+          description: 'Whether to copy custom data to the notification activity (only
+            applies when create_notification_activity is true) Deprecated: use notification_context.trigger.custom
+            and notification_context.target.custom instead'
           title: boolean
           type: boolean
           x-stream-index: "005"
@@ -2179,8 +2185,10 @@ components:
           type: string
           x-stream-index: "004"
         copy_custom_to_notification:
-          description: Whether to copy custom data to the notification activity (only
-            applies when create_notification_activity is true)
+          deprecated: true
+          description: 'Whether to copy custom data to the notification activity (only
+            applies when create_notification_activity is true) Deprecated: use notification_context.trigger.custom
+            and notification_context.target.custom instead'
           title: Copy Custom To Notification
           type: boolean
           x-stream-index: "010"
@@ -2323,8 +2331,10 @@ components:
       nullable: true
       properties:
         copy_custom_to_notification:
-          description: Whether to copy custom data to the notification activity (only
-            applies when create_notification_activity is true)
+          deprecated: true
+          description: 'Whether to copy custom data to the notification activity (only
+            applies when create_notification_activity is true) Deprecated: use notification_context.trigger.custom
+            and notification_context.target.custom instead'
           title: Copy Custom To Notification
           type: boolean
           x-stream-index: "005"
@@ -2393,6 +2403,11 @@ components:
       description: Request body for adding members to a user group
       nullable: true
       properties:
+        as_admin:
+          description: Whether to add the members as group admins. Defaults to false
+          title: As Admin
+          type: boolean
+          x-stream-index: "003"
         member_ids:
           description: List of user IDs to add as members
           items:
@@ -2405,7 +2420,7 @@ components:
         team_id:
           maxLength: 255
           type: string
-          x-stream-index: "003"
+          x-stream-index: "004"
       required:
       - member_ids
       title: AddUserGroupMembersRequest
@@ -2510,6 +2525,16 @@ components:
           title: Format
           type: string
           x-stream-index: "001"
+        score_strategy:
+          description: 'Strategy for computing aggregated group scores from member
+            activity scores when ranking is enabled. Valid values: sum, max, avg'
+          enum:
+          - sum
+          - max
+          - avg
+          title: Score Strategy
+          type: string
+          x-stream-index: "002"
       title: Aggregation Configuration
       type: object
     AppResponseFields:
@@ -3367,6 +3392,9 @@ components:
           - flag
           - shadow
           - remove
+          - bounce
+          - bounce_flag
+          - bounce_remove
           type: string
           x-stream-index: "003"
         name:
@@ -3454,6 +3482,12 @@ components:
     BanActionRequestPayload:
       description: Configuration for ban moderation action
       properties:
+        ban_from_future_channels:
+          description: Also ban user from all channels this moderator creates in the
+            future
+          title: Ban From Future Channels
+          type: boolean
+          x-stream-index: "009"
         channel_ban_only:
           description: Ban only from specific channel
           title: Channel Ban Only
@@ -4246,6 +4280,38 @@ components:
           x-stream-index: "001"
       required:
       - task_id
+      - duration
+      type: object
+    BypassActionRequest:
+      properties:
+        enabled:
+          type: boolean
+          x-stream-index: "001"
+      type: object
+    BypassRequest:
+      nullable: true
+      properties:
+        enabled:
+          description: Whether to enable moderation bypass for this user
+          title: Enabled
+          type: boolean
+          x-stream-index: "002"
+        target_user_id:
+          description: ID of the user to update
+          title: Target User ID
+          type: string
+          x-stream-index: "001"
+      required:
+      - target_user_id
+      - enabled
+      type: object
+    BypassResponse:
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "001.001"
+      required:
       - duration
       type: object
     CallActionOptions:
@@ -5643,6 +5709,13 @@ components:
           title: Config Team
           type: string
           x-stream-index: "006"
+        content_published_at:
+          description: Original timestamp when the content was produced (for correlating
+            flagged content with source video timeline)
+          format: date-time
+          title: Content Published At
+          type: number
+          x-stream-index: "010"
         entity_creator_id:
           description: ID of the user who created the entity
           title: Entity Creator ID
@@ -5676,10 +5749,10 @@ components:
           x-stream-index: "008"
         user:
           $ref: '#/components/schemas/UserRequest'
-          x-stream-index: "010.002"
+          x-stream-index: "011.002"
         user_id:
           type: string
-          x-stream-index: "010.001"
+          x-stream-index: "011.001"
       required:
       - entity_type
       - entity_id
@@ -8586,6 +8659,41 @@ components:
           type: string
           x-stream-index: "003"
       type: object
+    EnrichedCollection:
+      properties:
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "005"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "003"
+        id:
+          type: string
+          x-stream-index: "002"
+        name:
+          type: string
+          x-stream-index: "001"
+        status:
+          type: string
+          x-stream-index: "007"
+        updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "006"
+        user_id:
+          type: string
+          x-stream-index: "004"
+      required:
+      - name
+      - id
+      - custom
+      - user_id
+      - created_at
+      - updated_at
+      - status
+      type: object
     EnrichedCollectionResponse:
       properties:
         created_at:
@@ -8830,7 +8938,7 @@ components:
         ban_expires:
           format: date-time
           type: number
-          x-stream-index: "001.003"
+          x-stream-index: "001.004"
         banned:
           type: boolean
           x-stream-index: 001.001.012
@@ -8839,6 +8947,9 @@ components:
             type: string
           type: array
           x-stream-index: 001.001.017
+        bypass_moderation:
+          type: boolean
+          x-stream-index: "001.003"
         created_at:
           format: date-time
           type: number
@@ -8865,7 +8976,7 @@ components:
           items:
             $ref: '#/components/schemas/DeviceResponse'
           type: array
-          x-stream-index: "001.006"
+          x-stream-index: "001.007"
         flagged_count:
           description: Number of flag actions performed on the user
           format: int32
@@ -8880,7 +8991,7 @@ components:
           x-stream-index: 001.001.003
         invisible:
           type: boolean
-          x-stream-index: "001.007"
+          x-stream-index: "001.008"
         language:
           type: string
           x-stream-index: 001.001.005
@@ -8896,10 +9007,10 @@ components:
           x-stream-index: 001.001.013
         privacy_settings:
           $ref: '#/components/schemas/PrivacySettingsResponse'
-          x-stream-index: "001.005"
+          x-stream-index: "001.006"
         push_notifications:
           $ref: '#/components/schemas/PushNotificationSettingsResponse'
-          x-stream-index: "001.004"
+          x-stream-index: "001.005"
         revoke_tokens_issued_before:
           format: date-time
           type: number
@@ -8955,6 +9066,38 @@ components:
       required:
       - type
       - description
+      type: object
+    EscalatePayload:
+      description: Configuration for escalation action
+      properties:
+        notes:
+          description: Additional context for the reviewer
+          title: Notes
+          type: string
+          x-stream-index: "002"
+        priority:
+          description: Priority of the escalation (low, medium, high)
+          title: Priority
+          type: string
+          x-stream-index: "003"
+        reason:
+          description: Reason for the escalation (from configured escalation_reasons)
+          title: Reason
+          type: string
+          x-stream-index: "001"
+      title: EscalatePayload
+      type: object
+    EscalationMetadata:
+      properties:
+        notes:
+          type: string
+          x-stream-index: "002"
+        priority:
+          type: string
+          x-stream-index: "003"
+        reason:
+          type: string
+          x-stream-index: "001"
       type: object
     EventHook:
       nullable: true
@@ -10442,6 +10585,15 @@ components:
           title: Comment
           type: string
           x-stream-index: "002"
+        comment_mention:
+          description: 'Push notification preference for mentions in comments. One
+            of: all, none'
+          enum:
+          - all
+          - none
+          title: Comment Mention
+          type: string
+          x-stream-index: "006"
         comment_reaction:
           description: 'Push notification preference for reactions on comments. One
             of: all, none'
@@ -10467,7 +10619,7 @@ components:
             of activity type to preference (all or none)
           title: Custom Activity Types
           type: object
-          x-stream-index: "007"
+          x-stream-index: "008"
         follow:
           description: 'Push notification preference for new followers. One of: all,
             none'
@@ -10478,14 +10630,14 @@ components:
           type: string
           x-stream-index: "001"
         mention:
-          description: 'Push notification preference for mentions in activities or
-            comments. One of: all, none'
+          description: 'Push notification preference for mentions in activities. One
+            of: all, none'
           enum:
           - all
           - none
           title: Mention
           type: string
-          x-stream-index: "006"
+          x-stream-index: "007"
         reaction:
           description: 'Push notification preference for reactions on user''s activities
             or comments. One of: all, none'
@@ -10502,6 +10654,9 @@ components:
         comment:
           type: string
           x-stream-index: "002"
+        comment_mention:
+          type: string
+          x-stream-index: "006"
         comment_reaction:
           type: string
           x-stream-index: "004"
@@ -10512,16 +10667,35 @@ components:
           additionalProperties:
             type: string
           type: object
-          x-stream-index: "007"
+          x-stream-index: "008"
         follow:
           type: string
           x-stream-index: "001"
         mention:
           type: string
-          x-stream-index: "006"
+          x-stream-index: "007"
         reaction:
           type: string
           x-stream-index: "003"
+      type: object
+    FeedsReactionGroup:
+      properties:
+        count:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+        first_reaction_at:
+          format: date-time
+          type: number
+          x-stream-index: "002"
+        last_reaction_at:
+          format: date-time
+          type: number
+          x-stream-index: "003"
+      required:
+      - count
+      - first_reaction_at
+      - last_reaction_at
       type: object
     FeedsReactionGroupResponse:
       properties:
@@ -10596,6 +10770,286 @@ components:
       - created_at
       - updated_at
       title: Activity Reaction
+      type: object
+    FeedsV3ActivityResponse:
+      properties:
+        attachments:
+          items:
+            $ref: '#/components/schemas/Attachment'
+          type: array
+          x-stream-index: "014"
+        bookmark_count:
+          format: int32
+          type: integer
+          x-stream-index: "026"
+        collections:
+          additionalProperties:
+            $ref: '#/components/schemas/EnrichedCollection'
+          type: object
+          x-stream-index: "021"
+        comment_count:
+          format: int32
+          type: integer
+          x-stream-index: "025"
+        comments:
+          items:
+            $ref: '#/components/schemas/FeedsV3CommentResponse'
+          type: array
+          x-stream-index: "016"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "009"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "017"
+        deleted_at:
+          format: date-time
+          type: number
+          x-stream-index: "012"
+        edited_at:
+          format: date-time
+          type: number
+          x-stream-index: "011"
+        expires_at:
+          format: date-time
+          type: number
+          x-stream-index: "013"
+        feeds:
+          items:
+            type: string
+          type: array
+          x-stream-index: "004"
+        filter_tags:
+          items:
+            type: string
+          type: array
+          x-stream-index: "019"
+        hidden:
+          type: boolean
+          x-stream-index: "035"
+        id:
+          type: string
+          x-stream-index: "001"
+        interest_tags:
+          items:
+            type: string
+          type: array
+          x-stream-index: "020"
+        latest_reactions:
+          additionalProperties: {}
+          type: array
+          x-stream-index: "031"
+        mentioned_users:
+          items:
+            $ref: '#/components/schemas/UserResponse'
+          type: array
+          x-stream-index: "015"
+        metrics:
+          additionalProperties:
+            format: int64
+            type: integer
+          type: object
+          x-stream-index: "030"
+        moderation:
+          $ref: '#/components/schemas/ModerationV2Response'
+          x-stream-index: "022"
+        moderation_action:
+          type: string
+          x-stream-index: "023"
+        own_bookmarks:
+          additionalProperties: {}
+          type: array
+          x-stream-index: "034"
+        own_reactions:
+          additionalProperties: {}
+          type: array
+          x-stream-index: "033"
+        popularity:
+          format: int32
+          type: integer
+          x-stream-index: "024"
+        preview:
+          type: boolean
+          x-stream-index: "036"
+        reaction_count:
+          format: int32
+          type: integer
+          x-stream-index: "028"
+        reaction_groups:
+          additionalProperties:
+            $ref: '#/components/schemas/FeedsReactionGroup'
+          type: object
+          x-stream-index: "032"
+        restrict_replies:
+          type: string
+          x-stream-index: "007"
+        score:
+          format: float
+          type: number
+          x-stream-index: "029"
+        search_data:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "018"
+        share_count:
+          format: int32
+          type: integer
+          x-stream-index: "027"
+        text:
+          type: string
+          x-stream-index: "008"
+        type:
+          type: string
+          x-stream-index: "002"
+        updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "010"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          x-stream-index: "003"
+        visibility:
+          type: string
+          x-stream-index: "005"
+        visibility_tag:
+          type: string
+          x-stream-index: "006"
+      required:
+      - id
+      - type
+      - user
+      - feeds
+      - visibility
+      - restrict_replies
+      - created_at
+      - updated_at
+      - attachments
+      - mentioned_users
+      - comments
+      - custom
+      - search_data
+      - filter_tags
+      - interest_tags
+      - collections
+      - popularity
+      - comment_count
+      - bookmark_count
+      - share_count
+      - reaction_count
+      - score
+      - latest_reactions
+      - reaction_groups
+      - own_reactions
+      - own_bookmarks
+      - hidden
+      - preview
+      type: object
+    FeedsV3CommentResponse:
+      properties:
+        attachments:
+          items:
+            $ref: '#/components/schemas/Attachment'
+          type: array
+          x-stream-index: "010"
+        confidence_score:
+          format: float
+          type: number
+          x-stream-index: "019"
+        controversy_score:
+          format: float
+          type: number
+          x-stream-index: "020"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "012"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "011"
+        deleted_at:
+          format: date-time
+          type: number
+          x-stream-index: "015"
+        downvote_count:
+          format: int32
+          type: integer
+          x-stream-index: "017"
+        edited_at:
+          format: date-time
+          type: number
+          x-stream-index: "014"
+        id:
+          type: string
+          x-stream-index: "001"
+        mentioned_users:
+          items:
+            $ref: '#/components/schemas/UserResponse'
+          type: array
+          x-stream-index: "008"
+        moderation:
+          $ref: '#/components/schemas/ModerationV2Response'
+          x-stream-index: "023"
+        object_id:
+          type: string
+          x-stream-index: "002"
+        object_type:
+          type: string
+          x-stream-index: "003"
+        own_reactions:
+          additionalProperties: {}
+          type: array
+          x-stream-index: "009"
+        parent_id:
+          type: string
+          x-stream-index: "006"
+        reaction_count:
+          format: int32
+          type: integer
+          x-stream-index: "022"
+        reply_count:
+          format: int32
+          type: integer
+          x-stream-index: "021"
+        score:
+          format: int32
+          type: integer
+          x-stream-index: "018"
+        status:
+          type: string
+          x-stream-index: "004"
+        text:
+          type: string
+          x-stream-index: "005"
+        updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "013"
+        upvote_count:
+          format: int32
+          type: integer
+          x-stream-index: "016"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          x-stream-index: "007"
+      required:
+      - id
+      - object_id
+      - object_type
+      - status
+      - user
+      - mentioned_users
+      - own_reactions
+      - created_at
+      - updated_at
+      - upvote_count
+      - downvote_count
+      - score
+      - confidence_score
+      - reply_count
+      - reaction_count
       type: object
     Field:
       nullable: true
@@ -10959,31 +11413,14 @@ components:
       x-stream-event-doc-group: other
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
-    FollowPair:
-      properties:
-        source:
-          description: Fully qualified ID of the source feed
-          maxLength: 255
-          title: Source Feed
-          type: string
-          x-stream-index: "001"
-        target:
-          description: Fully qualified ID of the target feed
-          maxLength: 255
-          title: Target Feed
-          type: string
-          x-stream-index: "002"
-      required:
-      - source
-      - target
-      title: FollowPair
-      type: object
     FollowRequest:
       nullable: true
       properties:
         copy_custom_to_notification:
-          description: Whether to copy custom data to the notification activity (only
-            applies when create_notification_activity is true)
+          deprecated: true
+          description: 'Whether to copy custom data to the notification activity (only
+            applies when create_notification_activity is true) Deprecated: use notification_context.trigger.custom
+            and notification_context.target.custom instead'
           title: Copy Custom To Notification
           type: boolean
           x-stream-index: "005"
@@ -11250,7 +11687,7 @@ components:
         ban_expires:
           format: date-time
           type: number
-          x-stream-index: "015"
+          x-stream-index: "016"
         banned:
           type: boolean
           x-stream-index: "001.012"
@@ -11258,6 +11695,9 @@ components:
           items:
             type: string
           type: array
+          x-stream-index: "015"
+        bypass_moderation:
+          type: boolean
           x-stream-index: "014"
         channel_mutes:
           items:
@@ -11611,6 +12051,55 @@ components:
       - duration
       title: Response
       type: object
+    GetExternalStorageAWSS3Response:
+      properties:
+        bucket:
+          type: string
+          x-stream-index: "002"
+        path_prefix:
+          type: string
+          x-stream-index: "004"
+        region:
+          type: string
+          x-stream-index: "003"
+        role_arn:
+          type: string
+          x-stream-index: "001"
+      required:
+      - role_arn
+      - bucket
+      - region
+      type: object
+    GetExternalStorageResponse:
+      description: Basic response information
+      nullable: true
+      properties:
+        aws_s3:
+          $ref: '#/components/schemas/GetExternalStorageAWSS3Response'
+          x-stream-index: "002"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "003"
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "005.001"
+        type:
+          type: string
+          x-stream-index: "001"
+        updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "004"
+      required:
+      - type
+      - created_at
+      - updated_at
+      - duration
+      title: Response
+      type: object
     GetFeedGroupResponse:
       nullable: true
       properties:
@@ -11698,6 +12187,39 @@ components:
       - duration
       title: Get Feeds Rate Limits Response
       type: object
+    GetFlagCountRequest:
+      nullable: true
+      properties:
+        entity_creator_id:
+          description: ID of the user whose content was flagged
+          title: Entity Creator ID
+          type: string
+          x-stream-index: "001"
+        entity_type:
+          description: Optional entity type filter (e.g., stream:chat:v1:message,
+            stream:user)
+          title: Entity Type
+          type: string
+          x-stream-index: "002"
+      required:
+      - entity_creator_id
+      type: object
+    GetFlagCountResponse:
+      nullable: true
+      properties:
+        count:
+          description: Total number of flags against the specified user's content
+          format: int32
+          title: Count
+          type: integer
+          x-stream-index: "001"
+        duration:
+          type: string
+          x-stream-index: "002.001"
+      required:
+      - count
+      - duration
+      type: object
     GetFollowSuggestionsResponse:
       nullable: true
       properties:
@@ -11746,18 +12268,22 @@ components:
         created_at:
           format: date-time
           type: number
-          x-stream-index: "006"
+          x-stream-index: "007"
         duration:
           description: Duration of the request in milliseconds
           title: Duration
           type: string
-          x-stream-index: "008.001"
+          x-stream-index: "009.001"
         id:
           type: string
           x-stream-index: "001"
         product:
           type: string
           x-stream-index: "003"
+        result:
+          readOnly: true
+          type: object
+          x-stream-index: "006"
         settings:
           $ref: '#/components/schemas/ImportV2TaskSettings'
           x-stream-index: "005"
@@ -11767,7 +12293,7 @@ components:
         updated_at:
           format: date-time
           type: number
-          x-stream-index: "007"
+          x-stream-index: "008"
       required:
       - id
       - app_pk
@@ -12425,10 +12951,13 @@ components:
             type: string
           type: array
           x-stream-index: "001"
+        label_operator:
+          type: string
+          x-stream-index: "002"
         min_confidence:
           format: float
           type: number
-          x-stream-index: "002"
+          x-stream-index: "003"
       type: object
     ImageData:
       properties:
@@ -12639,13 +13168,17 @@ components:
         created_at:
           format: date-time
           type: number
-          x-stream-index: "006"
+          x-stream-index: "007"
         id:
           type: string
           x-stream-index: "001"
         product:
           type: string
           x-stream-index: "003"
+        result:
+          readOnly: true
+          type: object
+          x-stream-index: "006"
         settings:
           $ref: '#/components/schemas/ImportV2TaskSettings'
           x-stream-index: "005"
@@ -12655,7 +13188,7 @@ components:
         updated_at:
           format: date-time
           type: number
-          x-stream-index: "007"
+          x-stream-index: "008"
       required:
       - id
       - app_pk
@@ -13899,6 +14432,11 @@ components:
           title: Order
           type: integer
           x-stream-index: "002"
+        queue_type:
+          description: Queue type this action config belongs to
+          title: QueueType
+          type: string
+          x-stream-index: "007"
       required:
       - entity_type
       - order
@@ -14091,6 +14629,14 @@ components:
         disable_flagging_reviewed_entity:
           type: boolean
           x-stream-index: "003"
+        escalation_queue_enabled:
+          type: boolean
+          x-stream-index: "010"
+        escalation_reasons:
+          items:
+            type: string
+          type: array
+          x-stream-index: "009"
         flag_user_on_flagged_content:
           type: boolean
           x-stream-index: "002"
@@ -14841,6 +15387,12 @@ components:
             reactions to comments and comments on comments)
           title: Comment
           x-stream-index: "007"
+        custom:
+          additionalProperties: {}
+          description: Custom data from the target activity
+          title: Custom Data
+          type: object
+          x-stream-index: "009"
         id:
           description: The ID of the target (activity ID or user ID)
           title: Target ID
@@ -14885,6 +15437,12 @@ components:
             (for comment and comment_reply types)
           title: Comment
           x-stream-index: "003"
+        custom:
+          additionalProperties: {}
+          description: Custom data from the trigger object (comment, reaction, etc.)
+          title: Custom Data
+          type: object
+          x-stream-index: "004"
         text:
           description: Human-readable text describing the notification
           title: Notification Text
@@ -15005,7 +15563,7 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "015"
+          x-stream-index: "016"
         channel_mutes:
           items:
             $ref: '#/components/schemas/ChannelMute'
@@ -16135,7 +16693,7 @@ components:
       properties:
         enrich_own_fields:
           type: boolean
-          x-stream-index: "005"
+          x-stream-index: "006"
         filter:
           additionalProperties: {}
           description: Filters to apply to the query. Supports location-based queries
@@ -16152,18 +16710,23 @@ components:
         include_private_activities:
           type: boolean
           x-stream-index: "003"
+        include_soft_deleted_activities:
+          description: When true, include soft-deleted activities in the result.
+          title: Include Soft Deleted Activities
+          type: boolean
+          x-stream-index: "005"
         limit:
           format: int32
           maximum: 100
           minimum: 0
           type: integer
-          x-stream-index: "006.001"
+          x-stream-index: "007.001"
         next:
           type: string
-          x-stream-index: "006.002"
+          x-stream-index: "007.002"
         prev:
           type: string
-          x-stream-index: "006.003"
+          x-stream-index: "007.003"
         sort:
           description: Sorting parameters for the query
           items:
@@ -16174,10 +16737,10 @@ components:
           x-stream-index: "002"
         user:
           $ref: '#/components/schemas/UserRequest'
-          x-stream-index: "008.002"
+          x-stream-index: "009.002"
         user_id:
           type: string
-          x-stream-index: "008.001"
+          x-stream-index: "009.001"
       title: Query Activities Request
       type: object
     QueryActivitiesResponse:
@@ -17494,11 +18057,115 @@ components:
       - duration
       type: object
     QueryUsersPayload:
-      description: Client request
       properties:
         filter_conditions:
           additionalProperties: {}
+          description: Filter conditions to apply to the query
+          title: Filter
           type: object
+          x-stream-filter-fields:
+            banned:
+              operators:
+              - $eq
+              type: boolean
+            bypass_moderation:
+              operators:
+              - $eq
+              - $ne
+              type: boolean
+            created_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: date
+            email:
+              operators:
+              - $eq
+              - $in
+              type: string
+            id:
+              operators:
+              - $autocomplete
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: string
+            language:
+              operators:
+              - $eq
+              - $ne
+              type: string
+            last_active:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: date
+            name:
+              operators:
+              - $autocomplete
+              - $eq
+              type: string
+            role:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: string
+            shadow_banned:
+              operators:
+              - $eq
+              - $ne
+              type: boolean
+            teams:
+              operators:
+              - $_none
+              - $contains
+              - $eq
+              - $in
+              type: string
+            updated_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: date
+            username:
+              operators:
+              - $autocomplete
+              - $eq
+              type: string
           x-stream-index: "001"
         include_deactivated_users:
           type: boolean
@@ -17519,9 +18186,11 @@ components:
           type: boolean
           x-stream-index: "003"
         sort:
+          description: Array of sort parameters
           items:
             $ref: '#/components/schemas/SortParamRequest'
           maxItems: 5
+          title: Sort
           type: array
           x-stream-index: "002"
         user:
@@ -17532,7 +18201,6 @@ components:
           x-stream-index: "006.001"
       required:
       - filter_conditions
-      title: ClientRequest
       type: object
     QueryUsersResponse:
       nullable: true
@@ -17644,6 +18312,9 @@ components:
       type: object
     RawRecordSettings:
       properties:
+        audio_only:
+          type: boolean
+          x-stream-index: "002"
         mode:
           enum:
           - available
@@ -17774,6 +18445,14 @@ components:
           title: LastReactionAt
           type: number
           x-stream-index: "004"
+        latest_reactions_by:
+          description: The most recent users who reacted with this type, ordered by
+            most recent first.
+          items:
+            $ref: '#/components/schemas/ReactionGroupUserResponse'
+          title: LatestReactionsBy
+          type: array
+          x-stream-index: "005"
         sum_scores:
           description: 'SumScores is the sum of all scores of reactions of this type.
             Medium allows you to clap articles more than once and shows the sum of
@@ -17788,7 +18467,33 @@ components:
       - sum_scores
       - first_reaction_at
       - last_reaction_at
+      - latest_reactions_by
       title: ReactionGroupResponse
+      type: object
+    ReactionGroupUserResponse:
+      description: Contains information about a user who reacted with this reaction
+        type.
+      properties:
+        created_at:
+          description: The time when the user reacted.
+          format: date-time
+          title: CreatedAt
+          type: number
+          x-stream-index: "003"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          description: The full user object.
+          title: User
+          x-stream-index: "002"
+        user_id:
+          description: The ID of the user who reacted.
+          title: UserID
+          type: string
+          x-stream-index: "001"
+      required:
+      - user_id
+      - created_at
+      title: ReactionGroupUserResponse
       type: object
     ReactionResponse:
       properties:
@@ -18407,6 +19112,27 @@ components:
           title: Entity Type
           type: string
           x-stream-index: "004"
+        escalated:
+          description: Whether the item has been escalated
+          title: Escalated
+          type: boolean
+          x-stream-index: "034"
+        escalated_at:
+          description: When the item was escalated
+          format: date-time
+          title: Escalated At
+          type: number
+          x-stream-index: "037"
+        escalated_by:
+          description: ID of the moderator who escalated the item
+          title: Escalated By
+          type: string
+          x-stream-index: "036"
+        escalation_metadata:
+          $ref: '#/components/schemas/EscalationMetadata'
+          description: Escalation details including reason, notes, and priority
+          title: Escalation Metadata
+          x-stream-index: "035"
         feeds_v2_activity:
           $ref: '#/components/schemas/EnrichedActivity'
           description: Associated feed activity
@@ -18418,10 +19144,10 @@ components:
           title: Feeds V2 Reaction
           x-stream-index: "028"
         feeds_v3_activity:
-          $ref: '#/components/schemas/ActivityResponse'
+          $ref: '#/components/schemas/FeedsV3ActivityResponse'
           x-stream-index: "029"
         feeds_v3_comment:
-          $ref: '#/components/schemas/CommentResponse'
+          $ref: '#/components/schemas/FeedsV3CommentResponse'
           x-stream-index: "030"
         flags:
           description: Associated flag records
@@ -18519,6 +19245,7 @@ components:
       - flags
       - actions
       - flags_count
+      - escalated
       type: object
     ReviewQueueItemUpdatedEvent:
       description: This event is sent when a moderation review queue item is updated
@@ -19198,7 +19925,7 @@ components:
           description: 'Type of moderation action to perform. One of: mark_reviewed,
             delete_message, delete_activity, delete_comment, delete_reaction, ban,
             custom, unban, restore, delete_user, unblock, block, shadow_block, unmask,
-            kick_user, end_call'
+            kick_user, end_call, escalate, de_escalate'
           enum:
           - flag
           - mark_reviewed
@@ -19218,6 +19945,9 @@ components:
           - kick_user
           - end_call
           - reject_appeal
+          - escalate
+          - de_escalate
+          - bypass
           title: Action Type
           type: string
           x-stream-index: "002"
@@ -19237,6 +19967,11 @@ components:
           description: Configuration for block action
           title: Block
           x-stream-index: "015"
+        bypass:
+          $ref: '#/components/schemas/BypassActionRequest'
+          description: Configuration for bypass moderation action
+          title: Bypass
+          x-stream-index: "019"
         custom:
           $ref: '#/components/schemas/CustomActionRequestPayload'
           description: Configuration for custom action
@@ -19267,11 +20002,16 @@ components:
           description: Configuration for user deletion action
           title: Delete User
           x-stream-index: "008"
+        escalate:
+          $ref: '#/components/schemas/EscalatePayload'
+          description: Configuration for escalation action
+          title: Escalate
+          x-stream-index: "022"
         flag:
           $ref: '#/components/schemas/FlagRequest'
           description: Configuration for flag action
           title: Flag
-          x-stream-index: "020"
+          x-stream-index: "021"
         item_id:
           description: UUID of the review queue item to act on
           title: Item ID
@@ -19286,7 +20026,7 @@ components:
           $ref: '#/components/schemas/RejectAppealRequestPayload'
           description: Configuration for rejecting an appeal
           title: Reject Appeal
-          x-stream-index: "019"
+          x-stream-index: "020"
         restore:
           $ref: '#/components/schemas/RestoreActionRequestPayload'
           description: Configuration for restore action
@@ -19309,10 +20049,10 @@ components:
           x-stream-index: "014"
         user:
           $ref: '#/components/schemas/UserRequest'
-          x-stream-index: "021.002"
+          x-stream-index: "023.002"
         user_id:
           type: string
-          x-stream-index: "021.001"
+          x-stream-index: "023.001"
       required:
       - action_type
       type: object
@@ -19374,6 +20114,9 @@ components:
             type: string
           type: array
           x-stream-index: "001"
+        label_operator:
+          type: string
+          x-stream-index: "006"
         llm_harm_labels:
           additionalProperties:
             type: string
@@ -19912,6 +20655,11 @@ components:
           title: Decision Reason
           type: string
           x-stream-index: "002"
+        remove_future_channels_ban:
+          description: Also remove the future channels ban for this user
+          title: Remove Future Channels Ban
+          type: boolean
+          x-stream-index: "003"
       title: UnbanActionRequest
       type: object
     UnbanRequest:
@@ -19990,9 +20738,10 @@ components:
           type: boolean
           x-stream-index: "003"
         follows:
-          description: List of follow relationships to remove
+          description: List of follow relationships to remove, each with optional
+            keep_history
           items:
-            $ref: '#/components/schemas/FollowPair'
+            $ref: '#/components/schemas/UnfollowPair'
           maxItems: 100
           minItems: 1
           title: Follows
@@ -20019,6 +20768,31 @@ components:
       - follows
       - duration
       title: Unfollow Batch Response
+      type: object
+    UnfollowPair:
+      properties:
+        keep_history:
+          description: 'When true, activities from the unfollowed feed will remain
+            in the source feed''s timeline (default: false)'
+          title: Keep History
+          type: boolean
+          x-stream-index: "003"
+        source:
+          description: Fully qualified ID of the source feed
+          maxLength: 255
+          title: Source Feed
+          type: string
+          x-stream-index: "001"
+        target:
+          description: Fully qualified ID of the target feed
+          maxLength: 255
+          title: Target Feed
+          type: string
+          x-stream-index: "002"
+      required:
+      - source
+      - target
+      title: UnfollowPair
       type: object
     UnfollowResponse:
       nullable: true
@@ -20146,8 +20920,11 @@ components:
           type: string
           x-stream-index: "001"
         copy_custom_to_notification:
-          description: Whether to copy custom data to the notification activity (only
-            applies when handle_mention_notifications creates notifications)
+          deprecated: true
+          description: 'Whether to copy custom data to the notification activity (only
+            applies when handle_mention_notifications creates notifications) Deprecated:
+            use notification_context.trigger.custom and notification_context.target.custom
+            instead'
           title: boolean
           type: boolean
           x-stream-index: "005"
@@ -20185,8 +20962,11 @@ components:
       nullable: true
       properties:
         copy_custom_to_notification:
-          description: Whether to copy custom data to the notification activity (only
-            applies when handle_mention_notifications creates notifications)
+          deprecated: true
+          description: 'Whether to copy custom data to the notification activity (only
+            applies when handle_mention_notifications creates notifications) Deprecated:
+            use notification_context.trigger.custom and notification_context.target.custom
+            instead'
           title: boolean
           type: boolean
           x-stream-index: "005"
@@ -20271,8 +21051,11 @@ components:
           type: array
           x-stream-index: "012"
         copy_custom_to_notification:
-          description: Whether to copy custom data to the notification activity (only
-            applies when handle_mention_notifications creates notifications)
+          deprecated: true
+          description: 'Whether to copy custom data to the notification activity (only
+            applies when handle_mention_notifications creates notifications) Deprecated:
+            use notification_context.trigger.custom and notification_context.target.custom
+            instead'
           title: boolean
           type: boolean
           x-stream-index: "019"
@@ -20797,7 +21580,10 @@ components:
       nullable: true
       properties:
         copy_custom_to_notification:
-          description: Whether to copy custom data to notification activities
+          deprecated: true
+          description: 'Whether to copy custom data to notification activities Deprecated:
+            use notification_context.trigger.custom and notification_context.target.custom
+            instead'
           title: boolean
           type: boolean
           x-stream-index: "007"
@@ -20872,8 +21658,11 @@ components:
           type: string
           x-stream-index: "002"
         copy_custom_to_notification:
-          description: Whether to copy custom data to the notification activity (only
-            applies when handle_mention_notifications creates notifications)
+          deprecated: true
+          description: 'Whether to copy custom data to the notification activity (only
+            applies when handle_mention_notifications creates notifications) Deprecated:
+            use notification_context.trigger.custom and notification_context.target.custom
+            instead'
           title: boolean
           type: boolean
           x-stream-index: "009"
@@ -21274,8 +22063,10 @@ components:
       nullable: true
       properties:
         copy_custom_to_notification:
-          description: Whether to copy custom data to the notification activity (only
-            applies when create_notification_activity is true)
+          deprecated: true
+          description: 'Whether to copy custom data to the notification activity (only
+            applies when create_notification_activity is true) Deprecated: use notification_context.trigger.custom
+            and notification_context.target.custom instead'
           title: Copy Custom To Notification
           type: boolean
           x-stream-index: "001.005"
@@ -21875,6 +22666,52 @@ components:
           x-stream-index: "002.001"
       required:
       - duration
+      type: object
+    UpsertExternalStorageAWSS3Request:
+      properties:
+        bucket:
+          type: string
+          x-stream-index: "002"
+        path_prefix:
+          type: string
+          x-stream-index: "004"
+        region:
+          type: string
+          x-stream-index: "003"
+        role_arn:
+          type: string
+          x-stream-index: "001"
+      required:
+      - role_arn
+      - bucket
+      - region
+      type: object
+    UpsertExternalStorageRequest:
+      nullable: true
+      properties:
+        aws_s3:
+          $ref: '#/components/schemas/UpsertExternalStorageAWSS3Request'
+          x-stream-index: "002"
+        type:
+          enum:
+          - aws_s3
+          type: string
+          x-stream-index: "001"
+      required:
+      - type
+      type: object
+    UpsertExternalStorageResponse:
+      description: Basic response information
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      title: Response
       type: object
     UpsertModerationRuleRequest:
       nullable: true
@@ -22511,7 +23348,7 @@ components:
           format: date-time
           title: Ban expires
           type: number
-          x-stream-index: "003"
+          x-stream-index: "004"
         banned:
           description: Whether a user is banned or not
           title: Banned
@@ -22522,6 +23359,9 @@ components:
             type: string
           type: array
           x-stream-index: "001.017"
+        bypass_moderation:
+          type: boolean
+          x-stream-index: "003"
         created_at:
           description: Date/time of creation
           format: date-time
@@ -22552,7 +23392,7 @@ components:
             $ref: '#/components/schemas/DeviceResponse'
           title: Devices
           type: array
-          x-stream-index: "006"
+          x-stream-index: "007"
         id:
           description: Unique user identifier
           title: ID
@@ -22564,7 +23404,7 @@ components:
           x-stream-index: "001.003"
         invisible:
           type: boolean
-          x-stream-index: "007"
+          x-stream-index: "008"
         language:
           description: Preferred language of a user
           title: Language
@@ -22590,12 +23430,12 @@ components:
           $ref: '#/components/schemas/PrivacySettingsResponse'
           description: User privacy settings
           title: Privacy settings
-          x-stream-index: "005"
+          x-stream-index: "006"
         push_notifications:
           $ref: '#/components/schemas/PushNotificationSettingsResponse'
           description: User push notification settings
           title: Push notifications
-          x-stream-index: "004"
+          x-stream-index: "005"
         revoke_tokens_issued_before:
           description: Revocation date for tokens
           format: date-time
@@ -22954,6 +23794,19 @@ components:
       x-stream-event-doc-group: other
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    ValidateExternalStorageResponse:
+      description: Basic response information
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      title: Response
+      type: object
     VelocityFilterConfig:
       properties:
         advanced_filters:
@@ -23069,6 +23922,9 @@ components:
             type: string
           type: array
           x-stream-index: "001"
+        label_operator:
+          type: string
+          x-stream-index: "002"
       type: object
     VideoEndCallRequestPayload:
       description: Configuration for ending video call
@@ -23352,7 +24208,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v223.38.0
+  version: v225.3.2
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -25322,6 +26178,15 @@ paths:
           writeOnly: true
           x-stream-index: "005"
       - in: query
+        name: id_around
+        schema:
+          description: Returns the comment with the specified ID along with surrounding
+            comments for context
+          title: ID Around
+          type: string
+          writeOnly: true
+          x-stream-index: "006"
+      - in: query
         name: user_id
         schema:
           description: User ID for server-side requests to populate OwnReactions (server-side
@@ -25329,7 +26194,7 @@ paths:
           title: User ID
           type: string
           writeOnly: true
-          x-stream-index: "006.001"
+          x-stream-index: "007.001"
       - in: query
         name: limit
         schema:
@@ -25340,19 +26205,19 @@ paths:
           title: Root Limit
           type: integer
           writeOnly: true
-          x-stream-index: "007.001"
+          x-stream-index: "008.001"
       - in: query
         name: prev
         schema:
           type: string
           writeOnly: true
-          x-stream-index: "007.002"
+          x-stream-index: "008.002"
       - in: query
         name: next
         schema:
           type: string
           writeOnly: true
-          x-stream-index: "007.003"
+          x-stream-index: "008.003"
       responses:
         "200":
           content:
@@ -25773,6 +26638,15 @@ paths:
           writeOnly: true
           x-stream-index: "004"
       - in: query
+        name: id_around
+        schema:
+          description: Returns the reply with the specified ID along with surrounding
+            replies for context
+          title: ID Around
+          type: string
+          writeOnly: true
+          x-stream-index: "005"
+      - in: query
         name: user_id
         schema:
           description: User ID for server-side requests to populate OwnReactions (server-side
@@ -25780,7 +26654,7 @@ paths:
           title: User ID
           type: string
           writeOnly: true
-          x-stream-index: "005.001"
+          x-stream-index: "006.001"
       - in: query
         name: limit
         schema:
@@ -25791,19 +26665,19 @@ paths:
           title: Reply Limit
           type: integer
           writeOnly: true
-          x-stream-index: "006.001"
+          x-stream-index: "007.001"
       - in: query
         name: prev
         schema:
           type: string
           writeOnly: true
-          x-stream-index: "006.002"
+          x-stream-index: "007.002"
       - in: query
         name: next
         schema:
           type: string
           writeOnly: true
-          x-stream-index: "006.003"
+          x-stream-index: "007.003"
       responses:
         "200":
           content:
@@ -27491,6 +28365,15 @@ paths:
           writeOnly: true
           x-stream-index: "003"
       - in: query
+        name: keep_history
+        schema:
+          description: 'When true, activities from the unfollowed feed will remain
+            in the source feed''s timeline (default: false)'
+          title: Keep History
+          type: boolean
+          writeOnly: true
+          x-stream-index: "004"
+      - in: query
         name: enrich_own_fields
         schema:
           description: If true, enriches the follow's source_feed and target_feed
@@ -27499,7 +28382,7 @@ paths:
           title: boolean
           type: boolean
           writeOnly: true
-          x-stream-index: "004"
+          x-stream-index: "005"
       responses:
         "200":
           content:
@@ -28315,6 +29198,118 @@ paths:
       summary: Get import v2 task
       tags:
       - product:common
+  /api/v2/imports/v2/external-storage:
+    delete:
+      description: |
+        Removes the external storage configuration for the app. Idempotent: succeeds even if no configuration exists.
+      operationId: DeleteImporterExternalStorage
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteExternalStorageResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Delete external storage
+      tags:
+      - product:common
+    get:
+      description: |
+        Returns the current external storage configuration for the app. Returns 404 if no configuration exists.
+      operationId: GetImporterExternalStorage
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetExternalStorageResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get external storage
+      tags:
+      - product:common
+    put:
+      description: |
+        Creates or updates the external storage configuration for the app. Currently only AWS S3 (via cross-account IAM role assumption) is supported.
+      operationId: UpsertImporterExternalStorage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertExternalStorageRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpsertExternalStorageResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Upsert external storage
+      tags:
+      - product:common
+  /api/v2/imports/v2/external-storage/validate:
+    post:
+      description: |
+        Validates the configured external S3 storage by performing a live STS AssumeRole and S3 ListObjectsV2 check.
+      operationId: ValidateImporterExternalStorage
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateExternalStorageResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Validate external storage
+      tags:
+      - product:common
   /api/v2/moderation/action_logs:
     post:
       description: |
@@ -28516,6 +29511,39 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Bulk image moderation
+      tags:
+      - product:moderation
+  /api/v2/moderation/bypass:
+    post:
+      description: |
+        Enable or disable moderation bypass for a user. This endpoint is server-side only.
+      operationId: bypass
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BypassRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BypassResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Bypass Moderation
       tags:
       - product:moderation
   /api/v2/moderation/check:
@@ -28884,6 +29912,39 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Flag content for moderation
+      tags:
+      - product:moderation
+  /api/v2/moderation/flag_count:
+    post:
+      description: |
+        Returns the number of moderation flags created against a specific user's content. Optionally filter by entity type.
+      operationId: get_flag_count
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetFlagCountRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetFlagCountResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get flag count for a user
       tags:
       - product:moderation
   /api/v2/moderation/flags:
