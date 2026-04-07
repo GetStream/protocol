@@ -254,6 +254,11 @@ components:
       description: Request body for adding members to a user group
       nullable: true
       properties:
+        as_admin:
+          description: Whether to add the members as group admins. Defaults to false
+          title: As Admin
+          type: boolean
+          x-stream-index: "003"
         member_ids:
           description: List of user IDs to add as members
           items:
@@ -266,7 +271,7 @@ components:
         team_id:
           maxLength: 255
           type: string
-          x-stream-index: "003"
+          x-stream-index: "004"
       required:
       - member_ids
       title: AddUserGroupMembersRequest
@@ -545,7 +550,7 @@ components:
             by the banner
           title: Ban from future channels
           type: boolean
-          x-stream-index: "012"
+          x-stream-index: "013"
         banned_by:
           $ref: '#/components/schemas/UserRequest'
           description: User who issued a ban
@@ -568,6 +573,12 @@ components:
           - hard
           type: string
           x-stream-index: "011"
+        delete_reactions:
+          description: Whether to delete reactions by the banned user on other users'
+            messages
+          title: Delete reactions
+          type: boolean
+          x-stream-index: "012"
         ip_ban:
           description: Whether to perform IP ban or not
           title: IP ban
@@ -3372,6 +3383,15 @@ components:
           title: Comment
           type: string
           x-stream-index: "002"
+        comment_mention:
+          description: 'Push notification preference for mentions in comments. One
+            of: all, none'
+          enum:
+          - all
+          - none
+          title: Comment Mention
+          type: string
+          x-stream-index: "006"
         comment_reaction:
           description: 'Push notification preference for reactions on comments. One
             of: all, none'
@@ -3397,7 +3417,7 @@ components:
             of activity type to preference (all or none)
           title: Custom Activity Types
           type: object
-          x-stream-index: "007"
+          x-stream-index: "008"
         follow:
           description: 'Push notification preference for new followers. One of: all,
             none'
@@ -3408,14 +3428,14 @@ components:
           type: string
           x-stream-index: "001"
         mention:
-          description: 'Push notification preference for mentions in activities or
-            comments. One of: all, none'
+          description: 'Push notification preference for mentions in activities. One
+            of: all, none'
           enum:
           - all
           - none
           title: Mention
           type: string
-          x-stream-index: "006"
+          x-stream-index: "007"
         reaction:
           description: 'Push notification preference for reactions on user''s activities
             or comments. One of: all, none'
@@ -3432,20 +3452,26 @@ components:
         comment:
           type: string
           x-stream-index: "002"
+        comment_mention:
+          type: string
+          x-stream-index: "006"
         comment_reaction:
           type: string
           x-stream-index: "004"
+        comment_reply:
+          type: string
+          x-stream-index: "005"
         custom_activity_types:
           additionalProperties:
             type: string
           type: object
-          x-stream-index: "006"
+          x-stream-index: "008"
         follow:
           type: string
           x-stream-index: "001"
         mention:
           type: string
-          x-stream-index: "005"
+          x-stream-index: "007"
         reaction:
           type: string
           x-stream-index: "003"
@@ -3705,7 +3731,7 @@ components:
         ban_expires:
           format: date-time
           type: string
-          x-stream-index: "015"
+          x-stream-index: "016"
         banned:
           type: boolean
           x-stream-index: "001.012"
@@ -3713,7 +3739,7 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "014"
+          x-stream-index: "015"
         channel_mutes:
           items:
             $ref: '#/components/schemas/ChannelMute'
@@ -7867,7 +7893,7 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "015"
+          x-stream-index: "016"
         channel_mutes:
           items:
             $ref: '#/components/schemas/ChannelMute'
@@ -8843,7 +8869,64 @@ components:
           x-stream-index: "004"
         filter_conditions:
           additionalProperties: {}
+          description: Filter conditions to apply to the query
+          title: Filter
           type: object
+          x-stream-filter-fields:
+            banned_by_id:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: string
+            channel_cid:
+              operators:
+              - $eq
+              - $in
+              type: string
+            created_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: date
+            reason:
+              operators:
+              - $autocomplete
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: string
+            user_id:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: string
           x-stream-index: "001"
         limit:
           description: Number of records to return
@@ -8895,7 +8978,208 @@ components:
       properties:
         filter_conditions:
           additionalProperties: {}
+          description: Filter conditions to apply to the query
+          title: Filter
           type: object
+          x-stream-filter-fields:
+            app_banned:
+              operators:
+              - $eq
+              type: string
+            archived:
+              operators:
+              - $eq
+              type: boolean
+            blocked:
+              operators:
+              - $eq
+              type: boolean
+            channel_role:
+              operators:
+              - $eq
+              - $in
+              type: string
+            cid:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: string
+            created_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: date
+            created_by_id:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: string
+            disabled:
+              operators:
+              - $eq
+              type: boolean
+            distinct:
+              operators:
+              - $eq
+              type: boolean
+            filter_tags:
+              operators:
+              - $eq
+              - $in
+              type: string
+            frozen:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: boolean
+            has_unread:
+              operators:
+              - $eq
+              type: boolean
+            hidden:
+              operators:
+              - $eq
+              type: boolean
+            id:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: string
+            invite:
+              operators:
+              - $eq
+              type: string
+            joined:
+              operators:
+              - $eq
+              type: boolean
+            last_message_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: date
+            last_updated:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: date
+            member.user.name:
+              operators:
+              - $autocomplete
+              - $eq
+              - $ne
+              type: string
+            member_count:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: number
+            members:
+              operators:
+              - $eq
+              - $in
+              - $nin
+              type: string
+            muted:
+              operators:
+              - $eq
+              type: boolean
+            pinned:
+              operators:
+              - $eq
+              type: boolean
+            team:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: string
+            type:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: string
+            updated_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: date
           x-stream-index: "001"
         filter_values:
           additionalProperties: {}
@@ -9095,11 +9379,122 @@ components:
       - duration
       type: object
     QueryMembersPayload:
-      description: Client request
       properties:
         filter_conditions:
           additionalProperties: {}
+          description: Filter conditions to apply to the query
+          title: Filter
           type: object
+          x-stream-filter-fields:
+            banned:
+              operators:
+              - $eq
+              type: boolean
+            channel_role:
+              operators:
+              - $eq
+              - $in
+              type: string
+            cid:
+              operators:
+              - $eq
+              type: string
+            created_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: date
+            id:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: string
+            invite:
+              operators:
+              - $eq
+              type: string
+            is_moderator:
+              operators:
+              - $eq
+              - $ne
+              type: boolean
+            joined:
+              operators:
+              - $eq
+              type: boolean
+            last_active:
+              operators:
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              - $ne
+              type: date
+            name:
+              operators:
+              - $autocomplete
+              - $eq
+              - $in
+              - $ne
+              - $nin
+              - $q
+              type: string
+            notifications_muted:
+              operators:
+              - $eq
+              type: boolean
+            updated_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: date
+            user.email:
+              operators:
+              - $autocomplete
+              - $eq
+              - $in
+              - $ne
+              - $nin
+              - $q
+              type: string
+            user.nd_deactivated:
+              operators:
+              - $eq
+              type: boolean
+            user_id:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: string
           x-stream-index: "004"
         id:
           type: string
@@ -9122,11 +9517,15 @@ components:
           type: integer
           x-stream-index: "006.002"
         sort:
+          description: Array of sort parameters
           items:
             $ref: '#/components/schemas/SortParamRequest'
           maxItems: 1
+          title: Sort
           type: array
           x-stream-index: "005"
+          x-stream-sort-fields:
+          - created_at
         type:
           maxLength: 64
           type: string
@@ -9134,13 +9533,88 @@ components:
       required:
       - type
       - filter_conditions
-      title: ClientRequest
       type: object
     QueryMessageFlagsPayload:
       properties:
         filter_conditions:
           additionalProperties: {}
+          description: Filter conditions to apply to the query
+          title: Filter
           type: object
+          x-stream-filter-fields:
+            action:
+              operators:
+              - $eq
+              type: string
+            blocklist_name:
+              operators:
+              - $eq
+              type: string
+            channel_cid:
+              operators:
+              - $eq
+              - $in
+              type: string
+            date_range:
+              operators:
+              - $eq
+              type: string
+            harm_label:
+              operators:
+              - $eq
+              type: string
+            harm_type:
+              operators:
+              - $eq
+              type: string
+            image_labels:
+              operators:
+              - $eq
+              type: string
+            is_reviewed:
+              operators:
+              - $eq
+              type: boolean
+            keyword:
+              operators:
+              - $eq
+              type: string
+            matched_phrase:
+              operators:
+              - $eq
+              type: string
+            message_id:
+              operators:
+              - $eq
+              - $in
+              type: string
+            phrase_list_ids:
+              operators:
+              - $eq
+              type: number
+            reason:
+              operators:
+              - $eq
+              - $in
+              type: string
+            reporter_id:
+              operators:
+              - $eq
+              type: string
+            reporter_type:
+              operators:
+              - $eq
+              type: string
+            team:
+              operators:
+              - $eq
+              - $in
+              type: string
+            user_id:
+              operators:
+              - $eq
+              - $in
+              type: string
           x-stream-index: "001"
         limit:
           format: int32
@@ -9159,9 +9633,11 @@ components:
           type: boolean
           x-stream-index: "002"
         sort:
+          description: Array of sort parameters
           items:
             $ref: '#/components/schemas/SortParamRequest'
           maxItems: 5
+          title: Sort
           type: array
           x-stream-index: "003.005"
       type: object
@@ -9275,7 +9751,32 @@ components:
       properties:
         filter:
           additionalProperties: {}
+          description: Filter to apply to the query
+          title: Filter
           type: object
+          x-stream-filter-fields:
+            created_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: date
+            type:
+              operators:
+              - $eq
+              - $in
+              type: string
+            user_id:
+              operators:
+              - $eq
+              - $in
+              type: string
           x-stream-index: "002"
         limit:
           format: int32
@@ -9290,11 +9791,17 @@ components:
           type: string
           x-stream-index: "006.003"
         sort:
+          description: Array of sort parameters
           items:
             $ref: '#/components/schemas/SortParamRequest'
           maxItems: 2
+          title: Sort
           type: array
           x-stream-index: "003"
+          x-stream-sort-combinations:
+          - - created_at
+          x-stream-sort-fields:
+          - created_at
       type: object
     QueryReactionsResponse:
       description: Basic response information
@@ -9380,9 +9887,86 @@ components:
       properties:
         filter:
           additionalProperties: {}
-          description: Filter conditions to apply to threads
+          description: Filter to apply to the query
           title: Filter
           type: object
+          x-stream-filter-fields:
+            active_participant_count:
+              operators:
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              type: number
+            channel.disabled:
+              operators:
+              - $eq
+              type: boolean
+            channel.team:
+              operators:
+              - $eq
+              - $in
+              type: string
+            channel_cid:
+              operators:
+              - $eq
+              - $in
+              type: string
+            created_at:
+              operators:
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              type: date
+            created_by_user_id:
+              operators:
+              - $eq
+              - $in
+              type: string
+            has_unread:
+              operators:
+              - $eq
+              type: boolean
+            last_message_at:
+              operators:
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              type: date
+            parent_message_id:
+              operators:
+              - $eq
+              - $in
+              type: string
+            participant_count:
+              operators:
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              type: number
+            reply_count:
+              operators:
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              type: number
+            updated_at:
+              operators:
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              type: date
           x-stream-index: "006"
         limit:
           format: int32
@@ -9419,13 +10003,34 @@ components:
           type: integer
           x-stream-index: "003"
         sort:
-          description: Sort conditions to apply to threads
+          description: Array of sort parameters
           items:
             $ref: '#/components/schemas/SortParamRequest'
           maxItems: 5
           title: Sort
           type: array
           x-stream-index: "007"
+          x-stream-sort-combinations:
+          - - has_unread
+            - last_message_at
+            - parent_message_id
+          - - last_message_at
+            - parent_message_id
+          - - created_at
+          - - updated_at
+          - - reply_count
+          - - participant_count
+          - - active_participant_count
+          - - parent_message_id
+          x-stream-sort-fields:
+          - active_participant_count
+          - created_at
+          - has_unread
+          - last_message_at
+          - parent_message_id
+          - participant_count
+          - reply_count
+          - updated_at
         watch:
           description: Start watching the channel this thread belongs to
           title: Watch
@@ -9458,11 +10063,115 @@ components:
       - duration
       type: object
     QueryUsersPayload:
-      description: Client request
       properties:
         filter_conditions:
           additionalProperties: {}
+          description: Filter conditions to apply to the query
+          title: Filter
           type: object
+          x-stream-filter-fields:
+            banned:
+              operators:
+              - $eq
+              type: boolean
+            bypass_moderation:
+              operators:
+              - $eq
+              - $ne
+              type: boolean
+            created_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: date
+            email:
+              operators:
+              - $eq
+              - $in
+              type: string
+            id:
+              operators:
+              - $autocomplete
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: string
+            language:
+              operators:
+              - $eq
+              - $ne
+              type: string
+            last_active:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: date
+            name:
+              operators:
+              - $autocomplete
+              - $eq
+              type: string
+            role:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: string
+            shadow_banned:
+              operators:
+              - $eq
+              - $ne
+              type: boolean
+            teams:
+              operators:
+              - $_none
+              - $contains
+              - $eq
+              - $in
+              type: string
+            updated_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: date
+            username:
+              operators:
+              - $autocomplete
+              - $eq
+              type: string
           x-stream-index: "001"
         include_deactivated_users:
           type: boolean
@@ -9483,14 +10192,15 @@ components:
           type: boolean
           x-stream-index: "003"
         sort:
+          description: Array of sort parameters
           items:
             $ref: '#/components/schemas/SortParamRequest'
           maxItems: 5
+          title: Sort
           type: array
           x-stream-index: "002"
       required:
       - filter_conditions
-      title: ClientRequest
       type: object
     QueryUsersResponse:
       nullable: true
@@ -9639,6 +10349,14 @@ components:
           title: LastReactionAt
           type: string
           x-stream-index: "004"
+        latest_reactions_by:
+          description: The most recent users who reacted with this type, ordered by
+            most recent first.
+          items:
+            $ref: '#/components/schemas/ReactionGroupUserResponse'
+          title: LatestReactionsBy
+          type: array
+          x-stream-index: "005"
         sum_scores:
           description: 'SumScores is the sum of all scores of reactions of this type.
             Medium allows you to clap articles more than once and shows the sum of
@@ -9653,7 +10371,33 @@ components:
       - sum_scores
       - first_reaction_at
       - last_reaction_at
+      - latest_reactions_by
       title: ReactionGroupResponse
+      type: object
+    ReactionGroupUserResponse:
+      description: Contains information about a user who reacted with this reaction
+        type.
+      properties:
+        created_at:
+          description: The time when the user reacted.
+          format: date-time
+          title: CreatedAt
+          type: string
+          x-stream-index: "003"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          description: The full user object.
+          title: User
+          x-stream-index: "002"
+        user_id:
+          description: The ID of the user who reacted.
+          title: UserID
+          type: string
+          x-stream-index: "001"
+      required:
+      - user_id
+      - created_at
+      title: ReactionGroupUserResponse
       type: object
     ReactionNewEvent:
       description: Emitted when a new reaction is added to a message.
@@ -10341,6 +11085,205 @@ components:
           title: Channel filter
           type: object
           x-stream-docs-page-id: query_channels
+          x-stream-filter-fields:
+            app_banned:
+              operators:
+              - $eq
+              type: string
+            archived:
+              operators:
+              - $eq
+              type: boolean
+            blocked:
+              operators:
+              - $eq
+              type: boolean
+            channel_role:
+              operators:
+              - $eq
+              - $in
+              type: string
+            cid:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: string
+            created_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: date
+            created_by_id:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: string
+            disabled:
+              operators:
+              - $eq
+              type: boolean
+            distinct:
+              operators:
+              - $eq
+              type: boolean
+            filter_tags:
+              operators:
+              - $eq
+              - $in
+              type: string
+            frozen:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: boolean
+            has_unread:
+              operators:
+              - $eq
+              type: boolean
+            hidden:
+              operators:
+              - $eq
+              type: boolean
+            id:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: string
+            invite:
+              operators:
+              - $eq
+              type: string
+            joined:
+              operators:
+              - $eq
+              type: boolean
+            last_message_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: date
+            last_updated:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: date
+            member.user.name:
+              operators:
+              - $autocomplete
+              - $eq
+              - $ne
+              type: string
+            member_count:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: number
+            members:
+              operators:
+              - $eq
+              - $in
+              - $nin
+              type: string
+            muted:
+              operators:
+              - $eq
+              type: boolean
+            pinned:
+              operators:
+              - $eq
+              type: boolean
+            team:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: string
+            type:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: string
+            updated_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: date
           x-stream-index: "002"
         force_default_search:
           type: boolean
@@ -10359,6 +11302,141 @@ components:
           description: Message filter conditions
           title: Message filter
           type: object
+          x-stream-filter-fields:
+            _channel_filters:
+              operators:
+              - $eq
+              type: object
+            attachments:
+              operators:
+              - $exists
+              type: boolean
+            attachments.type:
+              operators:
+              - $eq
+              - $in
+              type: string
+            created_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: date
+            custom:
+              operators:
+              - $_custom
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              type: object
+            id:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: string
+            mentioned_users.id:
+              operators:
+              - $contains
+              type: string
+            parent_id:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: string
+            pinned:
+              operators:
+              - $eq
+              type: boolean
+            relevance:
+              operators: []
+              type: number
+            reply_count:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: number
+            text:
+              operators:
+              - $any
+              - $autocomplete
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              - $q
+              type: string
+            type:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: string
+            updated_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: date
+            user.id:
+              operators:
+              - $eq
+              - $in
+              - $ne
+              - $nin
+              type: string
+            user_id:
+              operators:
+              - $eq
+              - $in
+              - $ne
+              - $nin
+              type: string
           x-stream-index: "003"
         message_options:
           $ref: '#/components/schemas/MessageOptions'
@@ -10386,6 +11464,10 @@ components:
           title: Sort
           type: array
           x-stream-index: "007"
+          x-stream-sort-fields:
+          - created_at
+          - id
+          - updated_at
       required:
       - filter_conditions
       type: object
@@ -12574,7 +13656,7 @@ components:
           format: int32
           readOnly: true
           type: integer
-          x-stream-index: "047"
+          x-stream-index: "048"
         ban_expires:
           format: date-time
           type: string
@@ -12606,10 +13688,10 @@ components:
           x-stream-index: "003"
         invisible:
           type: boolean
-          x-stream-index: "023"
+          x-stream-index: "024"
         language:
           type: string
-          x-stream-index: "035"
+          x-stream-index: "036"
         last_active:
           format: date-time
           readOnly: true
@@ -12623,14 +13705,14 @@ components:
         online:
           readOnly: true
           type: boolean
-          x-stream-index: "022"
+          x-stream-index: "023"
         privacy_settings:
           $ref: '#/components/schemas/PrivacySettings'
-          x-stream-index: "026"
+          x-stream-index: "027"
         revoke_tokens_issued_before:
           format: date-time
           type: string
-          x-stream-index: "043"
+          x-stream-index: "044"
         role:
           type: string
           x-stream-index: "004"
@@ -12638,7 +13720,7 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "036"
+          x-stream-index: "037"
         teams_role:
           additionalProperties:
             type: string
@@ -14454,7 +15536,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v223.38.0
+  version: v225.4.0
 openapi: 3.0.3
 paths:
   /app:
