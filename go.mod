@@ -1,9 +1,8 @@
 module github.com/GetStream/protocol
 
-go 1.20
+go 1.24
 
 require (
-	github.com/envoyproxy/protoc-gen-validate v0.6.7
 	github.com/twitchtv/twirp v8.1.2+incompatible
 	google.golang.org/protobuf v1.28.1
 )
