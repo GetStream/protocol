@@ -10,9 +10,9 @@ RUN ARCH=${TARGETPLATFORM#*/} && TARGETARCH=${ARCH}
 WORKDIR /home
 
 # Install Go
-RUN wget https://golang.org/dl/go1.20.4.linux-$TARGETARCH.tar.gz
-RUN tar -C /usr/local -xzf go1.20.4.linux-$TARGETARCH.tar.gz
-RUN rm go1.20.4.linux-$TARGETARCH.tar.gz
+RUN wget https://golang.org/dl/go1.24.2.linux-$TARGETARCH.tar.gz
+RUN tar -C /usr/local -xzf go1.24.2.linux-$TARGETARCH.tar.gz
+RUN rm go1.24.2.linux-$TARGETARCH.tar.gz
 ENV PATH="$PATH:/usr/local/go/bin"
 
 # Install Dart
