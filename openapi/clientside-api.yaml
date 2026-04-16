@@ -2080,6 +2080,44 @@ components:
       - duration
       title: Add Bookmark Response
       type: object
+    AddCommentBookmarkRequest:
+      nullable: true
+      properties:
+        custom:
+          additionalProperties: {}
+          description: Custom data for the bookmark
+          title: Custom Data
+          type: object
+          x-stream-index: "004"
+        folder_id:
+          description: ID of the folder to add the bookmark to
+          maxLength: 255
+          title: Folder ID
+          type: string
+          x-stream-index: "002"
+        new_folder:
+          $ref: '#/components/schemas/AddFolderRequest'
+          description: Create a new folder for this bookmark
+          title: New Folder
+          x-stream-index: "003"
+      title: Add Comment Bookmark Request
+      type: object
+    AddCommentBookmarkResponse:
+      nullable: true
+      properties:
+        bookmark:
+          $ref: '#/components/schemas/BookmarkResponse'
+          description: The created comment bookmark
+          title: Bookmark
+          x-stream-index: "001"
+        duration:
+          type: string
+          x-stream-index: "002.001"
+      required:
+      - bookmark
+      - duration
+      title: Add Comment Bookmark Response
+      type: object
     AddCommentReactionRequest:
       nullable: true
       properties:
@@ -3806,38 +3844,58 @@ components:
       properties:
         activity:
           $ref: '#/components/schemas/ActivityResponse'
-          description: The bookmarked activity
+          description: The bookmarked activity (set when object_type is activity)
           title: Activity
-          x-stream-index: "002"
+          x-stream-index: "004"
+        activity_id:
+          type: string
+          x-stream-index: "010"
+        comment:
+          $ref: '#/components/schemas/CommentResponse'
+          description: The bookmarked comment (set when object_type is comment)
+          title: Comment
+          x-stream-index: "005"
         created_at:
           description: When the bookmark was created
           format: date-time
           title: Created At
           type: number
-          x-stream-index: "005"
+          x-stream-index: "008"
         custom:
           additionalProperties: {}
           description: Custom data for the bookmark
           title: Custom Data
           type: object
-          x-stream-index: "004"
+          x-stream-index: "007"
         folder:
           $ref: '#/components/schemas/BookmarkFolderResponse'
           description: Folder containing this bookmark
           title: Folder
-          x-stream-index: "003"
+          x-stream-index: "006"
+        object_id:
+          description: ID of the bookmarked object
+          title: Object ID
+          type: string
+          x-stream-index: "002"
+        object_type:
+          description: Type of the bookmarked object (activity or comment)
+          title: Object Type
+          type: string
+          x-stream-index: "001"
         updated_at:
           description: When the bookmark was last updated
           format: date-time
           title: Updated At
           type: number
-          x-stream-index: "006"
+          x-stream-index: "009"
         user:
           $ref: '#/components/schemas/UserResponse'
           description: User who created the bookmark
           title: User
-          x-stream-index: "001"
+          x-stream-index: "003"
       required:
+      - object_type
+      - object_id
       - user
       - activity
       - created_at
@@ -9189,18 +9247,22 @@ components:
           title: Attachments
           type: array
           x-stream-index: "011"
+        bookmark_count:
+          format: int32
+          type: integer
+          x-stream-index: "022"
         confidence_score:
           description: Confidence score of the comment
           format: float
           title: Confidence Score
           type: number
-          x-stream-index: "023"
+          x-stream-index: "024"
         controversy_score:
           description: Controversy score of the comment
           format: float
           title: Controversy Score
           type: number
-          x-stream-index: "024"
+          x-stream-index: "025"
         created_at:
           description: When the comment was created
           format: date-time
@@ -9271,7 +9333,7 @@ components:
             $ref: '#/components/schemas/FeedsReactionResponse'
           title: Own Reactions
           type: array
-          x-stream-index: "025"
+          x-stream-index: "026"
         parent_id:
           description: ID of parent comment for nested replies
           title: Parent ID
@@ -9301,7 +9363,7 @@ components:
           format: int32
           title: Score
           type: integer
-          x-stream-index: "022"
+          x-stream-index: "023"
         status:
           description: 'Status of the comment. One of: active, deleted, removed, hidden'
           enum:
@@ -9348,6 +9410,7 @@ components:
       - reply_count
       - upvote_count
       - downvote_count
+      - bookmark_count
       - score
       - confidence_score
       - own_reactions
@@ -10631,6 +10694,22 @@ components:
       required:
       - duration
       title: Delete Collections Response
+      type: object
+    DeleteCommentBookmarkResponse:
+      nullable: true
+      properties:
+        bookmark:
+          $ref: '#/components/schemas/BookmarkResponse'
+          description: The deleted comment bookmark
+          title: Bookmark
+          x-stream-index: "001"
+        duration:
+          type: string
+          x-stream-index: "002.001"
+      required:
+      - bookmark
+      - duration
+      title: Delete Comment Bookmark Response
       type: object
     DeleteCommentReactionResponse:
       nullable: true
@@ -30401,14 +30480,18 @@ components:
             $ref: '#/components/schemas/Attachment'
           type: array
           x-stream-index: "001.011"
+        bookmark_count:
+          format: int32
+          type: integer
+          x-stream-index: "001.022"
         confidence_score:
           format: float
           type: number
-          x-stream-index: "001.023"
+          x-stream-index: "001.024"
         controversy_score:
           format: float
           type: number
-          x-stream-index: "001.024"
+          x-stream-index: "001.025"
         created_at:
           format: date-time
           type: number
@@ -30460,7 +30543,7 @@ components:
           items:
             $ref: '#/components/schemas/FeedsReactionResponse'
           type: array
-          x-stream-index: "001.025"
+          x-stream-index: "001.026"
         parent_id:
           type: string
           x-stream-index: "001.007"
@@ -30487,7 +30570,7 @@ components:
         score:
           format: int32
           type: integer
-          x-stream-index: "001.022"
+          x-stream-index: "001.023"
         status:
           description: 'Status of the comment. One of: active, deleted, removed, hidden'
           enum:
@@ -30526,6 +30609,7 @@ components:
       - reply_count
       - upvote_count
       - downvote_count
+      - bookmark_count
       - score
       - confidence_score
       - own_reactions
@@ -31769,16 +31853,21 @@ components:
           type: object
           x-stream-index: "005"
         folder_id:
-          description: ID of the folder to move the bookmark to
+          description: ID of the folder containing the bookmark
           maxLength: 255
           title: Folder ID
           type: string
           x-stream-index: "002"
         new_folder:
           $ref: '#/components/schemas/AddFolderRequest'
+          description: Create a new folder and move the bookmark into it
+          title: New Folder
           x-stream-index: "004"
         new_folder_id:
+          description: Move the bookmark to this folder (empty string removes the
+            folder)
           maxLength: 255
+          title: New Folder ID
           type: string
           x-stream-index: "003"
       title: Update Bookmark Request
@@ -32136,6 +32225,51 @@ components:
       - collections
       - duration
       title: Update Collections Response
+      type: object
+    UpdateCommentBookmarkRequest:
+      nullable: true
+      properties:
+        custom:
+          additionalProperties: {}
+          description: Custom data for the bookmark
+          title: Custom Data
+          type: object
+          x-stream-index: "005"
+        folder_id:
+          description: ID of the folder containing the bookmark
+          maxLength: 255
+          title: Folder ID
+          type: string
+          x-stream-index: "002"
+        new_folder:
+          $ref: '#/components/schemas/AddFolderRequest'
+          description: Create a new folder and move the bookmark into it
+          title: New Folder
+          x-stream-index: "004"
+        new_folder_id:
+          description: Move the bookmark to this folder (empty string removes the
+            folder)
+          maxLength: 255
+          title: New Folder ID
+          type: string
+          x-stream-index: "003"
+      title: Update Comment Bookmark Request
+      type: object
+    UpdateCommentBookmarkResponse:
+      nullable: true
+      properties:
+        bookmark:
+          $ref: '#/components/schemas/BookmarkResponse'
+          description: The updated comment bookmark
+          title: Bookmark
+          x-stream-index: "001"
+        duration:
+          type: string
+          x-stream-index: "002.001"
+      required:
+      - bookmark
+      - duration
+      title: Update Comment Bookmark Response
       type: object
     UpdateCommentPartialRequest:
       nullable: true
@@ -35793,7 +35927,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v225.25.0
+  version: v225.25.1
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -38846,9 +38980,7 @@ paths:
         name: activity_id
         required: true
         schema:
-          description: ID of the activity
           maxLength: 255
-          title: Activity ID
           type: string
           writeOnly: true
           x-stream-index: "001"
@@ -40055,6 +40187,135 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Add a comment or reply
+      tags:
+      - product:feeds
+  /api/v2/feeds/comments/{comment_id}/bookmarks:
+    delete:
+      description: |
+        Deletes a bookmark from a comment
+      operationId: DeleteCommentBookmark
+      parameters:
+      - in: path
+        name: comment_id
+        required: true
+        schema:
+          maxLength: 255
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      - in: query
+        name: folder_id
+        schema:
+          maxLength: 255
+          type: string
+          writeOnly: true
+          x-stream-index: "002"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteCommentBookmarkResponse'
+          description: Delete Comment Bookmark Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Delete a comment bookmark
+      tags:
+      - product:feeds
+    patch:
+      description: |
+        Updates a bookmark for a comment
+      operationId: UpdateCommentBookmark
+      parameters:
+      - in: path
+        name: comment_id
+        required: true
+        schema:
+          description: ID of the comment
+          maxLength: 255
+          title: Comment ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCommentBookmarkRequest'
+        description: Update Comment Bookmark Request
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateCommentBookmarkResponse'
+          description: Update Comment Bookmark Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Update comment bookmark
+      tags:
+      - product:feeds
+    post:
+      description: |
+        Adds a bookmark to a comment
+      operationId: AddCommentBookmark
+      parameters:
+      - in: path
+        name: comment_id
+        required: true
+        schema:
+          maxLength: 255
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddCommentBookmarkRequest'
+        description: Add Comment Bookmark Request
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddCommentBookmarkResponse'
+          description: Add Comment Bookmark Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Add comment bookmark
       tags:
       - product:feeds
   /api/v2/feeds/comments/{id}:
