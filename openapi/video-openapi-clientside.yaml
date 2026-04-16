@@ -2950,6 +2950,39 @@ components:
       - call_status
       - call_duration_seconds
       type: object
+    CallStatsSessionResponse:
+      properties:
+        call_ended_at:
+          format: date-time
+          type: string
+          x-stream-index: "005"
+        call_id:
+          type: string
+          x-stream-index: "002"
+        call_session_id:
+          type: string
+          x-stream-index: "003"
+        call_started_at:
+          format: date-time
+          type: string
+          x-stream-index: "004"
+        call_type:
+          type: string
+          x-stream-index: "001"
+        counts:
+          $ref: '#/components/schemas/CallStatsParticipantCounts'
+          x-stream-index: "007"
+        generated_at:
+          format: date-time
+          type: string
+          x-stream-index: "006"
+      required:
+      - call_type
+      - call_id
+      - call_session_id
+      - generated_at
+      - counts
+      type: object
     CallTranscription:
       description: CallTranscription represents a transcription of a call.
       properties:
@@ -6486,6 +6519,126 @@ components:
       - user_id
       - user_session_id
       - events
+      title: Response
+      type: object
+    QueryCallSessionStatsRequest:
+      nullable: true
+      properties:
+        filter_conditions:
+          additionalProperties: {}
+          description: Filter conditions to apply to the query
+          title: Filter
+          type: object
+          x-stream-filter-fields:
+            call_cid:
+              operators:
+              - $eq
+              type: string
+            call_session_id:
+              operators:
+              - $eq
+              type: string
+            counts.cq_score:
+              operators:
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              - $ne
+              type: number
+            generated_at:
+              operators:
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              type: date
+            session_ended_at:
+              operators:
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              type: date
+            session_started_at:
+              operators:
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              type: date
+            updated_at:
+              operators:
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              type: date
+          x-stream-index: "001"
+        limit:
+          format: int32
+          maximum: 100
+          minimum: 0
+          type: integer
+          x-stream-index: "004.001"
+        next:
+          type: string
+          x-stream-index: "004.002"
+        prev:
+          type: string
+          x-stream-index: "004.003"
+        sort:
+          description: Array of sort parameters
+          items:
+            $ref: '#/components/schemas/SortParamRequest'
+          maxItems: 2
+          title: Sort
+          type: array
+          x-stream-index: "002"
+          x-stream-sort-combinations:
+          - - generated_at
+            - call_cid
+          - - updated_at
+            - call_cid
+          - - session_started_at
+            - call_cid
+          - - session_ended_at
+            - call_cid
+          x-stream-sort-fields:
+          - call_cid
+          - generated_at
+          - session_ended_at
+          - session_started_at
+          - updated_at
+      type: object
+    QueryCallSessionStatsResponse:
+      description: Basic response information
+      nullable: true
+      properties:
+        call_stats:
+          items:
+            $ref: '#/components/schemas/CallStatsSessionResponse'
+          type: array
+          x-stream-index: "001"
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        next:
+          type: string
+          x-stream-index: "003.001"
+        prev:
+          type: string
+          x-stream-index: "003.002"
+      required:
+      - call_stats
+      - duration
       title: Response
       type: object
     QueryCallStatsMapResponse:
@@ -10077,7 +10230,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v225.26.0
+  version: v226.0.0
 openapi: 3.0.3
 paths:
   /video/call/{type}/{id}:
@@ -12693,6 +12846,39 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Query Call Stats
+      tags:
+      - product:video
+  /video/call_stats:
+    post:
+      description: |2+
+
+      operationId: QueryCallSessionStats
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryCallSessionStatsRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryCallSessionStatsResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Query call session stats
       tags:
       - product:video
   /video/call_stats/{call_type}/{call_id}/{session}/map:
