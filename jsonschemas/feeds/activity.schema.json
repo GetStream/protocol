@@ -2,13 +2,21 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "activity.schema.json",
   "type": "object",
+  "description": "Activity entity for feeds import.",
+  "required": ["id", "type", "user_id", "fids"],
   "properties": {
-    "id": { "type": "string" },
-    "type": { "type": "string" },
-    "user_id": { "type": "string" },
+    "id": { "type": "string", "minLength": 1 },
+    "type": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Activity type, e.g. 'post', 'photo'."
+    },
+    "user_id": { "type": "string", "minLength": 1 },
     "fids": {
       "type": "array",
-      "items": { "type": "string" }
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "description": "List of feed IDs (fids) this activity is posted to."
     },
     "text": { "type": "string" },
     "attachments": {
@@ -16,17 +24,39 @@
       "items": {
         "type": "object",
         "properties": {
-          "type": { "type": "string" },
-          "image_url": { "type": "string" },
-          "thumb_url": { "type": "string" },
-          "asset_url": { "type": "string" },
+          "type": {
+            "type": "string",
+            "description": "e.g. text, image, audio, video, file, poll."
+          },
+          "image_url": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https://"
+          },
+          "thumb_url": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https://"
+          },
+          "asset_url": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https://"
+          },
           "migrate_resources": { "type": "boolean" },
-          "custom": { "type": "object" }
+          "custom": { "type": "object", "additionalProperties": true }
         }
       }
     },
-    "visibility": { "type": "string" },
-    "visibility_tag": { "type": "string" },
+    "visibility": {
+      "type": "string",
+      "enum": ["public", "private", "tag"],
+      "description": "Defaults to 'public' when empty."
+    },
+    "visibility_tag": {
+      "type": "string",
+      "description": "Required semantics when visibility='tag' (enforced at runtime, not in schema)."
+    },
     "location": {
       "type": "object",
       "properties": {
@@ -41,7 +71,7 @@
     },
     "parent_id": { "type": "string" },
     "poll_id": { "type": "string" },
-    "custom": { "type": "object" },
+    "custom": { "type": "object", "additionalProperties": true },
     "created_at": { "type": "string", "format": "date-time" },
     "updated_at": { "type": "string", "format": "date-time" },
     "edited_at": { "type": "string", "format": "date-time" },
@@ -53,7 +83,11 @@
     "interest_tags": {
       "type": "array",
       "items": { "type": "string" }
+    },
+    "collection_refs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Collection IDs this activity references."
     }
-  },
-  "required": ["id", "type", "user_id", "fids"]
+  }
 }
