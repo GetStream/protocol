@@ -585,7 +585,7 @@ components:
           type: string
           x-stream-index: "002.001"
         type:
-          default: export.moderation_logs.error
+          default: export.bulk_image_moderation.error
           type: string
           x-stream-index: "003.002"
       required:
@@ -4236,6 +4236,96 @@ components:
       - label
       - description
       type: object
+    LabelResultResponse:
+      properties:
+        category:
+          description: Category
+          title: Category
+          type: string
+          x-stream-index: "008"
+        content:
+          description: The moderated content
+          title: Content
+          type: string
+          x-stream-index: "005"
+        content_id:
+          description: Customer-supplied identifier for the moderated content
+          title: Content ID
+          type: string
+          x-stream-index: "014"
+        content_type:
+          type: string
+          x-stream-index: "004"
+        created_at:
+          description: Timestamp
+          format: date-time
+          title: Created At
+          type: number
+          x-stream-index: "002"
+        directed_at:
+          description: Who the content is directed at (USER, GROUP, EVERYONE, NONE,
+            etc.)
+          title: Directed At
+          type: string
+          x-stream-index: "011"
+        harm_type:
+          description: High-level harm category
+          title: Harm Type
+          type: string
+          x-stream-index: "010"
+        id:
+          description: Unique identifier
+          title: ID
+          type: string
+          x-stream-index: "001"
+        labels:
+          description: Moderation labels
+          items:
+            type: string
+          title: Labels
+          type: array
+          x-stream-index: "009"
+        language:
+          description: Detected language
+          title: Language
+          type: string
+          x-stream-index: "007"
+        masked_content:
+          description: Content with blocklisted tokens masked (when a blocklist rule
+            with action=mask rewrote the original)
+          title: Masked Content
+          type: string
+          x-stream-index: "006"
+        policy:
+          type: string
+          x-stream-index: "003"
+        recommended_action:
+          description: Provider recommended action
+          title: Recommended Action
+          type: string
+          x-stream-index: "012"
+        severity:
+          description: Severity level
+          title: Severity
+          type: string
+          x-stream-index: "013"
+        user_id:
+          description: Customer-supplied user identifier for the content author
+          title: User ID
+          type: string
+          x-stream-index: "015"
+      required:
+      - id
+      - created_at
+      - content_type
+      - content
+      - language
+      - category
+      - labels
+      - harm_type
+      - recommended_action
+      - severity
+      type: object
     LabelThresholds:
       properties:
         block:
@@ -4254,6 +4344,109 @@ components:
           title: Flag
           type: number
           x-stream-index: "001"
+      type: object
+    LabelsRequest:
+      nullable: true
+      properties:
+        category:
+          description: Optional category for filtering (max 128 chars)
+          maxLength: 128
+          title: Category
+          type: string
+          x-stream-index: "004"
+        content:
+          description: Content to moderate
+          maxLength: 20000
+          title: Content
+          type: string
+          x-stream-index: "001"
+        content_id:
+          description: Customer-supplied identifier for the moderated content, for
+            tracing
+          maxLength: 256
+          title: Content ID
+          type: string
+          x-stream-index: "005"
+        content_type:
+          description: 'Type of content: ''text'' (default), ''message'', or ''username''.
+            Stored as-sent; only ''username'' routes to the username moderation API.'
+          enum:
+          - text
+          - message
+          - username
+          title: Content Type
+          type: string
+          x-stream-index: "002"
+        policy:
+          description: Optional moderation policy key (max 128 chars)
+          maxLength: 128
+          title: Policy
+          type: string
+          x-stream-index: "003"
+        user_id:
+          description: Optional customer-supplied user identifier for the content
+            author (max 256 chars). Enables filtering stored results by user_id.
+          maxLength: 256
+          title: User ID
+          type: string
+          x-stream-index: "006"
+      required:
+      - content
+      type: object
+    LabelsResponse:
+      nullable: true
+      properties:
+        content_id:
+          description: Customer-supplied identifier for the moderated content, for
+            tracing
+          title: Content ID
+          type: string
+          x-stream-index: "001"
+        directed_at:
+          description: Who the content is directed at (USER, GROUP, EVERYONE, NONE,
+            etc.), when the provider exposes it
+          title: Directed At
+          type: string
+          x-stream-index: "004"
+        duration:
+          type: string
+          x-stream-index: "009.001"
+        harm_type:
+          description: High-level harm category
+          title: Harm Type
+          type: string
+          x-stream-index: "003"
+        labels:
+          description: Moderation labels detected
+          items:
+            type: string
+          title: Labels
+          type: array
+          x-stream-index: "002"
+        language:
+          description: Detected language
+          title: Language
+          type: string
+          x-stream-index: "007"
+        masked_content:
+          description: Content with blocklisted tokens masked or substituted. Present
+            only when a blocklist rewrote the original content.
+          title: Masked Content
+          type: string
+          x-stream-index: "008"
+        recommended_action:
+          description: Provider recommended action
+          title: Recommended Action
+          type: string
+          x-stream-index: "005"
+        severity:
+          description: Severity level
+          title: Severity
+          type: string
+          x-stream-index: "006"
+      required:
+      - recommended_action
+      - duration
       type: object
     LayoutSettingsResponse:
       properties:
@@ -5701,6 +5894,64 @@ components:
           x-stream-index: "001"
       required:
       - templates
+      - duration
+      type: object
+    QueryLabelResultsRequest:
+      nullable: true
+      properties:
+        filter:
+          additionalProperties: {}
+          description: Filter conditions
+          title: Filter
+          type: object
+          x-stream-index: "001"
+        limit:
+          format: int32
+          maximum: 100
+          minimum: 0
+          type: integer
+          x-stream-index: "003.001"
+        next:
+          type: string
+          x-stream-index: "003.002"
+        prev:
+          type: string
+          x-stream-index: "003.003"
+        sort:
+          description: Sorting parameters
+          items:
+            $ref: '#/components/schemas/SortParamRequest'
+          title: Sort
+          type: array
+          x-stream-index: "002"
+        user:
+          $ref: '#/components/schemas/UserRequest'
+          x-stream-index: "004.002"
+        user_id:
+          type: string
+          x-stream-index: "004.001"
+      type: object
+    QueryLabelResultsResponse:
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "003.001"
+        label_results:
+          description: List of moderation label results
+          items:
+            $ref: '#/components/schemas/LabelResultResponse'
+          title: Label Results
+          type: array
+          x-stream-index: "001"
+        next:
+          type: string
+          x-stream-index: "002.001"
+        prev:
+          type: string
+          x-stream-index: "002.002"
+      required:
+      - label_results
       - duration
       type: object
     QueryModerationConfigsRequest:
@@ -8198,7 +8449,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v226.10.0
+  version: v226.11.0
 openapi: 3.0.3
 paths:
   /api/v2/moderation/action_logs:
@@ -8877,6 +9128,72 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Query moderation flags
+      tags:
+      - product:moderation
+  /api/v2/moderation/labels:
+    post:
+      description: |
+        Run moderation on text and return labels
+      operationId: labels
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LabelsRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabelsResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Labels
+      tags:
+      - product:moderation
+  /api/v2/moderation/labels/results:
+    post:
+      description: |
+        Search and filter moderation label results with support for pagination and sorting. View the history of moderation labels applied to content.
+      operationId: query_label_results
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryLabelResultsRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryLabelResultsResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Query label results
       tags:
       - product:moderation
   /api/v2/moderation/logs:
