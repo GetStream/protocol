@@ -374,7 +374,7 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "011"
+          x-stream-index: "012"
         created_at:
           description: Timestamp when the action was taken
           format: date-time
@@ -386,7 +386,7 @@ components:
           description: Additional metadata about the action
           title: Custom
           type: object
-          x-stream-index: "007"
+          x-stream-index: "008"
         id:
           description: Unique identifier of the action log
           title: ID
@@ -396,22 +396,28 @@ components:
           description: Reason for the moderation action
           title: Reason
           type: string
+          x-stream-index: "007"
+        reporter_type:
+          description: Classification of who triggered the action (e.g. user, moderator,
+            automod, api_integration)
+          title: Reporter Type
+          type: string
           x-stream-index: "006"
         review_queue_item:
           $ref: '#/components/schemas/ReviewQueueItemResponse'
           description: Associated review queue item
           title: Review Queue Item
-          x-stream-index: "008"
+          x-stream-index: "009"
         target_user:
           $ref: '#/components/schemas/UserResponse'
           description: User who was the target of the action
           title: Target User
-          x-stream-index: "009"
+          x-stream-index: "010"
         target_user_id:
           description: ID of the user who was the target of the action
           title: Target User ID
           type: string
-          x-stream-index: "010"
+          x-stream-index: "011"
         type:
           description: Type of moderation action
           title: Type
@@ -432,6 +438,7 @@ components:
       - created_at
       - type
       - user_id
+      - reporter_type
       - reason
       - custom
       - target_user_id
@@ -6289,6 +6296,72 @@ components:
           type: boolean
           x-stream-index: "001"
       type: object
+    GroupedChannelsBucket:
+      properties:
+        channels:
+          description: Channels returned for this bucket
+          items:
+            $ref: '#/components/schemas/ChannelStateResponseFields'
+          title: Channels
+          type: array
+          x-stream-index: "001"
+        unread_channels:
+          description: Unread channels currently classified into this bucket
+          format: int32
+          title: Unread Channels
+          type: integer
+          x-stream-index: "002"
+      required:
+      - channels
+      title: Grouped Channels Bucket
+      type: object
+    GroupedQueryChannelsRequest:
+      nullable: true
+      properties:
+        limit:
+          description: Max channels per bucket (default 10)
+          format: int32
+          maximum: 10
+          title: Limit
+          type: integer
+          x-stream-index: "001"
+        presence:
+          description: Whether to subscribe to presence events for channel members
+          title: Presence
+          type: boolean
+          x-stream-index: "003"
+        watch:
+          description: Whether to start watching found channels or not
+          title: Watch
+          type: boolean
+          x-stream-index: "002"
+      title: Grouped Query Channels Request
+      type: object
+      x-stream-docs-page-id: grouped_query_channels
+    GroupedQueryChannelsResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        groups:
+          additionalProperties:
+            $ref: '#/components/schemas/GroupedChannelsBucket'
+          description: Predefined channel groups keyed by group name
+          title: Groups
+          type: object
+          x-stream-index: "001"
+          x-stream-map:
+            description: Channels and unread counts for one group
+            key: group_name
+            title: Grouped Channels Bucket
+      required:
+      - groups
+      - duration
+      title: Grouped Query Channels Response
+      type: object
     HLSSettingsResponse:
       properties:
         auto_on:
@@ -7780,6 +7853,12 @@ components:
           additionalProperties: {}
           type: object
           x-stream-index: 001.001.001.001.001.007
+        grouped_unread_channels:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "010"
         message:
           $ref: '#/components/schemas/MessageResponse'
           description: The new message
@@ -9584,6 +9663,12 @@ components:
           additionalProperties: {}
           type: object
           x-stream-index: 001.001.001.001.001.007
+        grouped_unread_channels:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "005"
         received_at:
           format: date-time
           type: number
@@ -9721,6 +9806,12 @@ components:
           additionalProperties: {}
           type: object
           x-stream-index: 001.001.001.001.001.007
+        grouped_unread_channels:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "006"
         message:
           $ref: '#/components/schemas/MessageResponse'
           description: The message regarding the update
@@ -10091,6 +10182,12 @@ components:
           additionalProperties: {}
           type: object
           x-stream-index: 001.001.001.001.007
+        grouped_unread_channels:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "010"
         last_read_message_id:
           description: The ID of the last read message
           title: Last Read Message ID
@@ -10144,13 +10241,13 @@ components:
           format: int32
           title: Unread Thread Messages
           type: integer
-          x-stream-index: "011"
+          x-stream-index: "012"
         unread_threads:
           description: The number of unread threads
           format: int32
           title: Unread Threads
           type: integer
-          x-stream-index: "010"
+          x-stream-index: "011"
         user:
           $ref: '#/components/schemas/UserResponseCommonFields'
           description: The user who marked the channel as read
@@ -10223,6 +10320,12 @@ components:
           title: First Unread Message ID
           type: string
           x-stream-index: "005"
+        grouped_unread_channels:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "012"
         last_read_at:
           description: The time when the channel/thread was marked as unread
           format: date-time
@@ -10283,13 +10386,13 @@ components:
           format: int32
           title: Unread Thread Messages
           type: integer
-          x-stream-index: "013"
+          x-stream-index: "014"
         unread_threads:
           description: The number of unread threads
           format: int32
           title: Unread Threads
           type: integer
-          x-stream-index: "012"
+          x-stream-index: "013"
         user:
           $ref: '#/components/schemas/UserResponseCommonFields'
           description: The user who marked the channel as unread
@@ -10393,6 +10496,12 @@ components:
           additionalProperties: {}
           type: object
           x-stream-index: 001.001.001.001.001.007
+        grouped_unread_channels:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "010"
         message:
           $ref: '#/components/schemas/MessageResponse'
           description: The new message
@@ -11987,6 +12096,18 @@ components:
               - $in
               - $nin
               type: string
+            message_count:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: number
             muted:
               operators:
               - $eq
@@ -14827,6 +14948,18 @@ components:
               - $in
               - $nin
               type: string
+            message_count:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: number
             muted:
               operators:
               - $eq
@@ -19769,7 +19902,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v226.17.1
+  version: v226.18.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -21231,6 +21364,46 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Mark channel message delivery status
+      tags:
+      - product:chat
+  /api/v2/chat/channels/grouped:
+    post:
+      description: |
+        Query channels grouped into predefined buckets. Only available for enterprise apps.
+      operationId: GroupedQueryChannels
+      parameters:
+      - in: query
+        name: connection_id
+        schema:
+          type: string
+          x-stream-index: "007.003"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupedQueryChannelsRequest'
+        description: Grouped Query Channels Request
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupedQueryChannelsResponse'
+          description: Grouped Query Channels Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Grouped query channels
       tags:
       - product:chat
   /api/v2/chat/channels/read:

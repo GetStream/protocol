@@ -363,7 +363,7 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "011"
+          x-stream-index: "012"
         created_at:
           description: Timestamp when the action was taken
           format: date-time
@@ -375,7 +375,7 @@ components:
           description: Additional metadata about the action
           title: Custom
           type: object
-          x-stream-index: "007"
+          x-stream-index: "008"
         id:
           description: Unique identifier of the action log
           title: ID
@@ -385,22 +385,28 @@ components:
           description: Reason for the moderation action
           title: Reason
           type: string
+          x-stream-index: "007"
+        reporter_type:
+          description: Classification of who triggered the action (e.g. user, moderator,
+            automod, api_integration)
+          title: Reporter Type
+          type: string
           x-stream-index: "006"
         review_queue_item:
           $ref: '#/components/schemas/ReviewQueueItemResponse'
           description: Associated review queue item
           title: Review Queue Item
-          x-stream-index: "008"
+          x-stream-index: "009"
         target_user:
           $ref: '#/components/schemas/UserResponse'
           description: User who was the target of the action
           title: Target User
-          x-stream-index: "009"
+          x-stream-index: "010"
         target_user_id:
           description: ID of the user who was the target of the action
           title: Target User ID
           type: string
-          x-stream-index: "010"
+          x-stream-index: "011"
         type:
           description: Type of moderation action
           title: Type
@@ -421,6 +427,7 @@ components:
       - created_at
       - type
       - user_id
+      - reporter_type
       - reason
       - custom
       - target_user_id
@@ -3137,7 +3144,7 @@ components:
           type: string
           x-stream-index: "002.001"
         type:
-          default: export.moderation_logs.error
+          default: export.bulk_image_moderation.error
           type: string
           x-stream-index: "003.002"
       required:
@@ -9252,6 +9259,9 @@ components:
             type: string
           type: array
           x-stream-index: "004"
+        failover_config:
+          $ref: '#/components/schemas/WebhookFailoverConfig'
+          x-stream-index: "020.003"
         hook_type:
           type: string
           x-stream-index: "002"
@@ -13696,6 +13706,18 @@ components:
           title: Reason
           type: string
           x-stream-index: "006"
+        reporter_type:
+          description: Type of reporter; 'api_integration' when the action was triggered
+            by an API integration call with no authenticated user
+          title: Reporter Type
+          type: string
+          x-stream-index: "008"
+        reporter_user_id:
+          description: ID of the user who triggered the action; empty for automated
+            actions
+          title: Reporter User ID
+          type: string
+          x-stream-index: "007"
       required:
       - entity_type
       - entity_id
@@ -24996,6 +25018,21 @@ components:
       required:
       - address
       type: object
+    WebhookFailoverConfig:
+      properties:
+        gcs_bucket:
+          type: string
+          x-stream-index: "002"
+        gcs_credentials:
+          type: string
+          x-stream-index: "004"
+        gcs_path:
+          type: string
+          x-stream-index: "003"
+        type:
+          type: string
+          x-stream-index: "001"
+      type: object
     XiaomiConfig:
       properties:
         Disabled:
@@ -25064,7 +25101,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v226.17.1
+  version: v226.18.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -26417,7 +26454,7 @@ paths:
   /api/v2/feeds/activities/{id}/restore:
     post:
       description: |
-        Restores a soft-deleted activity by its ID. Only the activity owner can restore their own activities.
+        Restores a soft-deleted, moderation-removed, or shadow-blocked activity by its ID. Deleted activities can be restored by the owner (client-side). Moderation-blocked activities can only be restored server-side.
       operationId: RestoreActivity
       parameters:
       - in: path
@@ -26460,7 +26497,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
-      summary: Restore a soft-deleted activity
+      summary: Restore an activity
       tags:
       - product:feeds
   /api/v2/feeds/activities/batch:
