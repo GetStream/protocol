@@ -2470,6 +2470,7 @@ components:
       - user_response_time_enabled
       - moderation_llm_configurability_enabled
       - max_aggregated_activities_length
+      - feed_audit_logs_enabled
       - moderation_video_call_moderation_enabled
       - moderation_audio_call_moderation_enabled
       type: object
@@ -3642,6 +3643,68 @@ components:
       - enabled
       - hls
       - rtmp
+      type: object
+    BulkDeleteActionConfigRequest:
+      nullable: true
+      properties:
+        ids:
+          description: UUIDs of the action configs to delete
+          items:
+            type: string
+          minItems: 1
+          title: IDs
+          type: array
+          x-stream-index: "001"
+      required:
+      - ids
+      type: object
+    BulkDeleteActionConfigResponse:
+      nullable: true
+      properties:
+        deleted:
+          description: Number of action configs deleted
+          format: int32
+          title: Deleted
+          type: integer
+          x-stream-index: "001"
+        duration:
+          type: string
+          x-stream-index: "002.001"
+      required:
+      - deleted
+      - duration
+      type: object
+    BulkUpsertActionConfigRequest:
+      nullable: true
+      properties:
+        action_configs:
+          description: List of action configs to create or update
+          items:
+            $ref: '#/components/schemas/UpsertActionConfigItem'
+          minItems: 1
+          title: Action Configs
+          type: array
+          x-stream-index: "001"
+      required:
+      - action_configs
+      type: object
+    BulkUpsertActionConfigResponse:
+      nullable: true
+      properties:
+        action_configs:
+          description: The created or updated action configs in the same order as
+            the request
+          items:
+            $ref: '#/components/schemas/ModerationActionConfigResponse'
+          title: Action Configs
+          type: array
+          x-stream-index: "001"
+        duration:
+          type: string
+          x-stream-index: "002.001"
+      required:
+      - action_configs
+      - duration
       type: object
     BypassActionRequest:
       properties:
@@ -5866,6 +5929,22 @@ components:
         scale:
           type: string
           x-stream-index: "003"
+      type: object
+    DeleteActionConfigResponse:
+      nullable: true
+      properties:
+        deleted:
+          description: Number of action configs deleted (0 or 1)
+          format: int32
+          title: Deleted
+          type: integer
+          x-stream-index: "001"
+        duration:
+          type: string
+          x-stream-index: "002.001"
+      required:
+      - deleted
+      - duration
       type: object
     DeleteActivitiesRequest:
       nullable: true
@@ -9212,6 +9291,26 @@ components:
       required:
       - names
       type: object
+    GetActionConfigResponse:
+      nullable: true
+      properties:
+        action_config:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/ModerationActionConfigResponse'
+            type: array
+          description: Moderation action configs grouped by entity type, sorted by
+            order ascending
+          title: Action Config
+          type: object
+          x-stream-index: "001"
+        duration:
+          type: string
+          x-stream-index: "002.001"
+      required:
+      - action_config
+      - duration
+      type: object
     GetActivityResponse:
       nullable: true
       properties:
@@ -10670,39 +10769,42 @@ components:
           description: The action to take
           title: Action
           type: string
-          x-stream-index: "003"
+          x-stream-index: "004"
         custom:
           additionalProperties: {}
           description: Custom data for the action
           title: Custom
           type: object
-          x-stream-index: "006"
+          x-stream-index: "007"
         description:
           description: Description of what this action does
           title: Description
           type: string
-          x-stream-index: "005"
+          x-stream-index: "006"
         entity_type:
           description: Type of entity this action applies to
           title: Entity Type
           type: string
-          x-stream-index: "001"
+          x-stream-index: "002"
         icon:
           description: Icon for the dashboard
           title: Icon
           type: string
-          x-stream-index: "004"
+          x-stream-index: "005"
+        id:
+          type: string
+          x-stream-index: "001"
         order:
           description: Display order (lower numbers shown first)
           format: int32
           title: Order
           type: integer
-          x-stream-index: "002"
+          x-stream-index: "003"
         queue_type:
           description: Queue type this action config belongs to
           title: QueueType
           type: string
-          x-stream-index: "007"
+          x-stream-index: "008"
       required:
       - entity_type
       - order
@@ -13216,6 +13318,9 @@ components:
     QueryReviewQueueRequest:
       nullable: true
       properties:
+        exclude_default_action_config:
+          type: boolean
+          x-stream-index: "007"
         filter:
           additionalProperties: {}
           description: Filter conditions for review queue items
@@ -13227,7 +13332,7 @@ components:
           maximum: 100
           minimum: 0
           type: integer
-          x-stream-index: "007.001"
+          x-stream-index: "008.001"
         lock_count:
           description: Number of items to lock (1-25)
           format: int32
@@ -13249,10 +13354,10 @@ components:
           x-stream-index: "003"
         next:
           type: string
-          x-stream-index: "007.002"
+          x-stream-index: "008.002"
         prev:
           type: string
-          x-stream-index: "007.003"
+          x-stream-index: "008.003"
         sort:
           description: Sorting parameters for the results
           items:
@@ -13278,14 +13383,21 @@ components:
           title: Action Config
           type: object
           x-stream-index: "002"
+        default_action_config:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/ModerationActionConfigResponse'
+            type: array
+          type: object
+          x-stream-index: "003"
         duration:
           type: string
-          x-stream-index: "006.001"
+          x-stream-index: "007.001"
         filter_config:
           $ref: '#/components/schemas/FilterConfigResponse'
           description: Configuration for filters in moderation review queue
           title: Filter Config
-          x-stream-index: "003"
+          x-stream-index: "004"
         items:
           description: List of review queue items
           items:
@@ -13295,16 +13407,16 @@ components:
           x-stream-index: "001"
         next:
           type: string
-          x-stream-index: "005.001"
+          x-stream-index: "006.001"
         prev:
           type: string
-          x-stream-index: "005.002"
+          x-stream-index: "006.002"
         stats:
           additionalProperties: {}
           description: Statistics about the review queue
           title: Stats
           type: object
-          x-stream-index: "004"
+          x-stream-index: "005"
       required:
       - items
       - action_config
@@ -16551,6 +16663,119 @@ components:
       - membership_deletion_task_id
       - duration
       type: object
+    UpsertActionConfigItem:
+      properties:
+        action:
+          maxLength: 255
+          type: string
+          x-stream-index: "001.004"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "001.007"
+        description:
+          maxLength: 1024
+          type: string
+          x-stream-index: "001.006"
+        entity_type:
+          maxLength: 255
+          type: string
+          x-stream-index: "001.002"
+        icon:
+          maxLength: 255
+          type: string
+          x-stream-index: "001.005"
+        id:
+          type: string
+          x-stream-index: "001.001"
+        order:
+          format: int32
+          maximum: 100
+          minimum: 0
+          type: integer
+          x-stream-index: "001.003"
+        queue_type:
+          maxLength: 255
+          type: string
+          x-stream-index: "001.008"
+      required:
+      - entity_type
+      - order
+      - action
+      type: object
+    UpsertActionConfigRequest:
+      nullable: true
+      properties:
+        action:
+          description: The action to perform (e.g. ban, delete_message, custom)
+          maxLength: 255
+          title: Action
+          type: string
+          x-stream-index: "001.004"
+        custom:
+          additionalProperties: {}
+          description: Action-specific parameters passed to the action handler
+          title: Custom
+          type: object
+          x-stream-index: "001.007"
+        description:
+          description: Human-readable label for the dashboard button
+          maxLength: 1024
+          title: Description
+          type: string
+          x-stream-index: "001.006"
+        entity_type:
+          description: Type of entity this action applies to (e.g. stream:chat:v1:message)
+          maxLength: 255
+          title: Entity Type
+          type: string
+          x-stream-index: "001.002"
+        icon:
+          description: Icon identifier for the dashboard button
+          maxLength: 255
+          title: Icon
+          type: string
+          x-stream-index: "001.005"
+        id:
+          description: UUID of an existing action config to update; omit to create
+            a new record
+          title: ID
+          type: string
+          x-stream-index: "001.001"
+        order:
+          description: Display order in the dashboard (0–100, lower numbers shown
+            first)
+          format: int32
+          maximum: 100
+          minimum: 0
+          title: Order
+          type: integer
+          x-stream-index: "001.003"
+        queue_type:
+          description: Queue this config belongs to; null means the default queue
+          maxLength: 255
+          title: Queue Type
+          type: string
+          x-stream-index: "001.008"
+      required:
+      - entity_type
+      - order
+      - action
+      type: object
+    UpsertActionConfigResponse:
+      nullable: true
+      properties:
+        action_config:
+          $ref: '#/components/schemas/ModerationActionConfigResponse'
+          description: The created or updated action config
+          title: Action Config
+          x-stream-index: "001"
+        duration:
+          type: string
+          x-stream-index: "002.001"
+      required:
+      - duration
+      type: object
     UpsertActivitiesRequest:
       nullable: true
       properties:
@@ -18033,7 +18258,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v226.20.0
+  version: v226.21.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -21493,6 +21718,201 @@ paths:
       summary: Long Poll (Transport)
       tags:
       - product:common
+  /api/v2/moderation/action_config:
+    get:
+      description: |
+        Returns moderation action configs grouped by entity type, sorted by order ascending. Supports fetching DB-configured actions, hardcoded defaults, or both.
+      operationId: get_action_config
+      parameters:
+      - in: query
+        name: queue_type
+        schema:
+          description: Filter configs by queue type; empty returns the default queue
+          title: Queue Type
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      - in: query
+        name: entity_type
+        schema:
+          description: Filter to a single entity type; empty returns all
+          title: Entity Type
+          type: string
+          writeOnly: true
+          x-stream-index: "002"
+      - in: query
+        name: exclude_defaults
+        schema:
+          description: Return only DB-configured actions; empty object if none exist
+          title: Exclude Defaults
+          type: boolean
+          writeOnly: true
+          x-stream-index: "003"
+      - in: query
+        name: only_defaults
+        schema:
+          description: Return hardcoded default configs without a DB query
+          title: Only Defaults
+          type: boolean
+          writeOnly: true
+          x-stream-index: "004"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetActionConfigResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get moderation action configs
+      tags:
+      - product:moderation
+    post:
+      description: |
+        Create a new moderation action config entry or update an existing one. Action configs control the action buttons displayed in the moderation dashboard for each entity type.
+      operationId: upsert_action_config
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertActionConfigRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpsertActionConfigResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Create or update a moderation action config
+      tags:
+      - product:moderation
+  /api/v2/moderation/action_config/{id}:
+    delete:
+      description: |
+        Delete a specific moderation action config entry by its UUID.
+      operationId: delete_action_config
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: UUID of the action config to delete
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteActionConfigResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Delete a moderation action config
+      tags:
+      - product:moderation
+  /api/v2/moderation/action_config/bulk:
+    post:
+      description: |
+        Create or update multiple moderation action config entries in a single request. Omit the ID field to create; provide an ID to update.
+      operationId: bulk_upsert_action_config
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkUpsertActionConfigRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkUpsertActionConfigResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Bulk create or update moderation action configs
+      tags:
+      - product:moderation
+  /api/v2/moderation/action_config/bulk_delete:
+    post:
+      description: |
+        Delete multiple moderation action config entries by UUID in a single request.
+      operationId: bulk_delete_action_config
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkDeleteActionConfigRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkDeleteActionConfigResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Bulk delete moderation action configs
+      tags:
+      - product:moderation
   /api/v2/moderation/appeal:
     post:
       description: |
