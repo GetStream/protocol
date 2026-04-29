@@ -3785,6 +3785,54 @@ components:
           title: VoteData
           x-stream-index: "004"
       type: object
+    ChangeFeedVisibilityRequest:
+      nullable: true
+      properties:
+        pending_follows_action:
+          description: 'What to do with existing pending follows when loosening visibility
+            from ''followers'': auto_approve (default) or reject'
+          enum:
+          - auto_approve
+          - reject
+          title: Pending Follows Action
+          type: string
+          x-stream-index: "004"
+        visibility:
+          description: 'Feed visibility level: public, visible, followers, members,
+            or private'
+          enum:
+          - public
+          - visible
+          - followers
+          - members
+          - private
+          title: Visibility
+          type: string
+          x-stream-index: "003"
+      required:
+      - visibility
+      title: Change Feed Visibility Request
+      type: object
+    ChangeFeedVisibilityResponse:
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "002.001"
+        feed:
+          $ref: '#/components/schemas/FeedResponse'
+          description: The feed with the intended new visibility. The DB is updated
+            asynchronously; a subsequent GET may briefly return the previous visibility
+            until the background reconciliation task commits. Numeric fields (follower_count,
+            member_count, pending-follow counts) reflect pre-change state and should
+            be considered stale until reconciliation completes.
+          title: Feed
+          x-stream-index: "001"
+      required:
+      - feed
+      - duration
+      title: Change Feed Visibility Response
+      type: object
     ChannelConfigWithInfo:
       properties:
         allowed_flag_reasons:
@@ -17637,7 +17685,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v226.23.0
+  version: v226.24.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -20210,6 +20258,57 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Mark activities as read/seen/watched
+      tags:
+      - product:feeds
+  /api/v2/feeds/feed_groups/{feed_group_id}/feeds/{feed_id}/change_visibility:
+    post:
+      description: |
+        Changes the visibility of an existing feed. Follow reconciliation (rewriting pending follows on loosening, or removing disallowed follows/members on tightening) runs asynchronously in the background; the response returns optimistically with the intended visibility.
+      operationId: ChangeFeedVisibility
+      parameters:
+      - in: path
+        name: feed_group_id
+        required: true
+        schema:
+          maxLength: 255
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      - in: path
+        name: feed_id
+        required: true
+        schema:
+          maxLength: 255
+          type: string
+          writeOnly: true
+          x-stream-index: "002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeFeedVisibilityRequest'
+        description: Change Feed Visibility Request
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChangeFeedVisibilityResponse'
+          description: Change Feed Visibility Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Change a feed's visibility
       tags:
       - product:feeds
   /api/v2/feeds/feed_groups/{feed_group_id}/feeds/{feed_id}/members:
