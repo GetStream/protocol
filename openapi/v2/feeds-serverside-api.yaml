@@ -21107,6 +21107,93 @@ components:
       required:
       - duration
       type: object
+    SubmitModerationFeedbackRequest:
+      nullable: true
+      properties:
+        channel_id:
+          description: Optional moderation channel UUID for context
+          maxLength: 255
+          title: Channel ID
+          type: string
+          x-stream-index: "001"
+        current_labels:
+          description: Labels originally produced by the moderation system
+          items:
+            type: string
+          maxItems: 16
+          title: Current Labels
+          type: array
+          x-stream-index: "005"
+        current_recommended_action:
+          description: Recommended action originally produced by the moderation system
+          maxLength: 64
+          title: Current Recommended Action
+          type: string
+          x-stream-index: "007"
+        current_severity:
+          description: Severity originally produced by the moderation system
+          maxLength: 64
+          title: Current Severity
+          type: string
+          x-stream-index: "006"
+        description:
+          description: Optional free-form note explaining why the classification was
+            wrong
+          maxLength: 4000
+          title: Description
+          type: string
+          x-stream-index: "008"
+        expected_labels:
+          description: Optional moderator-supplied labels (up to 16 entries)
+          items:
+            type: string
+          maxItems: 16
+          title: Expected Labels
+          type: array
+          x-stream-index: "009"
+        expected_recommended_action:
+          description: Optional moderator-supplied recommended action
+          maxLength: 64
+          title: Expected Recommended Action
+          type: string
+          x-stream-index: "010"
+        expected_severity:
+          description: Optional moderator-supplied severity
+          maxLength: 64
+          title: Expected Severity
+          type: string
+          x-stream-index: "011"
+        message:
+          description: The moderated content the moderator is providing feedback on
+          maxLength: 10000
+          title: Message
+          type: string
+          x-stream-index: "004"
+        published_at:
+          description: Original publication time of the moderated content (RFC3339)
+          title: Published At
+          type: string
+          x-stream-index: "002"
+        reference:
+          description: Provider-side reference identifying the moderated content
+          maxLength: 512
+          title: Reference
+          type: string
+          x-stream-index: "003"
+      required:
+      - published_at
+      - reference
+      - message
+      type: object
+    SubmitModerationFeedbackResponse:
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      type: object
     TargetResolution:
       properties:
         bitrate:
@@ -25470,7 +25557,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v226.33.1
+  version: v226.34.2
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -32073,6 +32160,39 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Submit moderation action
+      tags:
+      - product:moderation
+  /api/v2/moderation/submit_moderation_feedback:
+    post:
+      description: |
+        Forward a moderator-supplied correction to the moderation feedback pipeline. Server-side only.
+      operationId: submit_moderation_feedback
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitModerationFeedbackRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmitModerationFeedbackResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Submit moderation feedback
       tags:
       - product:moderation
   /api/v2/moderation/unban:
