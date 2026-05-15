@@ -924,6 +924,63 @@ func (ClientCapability) EnumDescriptor() ([]byte, []int) {
 	return file_video_sfu_models_models_proto_rawDescGZIP(), []int{14}
 }
 
+// DegradationPreference represents the RTCDegradationPreference from WebRTC.
+// See https://developer.mozilla.org/en-US/docs/Web/API/RTCRtpSender/setParameters#degradationpreference
+type DegradationPreference int32
+
+const (
+	DegradationPreference_DEGRADATION_PREFERENCE_UNSPECIFIED                       DegradationPreference = 0
+	DegradationPreference_DEGRADATION_PREFERENCE_BALANCED                          DegradationPreference = 1
+	DegradationPreference_DEGRADATION_PREFERENCE_MAINTAIN_FRAMERATE                DegradationPreference = 2
+	DegradationPreference_DEGRADATION_PREFERENCE_MAINTAIN_RESOLUTION               DegradationPreference = 3
+	DegradationPreference_DEGRADATION_PREFERENCE_MAINTAIN_FRAMERATE_AND_RESOLUTION DegradationPreference = 4
+)
+
+// Enum value maps for DegradationPreference.
+var (
+	DegradationPreference_name = map[int32]string{
+		0: "DEGRADATION_PREFERENCE_UNSPECIFIED",
+		1: "DEGRADATION_PREFERENCE_BALANCED",
+		2: "DEGRADATION_PREFERENCE_MAINTAIN_FRAMERATE",
+		3: "DEGRADATION_PREFERENCE_MAINTAIN_RESOLUTION",
+		4: "DEGRADATION_PREFERENCE_MAINTAIN_FRAMERATE_AND_RESOLUTION",
+	}
+	DegradationPreference_value = map[string]int32{
+		"DEGRADATION_PREFERENCE_UNSPECIFIED":                       0,
+		"DEGRADATION_PREFERENCE_BALANCED":                          1,
+		"DEGRADATION_PREFERENCE_MAINTAIN_FRAMERATE":                2,
+		"DEGRADATION_PREFERENCE_MAINTAIN_RESOLUTION":               3,
+		"DEGRADATION_PREFERENCE_MAINTAIN_FRAMERATE_AND_RESOLUTION": 4,
+	}
+)
+
+func (x DegradationPreference) Enum() *DegradationPreference {
+	p := new(DegradationPreference)
+	*p = x
+	return p
+}
+
+func (x DegradationPreference) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (DegradationPreference) Descriptor() protoreflect.EnumDescriptor {
+	return file_video_sfu_models_models_proto_enumTypes[15].Descriptor()
+}
+
+func (DegradationPreference) Type() protoreflect.EnumType {
+	return &file_video_sfu_models_models_proto_enumTypes[15]
+}
+
+func (x DegradationPreference) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use DegradationPreference.Descriptor instead.
+func (DegradationPreference) EnumDescriptor() ([]byte, []int) {
+	return file_video_sfu_models_models_proto_rawDescGZIP(), []int{15}
+}
+
 // CallState is the current state of the call
 // as seen by an SFU.
 type CallState struct {
@@ -3931,14 +3988,30 @@ var file_video_sfu_models_models_proto_rawDesc = []byte{
 	0x42, 0x45, 0x52, 0x5f, 0x56, 0x49, 0x44, 0x45, 0x4f, 0x5f, 0x50, 0x41, 0x55, 0x53, 0x45, 0x10,
 	0x01, 0x12, 0x27, 0x0a, 0x23, 0x43, 0x4c, 0x49, 0x45, 0x4e, 0x54, 0x5f, 0x43, 0x41, 0x50, 0x41,
 	0x42, 0x49, 0x4c, 0x49, 0x54, 0x59, 0x5f, 0x43, 0x4f, 0x4f, 0x52, 0x44, 0x49, 0x4e, 0x41, 0x54,
-	0x4f, 0x52, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x53, 0x10, 0x02, 0x42, 0x65, 0x42, 0x0b, 0x53, 0x66,
-	0x75, 0x4d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x56, 0x31, 0x50, 0x01, 0x5a, 0x37, 0x67, 0x69, 0x74,
-	0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x47, 0x65, 0x74, 0x53, 0x74, 0x72, 0x65, 0x61,
-	0x6d, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f,
-	0x62, 0x75, 0x66, 0x2f, 0x76, 0x69, 0x64, 0x65, 0x6f, 0x2f, 0x73, 0x66, 0x75, 0x2f, 0x6d, 0x6f,
-	0x64, 0x65, 0x6c, 0x73, 0xaa, 0x02, 0x1a, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x2e, 0x56, 0x69,
-	0x64, 0x65, 0x6f, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x66, 0x75, 0x2e, 0x4d, 0x6f, 0x64, 0x65, 0x6c,
-	0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x4f, 0x52, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x53, 0x10, 0x02, 0x2a, 0x81, 0x02, 0x0a, 0x15, 0x44,
+	0x65, 0x67, 0x72, 0x61, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x50, 0x72, 0x65, 0x66, 0x65, 0x72,
+	0x65, 0x6e, 0x63, 0x65, 0x12, 0x26, 0x0a, 0x22, 0x44, 0x45, 0x47, 0x52, 0x41, 0x44, 0x41, 0x54,
+	0x49, 0x4f, 0x4e, 0x5f, 0x50, 0x52, 0x45, 0x46, 0x45, 0x52, 0x45, 0x4e, 0x43, 0x45, 0x5f, 0x55,
+	0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x23, 0x0a, 0x1f,
+	0x44, 0x45, 0x47, 0x52, 0x41, 0x44, 0x41, 0x54, 0x49, 0x4f, 0x4e, 0x5f, 0x50, 0x52, 0x45, 0x46,
+	0x45, 0x52, 0x45, 0x4e, 0x43, 0x45, 0x5f, 0x42, 0x41, 0x4c, 0x41, 0x4e, 0x43, 0x45, 0x44, 0x10,
+	0x01, 0x12, 0x2d, 0x0a, 0x29, 0x44, 0x45, 0x47, 0x52, 0x41, 0x44, 0x41, 0x54, 0x49, 0x4f, 0x4e,
+	0x5f, 0x50, 0x52, 0x45, 0x46, 0x45, 0x52, 0x45, 0x4e, 0x43, 0x45, 0x5f, 0x4d, 0x41, 0x49, 0x4e,
+	0x54, 0x41, 0x49, 0x4e, 0x5f, 0x46, 0x52, 0x41, 0x4d, 0x45, 0x52, 0x41, 0x54, 0x45, 0x10, 0x02,
+	0x12, 0x2e, 0x0a, 0x2a, 0x44, 0x45, 0x47, 0x52, 0x41, 0x44, 0x41, 0x54, 0x49, 0x4f, 0x4e, 0x5f,
+	0x50, 0x52, 0x45, 0x46, 0x45, 0x52, 0x45, 0x4e, 0x43, 0x45, 0x5f, 0x4d, 0x41, 0x49, 0x4e, 0x54,
+	0x41, 0x49, 0x4e, 0x5f, 0x52, 0x45, 0x53, 0x4f, 0x4c, 0x55, 0x54, 0x49, 0x4f, 0x4e, 0x10, 0x03,
+	0x12, 0x3c, 0x0a, 0x38, 0x44, 0x45, 0x47, 0x52, 0x41, 0x44, 0x41, 0x54, 0x49, 0x4f, 0x4e, 0x5f,
+	0x50, 0x52, 0x45, 0x46, 0x45, 0x52, 0x45, 0x4e, 0x43, 0x45, 0x5f, 0x4d, 0x41, 0x49, 0x4e, 0x54,
+	0x41, 0x49, 0x4e, 0x5f, 0x46, 0x52, 0x41, 0x4d, 0x45, 0x52, 0x41, 0x54, 0x45, 0x5f, 0x41, 0x4e,
+	0x44, 0x5f, 0x52, 0x45, 0x53, 0x4f, 0x4c, 0x55, 0x54, 0x49, 0x4f, 0x4e, 0x10, 0x04, 0x42, 0x65,
+	0x42, 0x0b, 0x53, 0x66, 0x75, 0x4d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x56, 0x31, 0x50, 0x01, 0x5a,
+	0x37, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x47, 0x65, 0x74, 0x53,
+	0x74, 0x72, 0x65, 0x61, 0x6d, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x2f, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2f, 0x76, 0x69, 0x64, 0x65, 0x6f, 0x2f, 0x73, 0x66,
+	0x75, 0x2f, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0xaa, 0x02, 0x1a, 0x53, 0x74, 0x72, 0x65, 0x61,
+	0x6d, 0x2e, 0x56, 0x69, 0x64, 0x65, 0x6f, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x66, 0x75, 0x2e, 0x4d,
+	0x6f, 0x64, 0x65, 0x6c, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -3953,7 +4026,7 @@ func file_video_sfu_models_models_proto_rawDescGZIP() []byte {
 	return file_video_sfu_models_models_proto_rawDescData
 }
 
-var file_video_sfu_models_models_proto_enumTypes = make([]protoimpl.EnumInfo, 15)
+var file_video_sfu_models_models_proto_enumTypes = make([]protoimpl.EnumInfo, 16)
 var file_video_sfu_models_models_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
 var file_video_sfu_models_models_proto_goTypes = []interface{}{
 	(PeerType)(0),                   // 0: stream.video.sfu.models.PeerType
@@ -3971,82 +4044,83 @@ var file_video_sfu_models_models_proto_goTypes = []interface{}{
 	(AndroidThermalState)(0),        // 12: stream.video.sfu.models.AndroidThermalState
 	(AppleThermalState)(0),          // 13: stream.video.sfu.models.AppleThermalState
 	(ClientCapability)(0),           // 14: stream.video.sfu.models.ClientCapability
-	(*CallState)(nil),               // 15: stream.video.sfu.models.CallState
-	(*ParticipantCount)(nil),        // 16: stream.video.sfu.models.ParticipantCount
-	(*Pin)(nil),                     // 17: stream.video.sfu.models.Pin
-	(*Participant)(nil),             // 18: stream.video.sfu.models.Participant
-	(*StreamQuality)(nil),           // 19: stream.video.sfu.models.StreamQuality
-	(*VideoDimension)(nil),          // 20: stream.video.sfu.models.VideoDimension
-	(*VideoLayer)(nil),              // 21: stream.video.sfu.models.VideoLayer
-	(*SubscribeOption)(nil),         // 22: stream.video.sfu.models.SubscribeOption
-	(*PublishOption)(nil),           // 23: stream.video.sfu.models.PublishOption
-	(*Codec)(nil),                   // 24: stream.video.sfu.models.Codec
-	(*ICETrickle)(nil),              // 25: stream.video.sfu.models.ICETrickle
-	(*AudioBitrate)(nil),            // 26: stream.video.sfu.models.AudioBitrate
-	(*TrackInfo)(nil),               // 27: stream.video.sfu.models.TrackInfo
-	(*Error)(nil),                   // 28: stream.video.sfu.models.Error
-	(*ClientDetails)(nil),           // 29: stream.video.sfu.models.ClientDetails
-	(*Sdk)(nil),                     // 30: stream.video.sfu.models.Sdk
-	(*OS)(nil),                      // 31: stream.video.sfu.models.OS
-	(*Browser)(nil),                 // 32: stream.video.sfu.models.Browser
-	(*RTMPIngress)(nil),             // 33: stream.video.sfu.models.RTMPIngress
-	(*Device)(nil),                  // 34: stream.video.sfu.models.Device
-	(*Call)(nil),                    // 35: stream.video.sfu.models.Call
-	(*CallGrants)(nil),              // 36: stream.video.sfu.models.CallGrants
-	(*InputDevices)(nil),            // 37: stream.video.sfu.models.InputDevices
-	(*AndroidState)(nil),            // 38: stream.video.sfu.models.AndroidState
-	(*AppleState)(nil),              // 39: stream.video.sfu.models.AppleState
-	(*PerformanceStats)(nil),        // 40: stream.video.sfu.models.PerformanceStats
-	(*RtpBase)(nil),                 // 41: stream.video.sfu.models.RtpBase
-	(*InboundRtp)(nil),              // 42: stream.video.sfu.models.InboundRtp
-	(*OutboundRtp)(nil),             // 43: stream.video.sfu.models.OutboundRtp
-	(*RemoteInboundRtp)(nil),        // 44: stream.video.sfu.models.RemoteInboundRtp
-	(*RemoteOutboundRtp)(nil),       // 45: stream.video.sfu.models.RemoteOutboundRtp
-	(*timestamppb.Timestamp)(nil),   // 46: google.protobuf.Timestamp
-	(*structpb.Struct)(nil),         // 47: google.protobuf.Struct
+	(DegradationPreference)(0),      // 15: stream.video.sfu.models.DegradationPreference
+	(*CallState)(nil),               // 16: stream.video.sfu.models.CallState
+	(*ParticipantCount)(nil),        // 17: stream.video.sfu.models.ParticipantCount
+	(*Pin)(nil),                     // 18: stream.video.sfu.models.Pin
+	(*Participant)(nil),             // 19: stream.video.sfu.models.Participant
+	(*StreamQuality)(nil),           // 20: stream.video.sfu.models.StreamQuality
+	(*VideoDimension)(nil),          // 21: stream.video.sfu.models.VideoDimension
+	(*VideoLayer)(nil),              // 22: stream.video.sfu.models.VideoLayer
+	(*SubscribeOption)(nil),         // 23: stream.video.sfu.models.SubscribeOption
+	(*PublishOption)(nil),           // 24: stream.video.sfu.models.PublishOption
+	(*Codec)(nil),                   // 25: stream.video.sfu.models.Codec
+	(*ICETrickle)(nil),              // 26: stream.video.sfu.models.ICETrickle
+	(*AudioBitrate)(nil),            // 27: stream.video.sfu.models.AudioBitrate
+	(*TrackInfo)(nil),               // 28: stream.video.sfu.models.TrackInfo
+	(*Error)(nil),                   // 29: stream.video.sfu.models.Error
+	(*ClientDetails)(nil),           // 30: stream.video.sfu.models.ClientDetails
+	(*Sdk)(nil),                     // 31: stream.video.sfu.models.Sdk
+	(*OS)(nil),                      // 32: stream.video.sfu.models.OS
+	(*Browser)(nil),                 // 33: stream.video.sfu.models.Browser
+	(*RTMPIngress)(nil),             // 34: stream.video.sfu.models.RTMPIngress
+	(*Device)(nil),                  // 35: stream.video.sfu.models.Device
+	(*Call)(nil),                    // 36: stream.video.sfu.models.Call
+	(*CallGrants)(nil),              // 37: stream.video.sfu.models.CallGrants
+	(*InputDevices)(nil),            // 38: stream.video.sfu.models.InputDevices
+	(*AndroidState)(nil),            // 39: stream.video.sfu.models.AndroidState
+	(*AppleState)(nil),              // 40: stream.video.sfu.models.AppleState
+	(*PerformanceStats)(nil),        // 41: stream.video.sfu.models.PerformanceStats
+	(*RtpBase)(nil),                 // 42: stream.video.sfu.models.RtpBase
+	(*InboundRtp)(nil),              // 43: stream.video.sfu.models.InboundRtp
+	(*OutboundRtp)(nil),             // 44: stream.video.sfu.models.OutboundRtp
+	(*RemoteInboundRtp)(nil),        // 45: stream.video.sfu.models.RemoteInboundRtp
+	(*RemoteOutboundRtp)(nil),       // 46: stream.video.sfu.models.RemoteOutboundRtp
+	(*timestamppb.Timestamp)(nil),   // 47: google.protobuf.Timestamp
+	(*structpb.Struct)(nil),         // 48: google.protobuf.Struct
 }
 var file_video_sfu_models_models_proto_depIdxs = []int32{
-	18, // 0: stream.video.sfu.models.CallState.participants:type_name -> stream.video.sfu.models.Participant
-	46, // 1: stream.video.sfu.models.CallState.started_at:type_name -> google.protobuf.Timestamp
-	16, // 2: stream.video.sfu.models.CallState.participant_count:type_name -> stream.video.sfu.models.ParticipantCount
-	17, // 3: stream.video.sfu.models.CallState.pins:type_name -> stream.video.sfu.models.Pin
+	19, // 0: stream.video.sfu.models.CallState.participants:type_name -> stream.video.sfu.models.Participant
+	47, // 1: stream.video.sfu.models.CallState.started_at:type_name -> google.protobuf.Timestamp
+	17, // 2: stream.video.sfu.models.CallState.participant_count:type_name -> stream.video.sfu.models.ParticipantCount
+	18, // 3: stream.video.sfu.models.CallState.pins:type_name -> stream.video.sfu.models.Pin
 	3,  // 4: stream.video.sfu.models.Participant.published_tracks:type_name -> stream.video.sfu.models.TrackType
-	46, // 5: stream.video.sfu.models.Participant.joined_at:type_name -> google.protobuf.Timestamp
+	47, // 5: stream.video.sfu.models.Participant.joined_at:type_name -> google.protobuf.Timestamp
 	1,  // 6: stream.video.sfu.models.Participant.connection_quality:type_name -> stream.video.sfu.models.ConnectionQuality
-	47, // 7: stream.video.sfu.models.Participant.custom:type_name -> google.protobuf.Struct
+	48, // 7: stream.video.sfu.models.Participant.custom:type_name -> google.protobuf.Struct
 	4,  // 8: stream.video.sfu.models.Participant.source:type_name -> stream.video.sfu.models.ParticipantSource
 	2,  // 9: stream.video.sfu.models.StreamQuality.video_quality:type_name -> stream.video.sfu.models.VideoQuality
-	20, // 10: stream.video.sfu.models.VideoLayer.video_dimension:type_name -> stream.video.sfu.models.VideoDimension
+	21, // 10: stream.video.sfu.models.VideoLayer.video_dimension:type_name -> stream.video.sfu.models.VideoDimension
 	2,  // 11: stream.video.sfu.models.VideoLayer.quality:type_name -> stream.video.sfu.models.VideoQuality
 	3,  // 12: stream.video.sfu.models.SubscribeOption.track_type:type_name -> stream.video.sfu.models.TrackType
-	24, // 13: stream.video.sfu.models.SubscribeOption.codecs:type_name -> stream.video.sfu.models.Codec
+	25, // 13: stream.video.sfu.models.SubscribeOption.codecs:type_name -> stream.video.sfu.models.Codec
 	3,  // 14: stream.video.sfu.models.PublishOption.track_type:type_name -> stream.video.sfu.models.TrackType
-	24, // 15: stream.video.sfu.models.PublishOption.codec:type_name -> stream.video.sfu.models.Codec
-	20, // 16: stream.video.sfu.models.PublishOption.video_dimension:type_name -> stream.video.sfu.models.VideoDimension
-	26, // 17: stream.video.sfu.models.PublishOption.audio_bitrate_profiles:type_name -> stream.video.sfu.models.AudioBitrate
+	25, // 15: stream.video.sfu.models.PublishOption.codec:type_name -> stream.video.sfu.models.Codec
+	21, // 16: stream.video.sfu.models.PublishOption.video_dimension:type_name -> stream.video.sfu.models.VideoDimension
+	27, // 17: stream.video.sfu.models.PublishOption.audio_bitrate_profiles:type_name -> stream.video.sfu.models.AudioBitrate
 	0,  // 18: stream.video.sfu.models.ICETrickle.peer_type:type_name -> stream.video.sfu.models.PeerType
 	5,  // 19: stream.video.sfu.models.AudioBitrate.profile:type_name -> stream.video.sfu.models.AudioBitrateProfile
 	3,  // 20: stream.video.sfu.models.TrackInfo.track_type:type_name -> stream.video.sfu.models.TrackType
-	21, // 21: stream.video.sfu.models.TrackInfo.layers:type_name -> stream.video.sfu.models.VideoLayer
-	24, // 22: stream.video.sfu.models.TrackInfo.codec:type_name -> stream.video.sfu.models.Codec
+	22, // 21: stream.video.sfu.models.TrackInfo.layers:type_name -> stream.video.sfu.models.VideoLayer
+	25, // 22: stream.video.sfu.models.TrackInfo.codec:type_name -> stream.video.sfu.models.Codec
 	6,  // 23: stream.video.sfu.models.Error.code:type_name -> stream.video.sfu.models.ErrorCode
-	30, // 24: stream.video.sfu.models.ClientDetails.sdk:type_name -> stream.video.sfu.models.Sdk
-	31, // 25: stream.video.sfu.models.ClientDetails.os:type_name -> stream.video.sfu.models.OS
-	32, // 26: stream.video.sfu.models.ClientDetails.browser:type_name -> stream.video.sfu.models.Browser
-	34, // 27: stream.video.sfu.models.ClientDetails.device:type_name -> stream.video.sfu.models.Device
+	31, // 24: stream.video.sfu.models.ClientDetails.sdk:type_name -> stream.video.sfu.models.Sdk
+	32, // 25: stream.video.sfu.models.ClientDetails.os:type_name -> stream.video.sfu.models.OS
+	33, // 26: stream.video.sfu.models.ClientDetails.browser:type_name -> stream.video.sfu.models.Browser
+	35, // 27: stream.video.sfu.models.ClientDetails.device:type_name -> stream.video.sfu.models.Device
 	7,  // 28: stream.video.sfu.models.Sdk.type:type_name -> stream.video.sfu.models.SdkType
-	47, // 29: stream.video.sfu.models.Call.custom:type_name -> google.protobuf.Struct
-	46, // 30: stream.video.sfu.models.Call.created_at:type_name -> google.protobuf.Timestamp
-	46, // 31: stream.video.sfu.models.Call.updated_at:type_name -> google.protobuf.Timestamp
+	48, // 29: stream.video.sfu.models.Call.custom:type_name -> google.protobuf.Struct
+	47, // 30: stream.video.sfu.models.Call.created_at:type_name -> google.protobuf.Timestamp
+	47, // 31: stream.video.sfu.models.Call.updated_at:type_name -> google.protobuf.Timestamp
 	12, // 32: stream.video.sfu.models.AndroidState.thermal_state:type_name -> stream.video.sfu.models.AndroidThermalState
 	13, // 33: stream.video.sfu.models.AppleState.thermal_state:type_name -> stream.video.sfu.models.AppleThermalState
 	3,  // 34: stream.video.sfu.models.PerformanceStats.track_type:type_name -> stream.video.sfu.models.TrackType
-	24, // 35: stream.video.sfu.models.PerformanceStats.codec:type_name -> stream.video.sfu.models.Codec
-	20, // 36: stream.video.sfu.models.PerformanceStats.video_dimension:type_name -> stream.video.sfu.models.VideoDimension
-	41, // 37: stream.video.sfu.models.InboundRtp.base:type_name -> stream.video.sfu.models.RtpBase
-	41, // 38: stream.video.sfu.models.OutboundRtp.base:type_name -> stream.video.sfu.models.RtpBase
-	41, // 39: stream.video.sfu.models.RemoteInboundRtp.base:type_name -> stream.video.sfu.models.RtpBase
-	41, // 40: stream.video.sfu.models.RemoteOutboundRtp.base:type_name -> stream.video.sfu.models.RtpBase
+	25, // 35: stream.video.sfu.models.PerformanceStats.codec:type_name -> stream.video.sfu.models.Codec
+	21, // 36: stream.video.sfu.models.PerformanceStats.video_dimension:type_name -> stream.video.sfu.models.VideoDimension
+	42, // 37: stream.video.sfu.models.InboundRtp.base:type_name -> stream.video.sfu.models.RtpBase
+	42, // 38: stream.video.sfu.models.OutboundRtp.base:type_name -> stream.video.sfu.models.RtpBase
+	42, // 39: stream.video.sfu.models.RemoteInboundRtp.base:type_name -> stream.video.sfu.models.RtpBase
+	42, // 40: stream.video.sfu.models.RemoteOutboundRtp.base:type_name -> stream.video.sfu.models.RtpBase
 	41, // [41:41] is the sub-list for method output_type
 	41, // [41:41] is the sub-list for method input_type
 	41, // [41:41] is the sub-list for extension type_name
@@ -4438,7 +4512,7 @@ func file_video_sfu_models_models_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_video_sfu_models_models_proto_rawDesc,
-			NumEnums:      15,
+			NumEnums:      16,
 			NumMessages:   31,
 			NumExtensions: 0,
 			NumServices:   0,
