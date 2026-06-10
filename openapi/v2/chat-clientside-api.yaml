@@ -374,7 +374,7 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "011"
+          x-stream-index: "012"
         created_at:
           description: Timestamp when the action was taken
           format: date-time
@@ -386,7 +386,7 @@ components:
           description: Additional metadata about the action
           title: Custom
           type: object
-          x-stream-index: "007"
+          x-stream-index: "008"
         id:
           description: Unique identifier of the action log
           title: ID
@@ -396,22 +396,28 @@ components:
           description: Reason for the moderation action
           title: Reason
           type: string
+          x-stream-index: "007"
+        reporter_type:
+          description: Classification of who triggered the action (e.g. user, moderator,
+            automod, api_integration)
+          title: Reporter Type
+          type: string
           x-stream-index: "006"
         review_queue_item:
           $ref: '#/components/schemas/ReviewQueueItemResponse'
           description: Associated review queue item
           title: Review Queue Item
-          x-stream-index: "008"
+          x-stream-index: "009"
         target_user:
           $ref: '#/components/schemas/UserResponse'
           description: User who was the target of the action
           title: Target User
-          x-stream-index: "009"
+          x-stream-index: "010"
         target_user_id:
           description: ID of the user who was the target of the action
           title: Target User ID
           type: string
-          x-stream-index: "010"
+          x-stream-index: "011"
         type:
           description: Type of moderation action
           title: Type
@@ -432,6 +438,7 @@ components:
       - created_at
       - type
       - user_id
+      - reporter_type
       - reason
       - custom
       - target_user_id
@@ -615,6 +622,7 @@ components:
       - user_response_time_enabled
       - moderation_llm_configurability_enabled
       - max_aggregated_activities_length
+      - feed_audit_logs_enabled
       - moderation_video_call_moderation_enabled
       - moderation_audio_call_moderation_enabled
       type: object
@@ -857,41 +865,6 @@ components:
       title: Attachment
       type: object
       x-stream-docs-page-id: file_uploads
-    AudioSettingsResponse:
-      properties:
-        access_request_enabled:
-          type: boolean
-          x-stream-index: "001"
-        default_device:
-          type: string
-          x-stream-index: "002"
-        hifi_audio_enabled:
-          type: boolean
-          x-stream-index: "003"
-        mic_default_on:
-          type: boolean
-          x-stream-index: "004"
-        noise_cancellation:
-          $ref: '#/components/schemas/NoiseCancellationSettings'
-          x-stream-index: "008"
-        opus_dtx_enabled:
-          type: boolean
-          x-stream-index: "005"
-        redundant_coding_enabled:
-          type: boolean
-          x-stream-index: "006"
-        speaker_default_on:
-          type: boolean
-          x-stream-index: "007"
-      required:
-      - access_request_enabled
-      - default_device
-      - hifi_audio_enabled
-      - mic_default_on
-      - opus_dtx_enabled
-      - redundant_coding_enabled
-      - speaker_default_on
-      type: object
     AutomodDetailsResponse:
       properties:
         action:
@@ -1014,18 +987,6 @@ components:
       required:
       - enabled
       - rules
-      type: object
-    BackstageSettingsResponse:
-      properties:
-        enabled:
-          type: boolean
-          x-stream-index: "001"
-        join_ahead_time_seconds:
-          format: int32
-          type: integer
-          x-stream-index: "002"
-      required:
-      - enabled
       type: object
     BanActionRequestPayload:
       description: Configuration for ban moderation action
@@ -1430,10 +1391,25 @@ components:
       - blocked_user_id
       - created_at
       type: object
+    BodyguardProfileSummary:
+      properties:
+        display_name:
+          type: string
+          x-stream-index: "002"
+        name:
+          type: string
+          x-stream-index: "001"
+        text_type:
+          type: string
+          x-stream-index: "003"
+      required:
+      - name
+      type: object
     BodyguardRule:
       properties:
         action:
           enum:
+          - keep
           - flag
           - shadow
           - remove
@@ -1479,21 +1455,67 @@ components:
       - severity
       - action
       type: object
-    BroadcastSettingsResponse:
+    BulkDeleteActionConfigRequest:
+      nullable: true
       properties:
-        enabled:
-          type: boolean
+        ids:
+          description: UUIDs of the action configs to delete
+          items:
+            type: string
+          minItems: 1
+          title: IDs
+          type: array
           x-stream-index: "001"
-        hls:
-          $ref: '#/components/schemas/HLSSettingsResponse'
-          x-stream-index: "002"
-        rtmp:
-          $ref: '#/components/schemas/RTMPSettingsResponse'
-          x-stream-index: "003"
       required:
-      - enabled
-      - hls
-      - rtmp
+      - ids
+      type: object
+    BulkDeleteActionConfigResponse:
+      nullable: true
+      properties:
+        deleted:
+          description: Number of action configs deleted
+          format: int32
+          title: Deleted
+          type: integer
+          x-stream-index: "001"
+        duration:
+          type: string
+          x-stream-index: "002.001"
+      required:
+      - deleted
+      - duration
+      type: object
+    BulkUpsertActionConfigRequest:
+      nullable: true
+      properties:
+        action_configs:
+          description: List of action configs to create or update
+          items:
+            $ref: '#/components/schemas/UpsertActionConfigItem'
+          minItems: 1
+          title: Action Configs
+          type: array
+          x-stream-index: "001"
+      required:
+      - action_configs
+      type: object
+    BulkUpsertActionConfigResponse:
+      nullable: true
+      properties:
+        action_configs:
+          description: The created or updated action configs in the same order as
+            the request
+          items:
+            $ref: '#/components/schemas/ModerationActionConfigResponse'
+          title: Action Configs
+          type: array
+          x-stream-index: "001"
+        duration:
+          type: string
+          x-stream-index: "002.001"
+      required:
+      - action_configs
+      - duration
       type: object
     BypassActionRequest:
       properties:
@@ -1535,141 +1557,90 @@ components:
           type: string
           x-stream-index: "001"
       type: object
-    CallIngressResponse:
-      properties:
-        rtmp:
-          $ref: '#/components/schemas/RTMPIngress'
-          x-stream-index: "001"
-        srt:
-          $ref: '#/components/schemas/SRTIngress'
-          x-stream-index: "002"
-        whip:
-          $ref: '#/components/schemas/WHIPIngress'
-          x-stream-index: "003"
-      required:
-      - rtmp
-      - srt
-      - whip
-      type: object
-    CallParticipantResponse:
-      properties:
-        joined_at:
-          $ref: '#/components/schemas/Timestamp'
-          x-stream-index: "001"
-        role:
-          type: string
-          x-stream-index: "002"
-        user:
-          $ref: '#/components/schemas/UserResponse'
-          x-stream-index: "004"
-        user_session_id:
-          type: string
-          x-stream-index: "003"
-      required:
-      - joined_at
-      - role
-      - user_session_id
-      - user
-      type: object
     CallResponse:
       properties:
         backstage:
           type: boolean
-          x-stream-index: "001"
+          x-stream-index: "007"
         blocked_user_ids:
           items:
             type: string
           type: array
-          x-stream-index: "012"
+          x-stream-index: "009"
         captioning:
           type: boolean
-          x-stream-index: "002"
+          x-stream-index: "017"
         channel_cid:
           type: string
-          x-stream-index: "018"
+          x-stream-index: "014"
         cid:
           type: string
-          x-stream-index: "003"
+          x-stream-index: "001"
         created_at:
-          $ref: '#/components/schemas/Timestamp'
+          format: date-time
+          type: number
           x-stream-index: "004"
         created_by:
           $ref: '#/components/schemas/UserResponse'
-          x-stream-index: "013"
+          x-stream-index: "010"
         current_session_id:
           type: string
-          x-stream-index: "005"
+          x-stream-index: "006"
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "014"
-        egress:
-          $ref: '#/components/schemas/EgressResponse'
-          x-stream-index: "015"
+          x-stream-index: "008"
         ended_at:
-          $ref: '#/components/schemas/Timestamp'
-          x-stream-index: "019"
+          format: date-time
+          type: number
+          x-stream-index: "011"
         id:
           type: string
-          x-stream-index: "006"
-        ingress:
-          $ref: '#/components/schemas/CallIngressResponse'
-          x-stream-index: "016"
+          x-stream-index: "002"
         join_ahead_time_seconds:
           format: int32
           type: integer
-          x-stream-index: "020"
+          x-stream-index: "019"
         recording:
           type: boolean
-          x-stream-index: "007"
+          x-stream-index: "015"
         routing_number:
           type: string
-          x-stream-index: "021"
-        session:
-          $ref: '#/components/schemas/CallSessionResponse'
-          x-stream-index: "024"
-        settings:
-          $ref: '#/components/schemas/CallSettingsResponse'
-          x-stream-index: "017"
+          x-stream-index: "020"
         starts_at:
-          $ref: '#/components/schemas/Timestamp'
-          x-stream-index: "022"
+          format: date-time
+          type: number
+          x-stream-index: "012"
         team:
           type: string
-          x-stream-index: "023"
-        thumbnails:
-          $ref: '#/components/schemas/ThumbnailResponse'
-          x-stream-index: "025"
+          x-stream-index: "013"
         transcribing:
           type: boolean
-          x-stream-index: "008"
+          x-stream-index: "016"
         translating:
           type: boolean
-          x-stream-index: "009"
+          x-stream-index: "018"
         type:
           type: string
-          x-stream-index: "011"
+          x-stream-index: "003"
         updated_at:
-          $ref: '#/components/schemas/Timestamp'
-          x-stream-index: "010"
+          format: date-time
+          type: number
+          x-stream-index: "005"
       required:
-      - backstage
-      - captioning
       - cid
-      - created_at
-      - current_session_id
       - id
+      - type
+      - created_at
+      - updated_at
+      - current_session_id
+      - backstage
+      - custom
+      - blocked_user_ids
       - recording
       - transcribing
+      - captioning
       - translating
-      - updated_at
-      - type
-      - blocked_user_ids
-      - created_by
-      - custom
-      - egress
-      - ingress
-      - settings
       type: object
     CallRuleActionSequence:
       properties:
@@ -1685,132 +1656,6 @@ components:
           format: int32
           type: integer
           x-stream-index: "001"
-      type: object
-    CallSessionResponse:
-      properties:
-        accepted_by:
-          additionalProperties:
-            $ref: '#/components/schemas/Timestamp'
-          type: object
-          x-stream-index: "004"
-        anonymous_participant_count:
-          format: int32
-          type: integer
-          x-stream-index: "001"
-        ended_at:
-          $ref: '#/components/schemas/Timestamp'
-          x-stream-index: "008"
-        id:
-          type: string
-          x-stream-index: "002"
-        live_ended_at:
-          $ref: '#/components/schemas/Timestamp'
-          x-stream-index: "009"
-        live_started_at:
-          $ref: '#/components/schemas/Timestamp'
-          x-stream-index: "010"
-        missed_by:
-          additionalProperties:
-            $ref: '#/components/schemas/Timestamp'
-          type: object
-          x-stream-index: "005"
-        participants:
-          items:
-            $ref: '#/components/schemas/CallParticipantResponse'
-          type: array
-          x-stream-index: "003"
-        participants_count_by_role:
-          additionalProperties:
-            format: int32
-            type: integer
-          type: object
-          x-stream-index: "006"
-        rejected_by:
-          additionalProperties:
-            $ref: '#/components/schemas/Timestamp'
-          type: object
-          x-stream-index: "007"
-        started_at:
-          $ref: '#/components/schemas/Timestamp'
-          x-stream-index: "011"
-        timer_ends_at:
-          $ref: '#/components/schemas/Timestamp'
-          x-stream-index: "012"
-      required:
-      - anonymous_participant_count
-      - id
-      - participants
-      - accepted_by
-      - missed_by
-      - participants_count_by_role
-      - rejected_by
-      type: object
-    CallSettingsResponse:
-      properties:
-        audio:
-          $ref: '#/components/schemas/AudioSettingsResponse'
-          x-stream-index: "001"
-        backstage:
-          $ref: '#/components/schemas/BackstageSettingsResponse'
-          x-stream-index: "002"
-        broadcasting:
-          $ref: '#/components/schemas/BroadcastSettingsResponse'
-          x-stream-index: "003"
-        frame_recording:
-          $ref: '#/components/schemas/FrameRecordingSettingsResponse'
-          x-stream-index: "004"
-        geofencing:
-          $ref: '#/components/schemas/GeofenceSettingsResponse'
-          x-stream-index: "005"
-        individual_recording:
-          $ref: '#/components/schemas/IndividualRecordingSettingsResponse'
-          x-stream-index: "006"
-        ingress:
-          $ref: '#/components/schemas/IngressSettingsResponse'
-          x-stream-index: "016"
-        limits:
-          $ref: '#/components/schemas/LimitsSettingsResponse'
-          x-stream-index: "007"
-        raw_recording:
-          $ref: '#/components/schemas/RawRecordingSettingsResponse'
-          x-stream-index: "008"
-        recording:
-          $ref: '#/components/schemas/RecordSettingsResponse'
-          x-stream-index: "009"
-        ring:
-          $ref: '#/components/schemas/RingSettingsResponse'
-          x-stream-index: "010"
-        screensharing:
-          $ref: '#/components/schemas/ScreensharingSettingsResponse'
-          x-stream-index: "011"
-        session:
-          $ref: '#/components/schemas/SessionSettingsResponse'
-          x-stream-index: "012"
-        thumbnails:
-          $ref: '#/components/schemas/ThumbnailsSettingsResponse'
-          x-stream-index: "013"
-        transcription:
-          $ref: '#/components/schemas/TranscriptionSettingsResponse'
-          x-stream-index: "014"
-        video:
-          $ref: '#/components/schemas/VideoSettingsResponse'
-          x-stream-index: "015"
-      required:
-      - audio
-      - backstage
-      - broadcasting
-      - frame_recording
-      - geofencing
-      - individual_recording
-      - limits
-      - raw_recording
-      - recording
-      - ring
-      - screensharing
-      - session
-      - thumbnails
-      - transcription
-      - video
       type: object
     CallTypeRuleParameters:
       properties:
@@ -1859,6 +1704,11 @@ components:
           title: Commands
           type: array
           x-stream-index: "011"
+        count_messages:
+          description: Enable/disable message counting
+          title: Count messages
+          type: boolean
+          x-stream-index: "016"
         grants:
           additionalProperties:
             items:
@@ -1904,6 +1754,11 @@ components:
           title: Replies
           type: boolean
           x-stream-index: "003"
+        shared_locations:
+          description: Enable/disable shared locations
+          title: Shared locations
+          type: boolean
+          x-stream-index: "015"
         typing_events:
           description: Enables or disables typing events
           title: Typing events
@@ -1919,6 +1774,11 @@ components:
           title: URL Enrichment
           type: boolean
           x-stream-index: "006"
+        user_message_reminders:
+          description: Enable/disable user message reminders
+          title: User message reminders
+          type: boolean
+          x-stream-index: "014"
       type: object
     ChannelConfigWithInfo:
       properties:
@@ -2736,6 +2596,16 @@ components:
       - notifications_muted
       title: Channel member
       type: object
+    ChannelMessageCountRuleParameters:
+      properties:
+        operator:
+          type: string
+          x-stream-index: "002"
+        threshold:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+      type: object
     ChannelMute:
       nullable: true
       properties:
@@ -3472,6 +3342,329 @@ components:
       x-stream-is-event: true
       x-stream-throttle-group: ordered
       x-stream-ws-base-event-name: VideoEvent
+    ChatDraftPayloadResponse:
+      properties:
+        attachments:
+          items:
+            $ref: '#/components/schemas/Attachment'
+          type: array
+          x-stream-index: "004"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "007"
+        html:
+          type: string
+          x-stream-index: "010"
+        id:
+          type: string
+          x-stream-index: "001"
+        mentioned_users:
+          items:
+            $ref: '#/components/schemas/UserResponse'
+          type: array
+          x-stream-index: "008"
+        mml:
+          type: string
+          x-stream-index: "003"
+        parent_id:
+          type: string
+          x-stream-index: "005"
+        poll_id:
+          type: string
+          x-stream-index: "013"
+        quoted_message_id:
+          type: string
+          x-stream-index: "009"
+        show_in_channel:
+          type: boolean
+          x-stream-index: "006"
+        silent:
+          type: boolean
+          x-stream-index: "012"
+        text:
+          type: string
+          x-stream-index: "002"
+        type:
+          type: string
+          x-stream-index: "011"
+      required:
+      - id
+      - text
+      - custom
+      type: object
+    ChatDraftResponse:
+      properties:
+        channel_cid:
+          type: string
+          x-stream-index: "002"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "006"
+        message:
+          $ref: '#/components/schemas/ChatDraftPayloadResponse'
+          x-stream-index: "001"
+        parent_id:
+          type: string
+          x-stream-index: "003"
+        parent_message:
+          $ref: '#/components/schemas/ChatMessageResponse'
+          x-stream-index: "004"
+        quoted_message:
+          $ref: '#/components/schemas/ChatMessageResponse'
+          x-stream-index: "005"
+      required:
+      - message
+      - channel_cid
+      - created_at
+      type: object
+    ChatMessageResponse:
+      properties:
+        attachments:
+          items:
+            $ref: '#/components/schemas/Attachment'
+          type: array
+          x-stream-index: "009"
+        cid:
+          type: string
+          x-stream-index: "022"
+        command:
+          type: string
+          x-stream-index: "004"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "023"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "026"
+        deleted_at:
+          format: date-time
+          type: number
+          x-stream-index: "025"
+        deleted_for_me:
+          type: boolean
+          x-stream-index: "048"
+        deleted_reply_count:
+          format: int32
+          type: integer
+          x-stream-index: "018"
+        draft:
+          $ref: '#/components/schemas/ChatDraftResponse'
+          x-stream-index: "045"
+        html:
+          type: string
+          x-stream-index: "005"
+        i18n:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "034"
+        id:
+          type: string
+          x-stream-index: "001"
+        image_labels:
+          additionalProperties:
+            items:
+              type: string
+            type: array
+          type: object
+          x-stream-index: "028"
+        latest_reactions:
+          items:
+            $ref: '#/components/schemas/ChatReactionResponse'
+          type: array
+          x-stream-index: "010"
+        member:
+          $ref: '#/components/schemas/ChannelMemberResponse'
+          x-stream-index: "008"
+        mentioned_channel:
+          type: boolean
+          x-stream-index: "032"
+        mentioned_group_ids:
+          items:
+            type: string
+          type: array
+          x-stream-index: "031"
+        mentioned_here:
+          type: boolean
+          x-stream-index: "033"
+        mentioned_roles:
+          items:
+            type: string
+          type: array
+          x-stream-index: "030"
+        mentioned_users:
+          items:
+            $ref: '#/components/schemas/UserResponse'
+          type: array
+          x-stream-index: "029"
+        message_text_updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "040"
+        mml:
+          type: string
+          x-stream-index: "003"
+        moderation:
+          $ref: '#/components/schemas/ChatModerationV2Response'
+          x-stream-index: "043"
+        own_reactions:
+          items:
+            $ref: '#/components/schemas/ChatReactionResponse'
+          type: array
+          x-stream-index: "011"
+        parent_id:
+          type: string
+          x-stream-index: "015"
+        pin_expires:
+          format: date-time
+          type: number
+          x-stream-index: "039"
+        pinned:
+          type: boolean
+          x-stream-index: "036"
+        pinned_at:
+          format: date-time
+          type: number
+          x-stream-index: "037"
+        pinned_by:
+          $ref: '#/components/schemas/UserResponse'
+          x-stream-index: "038"
+        poll:
+          $ref: '#/components/schemas/PollResponseData'
+          x-stream-index: "042"
+        poll_id:
+          type: string
+          x-stream-index: "041"
+        quoted_message:
+          $ref: '#/components/schemas/ChatMessageResponse'
+          x-stream-index: "020"
+        quoted_message_id:
+          type: string
+          x-stream-index: "019"
+        reaction_counts:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "012"
+        reaction_groups:
+          additionalProperties:
+            $ref: '#/components/schemas/ChatReactionGroupResponse'
+          type: object
+          x-stream-index: "014"
+        reaction_scores:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "013"
+        reminder:
+          $ref: '#/components/schemas/ChatReminderResponseData'
+          x-stream-index: "046"
+        reply_count:
+          format: int32
+          type: integer
+          x-stream-index: "017"
+        restricted_visibility:
+          items:
+            type: string
+          type: array
+          x-stream-index: "044"
+        shadowed:
+          type: boolean
+          x-stream-index: "027"
+        shared_location:
+          $ref: '#/components/schemas/ChatSharedLocationResponseData'
+          x-stream-index: "047"
+        show_in_channel:
+          type: boolean
+          x-stream-index: "016"
+        silent:
+          type: boolean
+          x-stream-index: "035"
+        text:
+          type: string
+          x-stream-index: "002"
+        thread_participants:
+          items:
+            $ref: '#/components/schemas/UserResponse'
+          type: array
+          x-stream-index: "021"
+        type:
+          type: string
+          x-stream-index: "006"
+        updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "024"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          x-stream-index: "007"
+      required:
+      - id
+      - text
+      - html
+      - type
+      - user
+      - attachments
+      - latest_reactions
+      - own_reactions
+      - reaction_counts
+      - reaction_scores
+      - reply_count
+      - deleted_reply_count
+      - cid
+      - created_at
+      - updated_at
+      - custom
+      - shadowed
+      - mentioned_users
+      - mentioned_channel
+      - mentioned_here
+      - silent
+      - pinned
+      - restricted_visibility
+      type: object
+    ChatModerationV2Response:
+      properties:
+        action:
+          type: string
+          x-stream-index: "001"
+        blocklist_matched:
+          type: string
+          x-stream-index: "005"
+        blocklists_matched:
+          items:
+            type: string
+          type: array
+          x-stream-index: "006"
+        image_harms:
+          items:
+            type: string
+          type: array
+          x-stream-index: "004"
+        original_text:
+          type: string
+          x-stream-index: "002"
+        platform_circumvented:
+          type: boolean
+          x-stream-index: "008"
+        semantic_filter_matched:
+          type: string
+          x-stream-index: "007"
+        text_harms:
+          items:
+            type: string
+          type: array
+          x-stream-index: "003"
+      required:
+      - action
+      - original_text
+      type: object
     ChatPreferences:
       properties:
         channel_mentions:
@@ -3568,6 +3761,176 @@ components:
           type: string
           x-stream-index: "005"
       type: object
+    ChatReactionGroupResponse:
+      nullable: true
+      properties:
+        count:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+        first_reaction_at:
+          format: date-time
+          type: number
+          x-stream-index: "003"
+        last_reaction_at:
+          format: date-time
+          type: number
+          x-stream-index: "004"
+        latest_reactions_by:
+          items:
+            $ref: '#/components/schemas/ChatReactionGroupUserResponse'
+          type: array
+          x-stream-index: "005"
+        sum_scores:
+          format: int32
+          type: integer
+          x-stream-index: "002"
+      required:
+      - count
+      - sum_scores
+      - first_reaction_at
+      - last_reaction_at
+      - latest_reactions_by
+      type: object
+    ChatReactionGroupUserResponse:
+      properties:
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "003"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          x-stream-index: "002"
+        user_id:
+          type: string
+          x-stream-index: "001"
+      required:
+      - user_id
+      - created_at
+      type: object
+    ChatReactionResponse:
+      properties:
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "006"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "008"
+        message_id:
+          type: string
+          x-stream-index: "001"
+        score:
+          format: int32
+          type: integer
+          x-stream-index: "005"
+        type:
+          type: string
+          x-stream-index: "004"
+        updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "007"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          x-stream-index: "003"
+        user_id:
+          type: string
+          x-stream-index: "002"
+      required:
+      - message_id
+      - user_id
+      - user
+      - type
+      - score
+      - created_at
+      - updated_at
+      - custom
+      type: object
+    ChatReminderResponseData:
+      properties:
+        channel_cid:
+          type: string
+          x-stream-index: "002"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "007"
+        message:
+          $ref: '#/components/schemas/ChatMessageResponse'
+          x-stream-index: "004"
+        message_id:
+          type: string
+          x-stream-index: "003"
+        remind_at:
+          format: date-time
+          type: number
+          x-stream-index: "001"
+        updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "008"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          x-stream-index: "006"
+        user_id:
+          type: string
+          x-stream-index: "005"
+      required:
+      - channel_cid
+      - message_id
+      - user_id
+      - created_at
+      - updated_at
+      type: object
+    ChatSharedLocationResponseData:
+      properties:
+        channel_cid:
+          type: string
+          x-stream-index: "001"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "008"
+        created_by_device_id:
+          type: string
+          x-stream-index: "006"
+        end_at:
+          format: date-time
+          type: number
+          x-stream-index: "007"
+        latitude:
+          format: float
+          type: number
+          x-stream-index: "004"
+        longitude:
+          format: float
+          type: number
+          x-stream-index: "005"
+        message:
+          $ref: '#/components/schemas/ChatMessageResponse'
+          x-stream-index: "010"
+        message_id:
+          type: string
+          x-stream-index: "002"
+        updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "009"
+        user_id:
+          type: string
+          x-stream-index: "003"
+      required:
+      - channel_cid
+      - message_id
+      - user_id
+      - latitude
+      - longitude
+      - created_by_device_id
+      - created_at
+      - updated_at
+      type: object
     ClosedCaptionRuleParameters:
       properties:
         harm_labels:
@@ -3629,14 +3992,6 @@ components:
       - args
       - set
       title: Command
-      type: object
-    CompositeRecordingResponse:
-      properties:
-        status:
-          type: string
-          x-stream-index: "001"
-      required:
-      - status
       type: object
     ConfigOverridesRequest:
       description: Channel configuration overrides
@@ -3791,6 +4146,15 @@ components:
           description: Configuration for toxicity detection
           title: Automod Toxicity Config
           x-stream-index: "004"
+        available_bodyguard_profiles:
+          description: Names of Bodyguard credential profiles registered on this app.
+            The dashboard uses this list to render the profile picker on the AI Text
+            section.
+          items:
+            $ref: '#/components/schemas/BodyguardProfileSummary'
+          title: Available Bodyguard Profiles
+          type: array
+          x-stream-index: "019"
         block_list_config:
           $ref: '#/components/schemas/BlockListConfig'
           description: Configuration for block list filtering
@@ -4237,6 +4601,22 @@ components:
           x-stream-index: "001"
       required:
       - id
+      type: object
+    DeleteActionConfigResponse:
+      nullable: true
+      properties:
+        deleted:
+          description: Number of action configs deleted (0 or 1)
+          format: int32
+          title: Deleted
+          type: integer
+          x-stream-index: "001"
+        duration:
+          type: string
+          x-stream-index: "002.001"
+      required:
+      - deleted
+      - duration
       type: object
     DeleteActivityRequestPayload:
       description: Configuration for activity deletion action
@@ -4786,65 +5166,6 @@ components:
       x-stream-is-event: true
       x-stream-throttle-group: mergeable
       x-stream-ws-base-event-name: VideoEvent
-    EgressHLSResponse:
-      properties:
-        playlist_url:
-          type: string
-          x-stream-index: "001"
-        status:
-          type: string
-          x-stream-index: "002"
-      required:
-      - playlist_url
-      - status
-      type: object
-    EgressRTMPResponse:
-      properties:
-        name:
-          type: string
-          x-stream-index: "001"
-        started_at:
-          $ref: '#/components/schemas/Timestamp'
-          x-stream-index: "002"
-        stream_key:
-          type: string
-          x-stream-index: "003"
-        stream_url:
-          type: string
-          x-stream-index: "004"
-      required:
-      - name
-      - started_at
-      type: object
-    EgressResponse:
-      properties:
-        broadcasting:
-          type: boolean
-          x-stream-index: "001"
-        composite_recording:
-          $ref: '#/components/schemas/CompositeRecordingResponse'
-          x-stream-index: "003"
-        frame_recording:
-          $ref: '#/components/schemas/FrameRecordingResponse'
-          x-stream-index: "004"
-        hls:
-          $ref: '#/components/schemas/EgressHLSResponse'
-          x-stream-index: "005"
-        individual_recording:
-          $ref: '#/components/schemas/IndividualRecordingResponse'
-          x-stream-index: "006"
-        raw_recording:
-          $ref: '#/components/schemas/RawRecordingResponse'
-          x-stream-index: "007"
-        rtmps:
-          items:
-            $ref: '#/components/schemas/EgressRTMPResponse'
-          type: array
-          x-stream-index: "002"
-      required:
-      - broadcasting
-      - rtmps
-      type: object
     EnrichedActivity:
       properties:
         actor:
@@ -4897,41 +5218,6 @@ components:
         verb:
           type: string
           x-stream-index: "003"
-      type: object
-    EnrichedCollection:
-      properties:
-        created_at:
-          format: date-time
-          type: number
-          x-stream-index: "005"
-        custom:
-          additionalProperties: {}
-          type: object
-          x-stream-index: "003"
-        id:
-          type: string
-          x-stream-index: "002"
-        name:
-          type: string
-          x-stream-index: "001"
-        status:
-          type: string
-          x-stream-index: "007"
-        updated_at:
-          format: date-time
-          type: number
-          x-stream-index: "006"
-        user_id:
-          type: string
-          x-stream-index: "004"
-      required:
-      - name
-      - id
-      - custom
-      - user_id
-      - created_at
-      - updated_at
-      - status
       type: object
     EnrichedReaction:
       nullable: true
@@ -5163,6 +5449,276 @@ components:
       - duration
       title: Response
       type: object
+    FeedsActivityLocation:
+      properties:
+        lat:
+          format: float
+          type: number
+          x-stream-index: "001"
+        lng:
+          format: float
+          type: number
+          x-stream-index: "002"
+      required:
+      - lat
+      - lng
+      type: object
+    FeedsBookmarkResponse:
+      properties:
+        activity_id:
+          type: string
+          x-stream-index: "007"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "005"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "004"
+        object_id:
+          type: string
+          x-stream-index: "002"
+        object_type:
+          type: string
+          x-stream-index: "001"
+        updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "006"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          x-stream-index: "003"
+      required:
+      - object_type
+      - object_id
+      - user
+      - created_at
+      - updated_at
+      type: object
+    FeedsEnrichedCollectionResponse:
+      properties:
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "001.005"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "001.003"
+        id:
+          type: string
+          x-stream-index: "001.002"
+        name:
+          type: string
+          x-stream-index: "001.001"
+        status:
+          type: string
+          x-stream-index: "002"
+        updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "001.006"
+        user_id:
+          type: string
+          x-stream-index: "001.004"
+      required:
+      - name
+      - id
+      - custom
+      - user_id
+      - created_at
+      - updated_at
+      - status
+      type: object
+    FeedsFeedResponse:
+      properties:
+        activity_count:
+          format: int32
+          type: integer
+          x-stream-index: "014"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "016"
+        created_by:
+          $ref: '#/components/schemas/UserResponse'
+          x-stream-index: "010"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "006"
+        deleted_at:
+          format: date-time
+          type: number
+          x-stream-index: "018"
+        description:
+          type: string
+          x-stream-index: "005"
+        feed:
+          type: string
+          x-stream-index: "003"
+        filter_tags:
+          items:
+            type: string
+          type: array
+          x-stream-index: "008"
+        follower_count:
+          format: int32
+          type: integer
+          x-stream-index: "012"
+        following_count:
+          format: int32
+          type: integer
+          x-stream-index: "013"
+        group_id:
+          type: string
+          x-stream-index: "001"
+        id:
+          type: string
+          x-stream-index: "002"
+        location:
+          $ref: '#/components/schemas/FeedsActivityLocation'
+          x-stream-index: "007"
+        member_count:
+          format: int32
+          type: integer
+          x-stream-index: "011"
+        name:
+          type: string
+          x-stream-index: "004"
+        pin_count:
+          format: int32
+          type: integer
+          x-stream-index: "015"
+        updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "017"
+        visibility:
+          type: string
+          x-stream-index: "009"
+      required:
+      - group_id
+      - id
+      - feed
+      - name
+      - description
+      - created_by
+      - member_count
+      - follower_count
+      - following_count
+      - activity_count
+      - pin_count
+      - created_at
+      - updated_at
+      type: object
+    FeedsNotificationComment:
+      properties:
+        attachments:
+          items:
+            $ref: '#/components/schemas/Attachment'
+          type: array
+          x-stream-index: "004"
+        comment:
+          type: string
+          x-stream-index: "003"
+        id:
+          type: string
+          x-stream-index: "001"
+        user_id:
+          type: string
+          x-stream-index: "002"
+      required:
+      - id
+      - user_id
+      - comment
+      type: object
+    FeedsNotificationContext:
+      properties:
+        target:
+          $ref: '#/components/schemas/FeedsNotificationTarget'
+          x-stream-index: "002"
+        trigger:
+          $ref: '#/components/schemas/FeedsNotificationTrigger'
+          x-stream-index: "001"
+      type: object
+    FeedsNotificationParentActivity:
+      properties:
+        attachments:
+          items:
+            $ref: '#/components/schemas/Attachment'
+          type: array
+          x-stream-index: "005"
+        id:
+          type: string
+          x-stream-index: "001"
+        text:
+          type: string
+          x-stream-index: "004"
+        type:
+          type: string
+          x-stream-index: "003"
+        user_id:
+          type: string
+          x-stream-index: "002"
+      required:
+      - id
+      type: object
+    FeedsNotificationTarget:
+      properties:
+        attachments:
+          items:
+            $ref: '#/components/schemas/Attachment'
+          type: array
+          x-stream-index: "005"
+        comment:
+          $ref: '#/components/schemas/FeedsNotificationComment'
+          x-stream-index: "007"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "009"
+        id:
+          type: string
+          x-stream-index: "001"
+        name:
+          type: string
+          x-stream-index: "006"
+        parent_activity:
+          $ref: '#/components/schemas/FeedsNotificationParentActivity'
+          x-stream-index: "008"
+        text:
+          type: string
+          x-stream-index: "004"
+        type:
+          type: string
+          x-stream-index: "003"
+        user_id:
+          type: string
+          x-stream-index: "002"
+      required:
+      - id
+      type: object
+    FeedsNotificationTrigger:
+      properties:
+        comment:
+          $ref: '#/components/schemas/FeedsNotificationComment'
+          x-stream-index: "003"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "004"
+        text:
+          type: string
+          x-stream-index: "002"
+        type:
+          type: string
+          x-stream-index: "001"
+      required:
+      - type
+      - text
+      type: object
     FeedsPreferences:
       properties:
         comment:
@@ -5267,7 +5823,7 @@ components:
           type: string
           x-stream-index: "003"
       type: object
-    FeedsReactionGroup:
+    FeedsReactionGroupResponse:
       properties:
         count:
           format: int32
@@ -5286,51 +5842,87 @@ components:
       - first_reaction_at
       - last_reaction_at
       type: object
+    FeedsReactionResponse:
+      properties:
+        activity_id:
+          type: string
+          x-stream-index: "002"
+        comment_id:
+          type: string
+          x-stream-index: "003"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "006"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "005"
+        type:
+          type: string
+          x-stream-index: "004"
+        updated_at:
+          format: date-time
+          type: number
+          x-stream-index: "007"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          x-stream-index: "001"
+      required:
+      - user
+      - activity_id
+      - type
+      - created_at
+      - updated_at
+      type: object
     FeedsV3ActivityResponse:
       properties:
         attachments:
           items:
             $ref: '#/components/schemas/Attachment'
           type: array
-          x-stream-index: "014"
+          x-stream-index: "010"
         bookmark_count:
           format: int32
           type: integer
-          x-stream-index: "026"
+          x-stream-index: "032"
         collections:
           additionalProperties:
-            $ref: '#/components/schemas/EnrichedCollection'
+            $ref: '#/components/schemas/FeedsEnrichedCollectionResponse'
           type: object
-          x-stream-index: "021"
+          x-stream-index: "040"
         comment_count:
           format: int32
           type: integer
-          x-stream-index: "025"
+          x-stream-index: "031"
         comments:
           items:
             $ref: '#/components/schemas/FeedsV3CommentResponse'
           type: array
-          x-stream-index: "016"
+          x-stream-index: "018"
         created_at:
           format: date-time
           type: number
-          x-stream-index: "009"
+          x-stream-index: "008"
+        current_feed:
+          $ref: '#/components/schemas/FeedsFeedResponse'
+          x-stream-index: "043"
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "017"
+          x-stream-index: "012"
         deleted_at:
           format: date-time
           type: number
-          x-stream-index: "012"
+          x-stream-index: "024"
         edited_at:
           format: date-time
           type: number
-          x-stream-index: "011"
+          x-stream-index: "023"
         expires_at:
           format: date-time
           type: number
-          x-stream-index: "013"
+          x-stream-index: "025"
         feeds:
           items:
             type: string
@@ -5340,10 +5932,19 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "019"
+          x-stream-index: "027"
+        friend_reaction_count:
+          format: int32
+          type: integer
+          x-stream-index: "042"
+        friend_reactions:
+          items:
+            $ref: '#/components/schemas/FeedsReactionResponse'
+          type: array
+          x-stream-index: "041"
         hidden:
           type: boolean
-          x-stream-index: "035"
+          x-stream-index: "044"
         id:
           type: string
           x-stream-index: "001"
@@ -5351,77 +5952,108 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "020"
+          x-stream-index: "028"
+        is_read:
+          type: boolean
+          x-stream-index: "048"
+        is_seen:
+          type: boolean
+          x-stream-index: "047"
+        is_watched:
+          type: boolean
+          x-stream-index: "046"
         latest_reactions:
-          additionalProperties: {}
+          items:
+            $ref: '#/components/schemas/FeedsReactionResponse'
           type: array
-          x-stream-index: "031"
+          x-stream-index: "036"
+        location:
+          $ref: '#/components/schemas/FeedsActivityLocation'
+          x-stream-index: "020"
         mentioned_users:
           items:
             $ref: '#/components/schemas/UserResponse'
           type: array
-          x-stream-index: "015"
+          x-stream-index: "011"
         metrics:
           additionalProperties:
             format: int64
             type: integer
           type: object
-          x-stream-index: "030"
+          x-stream-index: "035"
         moderation:
           $ref: '#/components/schemas/ModerationV2Response'
-          x-stream-index: "022"
+          x-stream-index: "029"
         moderation_action:
           type: string
-          x-stream-index: "023"
+          x-stream-index: "030"
+        notification_context:
+          $ref: '#/components/schemas/FeedsNotificationContext'
+          x-stream-index: "013"
         own_bookmarks:
-          additionalProperties: {}
+          items:
+            $ref: '#/components/schemas/FeedsBookmarkResponse'
           type: array
-          x-stream-index: "034"
+          x-stream-index: "039"
         own_reactions:
-          additionalProperties: {}
+          items:
+            $ref: '#/components/schemas/FeedsReactionResponse'
           type: array
-          x-stream-index: "033"
+          x-stream-index: "038"
+        parent:
+          $ref: '#/components/schemas/FeedsV3ActivityResponse'
+          x-stream-index: "021"
+        poll:
+          $ref: '#/components/schemas/PollResponseData'
+          x-stream-index: "022"
         popularity:
           format: int32
           type: integer
-          x-stream-index: "024"
+          x-stream-index: "014"
         preview:
           type: boolean
-          x-stream-index: "036"
+          x-stream-index: "045"
         reaction_count:
           format: int32
           type: integer
-          x-stream-index: "028"
+          x-stream-index: "034"
         reaction_groups:
           additionalProperties:
-            $ref: '#/components/schemas/FeedsReactionGroup'
+            $ref: '#/components/schemas/FeedsReactionGroupResponse'
           type: object
-          x-stream-index: "032"
+          x-stream-index: "037"
         restrict_replies:
           type: string
           x-stream-index: "007"
         score:
           format: float
           type: number
-          x-stream-index: "029"
+          x-stream-index: "015"
+        score_vars:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "016"
         search_data:
           additionalProperties: {}
           type: object
-          x-stream-index: "018"
+          x-stream-index: "026"
+        selector_source:
+          type: string
+          x-stream-index: "017"
         share_count:
           format: int32
           type: integer
-          x-stream-index: "027"
+          x-stream-index: "033"
         text:
           type: string
-          x-stream-index: "008"
+          x-stream-index: "019"
         type:
           type: string
           x-stream-index: "002"
         updated_at:
           format: date-time
           type: number
-          x-stream-index: "010"
+          x-stream-index: "009"
         user:
           $ref: '#/components/schemas/UserResponse'
           x-stream-index: "003"
@@ -5442,22 +6074,22 @@ components:
       - updated_at
       - attachments
       - mentioned_users
-      - comments
       - custom
+      - popularity
+      - score
+      - comments
       - search_data
       - filter_tags
       - interest_tags
-      - collections
-      - popularity
       - comment_count
       - bookmark_count
       - share_count
       - reaction_count
-      - score
       - latest_reactions
       - reaction_groups
       - own_reactions
       - own_bookmarks
+      - collections
       - hidden
       - preview
       type: object
@@ -5467,46 +6099,55 @@ components:
           items:
             $ref: '#/components/schemas/Attachment'
           type: array
-          x-stream-index: "010"
+          x-stream-index: "011"
+        bookmark_count:
+          format: int32
+          type: integer
+          x-stream-index: "022"
         confidence_score:
           format: float
           type: number
-          x-stream-index: "019"
+          x-stream-index: "024"
         controversy_score:
           format: float
           type: number
-          x-stream-index: "020"
+          x-stream-index: "025"
         created_at:
           format: date-time
           type: number
-          x-stream-index: "012"
+          x-stream-index: "014"
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "011"
+          x-stream-index: "006"
         deleted_at:
           format: date-time
           type: number
-          x-stream-index: "015"
+          x-stream-index: "017"
         downvote_count:
           format: int32
           type: integer
-          x-stream-index: "017"
+          x-stream-index: "021"
         edited_at:
           format: date-time
           type: number
-          x-stream-index: "014"
+          x-stream-index: "016"
         id:
           type: string
           x-stream-index: "001"
+        latest_reactions:
+          items:
+            $ref: '#/components/schemas/FeedsReactionResponse'
+          type: array
+          x-stream-index: "009"
         mentioned_users:
           items:
             $ref: '#/components/schemas/UserResponse'
           type: array
-          x-stream-index: "008"
+          x-stream-index: "012"
         moderation:
           $ref: '#/components/schemas/ModerationV2Response'
-          x-stream-index: "023"
+          x-stream-index: "018"
         object_id:
           type: string
           x-stream-index: "002"
@@ -5514,57 +6155,64 @@ components:
           type: string
           x-stream-index: "003"
         own_reactions:
-          additionalProperties: {}
+          items:
+            $ref: '#/components/schemas/FeedsReactionResponse'
           type: array
-          x-stream-index: "009"
+          x-stream-index: "026"
         parent_id:
           type: string
-          x-stream-index: "006"
+          x-stream-index: "007"
         reaction_count:
           format: int32
           type: integer
-          x-stream-index: "022"
+          x-stream-index: "008"
+        reaction_groups:
+          additionalProperties:
+            $ref: '#/components/schemas/FeedsReactionGroupResponse'
+          type: object
+          x-stream-index: "010"
         reply_count:
           format: int32
           type: integer
-          x-stream-index: "021"
+          x-stream-index: "019"
         score:
           format: int32
           type: integer
-          x-stream-index: "018"
+          x-stream-index: "023"
         status:
           type: string
-          x-stream-index: "004"
+          x-stream-index: "013"
         text:
           type: string
           x-stream-index: "005"
         updated_at:
           format: date-time
           type: number
-          x-stream-index: "013"
+          x-stream-index: "015"
         upvote_count:
           format: int32
           type: integer
-          x-stream-index: "016"
+          x-stream-index: "020"
         user:
           $ref: '#/components/schemas/UserResponse'
-          x-stream-index: "007"
+          x-stream-index: "004"
       required:
       - id
       - object_id
       - object_type
-      - status
       - user
+      - reaction_count
       - mentioned_users
-      - own_reactions
+      - status
       - created_at
       - updated_at
+      - reply_count
       - upvote_count
       - downvote_count
+      - bookmark_count
       - score
       - confidence_score
-      - reply_count
-      - reaction_count
+      - own_reactions
       type: object
     Field:
       nullable: true
@@ -5791,30 +6439,6 @@ components:
           type: string
           x-stream-index: "001"
       type: object
-    FrameRecordingResponse:
-      properties:
-        status:
-          type: string
-          x-stream-index: "001"
-      required:
-      - status
-      type: object
-    FrameRecordingSettingsResponse:
-      properties:
-        capture_interval_in_seconds:
-          format: int32
-          type: integer
-          x-stream-index: "001"
-        mode:
-          type: string
-          x-stream-index: "002"
-        quality:
-          type: string
-          x-stream-index: "003"
-      required:
-      - capture_interval_in_seconds
-      - mode
-      type: object
     FullUserResponse:
       properties:
         avg_response_time:
@@ -5981,15 +6605,25 @@ components:
       required:
       - created_at
       type: object
-    GeofenceSettingsResponse:
+    GetActionConfigResponse:
+      nullable: true
       properties:
-        names:
-          items:
-            type: string
-          type: array
+        action_config:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/ModerationActionConfigResponse'
+            type: array
+          description: Moderation action configs grouped by entity type, sorted by
+            order ascending
+          title: Action Config
+          type: object
           x-stream-index: "001"
+        duration:
+          type: string
+          x-stream-index: "002.001"
       required:
-      - names
+      - action_config
+      - duration
       type: object
     GetAppealResponse:
       nullable: true
@@ -6289,27 +6923,71 @@ components:
           type: boolean
           x-stream-index: "001"
       type: object
-    HLSSettingsResponse:
+    GroupedChannelsBucket:
       properties:
-        auto_on:
-          type: boolean
+        channels:
+          description: Channels returned for this bucket
+          items:
+            $ref: '#/components/schemas/ChannelStateResponseFields'
+          title: Channels
+          type: array
           x-stream-index: "001"
-        enabled:
+        unread_channels:
+          description: Unread channels currently classified into this bucket
+          format: int32
+          title: Unread Channels
+          type: integer
+          x-stream-index: "002"
+      required:
+      - channels
+      title: Grouped Channels Bucket
+      type: object
+    GroupedQueryChannelsRequest:
+      nullable: true
+      properties:
+        limit:
+          description: Max channels per bucket (default 10)
+          format: int32
+          maximum: 10
+          title: Limit
+          type: integer
+          x-stream-index: "001"
+        presence:
+          description: Whether to subscribe to presence events for channel members
+          title: Presence
+          type: boolean
+          x-stream-index: "003"
+        watch:
+          description: Whether to start watching found channels or not
+          title: Watch
           type: boolean
           x-stream-index: "002"
-        layout:
-          $ref: '#/components/schemas/LayoutSettingsResponse'
-          x-stream-index: "004"
-        quality_tracks:
-          items:
-            type: string
-          type: array
-          x-stream-index: "003"
+      title: Grouped Query Channels Request
+      type: object
+      x-stream-docs-page-id: grouped_query_channels
+    GroupedQueryChannelsResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        groups:
+          additionalProperties:
+            $ref: '#/components/schemas/GroupedChannelsBucket'
+          description: Predefined channel groups keyed by group name
+          title: Groups
+          type: object
+          x-stream-index: "001"
+          x-stream-map:
+            description: Channels and unread counts for one group
+            key: group_name
+            title: Grouped Channels Bucket
       required:
-      - auto_on
-      - enabled
-      - quality_tracks
-      - layout
+      - groups
+      - duration
+      title: Grouped Query Channels Response
       type: object
     HarmConfig:
       properties:
@@ -6560,122 +7238,6 @@ components:
       - fixed_width_still
       - fixed_width_downsampled
       type: object
-    IndividualRecordingResponse:
-      properties:
-        status:
-          type: string
-          x-stream-index: "001"
-      required:
-      - status
-      type: object
-    IndividualRecordingSettingsResponse:
-      properties:
-        mode:
-          type: string
-          x-stream-index: "001"
-        output_types:
-          items:
-            type: string
-          type: array
-          x-stream-index: "002"
-      required:
-      - mode
-      type: object
-    IngressAudioEncodingResponse:
-      properties:
-        bitrate:
-          format: int32
-          type: integer
-          x-stream-index: "001"
-        channels:
-          format: int32
-          type: integer
-          x-stream-index: "002"
-        enable_dtx:
-          type: boolean
-          x-stream-index: "003"
-      required:
-      - bitrate
-      - channels
-      - enable_dtx
-      type: object
-    IngressSettingsResponse:
-      properties:
-        audio_encoding_options:
-          $ref: '#/components/schemas/IngressAudioEncodingResponse'
-          x-stream-index: "002"
-        enabled:
-          type: boolean
-          x-stream-index: "001"
-        video_encoding_options:
-          additionalProperties:
-            $ref: '#/components/schemas/IngressVideoEncodingResponse'
-          type: object
-          x-stream-index: "003"
-      required:
-      - enabled
-      type: object
-    IngressSourceResponse:
-      properties:
-        fps:
-          format: int32
-          type: integer
-          x-stream-index: "001"
-        height:
-          format: int32
-          type: integer
-          x-stream-index: "002"
-        width:
-          format: int32
-          type: integer
-          x-stream-index: "003"
-      required:
-      - fps
-      - height
-      - width
-      type: object
-    IngressVideoEncodingResponse:
-      properties:
-        layers:
-          items:
-            $ref: '#/components/schemas/IngressVideoLayerResponse'
-          type: array
-          x-stream-index: "001"
-        source:
-          $ref: '#/components/schemas/IngressSourceResponse'
-          x-stream-index: "002"
-      required:
-      - layers
-      - source
-      type: object
-    IngressVideoLayerResponse:
-      properties:
-        bitrate:
-          format: int32
-          type: integer
-          x-stream-index: "001"
-        codec:
-          type: string
-          x-stream-index: "002"
-        frame_rate_limit:
-          format: int32
-          type: integer
-          x-stream-index: "003"
-        max_dimension:
-          format: int32
-          type: integer
-          x-stream-index: "004"
-        min_dimension:
-          format: int32
-          type: integer
-          x-stream-index: "005"
-      required:
-      - bitrate
-      - codec
-      - frame_rate_limit
-      - max_dimension
-      - min_dimension
-      type: object
     KeyframeRuleParameters:
       properties:
         harm_labels:
@@ -6784,50 +7346,6 @@ components:
           title: Flag
           type: number
           x-stream-index: "001"
-      type: object
-    LayoutSettingsResponse:
-      properties:
-        detect_orientation:
-          type: boolean
-          x-stream-index: "004"
-        external_app_url:
-          type: string
-          x-stream-index: "001"
-        external_css_url:
-          type: string
-          x-stream-index: "002"
-        name:
-          type: string
-          x-stream-index: "003"
-        options:
-          additionalProperties: {}
-          type: object
-          x-stream-index: "005"
-      required:
-      - external_app_url
-      - external_css_url
-      - name
-      type: object
-    LimitsSettingsResponse:
-      properties:
-        max_duration_seconds:
-          format: int32
-          type: integer
-          x-stream-index: "002"
-        max_participants:
-          format: int32
-          type: integer
-          x-stream-index: "003"
-        max_participants_exclude_owner:
-          type: boolean
-          x-stream-index: "004"
-        max_participants_exclude_roles:
-          items:
-            type: string
-          type: array
-          x-stream-index: "001"
-      required:
-      - max_participants_exclude_roles
       type: object
     ListBlockListResponse:
       description: Basic response information
@@ -7780,6 +8298,12 @@ components:
           additionalProperties: {}
           type: object
           x-stream-index: 001.001.001.001.001.007
+        grouped_unread_channels:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "010"
         message:
           $ref: '#/components/schemas/MessageResponse'
           description: The new message
@@ -8994,39 +9518,42 @@ components:
           description: The action to take
           title: Action
           type: string
-          x-stream-index: "003"
+          x-stream-index: "004"
         custom:
           additionalProperties: {}
           description: Custom data for the action
           title: Custom
           type: object
-          x-stream-index: "006"
+          x-stream-index: "007"
         description:
           description: Description of what this action does
           title: Description
           type: string
-          x-stream-index: "005"
+          x-stream-index: "006"
         entity_type:
           description: Type of entity this action applies to
           title: Entity Type
           type: string
-          x-stream-index: "001"
+          x-stream-index: "002"
         icon:
           description: Icon for the dashboard
           title: Icon
           type: string
-          x-stream-index: "004"
+          x-stream-index: "005"
+        id:
+          type: string
+          x-stream-index: "001"
         order:
           description: Display order (lower numbers shown first)
           format: int32
           title: Order
           type: integer
-          x-stream-index: "002"
+          x-stream-index: "003"
         queue_type:
           description: Queue type this action config belongs to
           title: QueueType
           type: string
-          x-stream-index: "007"
+          x-stream-index: "008"
       required:
       - entity_type
       - order
@@ -9447,14 +9974,6 @@ components:
       - duration
       title: MuteResponse
       type: object
-    NoiseCancellationSettings:
-      properties:
-        mode:
-          type: string
-          x-stream-index: "001"
-      required:
-      - mode
-      type: object
     NotificationAddedToChannelEvent:
       description: Sent to a user when they are added to a channel (as a personal
         notification to update their channel list).
@@ -9584,6 +10103,12 @@ components:
           additionalProperties: {}
           type: object
           x-stream-index: 001.001.001.001.001.007
+        grouped_unread_channels:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "005"
         received_at:
           format: date-time
           type: number
@@ -9721,6 +10246,12 @@ components:
           additionalProperties: {}
           type: object
           x-stream-index: 001.001.001.001.001.007
+        grouped_unread_channels:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "006"
         message:
           $ref: '#/components/schemas/MessageResponse'
           description: The message regarding the update
@@ -10091,6 +10622,12 @@ components:
           additionalProperties: {}
           type: object
           x-stream-index: 001.001.001.001.007
+        grouped_unread_channels:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "010"
         last_read_message_id:
           description: The ID of the last read message
           title: Last Read Message ID
@@ -10144,13 +10681,13 @@ components:
           format: int32
           title: Unread Thread Messages
           type: integer
-          x-stream-index: "011"
+          x-stream-index: "012"
         unread_threads:
           description: The number of unread threads
           format: int32
           title: Unread Threads
           type: integer
-          x-stream-index: "010"
+          x-stream-index: "011"
         user:
           $ref: '#/components/schemas/UserResponseCommonFields'
           description: The user who marked the channel as read
@@ -10223,6 +10760,12 @@ components:
           title: First Unread Message ID
           type: string
           x-stream-index: "005"
+        grouped_unread_channels:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "012"
         last_read_at:
           description: The time when the channel/thread was marked as unread
           format: date-time
@@ -10283,13 +10826,13 @@ components:
           format: int32
           title: Unread Thread Messages
           type: integer
-          x-stream-index: "013"
+          x-stream-index: "014"
         unread_threads:
           description: The number of unread threads
           format: int32
           title: Unread Threads
           type: integer
-          x-stream-index: "012"
+          x-stream-index: "013"
         user:
           $ref: '#/components/schemas/UserResponseCommonFields'
           description: The user who marked the channel as unread
@@ -10393,6 +10936,12 @@ components:
           additionalProperties: {}
           type: object
           x-stream-index: 001.001.001.001.001.007
+        grouped_unread_channels:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "010"
         message:
           $ref: '#/components/schemas/MessageResponse'
           description: The new message
@@ -11987,6 +12536,18 @@ components:
               - $in
               - $nin
               type: string
+            message_count:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: number
             muted:
               operators:
               - $eq
@@ -12802,6 +13363,9 @@ components:
     QueryReviewQueueRequest:
       nullable: true
       properties:
+        exclude_default_action_config:
+          type: boolean
+          x-stream-index: "007"
         filter:
           additionalProperties: {}
           description: Filter conditions for review queue items
@@ -12813,7 +13377,7 @@ components:
           maximum: 100
           minimum: 0
           type: integer
-          x-stream-index: "007.001"
+          x-stream-index: "008.001"
         lock_count:
           description: Number of items to lock (1-25)
           format: int32
@@ -12835,10 +13399,10 @@ components:
           x-stream-index: "003"
         next:
           type: string
-          x-stream-index: "007.002"
+          x-stream-index: "008.002"
         prev:
           type: string
-          x-stream-index: "007.003"
+          x-stream-index: "008.003"
         sort:
           description: Sorting parameters for the results
           items:
@@ -12864,14 +13428,21 @@ components:
           title: Action Config
           type: object
           x-stream-index: "002"
+        default_action_config:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/ModerationActionConfigResponse'
+            type: array
+          type: object
+          x-stream-index: "003"
         duration:
           type: string
-          x-stream-index: "006.001"
+          x-stream-index: "007.001"
         filter_config:
           $ref: '#/components/schemas/FilterConfigResponse'
           description: Configuration for filters in moderation review queue
           title: Filter Config
-          x-stream-index: "003"
+          x-stream-index: "004"
         items:
           description: List of review queue items
           items:
@@ -12881,16 +13452,16 @@ components:
           x-stream-index: "001"
         next:
           type: string
-          x-stream-index: "005.001"
+          x-stream-index: "006.001"
         prev:
           type: string
-          x-stream-index: "005.002"
+          x-stream-index: "006.002"
         stats:
           additionalProperties: {}
           description: Statistics about the review queue
           title: Stats
           type: object
-          x-stream-index: "004"
+          x-stream-index: "005"
       required:
       - items
       - action_config
@@ -13243,46 +13814,6 @@ components:
       required:
       - users
       - duration
-      type: object
-    RTMPIngress:
-      properties:
-        address:
-          type: string
-          x-stream-index: "001"
-      required:
-      - address
-      type: object
-    RTMPSettingsResponse:
-      properties:
-        enabled:
-          type: boolean
-          x-stream-index: "001"
-        layout:
-          $ref: '#/components/schemas/LayoutSettingsResponse'
-          x-stream-index: "003"
-        quality:
-          type: string
-          x-stream-index: "002"
-      required:
-      - enabled
-      - quality
-      - layout
-      type: object
-    RawRecordingResponse:
-      properties:
-        status:
-          type: string
-          x-stream-index: "001"
-      required:
-      - status
-      type: object
-    RawRecordingSettingsResponse:
-      properties:
-        mode:
-          type: string
-          x-stream-index: "001"
-      required:
-      - mode
       type: object
     Reaction:
       properties:
@@ -13867,26 +14398,6 @@ components:
       - last_read
       - unread_messages
       type: object
-    RecordSettingsResponse:
-      properties:
-        audio_only:
-          type: boolean
-          x-stream-index: "001"
-        layout:
-          $ref: '#/components/schemas/LayoutSettingsResponse'
-          x-stream-index: "004"
-        mode:
-          type: string
-          x-stream-index: "002"
-        quality:
-          type: string
-          x-stream-index: "003"
-      required:
-      - audio_only
-      - mode
-      - quality
-      - layout
-      type: object
     RejectAppealRequestPayload:
       description: Configuration for rejecting an appeal
       properties:
@@ -14389,7 +14900,7 @@ components:
           type: string
           x-stream-index: "015"
         message:
-          $ref: '#/components/schemas/MessageResponse'
+          $ref: '#/components/schemas/ChatMessageResponse'
           description: Associated message details
           title: Message
           x-stream-index: "016"
@@ -14460,24 +14971,44 @@ components:
       - flags_count
       - escalated
       type: object
-    RingSettingsResponse:
+    Role:
       properties:
-        auto_cancel_timeout_ms:
-          format: int32
-          type: integer
-          x-stream-index: "001"
-        incoming_call_timeout_ms:
-          format: int32
-          type: integer
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: number
+          x-stream-index: "004"
+        custom:
+          description: Whether this is a custom role or built-in
+          title: Custom
+          type: boolean
           x-stream-index: "002"
-        missed_call_timeout_ms:
-          format: int32
-          type: integer
+        name:
+          description: Unique role name
+          title: Name
+          type: string
+          x-stream-index: "001"
+        scopes:
+          description: List of scopes where this role is currently present. `.app`
+            means that role is present in app-level grants
+          items:
+            type: string
+          title: Scopes
+          type: array
           x-stream-index: "003"
+        updated_at:
+          description: Date/time of the last update
+          format: date-time
+          title: Updated at
+          type: number
+          x-stream-index: "005"
       required:
-      - auto_cancel_timeout_ms
-      - incoming_call_timeout_ms
-      - missed_call_timeout_ms
+      - name
+      - custom
+      - scopes
+      - created_at
+      - updated_at
       type: object
     RuleBuilderAction:
       properties:
@@ -14519,16 +15050,19 @@ components:
       properties:
         call_custom_property_params:
           $ref: '#/components/schemas/CallCustomPropertyParameters'
-          x-stream-index: "020"
+          x-stream-index: "021"
         call_type_rule_params:
           $ref: '#/components/schemas/CallTypeRuleParameters'
-          x-stream-index: "019"
+          x-stream-index: "020"
         call_violation_count_params:
           $ref: '#/components/schemas/CallViolationCountParameters'
-          x-stream-index: "021"
+          x-stream-index: "022"
+        channel_message_count_rule_params:
+          $ref: '#/components/schemas/ChannelMessageCountRuleParameters'
+          x-stream-index: "008"
         closed_caption_rule_params:
           $ref: '#/components/schemas/ClosedCaptionRuleParameters'
-          x-stream-index: "018"
+          x-stream-index: "019"
         confidence:
           format: float
           type: number
@@ -14538,19 +15072,19 @@ components:
           x-stream-index: "007"
         content_flag_count_rule_params:
           $ref: '#/components/schemas/FlagCountRuleParameters'
-          x-stream-index: "009"
+          x-stream-index: "010"
         image_content_params:
           $ref: '#/components/schemas/ImageContentParameters'
-          x-stream-index: "012"
+          x-stream-index: "013"
         image_rule_params:
           $ref: '#/components/schemas/ImageRuleParameters'
           x-stream-index: "004"
         keyframe_rule_params:
           $ref: '#/components/schemas/KeyframeRuleParameters'
-          x-stream-index: "017"
+          x-stream-index: "018"
         text_content_params:
           $ref: '#/components/schemas/TextContentParameters'
-          x-stream-index: "011"
+          x-stream-index: "012"
         text_rule_params:
           $ref: '#/components/schemas/TextRuleParameters'
           x-stream-index: "003"
@@ -14559,25 +15093,25 @@ components:
           x-stream-index: "001"
         user_created_within_params:
           $ref: '#/components/schemas/UserCreatedWithinParameters'
-          x-stream-index: "014"
+          x-stream-index: "015"
         user_custom_property_params:
           $ref: '#/components/schemas/UserCustomPropertyParameters'
-          x-stream-index: "015"
+          x-stream-index: "016"
         user_flag_count_rule_params:
           $ref: '#/components/schemas/FlagCountRuleParameters'
-          x-stream-index: "008"
+          x-stream-index: "009"
         user_identical_content_count_params:
           $ref: '#/components/schemas/UserIdenticalContentCountParameters'
-          x-stream-index: "010"
+          x-stream-index: "011"
         user_role_params:
           $ref: '#/components/schemas/UserRoleParameters'
-          x-stream-index: "016"
+          x-stream-index: "017"
         user_rule_params:
           $ref: '#/components/schemas/UserRuleParameters'
           x-stream-index: "006"
         video_content_params:
           $ref: '#/components/schemas/VideoContentParameters'
-          x-stream-index: "013"
+          x-stream-index: "014"
         video_rule_params:
           $ref: '#/components/schemas/VideoRuleParameters'
           x-stream-index: "005"
@@ -14638,29 +15172,6 @@ components:
           x-stream-index: "002"
       required:
       - rule_type
-      type: object
-    SRTIngress:
-      properties:
-        address:
-          type: string
-          x-stream-index: "001"
-      required:
-      - address
-      type: object
-    ScreensharingSettingsResponse:
-      properties:
-        access_request_enabled:
-          type: boolean
-          x-stream-index: "001"
-        enabled:
-          type: boolean
-          x-stream-index: "002"
-        target_resolution:
-          $ref: '#/components/schemas/TargetResolution'
-          x-stream-index: "003"
-      required:
-      - access_request_enabled
-      - enabled
       type: object
     SearchPayload:
       properties:
@@ -14827,6 +15338,18 @@ components:
               - $in
               - $nin
               type: string
+            message_count:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: number
             muted:
               operators:
               - $eq
@@ -15330,6 +15853,23 @@ components:
       - pinned
       - restricted_visibility
       type: object
+    SearchRolesResponse:
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "001.001"
+        roles:
+          description: Matching roles, sorted ascending by name
+          items:
+            $ref: '#/components/schemas/Role'
+          title: Roles
+          type: array
+          x-stream-index: "002"
+      required:
+      - duration
+      - roles
+      type: object
     SearchUserGroupsResponse:
       description: Response for searching user groups
       nullable: true
@@ -15469,15 +16009,6 @@ components:
       - reaction
       - duration
       title: Response
-      type: object
-    SessionSettingsResponse:
-      properties:
-        inactivity_timeout_seconds:
-          format: int32
-          type: integer
-          x-stream-index: "001"
-      required:
-      - inactivity_timeout_seconds
       type: object
     ShadowBlockActionRequestPayload:
       description: Configuration for shadow block action
@@ -15691,17 +16222,6 @@ components:
           type: string
           x-stream-index: "002"
       type: object
-    SpeechSegmentConfig:
-      properties:
-        max_speech_caption_ms:
-          format: int32
-          type: integer
-          x-stream-index: "001"
-        silence_duration_ms:
-          format: int32
-          type: integer
-          x-stream-index: "002"
-      type: object
     SubmitActionRequest:
       nullable: true
       properties:
@@ -15904,25 +16424,6 @@ components:
       - events
       - duration
       title: SyncResponse
-      type: object
-    TargetResolution:
-      properties:
-        bitrate:
-          format: int32
-          type: integer
-          x-stream-index: "001"
-        height:
-          format: int32
-          type: integer
-          x-stream-index: "002"
-        width:
-          format: int32
-          type: integer
-          x-stream-index: "003"
-      required:
-      - bitrate
-      - height
-      - width
       type: object
     TextContentParameters:
       properties:
@@ -16333,53 +16834,7 @@ components:
           x-stream-index: "003"
       title: Auto moderation thresholds
       type: object
-    ThumbnailResponse:
-      properties:
-        image_url:
-          type: string
-          x-stream-index: "001"
-      required:
-      - image_url
-      type: object
-    ThumbnailsSettingsResponse:
-      properties:
-        enabled:
-          type: boolean
-          x-stream-index: "001"
-      required:
-      - enabled
-      type: object
     Time:
-      type: object
-    Timestamp:
-      properties:
-        Time:
-          format: date-time
-          type: number
-          writeOnly: true
-          x-stream-index: "001"
-      type: object
-    TranscriptionSettingsResponse:
-      properties:
-        closed_caption_mode:
-          type: string
-          x-stream-index: "001"
-        language:
-          type: string
-          x-stream-index: "002"
-        mode:
-          type: string
-          x-stream-index: "003"
-        speech_segment_config:
-          $ref: '#/components/schemas/SpeechSegmentConfig'
-          x-stream-index: "004"
-        translation:
-          $ref: '#/components/schemas/TranslationSettings'
-          x-stream-index: "005"
-      required:
-      - closed_caption_mode
-      - language
-      - mode
       type: object
     TranslateMessageRequest:
       nullable: true
@@ -16449,20 +16904,6 @@ components:
           x-stream-index: "001"
       required:
       - language
-      type: object
-    TranslationSettings:
-      properties:
-        enabled:
-          type: boolean
-          x-stream-index: "001"
-        languages:
-          items:
-            type: string
-          type: array
-          x-stream-index: "002"
-      required:
-      - enabled
-      - languages
       type: object
     TruncateChannelRequest:
       nullable: true
@@ -17531,6 +17972,119 @@ components:
           title: Upload sizes
           type: array
           x-stream-index: "002"
+      required:
+      - duration
+      type: object
+    UpsertActionConfigItem:
+      properties:
+        action:
+          maxLength: 255
+          type: string
+          x-stream-index: "001.004"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "001.007"
+        description:
+          maxLength: 1024
+          type: string
+          x-stream-index: "001.006"
+        entity_type:
+          maxLength: 255
+          type: string
+          x-stream-index: "001.002"
+        icon:
+          maxLength: 255
+          type: string
+          x-stream-index: "001.005"
+        id:
+          type: string
+          x-stream-index: "001.001"
+        order:
+          format: int32
+          maximum: 100
+          minimum: 0
+          type: integer
+          x-stream-index: "001.003"
+        queue_type:
+          maxLength: 255
+          type: string
+          x-stream-index: "001.008"
+      required:
+      - entity_type
+      - order
+      - action
+      type: object
+    UpsertActionConfigRequest:
+      nullable: true
+      properties:
+        action:
+          description: The action to perform (e.g. ban, delete_message, custom)
+          maxLength: 255
+          title: Action
+          type: string
+          x-stream-index: "001.004"
+        custom:
+          additionalProperties: {}
+          description: Action-specific parameters passed to the action handler
+          title: Custom
+          type: object
+          x-stream-index: "001.007"
+        description:
+          description: Human-readable label for the dashboard button
+          maxLength: 1024
+          title: Description
+          type: string
+          x-stream-index: "001.006"
+        entity_type:
+          description: Type of entity this action applies to (e.g. stream:chat:v1:message)
+          maxLength: 255
+          title: Entity Type
+          type: string
+          x-stream-index: "001.002"
+        icon:
+          description: Icon identifier for the dashboard button
+          maxLength: 255
+          title: Icon
+          type: string
+          x-stream-index: "001.005"
+        id:
+          description: UUID of an existing action config to update; omit to create
+            a new record
+          title: ID
+          type: string
+          x-stream-index: "001.001"
+        order:
+          description: Display order in the dashboard (0–100, lower numbers shown
+            first)
+          format: int32
+          maximum: 100
+          minimum: 0
+          title: Order
+          type: integer
+          x-stream-index: "001.003"
+        queue_type:
+          description: Queue this config belongs to; null means the default queue
+          maxLength: 255
+          title: Queue Type
+          type: string
+          x-stream-index: "001.008"
+      required:
+      - entity_type
+      - order
+      - action
+      type: object
+    UpsertActionConfigResponse:
+      nullable: true
+      properties:
+        action_config:
+          $ref: '#/components/schemas/ModerationActionConfigResponse'
+          description: The created or updated action config
+          title: Action Config
+          x-stream-index: "001"
+        duration:
+          type: string
+          x-stream-index: "002.001"
       required:
       - duration
       type: object
@@ -19291,30 +19845,6 @@ components:
           type: string
           x-stream-index: "002"
       type: object
-    VideoSettingsResponse:
-      properties:
-        access_request_enabled:
-          type: boolean
-          x-stream-index: "001"
-        camera_default_on:
-          type: boolean
-          x-stream-index: "002"
-        camera_facing:
-          type: string
-          x-stream-index: "003"
-        enabled:
-          type: boolean
-          x-stream-index: "004"
-        target_resolution:
-          $ref: '#/components/schemas/TargetResolution'
-          x-stream-index: "005"
-      required:
-      - access_request_enabled
-      - camera_default_on
-      - camera_facing
-      - enabled
-      - target_resolution
-      type: object
     VoteData:
       properties:
         answer_text:
@@ -19324,14 +19854,6 @@ components:
           maxLength: 255
           type: string
           x-stream-index: "001"
-      type: object
-    WHIPIngress:
-      properties:
-        address:
-          type: string
-          x-stream-index: "001"
-      required:
-      - address
       type: object
     WSAuthMessage:
       description: Websocket auth message
@@ -19769,7 +20291,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v226.11.0
+  version: v228.14.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -21231,6 +21753,46 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Mark channel message delivery status
+      tags:
+      - product:chat
+  /api/v2/chat/channels/grouped:
+    post:
+      description: |
+        Query channels grouped into predefined buckets. Only available for enterprise apps.
+      operationId: GroupedQueryChannels
+      parameters:
+      - in: query
+        name: connection_id
+        schema:
+          type: string
+          x-stream-index: "007.003"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupedQueryChannelsRequest'
+        description: Grouped Query Channels Request
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupedQueryChannelsResponse'
+          description: Grouped Query Channels Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Grouped query channels
       tags:
       - product:chat
   /api/v2/chat/channels/read:
@@ -22808,6 +23370,201 @@ paths:
       summary: Long Poll (Transport)
       tags:
       - product:common
+  /api/v2/moderation/action_config:
+    get:
+      description: |
+        Returns moderation action configs grouped by entity type, sorted by order ascending. Supports fetching DB-configured actions, hardcoded defaults, or both.
+      operationId: get_action_config
+      parameters:
+      - in: query
+        name: queue_type
+        schema:
+          description: Filter configs by queue type; empty returns the default queue
+          title: Queue Type
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      - in: query
+        name: entity_type
+        schema:
+          description: Filter to a single entity type; empty returns all
+          title: Entity Type
+          type: string
+          writeOnly: true
+          x-stream-index: "002"
+      - in: query
+        name: exclude_defaults
+        schema:
+          description: Return only DB-configured actions; empty object if none exist
+          title: Exclude Defaults
+          type: boolean
+          writeOnly: true
+          x-stream-index: "003"
+      - in: query
+        name: only_defaults
+        schema:
+          description: Return hardcoded default configs without a DB query
+          title: Only Defaults
+          type: boolean
+          writeOnly: true
+          x-stream-index: "004"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetActionConfigResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get moderation action configs
+      tags:
+      - product:moderation
+    post:
+      description: |
+        Create a new moderation action config entry or update an existing one. Action configs control the action buttons displayed in the moderation dashboard for each entity type.
+      operationId: upsert_action_config
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertActionConfigRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpsertActionConfigResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Create or update a moderation action config
+      tags:
+      - product:moderation
+  /api/v2/moderation/action_config/{id}:
+    delete:
+      description: |
+        Delete a specific moderation action config entry by its UUID.
+      operationId: delete_action_config
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: UUID of the action config to delete
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteActionConfigResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Delete a moderation action config
+      tags:
+      - product:moderation
+  /api/v2/moderation/action_config/bulk:
+    post:
+      description: |
+        Create or update multiple moderation action config entries in a single request. Omit the ID field to create; provide an ID to update.
+      operationId: bulk_upsert_action_config
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkUpsertActionConfigRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkUpsertActionConfigResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Bulk create or update moderation action configs
+      tags:
+      - product:moderation
+  /api/v2/moderation/action_config/bulk_delete:
+    post:
+      description: |
+        Delete multiple moderation action config entries by UUID in a single request.
+      operationId: bulk_delete_action_config
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkDeleteActionConfigRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkDeleteActionConfigResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Bulk delete moderation action configs
+      tags:
+      - product:moderation
   /api/v2/moderation/appeal:
     post:
       description: |
@@ -23794,6 +24551,86 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Push notification preferences
+      tags:
+      - product:common
+  /api/v2/roles/search:
+    get:
+      description: |
+        Searches mentionable roles (user-assignable + channel-assignable, built-in and custom) by name prefix for autocomplete
+      operationId: SearchRoles
+      parameters:
+      - in: query
+        name: query
+        required: true
+        schema:
+          description: Case-insensitive name prefix to match against role names
+          maxLength: 255
+          minLength: 1
+          title: Query
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      - in: query
+        name: limit
+        schema:
+          description: Maximum number of roles to return (1-25, default 10)
+          format: int32
+          maximum: 25
+          minimum: 1
+          title: Limit
+          type: integer
+          writeOnly: true
+          x-stream-index: "002"
+      - in: query
+        name: name_gt
+        schema:
+          description: Return roles with names strictly greater than this cursor (for
+            pagination)
+          title: Name cursor
+          type: string
+          writeOnly: true
+          x-stream-index: "003"
+      - in: query
+        name: role_type
+        schema:
+          description: 'Optional filter: ''user'' for user-assignable roles, ''channel''
+            for channel-assignable roles. Omit to return both.'
+          enum:
+          - user
+          - channel
+          title: Role type
+          type: string
+          writeOnly: true
+          x-stream-index: "004"
+      - in: query
+        name: include_global_roles
+        schema:
+          description: When true, include cross-team operator roles whose name starts
+            with 'global_'. Defaults to false.
+          title: Include global roles
+          type: boolean
+          writeOnly: true
+          x-stream-index: "005"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchRolesResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Search roles
       tags:
       - product:common
   /api/v2/uploads/file:

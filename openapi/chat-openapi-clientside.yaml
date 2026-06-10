@@ -393,6 +393,7 @@ components:
       - user_response_time_enabled
       - moderation_llm_configurability_enabled
       - max_aggregated_activities_length
+      - feed_audit_logs_enabled
       - moderation_video_call_moderation_enabled
       - moderation_audio_call_moderation_enabled
       type: object
@@ -817,6 +818,11 @@ components:
           title: Commands
           type: array
           x-stream-index: "011"
+        count_messages:
+          description: Enable/disable message counting
+          title: Count messages
+          type: boolean
+          x-stream-index: "016"
         grants:
           additionalProperties:
             items:
@@ -862,6 +868,11 @@ components:
           title: Replies
           type: boolean
           x-stream-index: "003"
+        shared_locations:
+          description: Enable/disable shared locations
+          title: Shared locations
+          type: boolean
+          x-stream-index: "015"
         typing_events:
           description: Enables or disables typing events
           title: Typing events
@@ -877,6 +888,11 @@ components:
           title: URL Enrichment
           type: boolean
           x-stream-index: "006"
+        user_message_reminders:
+          description: Enable/disable user message reminders
+          title: User message reminders
+          type: boolean
+          x-stream-index: "014"
       type: object
     ChannelConfigWithInfo:
       properties:
@@ -4152,6 +4168,72 @@ components:
       - duration
       title: GetUserGroupResponse
       type: object
+    GroupedChannelsBucket:
+      properties:
+        channels:
+          description: Channels returned for this bucket
+          items:
+            $ref: '#/components/schemas/ChannelStateResponseFields'
+          title: Channels
+          type: array
+          x-stream-index: "001"
+        unread_channels:
+          description: Unread channels currently classified into this bucket
+          format: int32
+          title: Unread Channels
+          type: integer
+          x-stream-index: "002"
+      required:
+      - channels
+      title: Grouped Channels Bucket
+      type: object
+    GroupedQueryChannelsRequest:
+      nullable: true
+      properties:
+        limit:
+          description: Max channels per bucket (default 10)
+          format: int32
+          maximum: 10
+          title: Limit
+          type: integer
+          x-stream-index: "001"
+        presence:
+          description: Whether to subscribe to presence events for channel members
+          title: Presence
+          type: boolean
+          x-stream-index: "003"
+        watch:
+          description: Whether to start watching found channels or not
+          title: Watch
+          type: boolean
+          x-stream-index: "002"
+      title: Grouped Query Channels Request
+      type: object
+      x-stream-docs-page-id: grouped_query_channels
+    GroupedQueryChannelsResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        groups:
+          additionalProperties:
+            $ref: '#/components/schemas/GroupedChannelsBucket'
+          description: Predefined channel groups keyed by group name
+          title: Groups
+          type: object
+          x-stream-index: "001"
+          x-stream-map:
+            description: Channels and unread counts for one group
+            key: group_name
+            title: Grouped Channels Bucket
+      required:
+      - groups
+      - duration
+      title: Grouped Query Channels Response
+      type: object
     HealthCheckEvent:
       nullable: true
       properties:
@@ -5304,6 +5386,12 @@ components:
           additionalProperties: {}
           type: object
           x-stream-index: 001.001.001.001.001.007
+        grouped_unread_channels:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "010"
         message:
           $ref: '#/components/schemas/MessageResponse'
           description: The new message
@@ -6793,6 +6881,12 @@ components:
           additionalProperties: {}
           type: object
           x-stream-index: 001.001.001.001.001.007
+        grouped_unread_channels:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "005"
         received_at:
           format: date-time
           type: string
@@ -6930,6 +7024,12 @@ components:
           additionalProperties: {}
           type: object
           x-stream-index: 001.001.001.001.001.007
+        grouped_unread_channels:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "006"
         message:
           $ref: '#/components/schemas/MessageResponse'
           description: The message regarding the update
@@ -7300,6 +7400,12 @@ components:
           additionalProperties: {}
           type: object
           x-stream-index: 001.001.001.001.007
+        grouped_unread_channels:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "010"
         last_read_message_id:
           description: The ID of the last read message
           title: Last Read Message ID
@@ -7353,13 +7459,13 @@ components:
           format: int32
           title: Unread Thread Messages
           type: integer
-          x-stream-index: "011"
+          x-stream-index: "012"
         unread_threads:
           description: The number of unread threads
           format: int32
           title: Unread Threads
           type: integer
-          x-stream-index: "010"
+          x-stream-index: "011"
         user:
           $ref: '#/components/schemas/UserResponseCommonFields'
           description: The user who marked the channel as read
@@ -7432,6 +7538,12 @@ components:
           title: First Unread Message ID
           type: string
           x-stream-index: "005"
+        grouped_unread_channels:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "012"
         last_read_at:
           description: The time when the channel/thread was marked as unread
           format: date-time
@@ -7492,13 +7604,13 @@ components:
           format: int32
           title: Unread Thread Messages
           type: integer
-          x-stream-index: "013"
+          x-stream-index: "014"
         unread_threads:
           description: The number of unread threads
           format: int32
           title: Unread Threads
           type: integer
-          x-stream-index: "012"
+          x-stream-index: "013"
         user:
           $ref: '#/components/schemas/UserResponseCommonFields'
           description: The user who marked the channel as unread
@@ -7602,6 +7714,12 @@ components:
           additionalProperties: {}
           type: object
           x-stream-index: 001.001.001.001.001.007
+        grouped_unread_channels:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "010"
         message:
           $ref: '#/components/schemas/MessageResponse'
           description: The new message
@@ -9136,6 +9254,18 @@ components:
               - $in
               - $nin
               type: string
+            message_count:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: number
             muted:
               operators:
               - $eq
@@ -11097,6 +11227,45 @@ components:
       - duration
       title: Response
       type: object
+    Role:
+      properties:
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: "004"
+        custom:
+          description: Whether this is a custom role or built-in
+          title: Custom
+          type: boolean
+          x-stream-index: "002"
+        name:
+          description: Unique role name
+          title: Name
+          type: string
+          x-stream-index: "001"
+        scopes:
+          description: List of scopes where this role is currently present. `.app`
+            means that role is present in app-level grants
+          items:
+            type: string
+          title: Scopes
+          type: array
+          x-stream-index: "003"
+        updated_at:
+          description: Date/time of the last update
+          format: date-time
+          title: Updated at
+          type: string
+          x-stream-index: "005"
+      required:
+      - name
+      - custom
+      - scopes
+      - created_at
+      - updated_at
+      type: object
     SearchPayload:
       properties:
         filter_conditions:
@@ -11262,6 +11431,18 @@ components:
               - $in
               - $nin
               type: string
+            message_count:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: number
             muted:
               operators:
               - $eq
@@ -11764,6 +11945,23 @@ components:
       - silent
       - pinned
       - restricted_visibility
+      type: object
+    SearchRolesResponse:
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "001.001"
+        roles:
+          description: Matching roles, sorted ascending by name
+          items:
+            $ref: '#/components/schemas/Role'
+          title: Roles
+          type: array
+          x-stream-index: "002"
+      required:
+      - duration
+      - roles
       type: object
     SearchUserGroupsResponse:
       description: Response for searching user groups
@@ -15572,7 +15770,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v226.11.0
+  version: v228.14.0
 openapi: 3.0.3
 paths:
   /app:
@@ -17036,6 +17234,46 @@ paths:
       summary: Mark channel message delivery status
       tags:
       - product:chat
+  /channels/grouped:
+    post:
+      description: |
+        Query channels grouped into predefined buckets. Only available for enterprise apps.
+      operationId: GroupedQueryChannels
+      parameters:
+      - in: query
+        name: connection_id
+        schema:
+          type: string
+          x-stream-index: "007.003"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupedQueryChannelsRequest'
+        description: Grouped Query Channels Request
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupedQueryChannelsResponse'
+          description: Grouped Query Channels Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Grouped query channels
+      tags:
+      - product:chat
   /channels/read:
     post:
       description: |
@@ -18145,6 +18383,12 @@ paths:
           type: boolean
           writeOnly: true
           x-stream-index: "006"
+      - in: query
+        name: reason
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "007"
       responses:
         "200":
           content:
@@ -19095,6 +19339,86 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Query reminders
+      tags:
+      - product:chat
+  /roles/search:
+    get:
+      description: |
+        Searches mentionable roles (user-assignable + channel-assignable, built-in and custom) by name prefix for autocomplete
+      operationId: SearchRoles
+      parameters:
+      - in: query
+        name: query
+        required: true
+        schema:
+          description: Case-insensitive name prefix to match against role names
+          maxLength: 255
+          minLength: 1
+          title: Query
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      - in: query
+        name: limit
+        schema:
+          description: Maximum number of roles to return (1-25, default 10)
+          format: int32
+          maximum: 25
+          minimum: 1
+          title: Limit
+          type: integer
+          writeOnly: true
+          x-stream-index: "002"
+      - in: query
+        name: name_gt
+        schema:
+          description: Return roles with names strictly greater than this cursor (for
+            pagination)
+          title: Name cursor
+          type: string
+          writeOnly: true
+          x-stream-index: "003"
+      - in: query
+        name: role_type
+        schema:
+          description: 'Optional filter: ''user'' for user-assignable roles, ''channel''
+            for channel-assignable roles. Omit to return both.'
+          enum:
+          - user
+          - channel
+          title: Role type
+          type: string
+          writeOnly: true
+          x-stream-index: "004"
+      - in: query
+        name: include_global_roles
+        schema:
+          description: When true, include cross-team operator roles whose name starts
+            with 'global_'. Defaults to false.
+          title: Include global roles
+          type: boolean
+          writeOnly: true
+          x-stream-index: "005"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchRolesResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Search roles
       tags:
       - product:chat
   /search:
