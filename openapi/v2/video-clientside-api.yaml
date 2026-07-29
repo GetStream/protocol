@@ -183,14 +183,14 @@ components:
           x-stream-index: "023"
         file_upload_config:
           $ref: '#/components/schemas/FileUploadConfig'
-          x-stream-index: "033"
+          x-stream-index: "036"
         id:
           format: int32
           type: integer
           x-stream-index: "001"
         image_upload_config:
           $ref: '#/components/schemas/FileUploadConfig'
-          x-stream-index: "034"
+          x-stream-index: "037"
         name:
           type: string
           x-stream-index: "002"
@@ -246,6 +246,7 @@ components:
       - feed_audit_logs_enabled
       - moderation_video_call_moderation_enabled
       - moderation_audio_call_moderation_enabled
+      - moderation_flood_rules_enabled
       type: object
     AppUpdatedEvent:
       description: Emitted when app settings are updated
@@ -497,17 +498,26 @@ components:
         id:
           type: string
           x-stream-index: "003"
+        is_confusable_folding_enabled:
+          type: boolean
+          x-stream-index: "011"
         is_leet_check_enabled:
           type: boolean
-          x-stream-index: "008"
+          x-stream-index: "009"
         is_plural_check_enabled:
           type: boolean
-          x-stream-index: "009"
+          x-stream-index: "010"
+        is_substring_matching_enabled:
+          type: boolean
+          x-stream-index: "012"
         name:
           description: Block list name
           title: Name
           type: string
           x-stream-index: "004"
+        owner_user_id:
+          type: string
+          x-stream-index: "008"
         team:
           type: string
           x-stream-index: "007"
@@ -536,6 +546,8 @@ components:
       - words
       - is_leet_check_enabled
       - is_plural_check_enabled
+      - is_confusable_folding_enabled
+      - is_substring_matching_enabled
       title: Block list
       type: object
       x-stream-docs-page-id: block_lists
@@ -2809,6 +2821,9 @@ components:
         broadcasting:
           $ref: '#/components/schemas/BroadcastSettingsRequest'
           x-stream-index: "012"
+        encryption:
+          $ref: '#/components/schemas/EncryptionSettingsRequest'
+          x-stream-index: "017"
         frame_recording:
           $ref: '#/components/schemas/FrameRecordingSettingsRequest'
           x-stream-index: "008"
@@ -2860,6 +2875,9 @@ components:
         broadcasting:
           $ref: '#/components/schemas/BroadcastSettingsResponse'
           x-stream-index: "003"
+        encryption:
+          $ref: '#/components/schemas/EncryptionSettingsResponse'
+          x-stream-index: "017"
         frame_recording:
           $ref: '#/components/schemas/FrameRecordingSettingsResponse'
           x-stream-index: "008"
@@ -2915,6 +2933,7 @@ components:
       - thumbnails
       - limits
       - session
+      - encryption
       type: object
     CallStateResponseFields:
       description: CallStateResponseFields is the payload for call state response
@@ -3113,6 +3132,10 @@ components:
         average_latency_ms:
           type: integer
           x-stream-index: "011"
+        avg_user_rating:
+          format: float
+          type: number
+          x-stream-index: "015"
         call_event_count:
           format: int32
           type: integer
@@ -3128,6 +3151,10 @@ components:
         max_freezes_duration_ms:
           type: integer
           x-stream-index: "012"
+        min_user_rating:
+          format: int32
+          type: integer
+          x-stream-index: "014"
         participants:
           format: int32
           type: integer
@@ -3880,6 +3907,29 @@ components:
       - skip_last_msg_update_for_system_msgs
       - commands
       type: object
+    ChannelMemberPartialResponse:
+      properties:
+        channel_role:
+          description: Role of the member in the channel
+          title: Channel Role
+          type: string
+          x-stream-index: "001"
+        custom:
+          additionalProperties: {}
+          description: Channel-member custom fields projected via `member_custom_include`
+          title: Custom data
+          type: object
+          x-stream-index: "003"
+        notifications_muted:
+          description: Whether the user muted notifications for this channel
+          title: Notifications muted
+          type: boolean
+          x-stream-index: "002"
+      required:
+      - channel_role
+      - notifications_muted
+      title: Channel member partial
+      type: object
     ChannelMemberResponse:
       nullable: true
       properties:
@@ -4030,6 +4080,7 @@ components:
       - cast-poll-vote
       - connect-events
       - create-attachment
+      - create-mention
       - delete-any-message
       - delete-channel
       - delete-own-message
@@ -4039,6 +4090,10 @@ components:
       - join-channel
       - leave-channel
       - mute-channel
+      - notify-channel
+      - notify-group
+      - notify-here
+      - notify-role
       - pin-message
       - query-poll-votes
       - quote-message
@@ -4349,6 +4404,215 @@ components:
           type: string
           x-stream-index: "005"
       type: object
+    ClientEvent:
+      description: A single client-side telemetry event. JoinInitiated is the top-level
+        marker emitted when a user begins a join attempt and carries only join_attempt_id
+        (no stage_id or coordinator_connect_id). When stage is CoordinatorJoin, CoordinatorWS,
+        WSJoin, or PeerConnectionConnect the event reports a join-lifecycle attempt;
+        initiation and completion of a stage attempt share the same stage_id. FirstAudioFrame
+        and FirstVideoFrame report media readiness and only ever carry an initiated
+        event. MediaDevicePermission reports the result of requesting screen-share,
+        microphone, and camera permissions. Other stage values denote generic client
+        events.
+      properties:
+        call_session_id:
+          description: Call session ID associated with the attempt. Required on every
+            event except CoordinatorJoin initiation and CoordinatorJoin failure (where
+            the call session is not yet established); optional on MediaDevicePermission.
+          maxLength: 64
+          title: Call Session ID
+          type: string
+          x-stream-index: "018"
+        camera_permission_status:
+          description: 'Camera permission status: INITIATED, FAILED, GRANTED, or NOT_INITIATED.
+            Required on every MediaDevicePermission event.'
+          maxLength: 32
+          title: Camera Permission Status
+          type: string
+          x-stream-index: "027"
+        coordinator_connect_id:
+          description: UUID generated by the client and shared across every event
+            of the same coordinator connection. Required on every event except JoinInitiated,
+            which is reported before a coordinator connection exists.
+          maxLength: 64
+          title: Coordinator Connect ID
+          type: string
+          x-stream-index: "007"
+        elapsed_time:
+          description: 'Milliseconds elapsed between the stage attempt''s initiation
+            and this event. '
+          format: int64
+          minimum: 0
+          title: Elapsed Time
+          type: integer
+          x-stream-index: "017"
+        event_type:
+          description: Whether the event marks the start (initiated) or resolution
+            (completed) of a stage attempt, or another event-specific value
+          maxLength: 32
+          title: Event Type
+          type: string
+          x-stream-index: "008"
+        ice_state:
+          description: Terminal state of the peer connection. Required on PeerConnectionConnect
+            failure.
+          maxLength: 32
+          title: ICE State
+          type: string
+          x-stream-index: "024"
+        id:
+          description: Call ID associated with the event. Required on every stage
+            except CoordinatorWS, where it is optional.
+          maxLength: 64
+          title: Call ID
+          type: string
+          x-stream-index: "003"
+        join_attempt_id:
+          description: UUID generated by the client and shared across JoinInitiated
+            and the join-lifecycle events (CoordinatorJoin, WSJoin, PeerConnectionConnect)
+            of the same overall join attempt. Required on every join event except
+            CoordinatorWS, which is reported before a join attempt is established.
+          maxLength: 64
+          title: Join Attempt ID
+          type: string
+          x-stream-index: "006"
+        join_reason:
+          description: Reason the client initiated the join. Optional on CoordinatorJoin
+            events; empty when not provided.
+          maxLength: 200
+          title: Join Reason
+          type: string
+          x-stream-index: "019"
+        microphone_permission_status:
+          description: 'Microphone permission status: INITIATED, FAILED, GRANTED,
+            or NOT_INITIATED. Required on every MediaDevicePermission event.'
+          maxLength: 32
+          title: Microphone Permission Status
+          type: string
+          x-stream-index: "026"
+        outcome:
+          description: 'Resolution of a completed event: success or failure. Required
+            on completed join events; forbidden on initiated join events.'
+          maxLength: 32
+          title: Outcome
+          type: string
+          x-stream-index: "015"
+        peer_connection:
+          description: 'Which peer connection a PeerConnectionConnect event reports
+            on: publish or subscribe. Required on every PeerConnectionConnect event.'
+          maxLength: 16
+          title: Peer Connection
+          type: string
+          x-stream-index: "012"
+        previously_connected_timestamp:
+          description: UTC timestamp at which the ICE connection was established earlier
+            in the session, when applicable
+          format: date-time
+          title: Previously Connected Timestamp
+          type: number
+          x-stream-index: "014"
+        retry_count_attempt:
+          description: Total in-stage retries the client made before resolving (0–1000).
+            Required on completed join events.
+          format: int32
+          maximum: 1000
+          minimum: 0
+          title: Retry Count Attempt
+          type: integer
+          x-stream-index: "016"
+        retry_failure_code:
+          description: Failure code string. Required on CoordinatorJoin, CoordinatorWS,
+            WSJoin, and PeerConnectionConnect failure.
+          maxLength: 200
+          title: Retry Failure Code
+          type: string
+          x-stream-index: "023"
+        retry_failure_reason:
+          description: Failure reason string. Required on CoordinatorJoin, CoordinatorWS,
+            WSJoin, and PeerConnectionConnect failure.
+          maxLength: 2000
+          title: Retry Failure Reason
+          type: string
+          x-stream-index: "022"
+        screen_share_status:
+          description: 'Screen-share permission status: INITIATED, FAILED, GRANTED,
+            or NOT_INITIATED. Optional on MediaDevicePermission events.'
+          maxLength: 32
+          title: Screen Share Status
+          type: string
+          x-stream-index: "025"
+        sdk_version:
+          description: Version of the client SDK
+          maxLength: 50
+          title: SDK Version
+          type: string
+          x-stream-index: "011"
+        sfu_id:
+          description: Identifier of the SFU the client was attempting to connect
+            to. Required on WSJoin and PeerConnectionConnect failure, and on FirstAudioFrame
+            and FirstVideoFrame.
+          maxLength: 128
+          title: SFU ID
+          type: string
+          x-stream-index: "020"
+        stage:
+          description: Discriminator identifying the event kind. JoinInitiated marks
+            the start of a join attempt; join-lifecycle events use CoordinatorJoin,
+            CoordinatorWS, WSJoin, or PeerConnectionConnect; media-readiness events
+            use FirstAudioFrame or FirstVideoFrame; MediaDevicePermission reports
+            device permission results; other values denote generic client events.
+          maxLength: 64
+          title: Stage
+          type: string
+          x-stream-index: "004"
+        stage_id:
+          description: UUID generated by the client at initiation. Identical on the
+            matching completion event. Absent on JoinInitiated.
+          maxLength: 64
+          title: Stage ID
+          type: string
+          x-stream-index: "005"
+        timestamp:
+          description: UTC timestamp at which the event was recorded
+          format: date-time
+          title: Timestamp
+          type: number
+          x-stream-index: "009"
+        track_id:
+          description: Identifier of the media track the frame belongs to. Required
+            on FirstVideoFrame; optional on FirstAudioFrame.
+          maxLength: 128
+          title: Track ID
+          type: string
+          x-stream-index: "021"
+        type:
+          description: Call type associated with the event. Required on every stage
+            except CoordinatorWS, where it is optional.
+          maxLength: 64
+          title: Call Type
+          type: string
+          x-stream-index: "002"
+        user_agent:
+          description: User agent string of the client SDK
+          maxLength: 512
+          title: User Agent
+          type: string
+          x-stream-index: "010"
+        user_id:
+          description: ID of the user the event was recorded for
+          maxLength: 128
+          title: User ID
+          type: string
+          x-stream-index: "001"
+        was_previously_connected:
+          description: Whether the ICE connection had been established earlier in
+            the same session. Required on every PeerConnectionConnect event so reconnects
+            can be distinguished from fresh connects.
+          title: Was Previously Connected
+          type: boolean
+          x-stream-index: "013"
+      title: ClientEvent
+      type: object
     ClosedCaptionEvent:
       description: This event is sent when closed captions are being sent in a call,
         clients should use this to show the closed captions in the call screen
@@ -4618,21 +4882,27 @@ components:
       description: Block list contains restricted words
       nullable: true
       properties:
+        is_confusable_folding_enabled:
+          type: boolean
+          x-stream-index: "003"
         is_leet_check_enabled:
           type: boolean
           x-stream-index: "001"
         is_plural_check_enabled:
           type: boolean
           x-stream-index: "002"
+        is_substring_matching_enabled:
+          type: boolean
+          x-stream-index: "004"
         name:
           description: Block list name
           maxLength: 255
           title: Name
           type: string
-          x-stream-index: "003"
+          x-stream-index: "005"
         team:
           type: string
-          x-stream-index: "006"
+          x-stream-index: "008"
         type:
           description: 'Block list type. One of: regex, domain, domain_allowlist,
             email, email_allowlist, word'
@@ -4645,14 +4915,14 @@ components:
           - word
           title: Type
           type: string
-          x-stream-index: "005"
+          x-stream-index: "007"
         words:
           description: List of words to block
           items:
             type: string
           title: Words
           type: array
-          x-stream-index: "004"
+          x-stream-index: "006"
       required:
       - name
       - words
@@ -4679,6 +4949,14 @@ components:
       description: Create device request
       nullable: true
       properties:
+        hardware_id:
+          description: Stable physical device identifier used to deduplicate pushes
+            across push providers (e.g. APNs VoIP and Firebase on the same iOS device).
+            Distinct from 'id', which is the push token.
+          maxLength: 255
+          title: HardwareID
+          type: string
+          x-stream-index: "005"
         id:
           description: Device ID
           maxLength: 255
@@ -5098,6 +5376,12 @@ components:
           title: Reason
           type: string
           x-stream-index: "006"
+        hardware_id:
+          description: Stable physical device identifier used to deduplicate pushes
+            across push providers
+          title: HardwareID
+          type: string
+          x-stream-index: "008"
         id:
           description: Device ID
           title: ID
@@ -5117,7 +5401,7 @@ components:
           description: User ID
           title: UserID
           type: string
-          x-stream-index: "008"
+          x-stream-index: "009"
         voip:
           description: When true the token is for Apple VoIP push notifications
           title: Voip
@@ -5349,6 +5633,27 @@ components:
       required:
       - broadcasting
       - rtmps
+      type: object
+    EncryptionSettingsRequest:
+      properties:
+        enabled:
+          description: if true, the call is created end-to-end encrypted
+          title: Enabled
+          type: boolean
+          x-stream-index: "001"
+      title: EncryptionSettingsRequest
+      type: object
+    EncryptionSettingsResponse:
+      description: EncryptionSettings is the payload for end-to-end encryption settings
+      properties:
+        enabled:
+          description: whether the call is end-to-end encrypted
+          title: Enabled
+          type: boolean
+          x-stream-index: "001"
+      required:
+      - enabled
+      title: EncryptionSettingsResponse
       type: object
     EndCallRequest:
       description: Request for ending a call
@@ -6476,6 +6781,40 @@ components:
       - fixed_width_still
       - fixed_width_downsampled
       type: object
+    ImportBlockListRequest:
+      nullable: true
+      properties:
+        chunk_size:
+          format: int32
+          minimum: 1
+          type: integer
+          x-stream-index: "003"
+        items:
+          items:
+            type: string
+          minItems: 1
+          type: array
+          x-stream-index: "002"
+      required:
+      - items
+      type: object
+    ImportBlockListResponse:
+      description: Basic response information
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        task_id:
+          type: string
+          x-stream-index: "001"
+      required:
+      - task_id
+      - duration
+      title: Response
+      type: object
     IndividualRecordingResponse:
       properties:
         status:
@@ -6891,6 +7230,12 @@ components:
         data:
           $ref: '#/components/schemas/CallRequest'
           x-stream-index: "003"
+        e2ee:
+          description: the encryption mode the client intends to use for this join;
+            the join is rejected if it does not match the call's encryption configuration
+          title: E2EE
+          type: boolean
+          x-stream-index: "013"
         hint_high_scale_livestream_publisher:
           description: if true, the participant will be marked as publsihing to large
             audience
@@ -7151,7 +7496,10 @@ components:
           description: Duration of the request in milliseconds
           title: Duration
           type: string
-          x-stream-index: "002.001"
+          x-stream-index: "003.001"
+        next_cursor:
+          type: string
+          x-stream-index: "002"
       required:
       - blocklists
       - duration
@@ -7362,14 +7710,14 @@ components:
           x-stream-index: "027"
         deleted_for_me:
           type: boolean
-          x-stream-index: "050"
+          x-stream-index: "051"
         deleted_reply_count:
           format: int32
           type: integer
           x-stream-index: "020"
         draft:
           $ref: '#/components/schemas/DraftResponse'
-          x-stream-index: "047"
+          x-stream-index: "048"
         html:
           description: Contains HTML markup of the message. Can only be set when using
             server-side API
@@ -7384,7 +7732,7 @@ components:
           title: Internationalization info
           type: object
           x-stream-docs-page-id: translation
-          x-stream-index: "036"
+          x-stream-index: "037"
         id:
           description: Message ID is unique string identifier of the message
           title: ID
@@ -7407,16 +7755,16 @@ components:
           type: array
           x-stream-index: "010"
         member:
-          $ref: '#/components/schemas/ChannelMemberResponse'
-          description: Channel member data for the message sender including only the
-            `channel_role`
+          $ref: '#/components/schemas/ChannelMemberPartialResponse'
+          description: Channel member data for the message sender including the `channel_role`;
+            also includes `custom` when requested via `member_custom_include`
           title: Member object
           x-stream-index: "008"
         mentioned_channel:
           description: Whether the message mentioned the channel tag
           title: Mentioned Channel
           type: boolean
-          x-stream-index: "034"
+          x-stream-index: "035"
         mentioned_group_ids:
           description: List of user group IDs mentioned in the message. Group members
             who are also channel members will receive push notifications based on
@@ -7426,11 +7774,18 @@ components:
           title: Mentioned Groups
           type: array
           x-stream-index: "033"
+        mentioned_groups:
+          description: List of mentioned user group objects.
+          items:
+            $ref: '#/components/schemas/UserGroupResponse'
+          title: Mentioned Groups Details
+          type: array
+          x-stream-index: "034"
         mentioned_here:
           description: Whether the message mentioned online users with @here tag
           title: Mentioned Here
           type: boolean
-          x-stream-index: "035"
+          x-stream-index: "036"
         mentioned_roles:
           description: List of roles mentioned in the message (e.g. admin, channel_moderator,
             custom roles). Members with matching roles will receive push notifications
@@ -7450,7 +7805,7 @@ components:
         message_text_updated_at:
           format: date-time
           type: number
-          x-stream-index: "042"
+          x-stream-index: "043"
         mml:
           description: Should be empty if `text` is provided. Can only be set when
             using server-side API
@@ -7460,7 +7815,7 @@ components:
           x-stream-index: "003"
         moderation:
           $ref: '#/components/schemas/ModerationV2Response'
-          x-stream-index: "045"
+          x-stream-index: "046"
         own_reactions:
           description: List of 10 latest reactions of authenticated user to this message
           items:
@@ -7480,34 +7835,34 @@ components:
           title: Pin expiration date
           type: number
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "041"
+          x-stream-index: "042"
         pinned:
           description: Whether message is pinned or not
           title: Pinned
           type: boolean
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "038"
+          x-stream-index: "039"
         pinned_at:
           description: Date when message got pinned
           format: date-time
           title: Pinned at
           type: number
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "039"
+          x-stream-index: "040"
         pinned_by:
           $ref: '#/components/schemas/UserResponse'
           description: Contains user who pinned the message
           title: Pinned by
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "040"
+          x-stream-index: "041"
         poll:
           $ref: '#/components/schemas/PollResponseData'
-          x-stream-index: "044"
+          x-stream-index: "045"
         poll_id:
           description: Identifier of the poll to include in the message
           title: Poll ID
           type: string
-          x-stream-index: "043"
+          x-stream-index: "044"
         quoted_message:
           $ref: '#/components/schemas/MessageResponse'
           description: Contains quoted message
@@ -7544,7 +7899,7 @@ components:
           x-stream-index: "013"
         reminder:
           $ref: '#/components/schemas/ReminderResponseData'
-          x-stream-index: "048"
+          x-stream-index: "049"
         reply_count:
           description: Number of replies to this message
           format: int32
@@ -7559,7 +7914,7 @@ components:
             type: string
           title: Restricted visibility
           type: array
-          x-stream-index: "046"
+          x-stream-index: "047"
         shadowed:
           description: Whether the message was shadowed or not
           title: Shadowed
@@ -7570,7 +7925,7 @@ components:
           $ref: '#/components/schemas/SharedLocationResponseData'
           description: Contains shared location data
           title: Shared Location
-          x-stream-index: "049"
+          x-stream-index: "050"
         show_in_channel:
           description: Whether thread reply should be shown in the channel as well
           title: Show in channel
@@ -7581,7 +7936,7 @@ components:
           description: Whether message is silent or not
           title: Silent
           type: boolean
-          x-stream-index: "037"
+          x-stream-index: "038"
         text:
           description: Text of the message. Should be empty if `mml` is provided
           title: Text
@@ -9249,7 +9604,25 @@ components:
               operators:
               - $eq
               type: string
+            counts.avg_user_rating:
+              operators:
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              - $ne
+              type: number
             counts.cq_score:
+              operators:
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              - $ne
+              type: number
+            counts.min_user_rating:
               operators:
               - $eq
               - $gt
@@ -9712,6 +10085,48 @@ components:
           description: Filter to apply to the query
           title: Filter
           type: object
+          x-stream-filter-fields:
+            created_at:
+              operators:
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              type: date
+            id:
+              operators:
+              - $eq
+              - $in
+              type: string
+            is_answer:
+              operators:
+              - $eq
+              type: boolean
+            option_id:
+              operators:
+              - $eq
+              - $exists
+              - $in
+              type: string
+            poll_id:
+              operators:
+              - $eq
+              - $in
+              type: string
+            updated_at:
+              operators:
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              type: date
+            user_id:
+              operators:
+              - $eq
+              - $in
+              type: string
           x-stream-index: "003"
         limit:
           format: int32
@@ -9733,6 +10148,14 @@ components:
           title: Sort
           type: array
           x-stream-index: "004"
+          x-stream-sort-combinations:
+          - - id
+          - - created_at
+          - - updated_at
+          x-stream-sort-fields:
+          - created_at
+          - id
+          - updated_at
       type: object
     QueryPollsRequest:
       nullable: true
@@ -9742,6 +10165,63 @@ components:
           description: Filter to apply to the query
           title: Filter
           type: object
+          x-stream-filter-fields:
+            allow_answers:
+              operators:
+              - $eq
+              type: boolean
+            allow_user_suggested_options:
+              operators:
+              - $eq
+              type: boolean
+            created_at:
+              operators:
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              type: date
+            created_by_id:
+              operators:
+              - $eq
+              - $in
+              type: string
+            id:
+              operators:
+              - $eq
+              - $in
+              type: string
+            is_closed:
+              operators:
+              - $eq
+              type: boolean
+            max_votes_allowed:
+              operators:
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              - $ne
+              type: number
+            name:
+              operators:
+              - $eq
+              - $in
+              type: string
+            updated_at:
+              operators:
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              type: date
+            voting_visibility:
+              operators:
+              - $eq
+              type: string
           x-stream-index: "002"
         limit:
           format: int32
@@ -9763,6 +10243,18 @@ components:
           title: Sort
           type: array
           x-stream-index: "003"
+          x-stream-sort-combinations:
+          - - id
+          - - name
+          - - created_at
+          - - updated_at
+          - - is_closed
+          x-stream-sort-fields:
+          - created_at
+          - id
+          - is_closed
+          - name
+          - updated_at
       type: object
     QueryPollsResponse:
       nullable: true
@@ -9800,6 +10292,7 @@ components:
             banned:
               operators:
               - $eq
+              - $ne
               type: boolean
             bypass_moderation:
               operators:
@@ -10423,6 +10916,38 @@ components:
       - category
       - sum
       - count
+      type: object
+    ReportClientEventRequest:
+      description: Reports a batch of client-side telemetry events. Each event is
+        validated and processed independently; one invalid event does not block the
+        rest of the batch.
+      nullable: true
+      properties:
+        events:
+          description: Client-side events to report (1-100 per request)
+          items:
+            $ref: '#/components/schemas/ClientEvent'
+          maxItems: 100
+          minItems: 1
+          title: Events
+          type: array
+          x-stream-index: "002"
+      required:
+      - events
+      title: ReportClientEventRequest
+      type: object
+    ReportClientEventResponse:
+      description: Response for reporting client-side telemetry events
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      title: ReportClientEventResponse
       type: object
     ReportResponse:
       properties:
@@ -12389,12 +12914,18 @@ components:
     UpdateBlockListRequest:
       nullable: true
       properties:
+        is_confusable_folding_enabled:
+          type: boolean
+          x-stream-index: "007"
         is_leet_check_enabled:
           type: boolean
           x-stream-index: "005"
         is_plural_check_enabled:
           type: boolean
           x-stream-index: "006"
+        is_substring_matching_enabled:
+          type: boolean
+          x-stream-index: "008"
         team:
           type: string
           x-stream-index: "002"
@@ -12771,6 +13302,7 @@ components:
         users:
           items:
             $ref: '#/components/schemas/UpdateUserPartialRequest'
+          maxItems: 100
           type: array
           x-stream-index: "001"
       required:
@@ -12963,6 +13495,12 @@ components:
           format: date-time
           type: number
           x-stream-index: 001.001.001.001.004
+        review_queue_item_id:
+          description: ID of the review queue item (flagged message) that triggered
+            the ban, if the ban was applied from the moderation review queue
+          title: Review Queue Item ID
+          type: string
+          x-stream-index: "007"
         shadow:
           description: Whether the user was shadow banned
           title: Shadow
@@ -12976,7 +13514,7 @@ components:
         total_bans:
           format: int32
           type: integer
-          x-stream-index: "007"
+          x-stream-index: "008"
         type:
           default: user.banned
           description: 'The type of event: "user.banned" in this case'
@@ -13187,31 +13725,31 @@ components:
         created_at:
           format: date-time
           type: number
-          x-stream-index: "006"
+          x-stream-index: "001.005"
         created_by:
           type: string
-          x-stream-index: "008"
+          x-stream-index: "001.007"
         description:
           type: string
-          x-stream-index: "003"
+          x-stream-index: "001.003"
         id:
           type: string
-          x-stream-index: "001"
+          x-stream-index: "001.001"
         members:
           items:
             $ref: '#/components/schemas/UserGroupMember'
           type: array
-          x-stream-index: "005"
+          x-stream-index: "002"
         name:
           type: string
-          x-stream-index: "002"
+          x-stream-index: "001.002"
         team_id:
           type: string
-          x-stream-index: "004"
+          x-stream-index: "001.004"
         updated_at:
           format: date-time
           type: number
-          x-stream-index: "007"
+          x-stream-index: "001.006"
       required:
       - id
       - name
@@ -13395,11 +13933,6 @@ components:
           title: Banned
           type: boolean
           x-stream-index: "001.012"
-        blocked_user_ids:
-          items:
-            type: string
-          type: array
-          x-stream-index: "001.017"
         created_at:
           description: Date/time of creation
           format: date-time
@@ -13507,11 +14040,6 @@ components:
         banned:
           type: boolean
           x-stream-index: "012"
-        blocked_user_ids:
-          items:
-            type: string
-          type: array
-          x-stream-index: "017"
         created_at:
           format: date-time
           type: number
@@ -13589,11 +14117,6 @@ components:
         banned:
           type: boolean
           x-stream-index: "001.012"
-        blocked_user_ids:
-          items:
-            type: string
-          type: array
-          x-stream-index: "001.017"
         created_at:
           format: date-time
           type: number
@@ -13898,6 +14421,15 @@ components:
       description: Websocket auth message
       nullable: true
       properties:
+        member_custom_include:
+          description: Channel-member custom keys to project onto message.member for
+            messages this connection receives (opt-in; capped, off by default).
+          items:
+            type: string
+          maxItems: 8
+          title: Member Custom Include
+          type: array
+          x-stream-index: "004"
         products:
           description: 'List of products to subscribe to. One of: chat, video, feeds'
           items:
@@ -14148,7 +14680,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v228.14.0
+  version: v233.19.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -14190,6 +14722,21 @@ paths:
           type: string
           writeOnly: true
           x-stream-index: "001"
+      - in: query
+        name: cursor
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "002"
+      - in: query
+        name: limit
+        schema:
+          format: int32
+          maximum: 200
+          minimum: 1
+          type: integer
+          writeOnly: true
+          x-stream-index: "003"
       responses:
         "200":
           content:
@@ -14243,6 +14790,51 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Create block list
+      tags:
+      - product:common
+  /api/v2/blocklists/{id}/import:
+    post:
+      description: |
+        Enqueues an asynchronous bulk import of items into an existing blocklist.
+        Returns a task ID that can be polled via GET /tasks/{id} to observe progress.
+        AddItems is idempotent: items already present are skipped without error.
+        For lists exceeding the HTTP request-body cap, issue repeated import calls each
+        carrying a bounded slice of items — the task result accumulates correctly.
+      operationId: ImportBlockList
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportBlockListRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportBlockListResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Import block list items
       tags:
       - product:common
   /api/v2/blocklists/{name}:
@@ -14457,6 +15049,7 @@ paths:
       summary: Create Guest
       tags:
       - product:common
+      x-stream-requires-token: false
   /api/v2/longpoll:
     get:
       description: |
@@ -18512,6 +19105,40 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Query Call Stats
+      tags:
+      - product:video
+  /api/v2/video/call_client_event:
+    post:
+      description: |
+        Reports a batch of client-side telemetry events. Events are processed independently; one invalid event does not block the rest of the batch, but the request fails if any event is invalid.
+      operationId: ReportClientCallEvent
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportClientEventRequest'
+        description: ReportClientEventRequest
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportClientEventResponse'
+          description: ReportClientEventResponse
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Report client-side events
       tags:
       - product:video
   /api/v2/video/call_stats:

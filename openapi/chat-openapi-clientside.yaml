@@ -333,14 +333,14 @@ components:
           x-stream-index: "023"
         file_upload_config:
           $ref: '#/components/schemas/FileUploadConfig'
-          x-stream-index: "033"
+          x-stream-index: "036"
         id:
           format: int32
           type: integer
           x-stream-index: "001"
         image_upload_config:
           $ref: '#/components/schemas/FileUploadConfig'
-          x-stream-index: "034"
+          x-stream-index: "037"
         name:
           type: string
           x-stream-index: "002"
@@ -396,6 +396,7 @@ components:
       - feed_audit_logs_enabled
       - moderation_video_call_moderation_enabled
       - moderation_audio_call_moderation_enabled
+      - moderation_flood_rules_enabled
       type: object
     AppUpdatedEvent:
       description: Emitted when app settings are updated
@@ -670,17 +671,26 @@ components:
         id:
           type: string
           x-stream-index: "003"
+        is_confusable_folding_enabled:
+          type: boolean
+          x-stream-index: "011"
         is_leet_check_enabled:
           type: boolean
-          x-stream-index: "008"
+          x-stream-index: "009"
         is_plural_check_enabled:
           type: boolean
-          x-stream-index: "009"
+          x-stream-index: "010"
+        is_substring_matching_enabled:
+          type: boolean
+          x-stream-index: "012"
         name:
           description: Block list name
           title: Name
           type: string
           x-stream-index: "004"
+        owner_user_id:
+          type: string
+          x-stream-index: "008"
         team:
           type: string
           x-stream-index: "007"
@@ -709,6 +719,8 @@ components:
       - words
       - is_leet_check_enabled
       - is_plural_check_enabled
+      - is_confusable_folding_enabled
+      - is_substring_matching_enabled
       title: Block list
       type: object
       x-stream-docs-page-id: block_lists
@@ -796,7 +808,7 @@ components:
           title: VoteData
           x-stream-index: "004"
       type: object
-    ChannelConfig:
+    ChannelConfigOverrides:
       description: Channel configuration overrides
       properties:
         blocklist:
@@ -1295,6 +1307,15 @@ components:
           title: Hide for creator
           type: boolean
           x-stream-index: "007"
+        member_custom_include:
+          description: Top-level keys of the message sender's channel-member custom
+            data to include under member.custom (max 8 keys, 64 chars each)
+          items:
+            type: string
+          maxItems: 8
+          title: Member custom include
+          type: array
+          x-stream-index: "012"
         members:
           $ref: '#/components/schemas/PaginationParams'
           x-stream-index: "010"
@@ -1422,7 +1443,7 @@ components:
           type: string
           x-stream-index: "006"
         config_overrides:
-          $ref: '#/components/schemas/ChannelConfig'
+          $ref: '#/components/schemas/ChannelConfigOverrides'
           x-stream-index: "024"
         created_by:
           $ref: '#/components/schemas/UserRequest'
@@ -1579,6 +1600,29 @@ components:
       x-stream-is-event: true
       x-stream-throttle-group: critical
       x-stream-ws-base-event-name: VideoEvent
+    ChannelMemberPartialResponse:
+      properties:
+        channel_role:
+          description: Role of the member in the channel
+          title: Channel Role
+          type: string
+          x-stream-index: "001"
+        custom:
+          additionalProperties: {}
+          description: Channel-member custom fields projected via `member_custom_include`
+          title: Custom data
+          type: object
+          x-stream-index: "003"
+        notifications_muted:
+          description: Whether the user muted notifications for this channel
+          title: Notifications muted
+          type: boolean
+          x-stream-index: "002"
+      required:
+      - channel_role
+      - notifications_muted
+      title: Channel member partial
+      type: object
     ChannelMemberRequest:
       nullable: true
       properties:
@@ -1603,16 +1647,112 @@ components:
       title: Channel member
       type: object
     ChannelMemberResponse:
+      nullable: true
       properties:
-        channel_role:
+        archived_at:
+          format: date-time
           type: string
-          x-stream-index: "001"
+          x-stream-index: "016"
+        ban_expires:
+          description: Expiration date of the ban
+          format: date-time
+          title: Ban expires
+          type: string
+          x-stream-index: "013"
+        banned:
+          description: Whether member is banned this channel or not
+          title: Banned
+          type: boolean
+          x-stream-index: "012"
+        channel_role:
+          description: Role of the member in the channel
+          title: Channel Role
+          type: string
+          x-stream-index: "018"
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: "009"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "004"
+        deleted_at:
+          format: date-time
+          type: string
+          x-stream-index: "011"
+        deleted_messages:
+          items:
+            type: string
+          type: array
+          x-stream-index: "020"
+        invite_accepted_at:
+          description: Date when invite was accepted
+          format: date-time
+          title: Invited accepted at
+          type: string
+          x-stream-index: "006"
+        invite_rejected_at:
+          description: Date when invite was rejected
+          format: date-time
+          title: Invited rejected at
+          type: string
+          x-stream-index: "007"
+        invited:
+          description: Whether member was invited or not
+          title: Invited
+          type: boolean
+          x-stream-index: "005"
+        is_moderator:
+          description: Whether member is channel moderator or not
+          title: Is moderator
+          type: boolean
+          x-stream-index: "003"
         notifications_muted:
           type: boolean
+          x-stream-index: "019"
+        pinned_at:
+          format: date-time
+          type: string
+          x-stream-index: "015"
+        role:
+          description: 'Permission level of the member in the channel (DEPRECATED:
+            use channel_role instead). One of: member, moderator, admin, owner'
+          title: Role
+          type: string
+          x-stream-index: "017"
+        shadow_banned:
+          description: Whether member is shadow banned in this channel or not
+          title: Shadow banned
+          type: boolean
+          x-stream-index: "014"
+        status:
+          type: string
+          x-stream-index: "008"
+        updated_at:
+          description: Date/time of the last update
+          format: date-time
+          title: Updated at
+          type: string
+          x-stream-index: "010"
+        user:
+          $ref: '#/components/schemas/UserResponse'
           x-stream-index: "002"
+        user_id:
+          title: User ID
+          type: string
+          x-stream-index: "001"
       required:
+      - custom
+      - created_at
+      - updated_at
+      - banned
+      - shadow_banned
       - channel_role
       - notifications_muted
+      title: Channel member
       type: object
     ChannelMute:
       nullable: true
@@ -1656,6 +1796,7 @@ components:
       - cast-poll-vote
       - connect-events
       - create-attachment
+      - create-mention
       - delete-any-message
       - delete-channel
       - delete-own-message
@@ -1665,6 +1806,10 @@ components:
       - join-channel
       - leave-channel
       - mute-channel
+      - notify-channel
+      - notify-group
+      - notify-here
+      - notify-role
       - pin-message
       - query-poll-votes
       - quote-message
@@ -1696,10 +1841,13 @@ components:
         chat_level:
           type: string
           x-stream-index: "001"
+        chat_preferences:
+          $ref: '#/components/schemas/ChatPreferencesResponse'
+          x-stream-index: "002"
         disabled_until:
           format: date-time
           type: string
-          x-stream-index: "002"
+          x-stream-index: "003"
       type: object
     ChannelResponse:
       description: Represents channel in chat
@@ -2590,6 +2738,12 @@ components:
         device:
           $ref: '#/components/schemas/DeviceFields'
           x-stream-index: "001.002"
+        member_custom_include:
+          items:
+            type: string
+          maxItems: 8
+          type: array
+          x-stream-index: "002"
         user_details:
           $ref: '#/components/schemas/User'
           x-stream-index: "001.001"
@@ -2600,21 +2754,27 @@ components:
       description: Block list contains restricted words
       nullable: true
       properties:
+        is_confusable_folding_enabled:
+          type: boolean
+          x-stream-index: "003"
         is_leet_check_enabled:
           type: boolean
           x-stream-index: "001"
         is_plural_check_enabled:
           type: boolean
           x-stream-index: "002"
+        is_substring_matching_enabled:
+          type: boolean
+          x-stream-index: "004"
         name:
           description: Block list name
           maxLength: 255
           title: Name
           type: string
-          x-stream-index: "003"
+          x-stream-index: "005"
         team:
           type: string
-          x-stream-index: "006"
+          x-stream-index: "008"
         type:
           description: 'Block list type. One of: regex, domain, domain_allowlist,
             email, email_allowlist, word'
@@ -2627,14 +2787,14 @@ components:
           - word
           title: Type
           type: string
-          x-stream-index: "005"
+          x-stream-index: "007"
         words:
           description: List of words to block
           items:
             type: string
           title: Words
           type: array
-          x-stream-index: "004"
+          x-stream-index: "006"
       required:
       - name
       - words
@@ -2661,6 +2821,14 @@ components:
       description: Create device request
       nullable: true
       properties:
+        hardware_id:
+          description: Stable physical device identifier used to deduplicate pushes
+            across push providers (e.g. APNs VoIP and Firebase on the same iOS device).
+            Distinct from 'id', which is the push token.
+          maxLength: 255
+          title: HardwareID
+          type: string
+          x-stream-index: "005"
         id:
           description: Device ID
           maxLength: 255
@@ -3069,11 +3237,12 @@ components:
         enabled:
           type: boolean
           x-stream-index: "001"
-      required:
-      - enabled
       type: object
     DeviceFields:
       properties:
+        hardware_id:
+          type: string
+          x-stream-index: "006"
         id:
           type: string
           x-stream-index: "004"
@@ -3115,6 +3284,12 @@ components:
           title: Reason
           type: string
           x-stream-index: "006"
+        hardware_id:
+          description: Stable physical device identifier used to deduplicate pushes
+            across push providers
+          title: HardwareID
+          type: string
+          x-stream-index: "008"
         id:
           description: Device ID
           title: ID
@@ -3134,7 +3309,7 @@ components:
           description: User ID
           title: UserID
           type: string
-          x-stream-index: "008"
+          x-stream-index: "009"
         voip:
           description: When true the token is for Apple VoIP push notifications
           title: Voip
@@ -4177,6 +4352,16 @@ components:
           title: Channels
           type: array
           x-stream-index: "001"
+        next:
+          description: Cursor for the next page of this group
+          title: Next
+          type: string
+          x-stream-index: "003.001"
+        prev:
+          description: Cursor for the previous page of this group
+          title: Previous
+          type: string
+          x-stream-index: "003.002"
         unread_channels:
           description: Unread channels currently classified into this bucket
           format: int32
@@ -4187,11 +4372,35 @@ components:
       - channels
       title: Grouped Channels Bucket
       type: object
+    GroupedChannelsGroupRequest:
+      properties:
+        limit:
+          format: int32
+          maximum: 10
+          minimum: 0
+          type: integer
+          x-stream-index: "001"
+        next:
+          type: string
+          x-stream-index: "002"
+        prev:
+          type: string
+          x-stream-index: "003"
+      type: object
     GroupedQueryChannelsRequest:
       nullable: true
       properties:
+        groups:
+          additionalProperties:
+            $ref: '#/components/schemas/GroupedChannelsGroupRequest'
+          description: Groups to return, keyed by group name. Each group can define
+            limit, next, or prev. 'next' and 'prev' cursors are only allowed when
+            the request contains exactly one group; multi-group pagination is rejected.
+          title: Groups
+          type: object
+          x-stream-index: "002"
         limit:
-          description: Max channels per bucket (default 10)
+          description: Default max channels per group (default 10)
           format: int32
           maximum: 10
           title: Limit
@@ -4201,12 +4410,12 @@ components:
           description: Whether to subscribe to presence events for channel members
           title: Presence
           type: boolean
-          x-stream-index: "003"
+          x-stream-index: "004"
         watch:
           description: Whether to start watching found channels or not
           title: Watch
           type: boolean
-          x-stream-index: "002"
+          x-stream-index: "003"
       title: Grouped Query Channels Request
       type: object
       x-stream-docs-page-id: grouped_query_channels
@@ -4419,6 +4628,40 @@ components:
       - fixed_width_still
       - fixed_width_downsampled
       type: object
+    ImportBlockListRequest:
+      nullable: true
+      properties:
+        chunk_size:
+          format: int32
+          minimum: 1
+          type: integer
+          x-stream-index: "003"
+        items:
+          items:
+            type: string
+          minItems: 1
+          type: array
+          x-stream-index: "002"
+      required:
+      - items
+      type: object
+    ImportBlockListResponse:
+      description: Basic response information
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        task_id:
+          type: string
+          x-stream-index: "001"
+      required:
+      - task_id
+      - duration
+      title: Response
+      type: object
     LabelResponse:
       properties:
         harm_labels:
@@ -4470,7 +4713,10 @@ components:
           description: Duration of the request in milliseconds
           title: Duration
           type: string
-          x-stream-index: "002.001"
+          x-stream-index: "003.001"
+        next_cursor:
+          type: string
+          x-stream-index: "002"
       required:
       - blocklists
       - duration
@@ -5471,6 +5717,12 @@ components:
         include_thread_participants:
           type: boolean
           x-stream-index: "001"
+        member_custom_include:
+          items:
+            type: string
+          maxItems: 8
+          type: array
+          x-stream-index: "002"
       type: object
     MessagePaginationParams:
       properties:
@@ -5814,14 +6066,14 @@ components:
           x-stream-index: "027"
         deleted_for_me:
           type: boolean
-          x-stream-index: "050"
+          x-stream-index: "051"
         deleted_reply_count:
           format: int32
           type: integer
           x-stream-index: "020"
         draft:
           $ref: '#/components/schemas/DraftResponse'
-          x-stream-index: "047"
+          x-stream-index: "048"
         html:
           description: Contains HTML markup of the message. Can only be set when using
             server-side API
@@ -5836,7 +6088,7 @@ components:
           title: Internationalization info
           type: object
           x-stream-docs-page-id: translation
-          x-stream-index: "036"
+          x-stream-index: "037"
         id:
           description: Message ID is unique string identifier of the message
           title: ID
@@ -5859,16 +6111,16 @@ components:
           type: array
           x-stream-index: "010"
         member:
-          $ref: '#/components/schemas/ChannelMemberResponse'
-          description: Channel member data for the message sender including only the
-            `channel_role`
+          $ref: '#/components/schemas/ChannelMemberPartialResponse'
+          description: Channel member data for the message sender including the `channel_role`;
+            also includes `custom` when requested via `member_custom_include`
           title: Member object
           x-stream-index: "008"
         mentioned_channel:
           description: Whether the message mentioned the channel tag
           title: Mentioned Channel
           type: boolean
-          x-stream-index: "034"
+          x-stream-index: "035"
         mentioned_group_ids:
           description: List of user group IDs mentioned in the message. Group members
             who are also channel members will receive push notifications based on
@@ -5878,11 +6130,18 @@ components:
           title: Mentioned Groups
           type: array
           x-stream-index: "033"
+        mentioned_groups:
+          description: List of mentioned user group objects.
+          items:
+            $ref: '#/components/schemas/UserGroupResponse'
+          title: Mentioned Groups Details
+          type: array
+          x-stream-index: "034"
         mentioned_here:
           description: Whether the message mentioned online users with @here tag
           title: Mentioned Here
           type: boolean
-          x-stream-index: "035"
+          x-stream-index: "036"
         mentioned_roles:
           description: List of roles mentioned in the message (e.g. admin, channel_moderator,
             custom roles). Members with matching roles will receive push notifications
@@ -5902,7 +6161,7 @@ components:
         message_text_updated_at:
           format: date-time
           type: string
-          x-stream-index: "042"
+          x-stream-index: "043"
         mml:
           description: Should be empty if `text` is provided. Can only be set when
             using server-side API
@@ -5912,7 +6171,7 @@ components:
           x-stream-index: "003"
         moderation:
           $ref: '#/components/schemas/ModerationV2Response'
-          x-stream-index: "045"
+          x-stream-index: "046"
         own_reactions:
           description: List of 10 latest reactions of authenticated user to this message
           items:
@@ -5932,34 +6191,34 @@ components:
           title: Pin expiration date
           type: string
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "041"
+          x-stream-index: "042"
         pinned:
           description: Whether message is pinned or not
           title: Pinned
           type: boolean
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "038"
+          x-stream-index: "039"
         pinned_at:
           description: Date when message got pinned
           format: date-time
           title: Pinned at
           type: string
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "039"
+          x-stream-index: "040"
         pinned_by:
           $ref: '#/components/schemas/UserResponse'
           description: Contains user who pinned the message
           title: Pinned by
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "040"
+          x-stream-index: "041"
         poll:
           $ref: '#/components/schemas/PollResponseData'
-          x-stream-index: "044"
+          x-stream-index: "045"
         poll_id:
           description: Identifier of the poll to include in the message
           title: Poll ID
           type: string
-          x-stream-index: "043"
+          x-stream-index: "044"
         quoted_message:
           $ref: '#/components/schemas/MessageResponse'
           description: Contains quoted message
@@ -5996,7 +6255,7 @@ components:
           x-stream-index: "013"
         reminder:
           $ref: '#/components/schemas/ReminderResponseData'
-          x-stream-index: "048"
+          x-stream-index: "049"
         reply_count:
           description: Number of replies to this message
           format: int32
@@ -6011,7 +6270,7 @@ components:
             type: string
           title: Restricted visibility
           type: array
-          x-stream-index: "046"
+          x-stream-index: "047"
         shadowed:
           description: Whether the message was shadowed or not
           title: Shadowed
@@ -6022,7 +6281,7 @@ components:
           $ref: '#/components/schemas/SharedLocationResponseData'
           description: Contains shared location data
           title: Shared Location
-          x-stream-index: "049"
+          x-stream-index: "050"
         show_in_channel:
           description: Whether thread reply should be shown in the channel as well
           title: Show in channel
@@ -6033,7 +6292,7 @@ components:
           description: Whether message is silent or not
           title: Silent
           type: boolean
-          x-stream-index: "037"
+          x-stream-index: "038"
         text:
           description: Text of the message. Should be empty if `mml` is provided
           title: Text
@@ -6319,14 +6578,14 @@ components:
           x-stream-index: "001.027"
         deleted_for_me:
           type: boolean
-          x-stream-index: "001.050"
+          x-stream-index: "001.051"
         deleted_reply_count:
           format: int32
           type: integer
           x-stream-index: "001.020"
         draft:
           $ref: '#/components/schemas/DraftResponse'
-          x-stream-index: "001.047"
+          x-stream-index: "001.048"
         html:
           description: Contains HTML markup of the message. Can only be set when using
             server-side API
@@ -6341,7 +6600,7 @@ components:
           title: Internationalization info
           type: object
           x-stream-docs-page-id: translation
-          x-stream-index: "001.036"
+          x-stream-index: "001.037"
         id:
           description: Message ID is unique string identifier of the message
           title: ID
@@ -6364,16 +6623,16 @@ components:
           type: array
           x-stream-index: "001.010"
         member:
-          $ref: '#/components/schemas/ChannelMemberResponse'
-          description: Channel member data for the message sender including only the
-            `channel_role`
+          $ref: '#/components/schemas/ChannelMemberPartialResponse'
+          description: Channel member data for the message sender including the `channel_role`;
+            also includes `custom` when requested via `member_custom_include`
           title: Member object
           x-stream-index: "001.008"
         mentioned_channel:
           description: Whether the message mentioned the channel tag
           title: Mentioned Channel
           type: boolean
-          x-stream-index: "001.034"
+          x-stream-index: "001.035"
         mentioned_group_ids:
           description: List of user group IDs mentioned in the message. Group members
             who are also channel members will receive push notifications based on
@@ -6383,11 +6642,18 @@ components:
           title: Mentioned Groups
           type: array
           x-stream-index: "001.033"
+        mentioned_groups:
+          description: List of mentioned user group objects.
+          items:
+            $ref: '#/components/schemas/UserGroupResponse'
+          title: Mentioned Groups Details
+          type: array
+          x-stream-index: "001.034"
         mentioned_here:
           description: Whether the message mentioned online users with @here tag
           title: Mentioned Here
           type: boolean
-          x-stream-index: "001.035"
+          x-stream-index: "001.036"
         mentioned_roles:
           description: List of roles mentioned in the message (e.g. admin, channel_moderator,
             custom roles). Members with matching roles will receive push notifications
@@ -6407,7 +6673,7 @@ components:
         message_text_updated_at:
           format: date-time
           type: string
-          x-stream-index: "001.042"
+          x-stream-index: "001.043"
         mml:
           description: Should be empty if `text` is provided. Can only be set when
             using server-side API
@@ -6417,7 +6683,7 @@ components:
           x-stream-index: "001.003"
         moderation:
           $ref: '#/components/schemas/ModerationV2Response'
-          x-stream-index: "001.045"
+          x-stream-index: "001.046"
         own_reactions:
           description: List of 10 latest reactions of authenticated user to this message
           items:
@@ -6437,34 +6703,34 @@ components:
           title: Pin expiration date
           type: string
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "001.041"
+          x-stream-index: "001.042"
         pinned:
           description: Whether message is pinned or not
           title: Pinned
           type: boolean
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "001.038"
+          x-stream-index: "001.039"
         pinned_at:
           description: Date when message got pinned
           format: date-time
           title: Pinned at
           type: string
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "001.039"
+          x-stream-index: "001.040"
         pinned_by:
           $ref: '#/components/schemas/UserResponse'
           description: Contains user who pinned the message
           title: Pinned by
           x-stream-docs-page-id: pinned_messages
-          x-stream-index: "001.040"
+          x-stream-index: "001.041"
         poll:
           $ref: '#/components/schemas/PollResponseData'
-          x-stream-index: "001.044"
+          x-stream-index: "001.045"
         poll_id:
           description: Identifier of the poll to include in the message
           title: Poll ID
           type: string
-          x-stream-index: "001.043"
+          x-stream-index: "001.044"
         quoted_message:
           $ref: '#/components/schemas/MessageResponse'
           description: Contains quoted message
@@ -6501,7 +6767,7 @@ components:
           x-stream-index: "001.013"
         reminder:
           $ref: '#/components/schemas/ReminderResponseData'
-          x-stream-index: "001.048"
+          x-stream-index: "001.049"
         reply_count:
           description: Number of replies to this message
           format: int32
@@ -6516,7 +6782,7 @@ components:
             type: string
           title: Restricted visibility
           type: array
-          x-stream-index: "001.046"
+          x-stream-index: "001.047"
         shadowed:
           description: Whether the message was shadowed or not
           title: Shadowed
@@ -6527,7 +6793,7 @@ components:
           $ref: '#/components/schemas/SharedLocationResponseData'
           description: Contains shared location data
           title: Shared Location
-          x-stream-index: "001.049"
+          x-stream-index: "001.050"
         show_in_channel:
           description: Whether thread reply should be shown in the channel as well
           title: Show in channel
@@ -6538,7 +6804,7 @@ components:
           description: Whether message is silent or not
           title: Silent
           type: boolean
-          x-stream-index: "001.037"
+          x-stream-index: "001.038"
         text:
           description: Text of the message. Should be empty if `mml` is provided
           title: Text
@@ -6599,20 +6865,29 @@ components:
       type: object
       x-stream-docs-page-id: send_message
     ModerationResponse:
+      description: Response from AI moderation
       properties:
         action:
+          description: Action taken by automod
+          title: Action
           type: string
           x-stream-index: "004"
         explicit:
+          description: Explicit score
           format: float
+          title: Explicit
           type: number
           x-stream-index: "002"
         spam:
+          description: Spam score
           format: float
+          title: Spam
           type: number
           x-stream-index: "003"
         toxic:
+          description: Toxicity score
           format: float
+          title: Toxic
           type: number
           x-stream-index: "001"
       required:
@@ -6621,6 +6896,7 @@ components:
       - spam
       - action
       - automod_response
+      title: Moderation response
       type: object
     ModerationV2Response:
       properties:
@@ -9337,6 +9613,15 @@ components:
           title: Limit
           type: integer
           x-stream-index: "008"
+        member_custom_include:
+          description: Top-level keys of the message sender's channel-member custom
+            data to include under member.custom (max 8 keys, 64 chars each)
+          items:
+            type: string
+          maxItems: 8
+          title: Member custom include
+          type: array
+          x-stream-index: "013"
         member_limit:
           description: Number of members to limit
           format: int32
@@ -9428,6 +9713,26 @@ components:
           maximum: 3
           title: Filter
           type: object
+          x-stream-filter-fields:
+            channel_cid:
+              operators:
+              - $eq
+              - $in
+              type: string
+            created_at:
+              operators:
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              type: date
+            parent_id:
+              operators:
+              - $eq
+              - $exists
+              - $in
+              type: string
           x-stream-index: "001"
         limit:
           format: int32
@@ -9449,6 +9754,10 @@ components:
           title: Sort
           type: array
           x-stream-index: "002"
+          x-stream-sort-combinations:
+          - - created_at
+          x-stream-sort-fields:
+          - created_at
       type: object
     QueryDraftsResponse:
       nullable: true
@@ -9814,6 +10123,48 @@ components:
           description: Filter to apply to the query
           title: Filter
           type: object
+          x-stream-filter-fields:
+            created_at:
+              operators:
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              type: date
+            id:
+              operators:
+              - $eq
+              - $in
+              type: string
+            is_answer:
+              operators:
+              - $eq
+              type: boolean
+            option_id:
+              operators:
+              - $eq
+              - $exists
+              - $in
+              type: string
+            poll_id:
+              operators:
+              - $eq
+              - $in
+              type: string
+            updated_at:
+              operators:
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              type: date
+            user_id:
+              operators:
+              - $eq
+              - $in
+              type: string
           x-stream-index: "003"
         limit:
           format: int32
@@ -9835,6 +10186,14 @@ components:
           title: Sort
           type: array
           x-stream-index: "004"
+          x-stream-sort-combinations:
+          - - id
+          - - created_at
+          - - updated_at
+          x-stream-sort-fields:
+          - created_at
+          - id
+          - updated_at
       type: object
     QueryPollsRequest:
       nullable: true
@@ -9844,6 +10203,63 @@ components:
           description: Filter to apply to the query
           title: Filter
           type: object
+          x-stream-filter-fields:
+            allow_answers:
+              operators:
+              - $eq
+              type: boolean
+            allow_user_suggested_options:
+              operators:
+              - $eq
+              type: boolean
+            created_at:
+              operators:
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              type: date
+            created_by_id:
+              operators:
+              - $eq
+              - $in
+              type: string
+            id:
+              operators:
+              - $eq
+              - $in
+              type: string
+            is_closed:
+              operators:
+              - $eq
+              type: boolean
+            max_votes_allowed:
+              operators:
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              - $ne
+              type: number
+            name:
+              operators:
+              - $eq
+              - $in
+              type: string
+            updated_at:
+              operators:
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              type: date
+            voting_visibility:
+              operators:
+              - $eq
+              type: string
           x-stream-index: "002"
         limit:
           format: int32
@@ -9865,6 +10281,18 @@ components:
           title: Sort
           type: array
           x-stream-index: "003"
+          x-stream-sort-combinations:
+          - - id
+          - - name
+          - - created_at
+          - - updated_at
+          - - is_closed
+          x-stream-sort-fields:
+          - created_at
+          - id
+          - is_closed
+          - name
+          - updated_at
       type: object
     QueryPollsResponse:
       nullable: true
@@ -9979,6 +10407,34 @@ components:
           description: Filter to apply to the query
           title: Filter
           type: object
+          x-stream-filter-fields:
+            channel_cid:
+              operators:
+              - $eq
+              - $in
+              type: string
+            created_at:
+              operators:
+              - $eq
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              type: date
+            message_id:
+              operators:
+              - $eq
+              - $in
+              type: string
+            remind_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              type: date
           x-stream-index: "001"
         limit:
           format: int32
@@ -10000,6 +10456,17 @@ components:
           title: Sort
           type: array
           x-stream-index: "002"
+          x-stream-sort-combinations:
+          - - channel_cid
+            - message_id
+          - - remind_at
+            - message_id
+          - - created_at
+          x-stream-sort-fields:
+          - channel_cid
+          - created_at
+          - message_id
+          - remind_at
       type: object
     QueryRemindersResponse:
       nullable: true
@@ -10217,6 +10684,7 @@ components:
             banned:
               operators:
               - $eq
+              - $ne
               type: boolean
             bypass_moderation:
               operators:
@@ -10853,8 +11321,6 @@ components:
         enabled:
           type: boolean
           x-stream-index: "001"
-      required:
-      - enabled
       type: object
     ReadStateResponse:
       properties:
@@ -11533,6 +11999,18 @@ components:
               - $eq
               - $in
               type: string
+            cid:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $ne
+              - $nin
+              type: string
             created_at:
               operators:
               - $eq
@@ -11551,6 +12029,7 @@ components:
               - $eq
               - $gt
               - $gte
+              - $in
               - $lt
               - $lte
               type: object
@@ -11763,14 +12242,14 @@ components:
           x-stream-index: "001.027"
         deleted_for_me:
           type: boolean
-          x-stream-index: "001.050"
+          x-stream-index: "001.051"
         deleted_reply_count:
           format: int32
           type: integer
           x-stream-index: "001.020"
         draft:
           $ref: '#/components/schemas/DraftResponse'
-          x-stream-index: "001.047"
+          x-stream-index: "001.048"
         html:
           type: string
           x-stream-index: "001.005"
@@ -11778,7 +12257,7 @@ components:
           additionalProperties:
             type: string
           type: object
-          x-stream-index: "001.036"
+          x-stream-index: "001.037"
         id:
           type: string
           x-stream-index: "001.001"
@@ -11795,19 +12274,24 @@ components:
           type: array
           x-stream-index: "001.010"
         member:
-          $ref: '#/components/schemas/ChannelMemberResponse'
+          $ref: '#/components/schemas/ChannelMemberPartialResponse'
           x-stream-index: "001.008"
         mentioned_channel:
           type: boolean
-          x-stream-index: "001.034"
+          x-stream-index: "001.035"
         mentioned_group_ids:
           items:
             type: string
           type: array
           x-stream-index: "001.033"
+        mentioned_groups:
+          items:
+            $ref: '#/components/schemas/UserGroupResponse'
+          type: array
+          x-stream-index: "001.034"
         mentioned_here:
           type: boolean
-          x-stream-index: "001.035"
+          x-stream-index: "001.036"
         mentioned_roles:
           items:
             type: string
@@ -11821,13 +12305,13 @@ components:
         message_text_updated_at:
           format: date-time
           type: string
-          x-stream-index: "001.042"
+          x-stream-index: "001.043"
         mml:
           type: string
           x-stream-index: "001.003"
         moderation:
           $ref: '#/components/schemas/ModerationV2Response'
-          x-stream-index: "001.045"
+          x-stream-index: "001.046"
         own_reactions:
           items:
             $ref: '#/components/schemas/ReactionResponse'
@@ -11839,23 +12323,23 @@ components:
         pin_expires:
           format: date-time
           type: string
-          x-stream-index: "001.041"
+          x-stream-index: "001.042"
         pinned:
           type: boolean
-          x-stream-index: "001.038"
+          x-stream-index: "001.039"
         pinned_at:
           format: date-time
           type: string
-          x-stream-index: "001.039"
+          x-stream-index: "001.040"
         pinned_by:
           $ref: '#/components/schemas/UserResponse'
-          x-stream-index: "001.040"
+          x-stream-index: "001.041"
         poll:
           $ref: '#/components/schemas/PollResponseData'
-          x-stream-index: "001.044"
+          x-stream-index: "001.045"
         poll_id:
           type: string
-          x-stream-index: "001.043"
+          x-stream-index: "001.044"
         quoted_message:
           $ref: '#/components/schemas/MessageResponse'
           x-stream-index: "001.022"
@@ -11881,7 +12365,7 @@ components:
           x-stream-index: "001.013"
         reminder:
           $ref: '#/components/schemas/ReminderResponseData'
-          x-stream-index: "001.048"
+          x-stream-index: "001.049"
         reply_count:
           format: int32
           type: integer
@@ -11890,19 +12374,19 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "001.046"
+          x-stream-index: "001.047"
         shadowed:
           type: boolean
           x-stream-index: "001.029"
         shared_location:
           $ref: '#/components/schemas/SharedLocationResponseData'
-          x-stream-index: "001.049"
+          x-stream-index: "001.050"
         show_in_channel:
           type: boolean
           x-stream-index: "001.018"
         silent:
           type: boolean
-          x-stream-index: "001.037"
+          x-stream-index: "001.038"
         text:
           type: string
           x-stream-index: "001.002"
@@ -12832,8 +13316,6 @@ components:
         enabled:
           type: boolean
           x-stream-index: "001"
-      required:
-      - enabled
       type: object
     TypingStartEvent:
       description: Emitted when a user starts typing in a channel/thread.
@@ -13099,12 +13581,18 @@ components:
     UpdateBlockListRequest:
       nullable: true
       properties:
+        is_confusable_folding_enabled:
+          type: boolean
+          x-stream-index: "007"
         is_leet_check_enabled:
           type: boolean
           x-stream-index: "005"
         is_plural_check_enabled:
           type: boolean
           x-stream-index: "006"
+        is_substring_matching_enabled:
+          type: boolean
+          x-stream-index: "008"
         team:
           type: string
           x-stream-index: "002"
@@ -13712,6 +14200,7 @@ components:
         users:
           items:
             $ref: '#/components/schemas/UpdateUserPartialRequest'
+          maxItems: 100
           type: array
           x-stream-index: "001"
       required:
@@ -14030,6 +14519,12 @@ components:
           format: date-time
           type: string
           x-stream-index: 001.001.001.001.004
+        review_queue_item_id:
+          description: ID of the review queue item (flagged message) that triggered
+            the ban, if the ban was applied from the moderation review queue
+          title: Review Queue Item ID
+          type: string
+          x-stream-index: "007"
         shadow:
           description: Whether the user was shadow banned
           title: Shadow
@@ -14043,7 +14538,7 @@ components:
         total_bans:
           format: int32
           type: integer
-          x-stream-index: "007"
+          x-stream-index: "008"
         type:
           default: user.banned
           description: 'The type of event: "user.banned" in this case'
@@ -14461,31 +14956,31 @@ components:
         created_at:
           format: date-time
           type: string
-          x-stream-index: "006"
+          x-stream-index: "001.005"
         created_by:
           type: string
-          x-stream-index: "008"
+          x-stream-index: "001.007"
         description:
           type: string
-          x-stream-index: "003"
+          x-stream-index: "001.003"
         id:
           type: string
-          x-stream-index: "001"
+          x-stream-index: "001.001"
         members:
           items:
             $ref: '#/components/schemas/UserGroupMember'
           type: array
-          x-stream-index: "005"
+          x-stream-index: "002"
         name:
           type: string
-          x-stream-index: "002"
+          x-stream-index: "001.002"
         team_id:
           type: string
-          x-stream-index: "004"
+          x-stream-index: "001.004"
         updated_at:
           format: date-time
           type: string
-          x-stream-index: "007"
+          x-stream-index: "001.006"
       required:
       - id
       - name
@@ -14620,7 +15115,6 @@ components:
       x-stream-throttle-group: critical
       x-stream-ws-base-event-name: VideoEvent
     UserMuteResponse:
-      nullable: true
       properties:
         created_at:
           format: date-time
@@ -14836,11 +15330,6 @@ components:
           title: Banned
           type: boolean
           x-stream-index: "001.012"
-        blocked_user_ids:
-          items:
-            type: string
-          type: array
-          x-stream-index: "001.017"
         created_at:
           description: Date/time of creation
           format: date-time
@@ -14948,11 +15437,6 @@ components:
         banned:
           type: boolean
           x-stream-index: "012"
-        blocked_user_ids:
-          items:
-            type: string
-          type: array
-          x-stream-index: "017"
         created_at:
           format: date-time
           type: string
@@ -15030,11 +15514,6 @@ components:
         banned:
           type: boolean
           x-stream-index: "001.012"
-        blocked_user_ids:
-          items:
-            type: string
-          type: array
-          x-stream-index: "001.017"
         created_at:
           format: date-time
           type: string
@@ -15770,7 +16249,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v228.14.0
+  version: v233.19.0
 openapi: 3.0.3
 paths:
   /app:
@@ -15812,6 +16291,21 @@ paths:
           type: string
           writeOnly: true
           x-stream-index: "001"
+      - in: query
+        name: cursor
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "002"
+      - in: query
+        name: limit
+        schema:
+          format: int32
+          maximum: 200
+          minimum: 1
+          type: integer
+          writeOnly: true
+          x-stream-index: "003"
       responses:
         "200":
           content:
@@ -15865,6 +16359,51 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Create block list
+      tags:
+      - product:chat
+  /blocklists/{id}/import:
+    post:
+      description: |
+        Enqueues an asynchronous bulk import of items into an existing blocklist.
+        Returns a task ID that can be polled via GET /tasks/{id} to observe progress.
+        AddItems is idempotent: items already present are skipped without error.
+        For lists exceeding the HTTP request-body cap, issue repeated import calls each
+        carrying a bounded slice of items — the task result accumulates correctly.
+      operationId: ImportBlockList
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportBlockListRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportBlockListResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Import block list items
       tags:
       - product:chat
   /blocklists/{name}:
@@ -15963,7 +16502,7 @@ paths:
             Body or URL parameter
           title: Connection ID
           type: string
-          x-stream-index: "014.003"
+          x-stream-index: "015.003"
       requestBody:
         content:
           application/json:
@@ -16045,6 +16584,77 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Delete channel
+      tags:
+      - product:chat
+    get:
+      description: |
+        Returns a channel by its CID without creating it. Responds with 404 when the channel does not exist, so it doubles as an existence check. Pass state=true to also load messages, read state and watchers.
+      operationId: GetChannel
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          description: Channel type to interact with
+          title: Channel type
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Channel ID to interact with
+          title: Channel ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
+      - in: query
+        name: state
+        schema:
+          type: boolean
+          x-stream-index: "002"
+      - in: query
+        name: messages_limit
+        schema:
+          format: int32
+          minimum: 0
+          type: integer
+          x-stream-index: "003"
+      - in: query
+        name: members_limit
+        schema:
+          format: int32
+          minimum: 0
+          type: integer
+          x-stream-index: "004"
+      - in: query
+        name: watchers_limit
+        schema:
+          format: int32
+          minimum: 0
+          type: integer
+          x-stream-index: "005"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelStateResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get channel
       tags:
       - product:chat
     patch:
@@ -16734,14 +17344,14 @@ paths:
         schema:
           type: string
           writeOnly: true
-          x-stream-index: "002.001"
+          x-stream-index: "003.001"
       - in: path
         name: id
         required: true
         schema:
           type: string
           writeOnly: true
-          x-stream-index: "002.002"
+          x-stream-index: "003.002"
       - in: query
         name: ids
         required: true
@@ -16755,6 +17365,18 @@ paths:
           type: array
           writeOnly: true
           x-stream-index: "001"
+      - in: query
+        name: member_custom_include
+        schema:
+          description: Top-level keys of each message sender's channel-member custom
+            data to include under member.custom (max 8 keys, 64 chars each)
+          items:
+            type: string
+          maxItems: 8
+          title: Member custom include
+          type: array
+          writeOnly: true
+          x-stream-index: "002"
       responses:
         "200":
           content:
@@ -16816,7 +17438,7 @@ paths:
             Body or URL parameter
           title: Connection ID
           type: string
-          x-stream-index: "012.003"
+          x-stream-index: "013.003"
       requestBody:
         content:
           application/json:
@@ -17136,7 +17758,7 @@ paths:
             Body or URL parameter
           title: Connection ID
           type: string
-          x-stream-index: "012.003"
+          x-stream-index: "013.003"
       requestBody:
         content:
           application/json:
@@ -17244,7 +17866,7 @@ paths:
         name: connection_id
         schema:
           type: string
-          x-stream-index: "007.003"
+          x-stream-index: "008.003"
       requestBody:
         content:
           application/json:
@@ -17472,6 +18094,7 @@ paths:
       summary: Create Guest
       tags:
       - product:chat
+      x-stream-requires-token: false
   /longpoll:
     get:
       description: |
@@ -18327,6 +18950,18 @@ paths:
           type: string
           writeOnly: true
           x-stream-index: "008"
+      - in: query
+        name: member_custom_include
+        schema:
+          description: Top-level keys of each message sender's channel-member custom
+            data to include under member.custom (max 8 keys, 64 chars each)
+          items:
+            type: string
+          maxItems: 8
+          title: Member custom include
+          type: array
+          writeOnly: true
+          x-stream-index: "009"
       responses:
         "200":
           content:
