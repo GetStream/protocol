@@ -59,6 +59,18 @@ components:
       - details
       title: Error response
       type: object
+    AbsentMetric:
+      properties:
+        metric:
+          type: string
+          x-stream-index: "001"
+        reason:
+          type: string
+          x-stream-index: "002"
+      required:
+      - metric
+      - reason
+      type: object
     AcceptCallRequest:
       description: AcceptCallRequest is the payload for accepting a call.
       nullable: true
@@ -149,6 +161,59 @@ components:
       x-stream-is-event: true
       x-stream-throttle-group: critical
       x-stream-ws-base-event-name: VideoEvent
+    Audience:
+      properties:
+        avg_concurrent_viewers:
+          format: int64
+          type: integer
+          x-stream-index: "003"
+        concurrency_by_minute:
+          items:
+            $ref: '#/components/schemas/ConcurrencyMinute'
+          type: array
+          x-stream-index: "011"
+        hours_watched:
+          format: double
+          type: number
+          x-stream-index: "006"
+        peak_at:
+          type: string
+          x-stream-index: "002"
+        peak_concurrent_viewers:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+        ramp_up_min_to_90pct_peak:
+          format: int64
+          type: integer
+          x-stream-index: "007"
+        retention_at_90pct_mark:
+          format: double
+          type: number
+          x-stream-index: "009"
+        retention_at_midpoint:
+          format: double
+          type: number
+          x-stream-index: "008"
+        shape:
+          type: string
+          x-stream-index: "010"
+        unique_viewers:
+          format: int32
+          type: integer
+          x-stream-index: "004"
+        viewer_connections:
+          format: int32
+          type: integer
+          x-stream-index: "005"
+      required:
+      - peak_concurrent_viewers
+      - avg_concurrent_viewers
+      - unique_viewers
+      - viewer_connections
+      - hours_watched
+      - concurrency_by_minute
+      type: object
     AudioSettingsRequest:
       properties:
         access_request_enabled:
@@ -320,6 +385,126 @@ components:
       required:
       - value
       - inclusive
+      type: object
+    BroadcastDigest:
+      properties:
+        audience:
+          $ref: '#/components/schemas/Audience'
+          x-stream-index: "004"
+        broadcast:
+          $ref: '#/components/schemas/BroadcastInfo'
+          x-stream-index: "002"
+        coverage:
+          $ref: '#/components/schemas/Coverage'
+          x-stream-index: "010"
+        joins:
+          $ref: '#/components/schemas/Joins'
+          x-stream-index: "009"
+        poor_tail:
+          $ref: '#/components/schemas/PoorTail'
+          x-stream-index: "007"
+        quality:
+          $ref: '#/components/schemas/Quality'
+          x-stream-index: "006"
+        schema_version:
+          type: string
+          x-stream-index: "001"
+        segments:
+          $ref: '#/components/schemas/Segments'
+          x-stream-index: "008"
+        source:
+          $ref: '#/components/schemas/SourceHealth'
+          x-stream-index: "003"
+        viewers:
+          $ref: '#/components/schemas/ViewerBehavior'
+          x-stream-index: "005"
+      required:
+      - schema_version
+      - broadcast
+      - source
+      - audience
+      - viewers
+      - quality
+      - poor_tail
+      - segments
+      - joins
+      - coverage
+      type: object
+    BroadcastInfo:
+      properties:
+        app_id:
+          format: int64
+          type: integer
+          x-stream-index: "004"
+        call_cid:
+          type: string
+          x-stream-index: "001"
+        call_session_id:
+          type: string
+          x-stream-index: "002"
+        call_type:
+          type: string
+          x-stream-index: "003"
+        creators:
+          items:
+            type: string
+          type: array
+          x-stream-index: "009"
+        duration_min:
+          format: double
+          type: number
+          x-stream-index: "007"
+        ended_at:
+          type: string
+          x-stream-index: "006"
+        source_mode:
+          type: string
+          x-stream-index: "008"
+        started_at:
+          type: string
+          x-stream-index: "005"
+      required:
+      - call_cid
+      - call_session_id
+      - call_type
+      - app_id
+      - started_at
+      - ended_at
+      - duration_min
+      - creators
+      type: object
+    BroadcastSegment:
+      properties:
+        avg_quality_score:
+          format: double
+          type: number
+          x-stream-index: "005"
+        key:
+          type: string
+          x-stream-index: "001"
+        p5_quality_score:
+          format: double
+          type: number
+          x-stream-index: "006"
+        poor_pct:
+          format: double
+          type: number
+          x-stream-index: "007"
+        sessions:
+          format: int32
+          type: integer
+          x-stream-index: "002"
+        share_pct:
+          format: double
+          type: number
+          x-stream-index: "003"
+        watch_share_pct:
+          format: double
+          type: number
+          x-stream-index: "004"
+      required:
+      - key
+      - sessions
       type: object
     BroadcastSettingsRequest:
       properties:
@@ -3671,6 +3856,34 @@ components:
       required:
       - status
       type: object
+    ConcurrencyMinute:
+      properties:
+        joins:
+          format: int32
+          type: integer
+          x-stream-index: "004"
+        leaves:
+          format: int32
+          type: integer
+          x-stream-index: "005"
+        max:
+          format: int32
+          type: integer
+          x-stream-index: "003"
+        min:
+          format: int32
+          type: integer
+          x-stream-index: "002"
+        minute:
+          type: string
+          x-stream-index: "001"
+      required:
+      - minute
+      - min
+      - max
+      - joins
+      - leaves
+      type: object
     ConnectUserDetailsRequest:
       properties:
         custom:
@@ -3801,6 +4014,25 @@ components:
       required:
       - start_ts
       - count
+      type: object
+    Coverage:
+      properties:
+        absent:
+          items:
+            $ref: '#/components/schemas/AbsentMetric'
+          type: array
+          x-stream-index: "003"
+        metrics_pct:
+          $ref: '#/components/schemas/MetricsPct'
+          x-stream-index: "001"
+        publisher_encoding_profiles:
+          format: int32
+          type: integer
+          x-stream-index: "002"
+      required:
+      - metrics_pct
+      - publisher_encoding_profiles
+      - absent
       type: object
     CreateDeviceRequest:
       description: Create device request
@@ -4067,6 +4299,43 @@ components:
       - duration
       title: DeleteTranscriptionResponse
       type: object
+    DeliveryZoneSegment:
+      properties:
+        avg_quality_score:
+          format: double
+          type: number
+          x-stream-index: "001.005"
+        key:
+          type: string
+          x-stream-index: "001.001"
+        outlier:
+          type: boolean
+          x-stream-index: "002"
+        p5_quality_score:
+          format: double
+          type: number
+          x-stream-index: "001.006"
+        poor_pct:
+          format: double
+          type: number
+          x-stream-index: "001.007"
+        sessions:
+          format: int32
+          type: integer
+          x-stream-index: "001.002"
+        share_pct:
+          format: double
+          type: number
+          x-stream-index: "001.003"
+        watch_share_pct:
+          format: double
+          type: number
+          x-stream-index: "001.004"
+      required:
+      - key
+      - sessions
+      - outlier
+      type: object
     DeviceResponse:
       description: Response for Device
       properties:
@@ -4232,6 +4501,73 @@ components:
       required:
       - broadcasting
       - rtmps
+      type: object
+    EncodingProfile:
+      properties:
+        avg_send_kbps:
+          format: int64
+          type: integer
+          x-stream-index: "013"
+        codec:
+          type: string
+          x-stream-index: "003"
+        encoder_impl:
+          type: string
+          x-stream-index: "004"
+        fps_p10:
+          format: int64
+          type: integer
+          x-stream-index: "012"
+        fps_p50:
+          format: int64
+          type: integer
+          x-stream-index: "011"
+        getstats_snapshots:
+          format: int32
+          type: integer
+          x-stream-index: "002"
+        hardware_encode:
+          type: boolean
+          x-stream-index: "005"
+        ladder_type:
+          type: string
+          x-stream-index: "007"
+        power_efficient:
+          type: boolean
+          x-stream-index: "006"
+        quality_limitation_durations_s:
+          additionalProperties:
+            format: int64
+            type: integer
+          type: object
+          x-stream-index: "015"
+        quality_limitation_samples:
+          additionalProperties:
+            format: int64
+            type: integer
+          type: object
+          x-stream-index: "014"
+        resolution:
+          type: string
+          x-stream-index: "010"
+        simulcast_layers:
+          format: int32
+          type: integer
+          x-stream-index: "009"
+        source_file:
+          type: string
+          x-stream-index: "001"
+        svc_modes:
+          items:
+            type: string
+          type: array
+          x-stream-index: "008"
+      required:
+      - source_file
+      - getstats_snapshots
+      - svc_modes
+      - quality_limitation_samples
+      - quality_limitation_durations_s
       type: object
     EncryptionSettingsRequest:
       properties:
@@ -4467,6 +4803,9 @@ components:
         chat_activity:
           $ref: '#/components/schemas/ChatActivityStatsResponse'
           x-stream-index: "005"
+        digest:
+          $ref: '#/components/schemas/BroadcastDigest'
+          x-stream-index: "007"
         duration:
           description: Duration of the request in milliseconds
           title: Duration
@@ -4835,6 +5174,28 @@ components:
       - username
       - password
       title: ICEServer
+      type: object
+    Incident:
+      properties:
+        from:
+          type: string
+          x-stream-index: "001"
+        peak_concurrency:
+          format: int32
+          type: integer
+          x-stream-index: "004"
+        to:
+          type: string
+          x-stream-index: "002"
+        viewers_interrupted:
+          format: int32
+          type: integer
+          x-stream-index: "003"
+      required:
+      - from
+      - to
+      - viewers_interrupted
+      - peak_concurrency
       type: object
     IndividualRecordingResponse:
       properties:
@@ -5346,6 +5707,36 @@ components:
       - duration
       title: JoinCallResponse
       type: object
+    Joins:
+      properties:
+        disconnect_reasons:
+          additionalProperties:
+            format: int64
+            type: integer
+          type: object
+          x-stream-index: "004"
+        failure_stages:
+          additionalProperties:
+            format: int64
+            type: integer
+          type: object
+          x-stream-index: "003"
+        join_attempts:
+          format: int64
+          type: integer
+          x-stream-index: "001"
+        join_success_rate:
+          format: double
+          type: number
+          x-stream-index: "002"
+        reason:
+          type: string
+          x-stream-index: "005"
+      required:
+      - failure_stages
+      - disconnect_reasons
+      - reason
+      type: object
     KickUserRequest:
       description: KickUserRequest is the payload for kicking a user from a call.
         Optionally block the user as well.
@@ -5686,6 +6077,29 @@ components:
               type: number
             type: array
           type: array
+          x-stream-index: "001"
+      type: object
+    MetricsPct:
+      properties:
+        freezes:
+          format: double
+          type: number
+          x-stream-index: "004"
+        geo:
+          format: double
+          type: number
+          x-stream-index: "005"
+        jitter:
+          format: double
+          type: number
+          x-stream-index: "002"
+        latency:
+          format: double
+          type: number
+          x-stream-index: "003"
+        quality_score:
+          format: double
+          type: number
           x-stream-index: "001"
       type: object
     MuteUsersRequest:
@@ -6228,6 +6642,17 @@ components:
       - total
       - by_version
       type: object
+    Percentiles:
+      properties:
+        p50:
+          format: double
+          type: number
+          x-stream-index: "001"
+        p95:
+          format: double
+          type: number
+          x-stream-index: "002"
+      type: object
     PermissionRequestEvent:
       description: |-
         This event is sent when a user requests access to a feature on a call,
@@ -6303,6 +6728,65 @@ components:
       - duration
       title: Response
       type: object
+    PoorByCause:
+      properties:
+        delivery:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+        edge:
+          format: int32
+          type: integer
+          x-stream-index: "002"
+        isolated_local:
+          format: int32
+          type: integer
+          x-stream-index: "004"
+        source:
+          format: int32
+          type: integer
+          x-stream-index: "003"
+        unattributed:
+          format: int32
+          type: integer
+          x-stream-index: "005"
+      required:
+      - delivery
+      - edge
+      - source
+      - isolated_local
+      - unattributed
+      type: object
+    PoorTail:
+      properties:
+        healthy_pct:
+          format: double
+          type: number
+          x-stream-index: "002"
+        healthy_viewers:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+        note:
+          type: string
+          x-stream-index: "006"
+        poor_by_cause:
+          $ref: '#/components/schemas/PoorByCause'
+          x-stream-index: "004"
+        poor_total:
+          format: int32
+          type: integer
+          x-stream-index: "003"
+        supporting:
+          $ref: '#/components/schemas/Supporting'
+          x-stream-index: "005"
+      required:
+      - healthy_viewers
+      - poor_total
+      - poor_by_cause
+      - supporting
+      - note
+      type: object
     PrivacySettingsResponse:
       type: object
     PublishedTrackFlags:
@@ -6351,6 +6835,55 @@ components:
           type: array
           x-stream-index: "007"
       type: object
+    PublisherSession:
+      nullable: true
+      properties:
+        avg_jitter_ms:
+          format: double
+          type: number
+          x-stream-index: "011"
+        browser:
+          type: string
+          x-stream-index: "006"
+        delivery_zone:
+          type: string
+          x-stream-index: "009"
+        duration_min:
+          format: double
+          type: number
+          x-stream-index: "008"
+        encoding:
+          $ref: '#/components/schemas/EncodingProfile'
+          x-stream-index: "012"
+        ingest:
+          type: string
+          x-stream-index: "003"
+        os:
+          type: string
+          x-stream-index: "005"
+        send_quality_score:
+          format: double
+          type: number
+          x-stream-index: "010"
+        started_offset_min:
+          format: double
+          type: number
+          x-stream-index: "007"
+        tool:
+          type: string
+          x-stream-index: "004"
+        user_id:
+          type: string
+          x-stream-index: "001"
+        user_session_id:
+          type: string
+          x-stream-index: "002"
+      required:
+      - user_id
+      - user_session_id
+      - started_offset_min
+      - duration_min
+      type: object
     PublisherStatsResponse:
       properties:
         by_track:
@@ -6391,6 +6924,48 @@ components:
         feeds_preferences:
           $ref: '#/components/schemas/FeedsPreferencesResponse'
           x-stream-index: "005"
+      type: object
+    Quality:
+      properties:
+        connection_avg_jitter_ms:
+          $ref: '#/components/schemas/Percentiles'
+          x-stream-index: "005"
+        connection_avg_latency_ms:
+          $ref: '#/components/schemas/Percentiles'
+          x-stream-index: "006"
+        interruption_incidents:
+          items:
+            $ref: '#/components/schemas/Incident'
+          type: array
+          x-stream-index: "007"
+        p5_quality_score:
+          format: double
+          type: number
+          x-stream-index: "003"
+        p50_quality_score:
+          format: double
+          type: number
+          x-stream-index: "004"
+        score_bands_by_connection_pct:
+          $ref: '#/components/schemas/ScoreBands'
+          x-stream-index: "001"
+        score_bands_by_watch_time_pct:
+          $ref: '#/components/schemas/ScoreBands'
+          x-stream-index: "002"
+        viewer_interruption_note:
+          type: string
+          x-stream-index: "009"
+        viewer_interruption_rate_pct:
+          format: double
+          type: number
+          x-stream-index: "008"
+      required:
+      - score_bands_by_connection_pct
+      - score_bands_by_watch_time_pct
+      - connection_avg_jitter_ms
+      - connection_avg_latency_ms
+      - interruption_incidents
+      - viewer_interruption_note
       type: object
     QualityScoreReport:
       properties:
@@ -8296,6 +8871,21 @@ components:
       required:
       - address
       type: object
+    ScoreBands:
+      properties:
+        good:
+          format: double
+          type: number
+          x-stream-index: "001"
+        ok:
+          format: double
+          type: number
+          x-stream-index: "002"
+        poor:
+          format: double
+          type: number
+          x-stream-index: "003"
+      type: object
     ScreensharingSettingsRequest:
       properties:
         access_request_enabled:
@@ -8322,6 +8912,44 @@ components:
       required:
       - enabled
       - access_request_enabled
+      type: object
+    Segments:
+      properties:
+        by_browser:
+          items:
+            $ref: '#/components/schemas/BroadcastSegment'
+          type: array
+          x-stream-index: "004"
+        by_country:
+          items:
+            $ref: '#/components/schemas/BroadcastSegment'
+          type: array
+          x-stream-index: "005"
+        by_country_reason:
+          type: string
+          x-stream-index: "006"
+        by_delivery_zone:
+          items:
+            $ref: '#/components/schemas/DeliveryZoneSegment'
+          type: array
+          x-stream-index: "001"
+        by_os:
+          items:
+            $ref: '#/components/schemas/BroadcastSegment'
+          type: array
+          x-stream-index: "003"
+        by_sdk:
+          items:
+            $ref: '#/components/schemas/BroadcastSegment'
+          type: array
+          x-stream-index: "002"
+      required:
+      - by_delivery_zone
+      - by_sdk
+      - by_os
+      - by_browser
+      - by_country
+      - by_country_reason
       type: object
     SendCallEventRequest:
       description: Send a call event to the other user
@@ -8507,6 +9135,53 @@ components:
           title: Type
           type: string
           x-stream-index: "002"
+      type: object
+    SourceHealth:
+      properties:
+        co_host_peak:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+        dead_air_s:
+          format: int64
+          type: integer
+          x-stream-index: "003"
+        interruptions:
+          items:
+            $ref: '#/components/schemas/SourceInterruption'
+          type: array
+          x-stream-index: "002"
+        publisher_sessions:
+          items:
+            $ref: '#/components/schemas/PublisherSession'
+          type: array
+          x-stream-index: "004"
+      required:
+      - co_host_peak
+      - interruptions
+      - dead_air_s
+      - publisher_sessions
+      type: object
+    SourceInterruption:
+      properties:
+        at_offset_min:
+          format: double
+          type: number
+          x-stream-index: "003"
+        dead_air_s:
+          format: int64
+          type: integer
+          x-stream-index: "004"
+        kind:
+          type: string
+          x-stream-index: "001"
+        seamless:
+          type: boolean
+          x-stream-index: "002"
+      required:
+      - kind
+      - at_offset_min
+      - dead_air_s
       type: object
     SpeechSegmentConfig:
       properties:
@@ -8962,6 +9637,28 @@ components:
       - unique
       - total_subscribed_duration_seconds
       type: object
+    Supporting:
+      properties:
+        delivery_incident_windows:
+          items:
+            $ref: '#/components/schemas/Incident'
+          type: array
+          x-stream-index: "001"
+        edge_outlier_zones:
+          items:
+            type: string
+          type: array
+          x-stream-index: "002"
+        source_drop_windows:
+          items:
+            $ref: '#/components/schemas/TimeWindow'
+          type: array
+          x-stream-index: "003"
+      required:
+      - delivery_incident_windows
+      - edge_outlier_zones
+      - source_drop_windows
+      type: object
     TargetResolution:
       properties:
         bitrate:
@@ -9006,6 +9703,18 @@ components:
           x-stream-index: "001"
       required:
       - enabled
+      type: object
+    TimeWindow:
+      properties:
+        from:
+          type: string
+          x-stream-index: "001"
+        to:
+          type: string
+          x-stream-index: "002"
+      required:
+      - from
+      - to
       type: object
     TrackStatsResponse:
       nullable: true
@@ -10489,6 +11198,46 @@ components:
       - camera_default_on
       - camera_facing
       type: object
+    ViewerBehavior:
+      properties:
+        bounce_rate_pct:
+          format: double
+          type: number
+          x-stream-index: "003"
+        connection_duration_p50_s:
+          format: int64
+          type: integer
+          x-stream-index: "006"
+        connections_per_viewer_mean:
+          format: double
+          type: number
+          x-stream-index: "005"
+        connections_under_30s_pct:
+          format: double
+          type: number
+          x-stream-index: "007"
+        median_watch_min:
+          format: double
+          type: number
+          x-stream-index: "001"
+        note:
+          type: string
+          x-stream-index: "008"
+        p90_watch_min:
+          format: double
+          type: number
+          x-stream-index: "002"
+        return_visit_rate_pct:
+          format: double
+          type: number
+          x-stream-index: "004"
+      required:
+      - median_watch_min
+      - p90_watch_min
+      - connections_per_viewer_mean
+      - connection_duration_p50_s
+      - note
+      type: object
     WHIPIngress:
       properties:
         address:
@@ -10595,7 +11344,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v235.15.2
+  version: v235.16.0
 openapi: 3.0.3
 paths:
   /video/call/{type}/{id}:
