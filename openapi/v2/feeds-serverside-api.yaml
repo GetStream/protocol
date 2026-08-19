@@ -3575,7 +3575,7 @@ components:
           type: string
           x-stream-index: "002.001"
         type:
-          default: export.review_queue.error
+          default: export.moderation_logs.error
           type: string
           x-stream-index: "003.002"
       required:
@@ -18750,6 +18750,48 @@ components:
       - owner_resource
       - tags
       type: object
+    PermissionRequest:
+      nullable: true
+      properties:
+        action:
+          description: Action name this permission is for (e.g. SendMessage)
+          title: Action
+          type: string
+          x-stream-index: "001.004"
+        condition:
+          additionalProperties: {}
+          description: MongoDB style condition which decides whether or not the permission
+            is granted
+          title: Condition
+          type: object
+          x-stream-index: "001.007"
+        description:
+          description: Description of the permission
+          maxLength: 2048
+          title: Description
+          type: string
+          x-stream-index: "001.003"
+        name:
+          description: Name of the permission
+          maxLength: 100
+          title: Name
+          type: string
+          x-stream-index: "001.002"
+        owner:
+          description: Whether this permission applies to resource owner or not
+          title: Owner
+          type: boolean
+          x-stream-index: "001.005"
+        same_team:
+          description: Whether this permission applies to teammates (multi-tenancy
+            mode only)
+          title: Same team
+          type: boolean
+          x-stream-index: "001.006"
+      required:
+      - name
+      - action
+      type: object
     PinActivityRequest:
       nullable: true
       properties:
@@ -19487,8 +19529,10 @@ components:
           type: boolean
           x-stream-index: "001"
         push_types:
-          description: List of notification types that should trigger push notifications
-            (e.g., follow, comment, reaction, comment_reaction, mention)
+          description: Allowlist of notification types that may trigger push (e.g.
+            follow, comment, reaction, comment_reaction, mention, or any custom activity.type).
+            Empty or omitted means no types. Built-in notifications match notification_context.trigger.type;
+            manually added notification activities match activity.type.
           items:
             type: string
           title: Push Types
@@ -30045,7 +30089,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v235.20.1
+  version: v235.21.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -37943,7 +37987,75 @@ paths:
       summary: List permissions
       tags:
       - product:common
+    post:
+      description: |
+        Creates permission
+      operationId: CreatePermission
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermissionRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Create permission
+      tags:
+      - product:common
   /api/v2/permissions/{id}:
+    delete:
+      description: |
+        Deletes custom permission
+      operationId: DeletePermission
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Permission ID
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Delete permission
+      tags:
+      - product:common
     get:
       description: |
         Gets custom permission
@@ -37978,6 +38090,48 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Get permission
+      tags:
+      - product:common
+    put:
+      description: |
+        Updates custom permission
+      operationId: UpdatePermission
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Unique permission ID
+          maxLength: 255
+          title: ID
+          type: string
+          x-stream-index: "001.001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermissionRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Update permission
       tags:
       - product:common
   /api/v2/polls:
