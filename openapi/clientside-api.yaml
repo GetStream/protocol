@@ -17167,6 +17167,38 @@ components:
       - duration
       title: Response
       type: object
+    GetFeedCountsResponse:
+      nullable: true
+      properties:
+        activity_count:
+          description: Number of activities in the feed
+          format: int64
+          title: Activity Count
+          type: integer
+          x-stream-index: "001"
+        comment_count:
+          description: Total number of comments on those activities, including nested
+            replies
+          format: int64
+          title: Comment Count
+          type: integer
+          x-stream-index: "002"
+        duration:
+          type: string
+          x-stream-index: "004.001"
+        total_count:
+          description: Sum of activity_count and comment_count
+          format: int64
+          title: Total Count
+          type: integer
+          x-stream-index: "003"
+      required:
+      - activity_count
+      - comment_count
+      - total_count
+      - duration
+      title: Get Feed Counts Response
+      type: object
     GetFollowSuggestionsResponse:
       nullable: true
       properties:
@@ -41431,7 +41463,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v236.0.0
+  version: v236.0.1
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -47434,6 +47466,50 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Change a feed's visibility
+      tags:
+      - product:feeds
+  /api/v2/feeds/feed_groups/{feed_group_id}/feeds/{feed_id}/counts:
+    get:
+      description: |
+        Returns the number of activities in a feed, the total number of comments on those activities (including nested replies), and the sum of both. The comment total is cached for a few seconds on large feeds.
+      operationId: GetFeedCounts
+      parameters:
+      - in: path
+        name: feed_group_id
+        required: true
+        schema:
+          maxLength: 255
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      - in: path
+        name: feed_id
+        required: true
+        schema:
+          maxLength: 255
+          type: string
+          writeOnly: true
+          x-stream-index: "002"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetFeedCountsResponse'
+          description: Get Feed Counts Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get feed counts
       tags:
       - product:feeds
   /api/v2/feeds/feed_groups/{feed_group_id}/feeds/{feed_id}/members:
