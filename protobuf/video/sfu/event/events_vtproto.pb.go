@@ -1291,6 +1291,23 @@ func (m *JoinRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if len(m.TranscodeOfUserId) > 0 {
+		i -= len(m.TranscodeOfUserId)
+		copy(dAtA[i:], m.TranscodeOfUserId)
+		i = encodeVarint(dAtA, i, uint64(len(m.TranscodeOfUserId)))
+		i--
+		dAtA[i] = 0x7a
+	}
+	if m.WebrtcTranscodeMode {
+		i--
+		if m.WebrtcTranscodeMode {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x70
+	}
 	if len(m.UnifiedSessionId) > 0 {
 		i -= len(m.UnifiedSessionId)
 		copy(dAtA[i:], m.UnifiedSessionId)
@@ -3531,6 +3548,13 @@ func (m *JoinRequest) SizeVT() (n int) {
 		n += 1 + sov(uint64(m.Source))
 	}
 	l = len(m.UnifiedSessionId)
+	if l > 0 {
+		n += 1 + l + sov(uint64(l))
+	}
+	if m.WebrtcTranscodeMode {
+		n += 2
+	}
+	l = len(m.TranscodeOfUserId)
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
 	}
@@ -7057,6 +7081,58 @@ func (m *JoinRequest) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.UnifiedSessionId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 14:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field WebrtcTranscodeMode", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.WebrtcTranscodeMode = bool(v != 0)
+		case 15:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TranscodeOfUserId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.TranscodeOfUserId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
