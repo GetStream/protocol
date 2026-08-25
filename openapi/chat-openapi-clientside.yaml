@@ -1627,14 +1627,12 @@ components:
           type: object
           x-stream-index: "003"
         user:
-          $ref: '#/components/schemas/UserResponse'
+          $ref: '#/components/schemas/MemberUserRequest'
           x-stream-index: "002"
         user_id:
           title: User ID
           type: string
           x-stream-index: "001"
-      required:
-      - user_id
       title: Channel member
       type: object
     ChannelMemberResponse:
@@ -2743,18 +2741,113 @@ components:
       properties:
         device:
           $ref: '#/components/schemas/DeviceFields'
-          x-stream-index: "001.002"
+          x-stream-index: "002"
         member_custom_include:
           items:
             type: string
           maxItems: 8
           type: array
-          x-stream-index: "002"
+          x-stream-index: "003"
         user_details:
-          $ref: '#/components/schemas/User'
-          x-stream-index: "001.001"
+          $ref: '#/components/schemas/ConnectUserDetails'
+          x-stream-index: "001"
       required:
       - user_details
+      type: object
+    ConnectUserDetails:
+      description: User details for the connection
+      properties:
+        avg_response_time:
+          format: int32
+          readOnly: true
+          type: integer
+          x-stream-index: "019"
+        ban_expires:
+          format: date-time
+          type: string
+          x-stream-index: "012"
+        banned:
+          type: boolean
+          x-stream-index: "011"
+        created_at:
+          format: date-time
+          readOnly: true
+          type: string
+          x-stream-index: "005"
+        custom:
+          additionalProperties: {}
+          description: Custom user data
+          title: Custom
+          type: object
+          x-stream-index: "004"
+        deactivated_at:
+          format: date-time
+          readOnly: true
+          type: string
+          x-stream-index: "010"
+        deleted_at:
+          format: date-time
+          readOnly: true
+          type: string
+          x-stream-index: "009"
+        id:
+          description: User ID
+          title: ID
+          type: string
+          x-stream-index: "001"
+        invisible:
+          description: Whether the user connects invisibly
+          title: Invisible
+          type: boolean
+          x-stream-index: "014"
+        language:
+          description: Preferred language of the user
+          title: Language
+          type: string
+          x-stream-index: "016"
+        last_active:
+          format: date-time
+          readOnly: true
+          type: string
+          x-stream-index: "007"
+        last_engaged_at:
+          format: date-time
+          readOnly: true
+          type: string
+          x-stream-index: "008"
+        online:
+          readOnly: true
+          type: boolean
+          x-stream-index: "013"
+        privacy_settings:
+          $ref: '#/components/schemas/PrivacySettings'
+          description: Privacy settings of the user
+          title: Privacy settings
+          x-stream-index: "015"
+        revoke_tokens_issued_before:
+          format: date-time
+          type: string
+          x-stream-index: "018"
+        role:
+          type: string
+          x-stream-index: "002"
+        teams:
+          items:
+            type: string
+          type: array
+          x-stream-index: "017"
+        teams_role:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "003"
+        updated_at:
+          format: date-time
+          readOnly: true
+          type: string
+          x-stream-index: "006"
+      required:
+      - id
       type: object
     CreateBlockListRequest:
       description: Block list contains restricted words
@@ -5205,6 +5298,33 @@ components:
       x-stream-is-event: true
       x-stream-throttle-group: ordered
       x-stream-ws-base-event-name: VideoEvent
+    MemberUserRequest:
+      properties:
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "004"
+        id:
+          type: string
+          x-stream-index: "001"
+        image:
+          type: string
+          x-stream-index: "003"
+        invisible:
+          type: boolean
+          x-stream-index: "006"
+        language:
+          type: string
+          x-stream-index: "005"
+        name:
+          type: string
+          x-stream-index: "002"
+        privacy_settings:
+          $ref: '#/components/schemas/PrivacySettingsResponse'
+          x-stream-index: "007"
+      required:
+      - id
+      type: object
     MembersResponse:
       nullable: true
       properties:
@@ -8811,6 +8931,11 @@ components:
           type: object
           x-stream-index: "013"
         voting_visibility:
+          description: Voting visibility of the poll
+          enum:
+          - anonymous
+          - public
+          title: Voting visibility
           type: string
           x-stream-index: "004"
       required:
@@ -9996,7 +10121,6 @@ components:
           x-stream-index: "001"
       required:
       - type
-      - filter_conditions
       type: object
     QueryMessageFlagsPayload:
       properties:
@@ -11440,6 +11564,7 @@ components:
       - message_id
       - user_id
       - cid
+      - reminder
       title: ReminderCreatedEvent
       type: object
       x-stream-event-client-type: true
@@ -11504,6 +11629,7 @@ components:
       - message_id
       - user_id
       - cid
+      - reminder
       title: ReminderDeletedEvent
       type: object
       x-stream-event-client-type: true
@@ -11566,6 +11692,7 @@ components:
       - message_id
       - user_id
       - cid
+      - reminder
       title: ReminderNotificationEvent
       type: object
       x-stream-event-client-type: true
@@ -11669,6 +11796,7 @@ components:
       - message_id
       - user_id
       - cid
+      - reminder
       title: ReminderUpdatedEvent
       type: object
       x-stream-event-client-type: true
@@ -13701,23 +13829,6 @@ components:
           title: Add members
           type: array
           x-stream-index: "001"
-        add_moderators:
-          description: List of user IDs to make channel moderators
-          items:
-            type: string
-          maxItems: 100
-          title: Add moderators
-          type: array
-          x-stream-index: "003"
-        assign_roles:
-          description: List of channel member role assignments. If any specified user
-            is not part of the channel, the request will fail
-          items:
-            $ref: '#/components/schemas/ChannelMemberRequest'
-          maxItems: 100
-          title: Assign roles
-          type: array
-          x-stream-index: "006"
         cooldown:
           description: Sets cool down period for the channel in seconds
           format: int32
@@ -13729,14 +13840,6 @@ components:
         data:
           $ref: '#/components/schemas/ChannelInputRequest'
           x-stream-index: "016.001"
-        demote_moderators:
-          description: List of user IDs to take away moderators status from
-          items:
-            type: string
-          maxItems: 100
-          title: Demote moderators
-          type: array
-          x-stream-index: "004"
         hide_history:
           description: Set to `true` to hide channel's history when adding new members
           title: Hide history
@@ -14379,90 +14482,6 @@ components:
       - user_preferences
       - user_channel_preferences
       - duration
-      type: object
-    User:
-      properties:
-        avg_response_time:
-          format: int32
-          readOnly: true
-          type: integer
-          x-stream-index: "048"
-        ban_expires:
-          format: date-time
-          type: string
-          x-stream-index: "017"
-        banned:
-          type: boolean
-          x-stream-index: "016"
-        created_at:
-          format: date-time
-          readOnly: true
-          type: string
-          x-stream-index: "008"
-        custom:
-          additionalProperties: {}
-          type: object
-          x-stream-index: "006"
-        deactivated_at:
-          format: date-time
-          readOnly: true
-          type: string
-          x-stream-index: "014"
-        deleted_at:
-          format: date-time
-          readOnly: true
-          type: string
-          x-stream-index: "013"
-        id:
-          type: string
-          x-stream-index: "003"
-        invisible:
-          type: boolean
-          x-stream-index: "024"
-        language:
-          type: string
-          x-stream-index: "036"
-        last_active:
-          format: date-time
-          readOnly: true
-          type: string
-          x-stream-index: "011"
-        last_engaged_at:
-          format: date-time
-          readOnly: true
-          type: string
-          x-stream-index: "012"
-        online:
-          readOnly: true
-          type: boolean
-          x-stream-index: "023"
-        privacy_settings:
-          $ref: '#/components/schemas/PrivacySettings'
-          x-stream-index: "027"
-        revoke_tokens_issued_before:
-          format: date-time
-          type: string
-          x-stream-index: "044"
-        role:
-          type: string
-          x-stream-index: "004"
-        teams:
-          items:
-            type: string
-          type: array
-          x-stream-index: "037"
-        teams_role:
-          additionalProperties:
-            type: string
-          type: object
-          x-stream-index: "005"
-        updated_at:
-          format: date-time
-          readOnly: true
-          type: string
-          x-stream-index: "009"
-      required:
-      - id
       type: object
     UserBannedEvent:
       description: This event is sent when a user gets banned. The event contains
@@ -16269,7 +16288,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v237.0.0
+  version: v237.1.2
 openapi: 3.0.3
 paths:
   /app:
