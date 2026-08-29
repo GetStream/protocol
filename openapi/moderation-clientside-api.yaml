@@ -852,16 +852,6 @@ components:
     BanRequest:
       nullable: true
       properties:
-        banned_by:
-          $ref: '#/components/schemas/UserRequest'
-          description: Details about the user performing the ban
-          title: Banned By
-          x-stream-index: "008"
-        banned_by_id:
-          description: ID of the user performing the ban
-          title: Banned By ID
-          type: string
-          x-stream-index: "007"
         channel_cid:
           description: Channel where the ban applies
           title: Channel CID
@@ -2968,6 +2958,8 @@ components:
         enabled:
           type: boolean
           x-stream-index: "001"
+      required:
+      - enabled
       type: object
     DeviceResponse:
       description: Response for Device
@@ -6941,6 +6933,8 @@ components:
         enabled:
           type: boolean
           x-stream-index: "001"
+      required:
+      - enabled
       type: object
     RejectAppealRequestPayload:
       description: Configuration for rejecting an appeal
@@ -7751,6 +7745,8 @@ components:
         enabled:
           type: boolean
           x-stream-index: "001"
+      required:
+      - enabled
       type: object
     UnbanActionRequestPayload:
       description: Configuration for unban moderation action
@@ -7776,6 +7772,18 @@ components:
           type: string
           x-stream-index: "001"
       title: UnbanActionRequest
+      type: object
+    UnbanRequest:
+      nullable: true
+      type: object
+    UnbanResponse:
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
       type: object
     UnblockActionRequestPayload:
       description: 'Deprecated: use restore instead — it now also reverses a block
@@ -8163,43 +8171,6 @@ components:
       - created_at
       - updated_at
       type: object
-    UserRequest:
-      description: User request object
-      properties:
-        custom:
-          additionalProperties: {}
-          description: Custom user data
-          title: Custom
-          type: object
-          x-stream-index: "004"
-        id:
-          description: User ID
-          title: ID
-          type: string
-          x-stream-index: "001"
-        image:
-          description: User's profile image URL
-          title: Image
-          type: string
-          x-stream-index: "003"
-        invisible:
-          type: boolean
-          x-stream-index: "006"
-        language:
-          type: string
-          x-stream-index: "005"
-        name:
-          description: Optional name of user
-          title: Name
-          type: string
-          x-stream-index: "002"
-        privacy_settings:
-          $ref: '#/components/schemas/PrivacySettingsResponse'
-          x-stream-index: "007"
-      required:
-      - id
-      title: UserRequest
-      type: object
     UserResponse:
       description: User response object
       properties:
@@ -8560,7 +8531,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v237.8.0
+  version: v237.9.0
 openapi: 3.0.3
 paths:
   /api/v2/moderation/action_config:
@@ -9384,6 +9355,57 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Submit moderation action
+      tags:
+      - product:moderation
+  /api/v2/moderation/unban:
+    post:
+      description: |
+        Unban a user from a channel or globally.
+      operationId: unban
+      parameters:
+      - in: query
+        name: target_user_id
+        required: true
+        schema:
+          description: ID of the user to unban
+          title: Target User ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      - in: query
+        name: channel_cid
+        schema:
+          description: Channel where the unban applies
+          title: Channel CID
+          type: string
+          writeOnly: true
+          x-stream-index: "002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnbanRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnbanResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Unban
       tags:
       - product:moderation
   /api/v2/moderation/unmute:
