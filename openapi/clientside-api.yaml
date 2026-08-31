@@ -426,7 +426,8 @@ components:
       nullable: true
       properties:
         follower_role:
-          description: Optional role for the follower in the follow relationship
+          description: Optional role for the follower in the follow relationship.
+            Server-side only, and one of 'feed_follower' (the default) or 'feed_member_viewer'.
           title: Follower Role
           type: string
           x-stream-index: "003"
@@ -11884,7 +11885,7 @@ components:
             performance.
           title: Enrich Own Fields
           type: boolean
-          x-stream-index: "002"
+          x-stream-index: "003"
         feeds:
           description: List of feeds to create
           items:
@@ -12070,6 +12071,23 @@ components:
           format: date-time
           type: string
           x-stream-index: "001"
+      type: object
+    CreateReminderResponse:
+      description: Basic response information
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        reminder:
+          $ref: '#/components/schemas/ReminderResponseData'
+          x-stream-index: "001"
+      required:
+      - reminder
+      - duration
+      title: Response
       type: object
     CreateUserGroupRequest:
       description: Request body for creating a user group
@@ -16421,7 +16439,9 @@ components:
           type: object
           x-stream-index: "004"
         follower_role:
-          description: Role of the follower (source user) in the follow relationship
+          description: Role of the follower (source user) in the follow relationship,
+            as stored. A value outside the allowed set is reported as stored but evaluated
+            as 'feed_follower'.
           title: Follower Role
           type: string
           x-stream-index: "008"
@@ -37940,6 +37960,9 @@ components:
           type: boolean
           x-stream-index: "001.009"
         follower_role:
+          description: Optional role for the follower in the follow relationship.
+            Server-side only, and one of 'feed_follower' (the default) or 'feed_member_viewer'.
+          title: Follower Role
           type: string
           x-stream-index: "002"
         push_preference:
@@ -41486,7 +41509,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v237.9.1
+  version: v237.10.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -44110,8 +44133,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReminderResponseData'
-          description: Successful response
+                $ref: '#/components/schemas/CreateReminderResponse'
+          description: Response
         "400":
           content:
             application/json:
@@ -48159,7 +48182,7 @@ paths:
   /api/v2/feeds/follows/accept:
     post:
       description: |
-        Accepts a pending follow request
+        Accepts a pending follow request. Follower role can only be set via server-side requests.
       operationId: AcceptFollow
       requestBody:
         content:
