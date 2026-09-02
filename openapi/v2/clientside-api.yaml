@@ -17027,6 +17027,85 @@ components:
       - duration
       title: GetCallResponse
       type: object
+    GetCallRingStateResponse:
+      description: 'The ring state of a call session: who accepted, rejected, or missed
+        the ring.'
+      nullable: true
+      properties:
+        accepted_by:
+          additionalProperties:
+            format: date-time
+            type: number
+          description: Users that accepted the call, mapped to when they accepted
+          title: AcceptedBy
+          type: object
+          x-stream-index: "005"
+        call_cid:
+          description: The CID of the call
+          title: CallCID
+          type: string
+          x-stream-index: "002"
+        call_ended_at:
+          description: When the call ended
+          format: date-time
+          title: CallEndedAt
+          type: number
+          x-stream-index: "010"
+        created_by_user_id:
+          description: The user that created the call, i.e. the caller
+          title: CreatedByUserID
+          type: string
+          x-stream-index: "004"
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+        missed_by:
+          additionalProperties:
+            format: date-time
+            type: number
+          description: Users that missed the call, mapped to when they were marked
+            as missed
+          title: MissedBy
+          type: object
+          x-stream-index: "007"
+        rejected_by:
+          additionalProperties:
+            format: date-time
+            type: number
+          description: Users that rejected the call, mapped to when they rejected
+          title: RejectedBy
+          type: object
+          x-stream-index: "006"
+        session_ended_at:
+          description: When the call session ended
+          format: date-time
+          title: SessionEndedAt
+          type: number
+          x-stream-index: "009"
+        session_id:
+          description: The call session this state belongs to, empty when the call
+            has never rung
+          title: SessionID
+          type: string
+          x-stream-index: "003"
+        session_started_at:
+          description: When the call session started
+          format: date-time
+          title: SessionStartedAt
+          type: number
+          x-stream-index: "008"
+      required:
+      - duration
+      - call_cid
+      - session_id
+      - created_by_user_id
+      - accepted_by
+      - rejected_by
+      - missed_by
+      title: GetCallRingStateResponse
+      type: object
     GetCallSessionParticipantStatsDetailsResponse:
       description: Basic response information
       nullable: true
@@ -21984,10 +22063,14 @@ components:
     ModerationFlagResponse:
       nullable: true
       properties:
-        created_at:
+        content_published_at:
           format: date-time
           type: number
           x-stream-index: "015"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "016"
         custom:
           additionalProperties: {}
           type: object
@@ -22030,7 +22113,7 @@ components:
         updated_at:
           format: date-time
           type: number
-          x-stream-index: "016"
+          x-stream-index: "017"
         user:
           $ref: '#/components/schemas/UserResponse'
           x-stream-index: "004"
@@ -41556,7 +41639,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v237.14.0
+  version: v237.15.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -52407,6 +52490,65 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Ring Call Users
+      tags:
+      - product:video
+  /api/v2/video/call/{type}/{id}/ring_state:
+    get:
+      description: |
+        Returns who accepted, rejected, or missed the ring for a call session. Safe to poll: it performs no writes and emits no events. Use it to reconcile after a dropped call.accepted, call.rejected, or call.missed websocket event. call_session_id identifies the session, so the state stays readable after the call has ended.
+      operationId: GetCallRingState
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          description: The type of call
+          maxLength: 64
+          title: Type
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Call ID
+          maxLength: 64
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
+      - in: query
+        name: call_session_id
+        required: true
+        schema:
+          description: The call session to read, as published in the session_id of
+            the call.ring event
+          maxLength: 64
+          title: CallSessionID
+          type: string
+          writeOnly: true
+          x-stream-index: "003"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCallRingStateResponse'
+          description: GetCallRingStateResponse
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get Call Ring State
       tags:
       - product:video
   /api/v2/video/call/{type}/{id}/rtmp_broadcasts:
