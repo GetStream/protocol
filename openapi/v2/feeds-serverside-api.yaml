@@ -1809,6 +1809,12 @@ components:
           title: Cutoff Window
           type: string
           x-stream-index: "006"
+        feed_groups:
+          $ref: '#/components/schemas/FeedGroupScope'
+          description: Scope activity selection to an included or excluded set of
+            feed groups. Not supported on the current_feed selector
+          title: Feed Groups
+          x-stream-index: "009"
         filter:
           additionalProperties: {}
           description: Filter for activity selection
@@ -1826,7 +1832,7 @@ components:
         params:
           additionalProperties: {}
           type: object
-          x-stream-index: "009"
+          x-stream-index: "010"
         sort:
           description: Sort parameters for activity selection
           items:
@@ -1866,6 +1872,11 @@ components:
           title: Cutoff Window
           type: string
           x-stream-index: "005"
+        feed_groups:
+          $ref: '#/components/schemas/FeedGroupScope'
+          description: Feed groups activity selection is scoped to
+          title: Feed Groups
+          x-stream-index: "007"
         filter:
           additionalProperties: {}
           description: Filter for activity selection
@@ -1884,7 +1895,7 @@ components:
           description: Generic params for selector-specific configuration
           title: Params
           type: object
-          x-stream-index: "007"
+          x-stream-index: "008"
         sort:
           description: Sort parameters for activity selection
           items:
@@ -3680,7 +3691,7 @@ components:
           type: string
           x-stream-index: "002.001"
         type:
-          default: export.bulk_image_moderation.error
+          default: export.moderation_logs.error
           type: string
           x-stream-index: "003.002"
       required:
@@ -4260,17 +4271,20 @@ components:
       nullable: true
       properties:
         activity_ids:
-          description: Activity IDs to fetch the user's reactions for (max 100)
+          description: Activity IDs to fetch the user's reactions for (max 100). Omit
+            to page over all of the user's activity reactions
           items:
             type: string
           maxItems: 100
-          minItems: 1
           title: Activity IDs
           type: array
           x-stream-index: "001"
         filter:
           additionalProperties: {}
-          description: Optional filter on reaction_type or created_at
+          description: 'Optional filter on reaction_type or created_at. To restrict
+            by activity, prefer activity_ids over filter.activity_id: activity_ids
+            is capped at 100 and served by the per-activity index, and filter.activity_id
+            is rejected when activity_ids is omitted'
           title: Filter
           type: object
           x-stream-filter-fields:
@@ -4332,8 +4346,6 @@ components:
           title: User ID
           type: string
           x-stream-index: "005.001"
-      required:
-      - activity_ids
       title: Batch Query Activity Reactions Request
       type: object
     BatchQueryActivityReactionsResponse:
@@ -4365,17 +4377,20 @@ components:
       nullable: true
       properties:
         comment_ids:
-          description: Comment IDs to fetch the user's reactions for (max 100)
+          description: Comment IDs to fetch the user's reactions for (max 100). Omit
+            to page over all of the user's comment reactions
           items:
             type: string
           maxItems: 100
-          minItems: 1
           title: Comment IDs
           type: array
           x-stream-index: "001"
         filter:
           additionalProperties: {}
-          description: Optional filter on reaction_type or created_at
+          description: 'Optional filter on reaction_type or created_at. To restrict
+            by comment, prefer comment_ids over filter.comment_id: comment_ids is
+            capped at 100 and served by the per-comment index, and filter.comment_id
+            is rejected when comment_ids is omitted'
           title: Filter
           type: object
           x-stream-filter-fields:
@@ -4437,8 +4452,6 @@ components:
           title: User ID
           type: string
           x-stream-index: "005.001"
-      required:
-      - comment_ids
       title: Batch Query Comment Reactions Request
       type: object
     BatchQueryCommentReactionsResponse:
@@ -11495,6 +11508,27 @@ components:
       x-stream-event-doc-group: other
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    FeedGroupScope:
+      properties:
+        exclude:
+          description: Select activities from every feed group except these. An activity
+            cross-posted to an excluded and a non-excluded group is still selected.
+            Mutually exclusive with include
+          items:
+            type: string
+          title: Exclude
+          type: array
+          x-stream-index: "002"
+        include:
+          description: Select only activities that live in a feed belonging to one
+            of these feed groups. Mutually exclusive with exclude
+          items:
+            type: string
+          title: Include
+          type: array
+          x-stream-index: "001"
+      title: Feed Group Scope
+      type: object
     FeedInput:
       properties:
         custom:
@@ -30359,6 +30393,24 @@ components:
         gcs_path:
           type: string
           x-stream-index: "003"
+        s3_api_key:
+          type: string
+          x-stream-index: "008"
+        s3_bucket:
+          type: string
+          x-stream-index: "005"
+        s3_path:
+          type: string
+          x-stream-index: "006"
+        s3_region:
+          type: string
+          x-stream-index: "007"
+        s3_role_arn:
+          type: string
+          x-stream-index: "010"
+        s3_secret:
+          type: string
+          x-stream-index: "009"
         type:
           type: string
           x-stream-index: "001"
@@ -30431,7 +30483,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v237.29.0
+  version: v237.31.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -32199,7 +32251,7 @@ paths:
   /api/v2/feeds/activities/reactions/query:
     post:
       description: |
-        Returns a single user's reactions across a set of activity IDs, without activity payloads
+        Returns a single user's activity reactions, optionally scoped to a set of activity IDs, without activity payloads
       operationId: BatchQueryActivityReactions
       requestBody:
         content:
@@ -33541,7 +33593,7 @@ paths:
   /api/v2/feeds/comments/reactions/query:
     post:
       description: |
-        Returns a single user's reactions across a set of comment IDs, without comment payloads
+        Returns a single user's comment reactions, optionally scoped to a set of comment IDs, without comment payloads
       operationId: BatchQueryCommentReactions
       requestBody:
         content:
