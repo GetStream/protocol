@@ -649,7 +649,7 @@ components:
           type: string
           x-stream-index: "002.001"
         type:
-          default: export.moderation_logs.error
+          default: export.channels.error
           type: string
           x-stream-index: "003.002"
       required:
@@ -1906,25 +1906,41 @@ components:
           - updateData
           type: string
           x-stream-index: "001"
+        synchronous:
+          description: For updateData only. Requires a root cids $eq or $in filter
+            with at most 100 CIDs and no root $or/$and. Split larger selections into
+            requests of at most 100 CIDs. A success_channels_count response means
+            the database update completed; a task_id response means it was queued
+            and must be polled, including on older API nodes.
+          title: Synchronous update
+          type: boolean
+          x-stream-index: "008"
       required:
       - operation
       - filter
       type: object
     ChannelBatchUpdateResponse:
-      description: Basic response information
       nullable: true
       properties:
         duration:
-          description: Duration of the request in milliseconds
-          title: Duration
           type: string
           x-stream-index: "002.001"
+        success_channels_count:
+          description: Positive count of channels selected for a completed synchronous
+            database update, not an affected-row count. Concurrent deletion may reduce
+            the rows written. task_id is absent.
+          format: int32
+          title: Updated channels
+          type: integer
+          x-stream-index: "003"
         task_id:
+          description: 'Present for asynchronous updates. Poll this task even if synchronous
+            was requested: an older API node may have queued the update.'
+          title: Task ID
           type: string
           x-stream-index: "001"
       required:
       - duration
-      title: Response
       type: object
     ChannelConfig:
       nullable: true
@@ -23635,7 +23651,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v238.6.3
+  version: v238.7.0
 openapi: 3.0.3
 paths:
   /app:
@@ -25641,7 +25657,7 @@ paths:
   /channels/batch:
     put:
       description: |
-        Update channels in batch
+        Update channels in batch. By default returns task_id for an asynchronous task. With synchronous: true, updateData accepts at most 100 explicit CIDs and returns a positive success_channels_count of channels selected for update after the database write completes, without task_id. Always poll a returned task_id, including when an older node ignores synchronous.
 
         Sends events:
         - channel.frozen
@@ -25665,7 +25681,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ChannelBatchUpdateResponse'
-          description: Response
+          description: Successful response
         "400":
           content:
             application/json:
