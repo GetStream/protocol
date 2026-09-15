@@ -12868,6 +12868,27 @@ components:
       - duration
       title: DeleteTranscriptionResponse
       type: object
+    DeleteUserInterestsResponse:
+      description: The user's remaining interest tags, ordered by descending weight,
+        then manually set tags before computed ones, then descending count, then ascending
+        tag name
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "002.001"
+        interests:
+          description: Interest tags still set on the user
+          items:
+            $ref: '#/components/schemas/InterestTagResponse'
+          title: Interests
+          type: array
+          x-stream-index: "001"
+      required:
+      - interests
+      - duration
+      title: Delete User Interests Response
+      type: object
     DeleteUserMessagesRequestPayload:
       description: Configuration for deleting all of a user's chat messages without
         banning them or deleting their account
@@ -17854,15 +17875,16 @@ components:
       title: GetUserGroupResponse
       type: object
     GetUserInterestsResponse:
-      description: User's computed interest tags ordered by descending count, then
-        ascending tag name
+      description: User's interest tags ordered by descending weight, then manually
+        set tags before computed ones, then descending count, then ascending tag name
       nullable: true
       properties:
         duration:
           type: string
           x-stream-index: "002.001"
         interests:
-          description: Top-N interest tags sorted by descending count, then alphabetically
+          description: Interest tags sorted by descending weight, then manually set
+            tags before computed ones, then descending count, then alphabetically
             by tag
           items:
             $ref: '#/components/schemas/InterestTagResponse'
@@ -18868,23 +18890,40 @@ components:
       - frame_rate_limit
       type: object
     InterestTagResponse:
-      description: An interest tag with the number of distinct activities the user
-        reacted to that carried it
+      description: An interest tag of a user with its ranking weight and, for computed
+        tags, how many distinct reacted-to activities carried it
       properties:
         count:
-          description: Number of distinct reacted-to activities tagged with this value
+          description: Lifetime number of distinct reacted-to activities tagged with
+            this value, without decay; 0 for manually set tags
           format: int32
           title: Count
           type: integer
           x-stream-index: "002"
+        source:
+          description: 'How the tag was set: computed (from the user''s reactions)
+            or manual (through the API)'
+          title: Source
+          type: string
+          x-stream-index: "004"
         tag:
           description: The interest tag value
           title: Tag
           type: string
           x-stream-index: "001"
+        weight:
+          description: 'Ranking weight between -1.0 and 1.0. Computed tags carry a
+            recency-decayed weight in (0, 1.0]: the user''s strongest tag is 1.0 and
+            every other a proportional share'
+          format: double
+          title: Weight
+          type: number
+          x-stream-index: "003"
       required:
       - tag
       - count
+      - weight
+      - source
       title: Interest Tag
       type: object
     JoinCallRequest:
@@ -39245,6 +39284,47 @@ components:
       - user_channel_preferences
       - duration
       type: object
+    UpsertUserInterestsRequest:
+      description: Adds or updates manually set interest tags on a user. Tags already
+        present are updated with the supplied weight; other tags on the user are left
+        untouched. Manually set tags are never overwritten by the reaction-based computation.
+        A user holds at most 50 interest tags in total.
+      nullable: true
+      properties:
+        interests:
+          description: Interest tags to add or update (1-50)
+          items:
+            $ref: '#/components/schemas/UserInterestRequest'
+          maxItems: 50
+          minItems: 1
+          title: Interests
+          type: array
+          x-stream-index: "002"
+      required:
+      - interests
+      title: Upsert User Interests Request
+      type: object
+    UpsertUserInterestsResponse:
+      description: The user's interest tags after the write, ordered by descending
+        weight, then manually set tags before computed ones, then descending count,
+        then ascending tag name
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "002.001"
+        interests:
+          description: All interest tags of the user after the write
+          items:
+            $ref: '#/components/schemas/InterestTagResponse'
+          title: Interests
+          type: array
+          x-stream-index: "001"
+      required:
+      - interests
+      - duration
+      title: Upsert User Interests Response
+      type: object
     User:
       properties:
         data:
@@ -39881,6 +39961,28 @@ components:
         time_window:
           type: string
           x-stream-index: "002"
+      type: object
+    UserInterestRequest:
+      description: An interest tag to set on a user with its ranking weight
+      properties:
+        tag:
+          description: The interest tag; trimmed and lower-cased like activity interest_tags
+          maxLength: 255
+          title: Tag
+          type: string
+          x-stream-index: "001"
+        weight:
+          description: Ranking weight between -1.0 (dislike) and 1.0 (like). Defaults
+            to 1.0
+          format: double
+          maximum: 1
+          minimum: 1.8446744073709552e+19
+          title: Weight
+          type: number
+          x-stream-index: "002"
+      required:
+      - tag
+      title: User Interest
       type: object
     UserMessagesDeletedEvent:
       description: This event is sent when a user's message get deleted. The event
@@ -41818,7 +41920,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v238.9.1
+  version: v238.9.2
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -48764,9 +48866,58 @@ paths:
       tags:
       - product:feeds
   /api/v2/feeds/users/{user_id}/interests:
+    delete:
+      description: |
+        Removes the given interest tags from a user, whether they were set manually or computed from reactions. A removed computed tag returns on the next recomputation if the user's reactions still support it; to keep a tag out of ranking for good, set it with a weight of 0 or below instead. Client-side callers may only manage their own interests; server-side callers may manage any user. Returns the user's remaining interests.
+      operationId: DeleteUserInterests
+      parameters:
+      - in: path
+        name: user_id
+        required: true
+        schema:
+          description: The ID of the user whose interests to remove
+          title: User ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      - in: query
+        name: tags
+        required: true
+        schema:
+          description: Interest tags to remove (1-50)
+          items:
+            type: string
+          maxItems: 50
+          minItems: 1
+          title: Tags
+          type: array
+          writeOnly: true
+          x-stream-index: "002"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteUserInterestsResponse'
+          description: Delete User Interests Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Remove interests from a user
+      tags:
+      - product:feeds
     get:
       description: |
-        Returns the user's most common interest tags ranked by the number of distinct activities they reacted to that carried each tag. Client-side callers may only read their own interests; server-side callers may fetch any user. Results are sorted by descending count, then alphabetically by tag.
+        Returns the user's interest tags with their ranking weights: tags computed from the activities the user reacted to and tags set manually through the API. Client-side callers may only read their own interests; server-side callers may fetch any user. Results are sorted by descending weight, then manually set tags before computed ones, then descending count, then alphabetically by tag.
       operationId: GetUserInterests
       parameters:
       - in: path
@@ -48809,7 +48960,50 @@ paths:
               schema:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
-      summary: Get a user's computed interests
+      summary: Get a user's interests
+      tags:
+      - product:feeds
+    put:
+      description: |
+        Adds or updates interest tags on a user with explicit ranking weights. Tags set this way rank above the tags computed from the user's reactions at equal weight and are never overwritten by them. Client-side callers may only manage their own interests; server-side callers may manage any user. Returns the user's full interest list after the write.
+      operationId: UpsertUserInterests
+      parameters:
+      - in: path
+        name: user_id
+        required: true
+        schema:
+          description: The ID of the user whose interests to set
+          title: User ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertUserInterestsRequest'
+        description: Upsert User Interests Request
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpsertUserInterestsResponse'
+          description: Upsert User Interests Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Set a user's interests
       tags:
       - product:feeds
   /api/v2/guest:
