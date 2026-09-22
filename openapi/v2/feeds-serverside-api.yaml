@@ -2391,11 +2391,22 @@ components:
           description: The comment the reaction was added to
           title: Comment
           x-stream-index: "001"
+        counter_delta:
+          description: 'The change this write made to the number of reactions the
+            user holds on this target: 1 when outcome is ''created'', 0 when it is
+            ''replaced'' or ''unchanged''. These endpoints never return -1; a successful
+            delete-reaction call is what decrements the count. With enforce_unique
+            this is the delta of the user''s reaction on the target; without it, the
+            delta of reactions of this type.'
+          format: int32
+          title: Counter Delta
+          type: integer
+          x-stream-index: "009"
         duration:
           description: Duration of the request
           title: Duration
           type: string
-          x-stream-index: "007.001"
+          x-stream-index: "010.001"
         notification_accepted:
           description: Whether notification creation was accepted for asynchronous
             processing
@@ -2415,6 +2426,26 @@ components:
           title: Notification Task ID
           type: string
           x-stream-index: "005"
+        outcome:
+          description: 'What this write did to the user''s reaction on this target.
+            One of: created, replaced, unchanged. ''created'' means a new reaction
+            was written and nothing was replaced; ''replaced'' means enforce_unique
+            removed one or more of the user''s other reaction types; ''unchanged''
+            means the user already held this reaction type (its custom data may still
+            have been updated). Without enforce_unique a user can hold several reaction
+            types on one target, so ''created'' then means ''this reaction type was
+            newly added'', not ''the user''s first reaction on this target''.'
+          title: Outcome
+          type: string
+          x-stream-index: "007"
+        previous_reaction_type:
+          description: The reaction type this write replaced, or null when nothing
+            was replaced. Non-null exactly when outcome is 'replaced'. If enforce_unique
+            removed several reactions — possible only for data created before enforce_unique
+            was adopted — this is the most recently created one.
+          title: Previous Reaction Type
+          type: string
+          x-stream-index: "008"
         reaction:
           $ref: '#/components/schemas/FeedsReactionResponse'
           description: The created or updated reaction
@@ -2429,6 +2460,8 @@ components:
       required:
       - comment
       - reaction
+      - outcome
+      - counter_delta
       - duration
       type: object
     AddCommentRequest:
@@ -2664,9 +2697,20 @@ components:
         activity:
           $ref: '#/components/schemas/ActivityResponse'
           x-stream-index: "001"
+        counter_delta:
+          description: 'The change this write made to the number of reactions the
+            user holds on this target: 1 when outcome is ''created'', 0 when it is
+            ''replaced'' or ''unchanged''. These endpoints never return -1; a successful
+            delete-reaction call is what decrements the count. With enforce_unique
+            this is the delta of the user''s reaction on the target; without it, the
+            delta of reactions of this type.'
+          format: int32
+          title: Counter Delta
+          type: integer
+          x-stream-index: "009"
         duration:
           type: string
-          x-stream-index: "007.001"
+          x-stream-index: "010.001"
         notification_accepted:
           description: Whether notification creation was accepted for asynchronous
             processing
@@ -2686,6 +2730,26 @@ components:
           title: Notification Task ID
           type: string
           x-stream-index: "005"
+        outcome:
+          description: 'What this write did to the user''s reaction on this target.
+            One of: created, replaced, unchanged. ''created'' means a new reaction
+            was written and nothing was replaced; ''replaced'' means enforce_unique
+            removed one or more of the user''s other reaction types; ''unchanged''
+            means the user already held this reaction type (its custom data may still
+            have been updated). Without enforce_unique a user can hold several reaction
+            types on one target, so ''created'' then means ''this reaction type was
+            newly added'', not ''the user''s first reaction on this target''.'
+          title: Outcome
+          type: string
+          x-stream-index: "007"
+        previous_reaction_type:
+          description: The reaction type this write replaced, or null when nothing
+            was replaced. Non-null exactly when outcome is 'replaced'. If enforce_unique
+            removed several reactions — possible only for data created before enforce_unique
+            was adopted — this is the most recently created one.
+          title: Previous Reaction Type
+          type: string
+          x-stream-index: "008"
         reaction:
           $ref: '#/components/schemas/FeedsReactionResponse'
           description: The created reaction
@@ -2700,6 +2764,8 @@ components:
       required:
       - activity
       - reaction
+      - outcome
+      - counter_delta
       - duration
       title: Add Reaction Response
       type: object
@@ -3743,7 +3809,7 @@ components:
           type: string
           x-stream-index: "002.001"
         type:
-          default: export.moderation_logs.error
+          default: export.bulk_image_moderation.error
           type: string
           x-stream-index: "003.002"
       required:
@@ -30847,7 +30913,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v239.7.1
+  version: v239.8.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
