@@ -247,7 +247,7 @@ components:
             format: int32
             type: integer
           type: object
-          x-stream-index: "061"
+          x-stream-index: "062"
         allow_multi_user_devices:
           type: boolean
           x-stream-index: "018"
@@ -266,6 +266,9 @@ components:
           format: int32
           type: integer
           x-stream-index: "025"
+        before_message_send_hook_system_messages:
+          type: boolean
+          x-stream-index: "066"
         before_message_send_hook_url:
           type: string
           x-stream-index: "024"
@@ -325,6 +328,7 @@ components:
             items:
               type: string
             type: array
+          nullable: true
           type: object
           x-stream-index: "039"
         guest_user_creation_disabled:
@@ -351,10 +355,13 @@ components:
           x-stream-index: "055"
         member_custom_on_mentioned_users_enabled:
           type: boolean
-          x-stream-index: "063"
+          x-stream-index: "064"
         member_custom_on_messages_enabled:
           type: boolean
-          x-stream-index: "062"
+          x-stream-index: "063"
+        member_custom_on_typing_events_enabled:
+          type: boolean
+          x-stream-index: "065"
         moderation_audio_call_moderation_enabled:
           type: boolean
           x-stream-index: "059"
@@ -364,6 +371,9 @@ components:
         moderation_enabled:
           type: boolean
           x-stream-index: "047"
+        moderation_keyframe_video_enabled:
+          type: boolean
+          x-stream-index: "060"
         moderation_llm_configurability_enabled:
           type: boolean
           x-stream-index: "054"
@@ -375,7 +385,7 @@ components:
           x-stream-index: "057"
         moderation_s3_image_access_role_arn:
           type: string
-          x-stream-index: "060"
+          x-stream-index: "061"
         moderation_video_call_moderation_enabled:
           type: boolean
           x-stream-index: "058"
@@ -509,8 +519,11 @@ components:
       - feed_audit_logs_enabled
       - moderation_video_call_moderation_enabled
       - moderation_audio_call_moderation_enabled
+      - moderation_keyframe_video_enabled
       - member_custom_on_messages_enabled
       - member_custom_on_mentioned_users_enabled
+      - member_custom_on_typing_events_enabled
+      - before_message_send_hook_system_messages
       type: object
     AsyncBulkImageModerationEvent:
       nullable: true
@@ -636,7 +649,7 @@ components:
           type: string
           x-stream-index: "002.001"
         type:
-          default: export.bulk_image_moderation.error
+          default: export.channels.error
           type: string
           x-stream-index: "003.002"
       required:
@@ -1821,6 +1834,25 @@ components:
     ChannelBatchUpdateRequest:
       nullable: true
       properties:
+        custom_set:
+          additionalProperties: {}
+          description: '`updateData` only. Merges these keys into each channel''s
+            existing custom object, leaving every other custom key untouched. Keys
+            are dot-paths, so `a.b` sets key `b` inside object `a` (the parent object
+            must already exist). Cannot be combined with `data.custom`'
+          title: Custom data to set
+          type: object
+          x-stream-index: "005"
+        custom_unset:
+          description: '`updateData` only. Deletes these keys from each channel''s
+            existing custom object, leaving every other custom key untouched. Keys
+            are dot-paths; deleting a key that does not exist is a no-op. Cannot be
+            combined with `data.custom`'
+          items:
+            type: string
+          title: Custom data to unset
+          type: array
+          x-stream-index: "006"
         data:
           $ref: '#/components/schemas/ChannelDataUpdate'
           x-stream-index: "004"
@@ -1841,6 +1873,16 @@ components:
               - $in
               type: string
           x-stream-index: "002"
+        hide_history_before:
+          description: Required with the `addMembersHideHistory` operation, and rejected
+            with every other operation including `addMembers`. Hides each matched
+            channel's history before this time from the members the operation adds.
+            Members that already belong to a matched channel are never affected. Must
+            be in RFC3339 format (e.g., "2024-01-01T10:00:00Z") and in the past.
+          format: date-time
+          title: Hide history before
+          type: string
+          x-stream-index: "007"
         members:
           items:
             $ref: '#/components/schemas/ChannelBatchMemberRequest'
@@ -1850,6 +1892,7 @@ components:
         operation:
           enum:
           - addMembers
+          - addMembersHideHistory
           - removeMembers
           - inviteMembers
           - invites
@@ -1863,25 +1906,41 @@ components:
           - updateData
           type: string
           x-stream-index: "001"
+        synchronous:
+          description: For updateData only. Requires a root cids $eq or $in filter
+            with at most 100 CIDs and no root $or/$and. Split larger selections into
+            requests of at most 100 CIDs. A success_channels_count response means
+            the database update completed; a task_id response means it was queued
+            and must be polled, including on older API nodes.
+          title: Synchronous update
+          type: boolean
+          x-stream-index: "008"
       required:
       - operation
       - filter
       type: object
     ChannelBatchUpdateResponse:
-      description: Basic response information
       nullable: true
       properties:
         duration:
-          description: Duration of the request in milliseconds
-          title: Duration
           type: string
           x-stream-index: "002.001"
+        success_channels_count:
+          description: Positive count of channels selected for a completed synchronous
+            database update, not an affected-row count. Concurrent deletion may reduce
+            the rows written. task_id is absent.
+          format: int32
+          title: Updated channels
+          type: integer
+          x-stream-index: "003"
         task_id:
+          description: 'Present for asynchronous updates. Poll this task even if synchronous
+            was requested: an older API node may have queued the update.'
+          title: Task ID
           type: string
           x-stream-index: "001"
       required:
       - duration
-      title: Response
       type: object
     ChannelConfig:
       nullable: true
@@ -1980,13 +2039,17 @@ components:
           type: boolean
           x-stream-index: "001.017"
         push_level:
+          description: Sets the push notification level for a channel type
           enum:
           - all
           - all_mentions
           - mentions
           - direct_mentions
           - none
+          title: Push notification level
           type: string
+          x-stream-deprecated-enum-values:
+            mentions: direct_mentions
           x-stream-index: "001.033"
         push_notifications:
           type: boolean
@@ -2117,6 +2180,8 @@ components:
           - none
           title: Push Level
           type: string
+          x-stream-deprecated-enum-values:
+            mentions: direct_mentions
           x-stream-index: "012"
         quotes:
           description: Enables message quotes
@@ -2260,13 +2325,17 @@ components:
           type: boolean
           x-stream-index: 001.002.017
         push_level:
+          description: Sets the push notification level for a channel type
           enum:
           - all
           - all_mentions
           - mentions
           - direct_mentions
           - none
+          title: Push notification level
           type: string
+          x-stream-deprecated-enum-values:
+            mentions: direct_mentions
           x-stream-index: 001.002.033
         push_notifications:
           type: boolean
@@ -3684,6 +3753,7 @@ components:
             items:
               type: string
             type: array
+          nullable: true
           type: object
           x-stream-index: "002"
         mark_messages_pending:
@@ -3722,13 +3792,17 @@ components:
           type: boolean
           x-stream-index: 003.002.017
         push_level:
+          description: Sets the push notification level for a channel type
           enum:
           - all
           - all_mentions
           - mentions
           - direct_mentions
           - none
+          title: Push notification level
           type: string
+          x-stream-deprecated-enum-values:
+            mentions: direct_mentions
           x-stream-index: 003.002.033
         push_notifications:
           type: boolean
@@ -4479,13 +4553,17 @@ components:
           type: integer
           x-stream-index: "007"
         push_level:
+          description: Overrides the push notification level for this channel
           enum:
           - all
           - all_mentions
           - mentions
           - direct_mentions
           - none
+          title: Push level
           type: string
+          x-stream-deprecated-enum-values:
+            mentions: direct_mentions
           x-stream-index: "015"
         quotes:
           description: Enable/disable quotes
@@ -4787,6 +4865,7 @@ components:
               type: string
             type: array
           description: List of grants for the channel type
+          nullable: true
           title: Grants
           type: object
           x-stream-index: "025"
@@ -4854,6 +4933,8 @@ components:
           - none
           title: Push level
           type: string
+          x-stream-deprecated-enum-values:
+            mentions: direct_mentions
           x-stream-index: "032"
         push_notifications:
           description: Push notifications
@@ -4914,6 +4995,7 @@ components:
       title: CreateChannelTypeRequest
       type: object
     CreateChannelTypeResponse:
+      description: Basic response information
       nullable: true
       properties:
         allowed_flag_reasons:
@@ -4978,6 +5060,8 @@ components:
           type: boolean
           x-stream-index: 001.001.005
         duration:
+          description: Duration of the request in milliseconds
+          title: Duration
           type: string
           x-stream-index: "004.001"
         grants:
@@ -4985,6 +5069,7 @@ components:
             items:
               type: string
             type: array
+          nullable: true
           type: object
           x-stream-index: "003"
         mark_messages_pending:
@@ -5023,13 +5108,17 @@ components:
           type: boolean
           x-stream-index: 001.001.017
         push_level:
+          description: Sets the push notification level for a channel type
           enum:
           - all
           - all_mentions
           - mentions
           - direct_mentions
           - none
+          title: Push notification level
           type: string
+          x-stream-deprecated-enum-values:
+            mentions: direct_mentions
           x-stream-index: 001.001.033
         push_notifications:
           type: boolean
@@ -5523,7 +5612,7 @@ components:
           description: Custom data for this object
           title: Custom data
           type: object
-          x-stream-index: "011"
+          x-stream-index: "012"
         description:
           description: A description of the poll
           title: Description
@@ -5561,12 +5650,16 @@ components:
           maxItems: 100
           type: array
           x-stream-index: "004"
+        team:
+          maxLength: 255
+          type: string
+          x-stream-index: "011"
         user:
           $ref: '#/components/schemas/UserRequest'
-          x-stream-index: "012.002"
+          x-stream-index: "013.002"
         user_id:
           type: string
-          x-stream-index: "012.001"
+          x-stream-index: "013.001"
         voting_visibility:
           enum:
           - anonymous
@@ -5679,6 +5772,8 @@ components:
               - $lte
               type: boolean
             has_unread:
+              accepted_values:
+              - true
               operators:
               - $eq
               type: boolean
@@ -5861,6 +5956,23 @@ components:
         user_id:
           type: string
           x-stream-index: "003.001"
+      type: object
+    CreateReminderResponse:
+      description: Basic response information
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        reminder:
+          $ref: '#/components/schemas/ReminderResponseData'
+          x-stream-index: "001"
+      required:
+      - reminder
+      - duration
+      title: Response
       type: object
     CreateRoleRequest:
       nullable: true
@@ -6193,10 +6305,19 @@ components:
           type: array
           x-stream-index: "001"
         hard_delete:
-          description: Specify if channels and all ressources should be hard deleted
+          description: Server-side only. When true, the channels and all their resources
+            are permanently deleted instead of soft-deleted.
           title: Hard delete
           type: boolean
           x-stream-index: "002"
+        skip_truncate:
+          description: Server-side only. When true, the soft delete preserves message
+            history instead of hiding it, so a later recreation of any of these channel
+            IDs restores the full history. Only supported for distinct channels. Cannot
+            be combined with hard_delete.
+          title: Skip truncate
+          type: boolean
+          x-stream-index: "003"
       required:
       - cids
       type: object
@@ -6707,7 +6828,7 @@ components:
           x-stream-index: "004"
         failover_config:
           $ref: '#/components/schemas/WebhookFailoverConfig'
-          x-stream-index: "020.003"
+          x-stream-index: "020.004"
         hook_type:
           type: string
           x-stream-index: "002"
@@ -6744,6 +6865,9 @@ components:
         sqs_auth_type:
           type: string
           x-stream-index: "008"
+        sqs_event_based_message_group_id_enabled:
+          type: boolean
+          x-stream-index: "020.003"
         sqs_key:
           type: string
           x-stream-index: "009"
@@ -7570,8 +7694,14 @@ components:
           type: integer
           x-stream-index: "010"
         unread_count:
+          deprecated: true
+          description: 'Deprecated: Use total_unread_count instead.'
           format: int32
+          title: Unread count
           type: integer
+          x-stream-deprecated: true
+          x-stream-deprecated-message: Use total_unread_count instead.
+          x-stream-deprecated-renamed: total_unread_count
           x-stream-index: "008"
         unread_threads:
           format: int32
@@ -7805,6 +7935,7 @@ components:
             items:
               type: string
             type: array
+          nullable: true
           type: object
           x-stream-index: "002"
         mark_messages_pending:
@@ -7843,13 +7974,17 @@ components:
           type: boolean
           x-stream-index: 003.002.017
         push_level:
+          description: Sets the push notification level for a channel type
           enum:
           - all
           - all_mentions
           - mentions
           - direct_mentions
           - none
+          title: Push notification level
           type: string
+          x-stream-deprecated-enum-values:
+            mentions: direct_mentions
           x-stream-index: 003.002.033
         push_notifications:
           type: boolean
@@ -8343,7 +8478,7 @@ components:
             title: Endpoint name
         duration:
           type: string
-          x-stream-index: "006.001"
+          x-stream-index: "008.001"
         ios:
           additionalProperties:
             $ref: '#/components/schemas/LimitInfoResponse'
@@ -8373,6 +8508,28 @@ components:
           title: Unity
           type: object
           x-stream-index: "005"
+          x-stream-map:
+            description: The name of the endpoint for which the limits apply
+            key: endpoint
+            title: Endpoint name
+        unity_console:
+          additionalProperties:
+            $ref: '#/components/schemas/LimitInfoResponse'
+          description: Map of endpoint rate limits for the Unity console platform
+          title: Unity console
+          type: object
+          x-stream-index: "007"
+          x-stream-map:
+            description: The name of the endpoint for which the limits apply
+            key: endpoint
+            title: Endpoint name
+        unity_desktop:
+          additionalProperties:
+            $ref: '#/components/schemas/LimitInfoResponse'
+          description: Map of endpoint rate limits for the Unity desktop platform
+          title: Unity desktop
+          type: object
+          x-stream-index: "006"
           x-stream-map:
             description: The name of the endpoint for which the limits apply
             key: endpoint
@@ -8501,6 +8658,9 @@ components:
           x-stream-sort-combinations:
           - - policy
           - - date
+          x-stream-sort-fields:
+          - date
+          - policy
       type: object
     GetRetentionPolicyRunsResponse:
       description: Basic response information
@@ -11874,42 +12034,48 @@ components:
           x-stream-index: "006"
         block_foreign_cdn_attachments:
           type: boolean
-          x-stream-index: "013"
+          x-stream-index: "014"
         custom_views_enabled:
           type: boolean
-          x-stream-index: "011"
+          x-stream-index: "012"
+        disable_action_logs:
+          type: boolean
+          x-stream-index: "008"
         disable_audit_logs:
           type: boolean
           x-stream-index: "007"
         disable_flagging_reviewed_entity:
           type: boolean
           x-stream-index: "003"
+        enforce_shadow_server_side:
+          type: boolean
+          x-stream-index: "016"
         escalation_queue_enabled:
           type: boolean
-          x-stream-index: "010"
+          x-stream-index: "011"
         escalation_reasons:
           items:
             type: string
           type: array
-          x-stream-index: "009"
+          x-stream-index: "010"
         filterable_custom_keys:
           items:
             type: string
           type: array
-          x-stream-index: "014"
+          x-stream-index: "015"
         flag_user_on_flagged_content:
           type: boolean
           x-stream-index: "002"
         include_attachment_payload:
           type: boolean
-          x-stream-index: "012"
+          x-stream-index: "013"
         keyframe_classifications_map:
           additionalProperties:
             additionalProperties:
               type: boolean
             type: object
           type: object
-          x-stream-index: "008"
+          x-stream-index: "009"
         media_queue_blur_enabled:
           type: boolean
           x-stream-index: "001"
@@ -12517,8 +12683,14 @@ components:
           type: integer
           x-stream-index: "011"
         unread_count:
+          deprecated: true
+          description: 'Deprecated: Use total_unread_count instead.'
           format: int32
+          title: Unread count
           type: integer
+          x-stream-deprecated: true
+          x-stream-deprecated-message: Use total_unread_count instead.
+          x-stream-deprecated-renamed: total_unread_count
           x-stream-index: "008"
         unread_threads:
           format: int32
@@ -12558,6 +12730,22 @@ components:
       type: object
     PaginationParams:
       properties:
+        id_gt:
+          format: int32
+          type: integer
+          x-stream-index: "004"
+        id_gte:
+          format: int32
+          type: integer
+          x-stream-index: "003"
+        id_lt:
+          format: int32
+          type: integer
+          x-stream-index: "006"
+        id_lte:
+          format: int32
+          type: integer
+          x-stream-index: "005"
         limit:
           format: int32
           minimum: 0
@@ -12991,13 +13179,18 @@ components:
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "003"
+          x-stream-index: "004"
         id:
           type: string
           x-stream-index: "001"
         text:
           type: string
           x-stream-index: "002"
+        text_i18n:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "003"
       required:
       - id
       - text
@@ -13024,83 +13217,93 @@ components:
       properties:
         allow_answers:
           type: boolean
-          x-stream-index: "008"
+          x-stream-index: "010"
         allow_user_suggested_options:
           type: boolean
-          x-stream-index: "007"
+          x-stream-index: "009"
         answers_count:
           format: int32
           type: integer
-          x-stream-index: "012"
+          x-stream-index: "014"
         created_at:
           format: date-time
           type: string
-          x-stream-index: "019"
+          x-stream-index: "021"
         created_by:
           $ref: '#/components/schemas/UserResponse'
-          x-stream-index: "018"
+          x-stream-index: "020"
         created_by_id:
           type: string
-          x-stream-index: "017"
+          x-stream-index: "019"
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "021"
+          x-stream-index: "023"
         description:
           type: string
-          x-stream-index: "003"
+          x-stream-index: "004"
+        description_i18n:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "005"
         enforce_unique_vote:
           type: boolean
-          x-stream-index: "005"
+          x-stream-index: "007"
         id:
           type: string
           x-stream-index: "001"
         is_closed:
           type: boolean
-          x-stream-index: "009"
+          x-stream-index: "011"
         latest_answers:
           items:
             $ref: '#/components/schemas/PollVoteResponseData'
           type: array
-          x-stream-index: "015"
+          x-stream-index: "017"
         latest_votes_by_option:
           additionalProperties:
             items:
               $ref: '#/components/schemas/PollVoteResponseData'
             type: array
           type: object
-          x-stream-index: "014"
+          x-stream-index: "016"
         max_votes_allowed:
           format: int32
           type: integer
-          x-stream-index: "006"
+          x-stream-index: "008"
         name:
           type: string
           x-stream-index: "002"
+        name_i18n:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "003"
         options:
           items:
             $ref: '#/components/schemas/PollOptionResponseData'
           type: array
-          x-stream-index: "011"
+          x-stream-index: "013"
         own_votes:
           items:
             $ref: '#/components/schemas/PollVoteResponseData'
           type: array
-          x-stream-index: "016"
+          x-stream-index: "018"
         updated_at:
           format: date-time
           type: string
-          x-stream-index: "020"
+          x-stream-index: "022"
         vote_count:
           format: int32
           type: integer
-          x-stream-index: "010"
+          x-stream-index: "012"
         vote_counts_by_option:
           additionalProperties:
             format: int32
             type: integer
           type: object
-          x-stream-index: "013"
+          x-stream-index: "015"
         voting_visibility:
           description: Voting visibility of the poll
           enum:
@@ -13108,7 +13311,7 @@ components:
           - public
           title: Voting visibility
           type: string
-          x-stream-index: "004"
+          x-stream-index: "006"
       required:
       - id
       - name
@@ -13156,10 +13359,15 @@ components:
         answer_text:
           type: string
           x-stream-index: "005"
+        answer_text_i18n:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "006"
         created_at:
           format: date-time
           type: string
-          x-stream-index: "008"
+          x-stream-index: "009"
         id:
           type: string
           x-stream-index: "002"
@@ -13175,13 +13383,13 @@ components:
         updated_at:
           format: date-time
           type: string
-          x-stream-index: "009"
+          x-stream-index: "010"
         user:
           $ref: '#/components/schemas/UserResponse'
-          x-stream-index: "007"
+          x-stream-index: "008"
         user_id:
           type: string
-          x-stream-index: "006"
+          x-stream-index: "007"
       required:
       - poll_id
       - id
@@ -13377,6 +13585,8 @@ components:
           - default
           title: Chat Level
           type: string
+          x-stream-deprecated-enum-values:
+            mentions: direct_mentions
           x-stream-index: "003"
         chat_preferences:
           $ref: '#/components/schemas/ChatPreferencesInput'
@@ -13798,6 +14008,22 @@ components:
       type: object
     QueryBannedUsersPayload:
       properties:
+        created_at_after:
+          format: date-time
+          type: string
+          x-stream-index: "003.006"
+        created_at_after_or_equal:
+          format: date-time
+          type: string
+          x-stream-index: "003.005"
+        created_at_before:
+          format: date-time
+          type: string
+          x-stream-index: "003.008"
+        created_at_before_or_equal:
+          format: date-time
+          type: string
+          x-stream-index: "003.007"
         exclude_expired_bans:
           description: Whether to exclude expired bans or not
           title: Exclude expired bans
@@ -14127,6 +14353,8 @@ components:
               - $lte
               type: boolean
             has_unread:
+              accepted_values:
+              - true
               operators:
               - $eq
               type: boolean
@@ -14443,6 +14671,22 @@ components:
       type: object
     QueryFutureChannelBansPayload:
       properties:
+        created_at_after:
+          format: date-time
+          type: string
+          x-stream-index: "001.006"
+        created_at_after_or_equal:
+          format: date-time
+          type: string
+          x-stream-index: "001.005"
+        created_at_before:
+          format: date-time
+          type: string
+          x-stream-index: "001.008"
+        created_at_before_or_equal:
+          format: date-time
+          type: string
+          x-stream-index: "001.007"
         exclude_expired_bans:
           description: Whether to exclude expired bans or not
           title: Exclude expired bans
@@ -14512,6 +14756,22 @@ components:
       type: object
     QueryMembersPayload:
       properties:
+        created_at_after:
+          format: date-time
+          type: string
+          x-stream-index: "006.008"
+        created_at_after_or_equal:
+          format: date-time
+          type: string
+          x-stream-index: "006.007"
+        created_at_before:
+          format: date-time
+          type: string
+          x-stream-index: "006.010"
+        created_at_before_or_equal:
+          format: date-time
+          type: string
+          x-stream-index: "006.009"
         filter_conditions:
           additionalProperties: {}
           description: Filter conditions to apply to the query
@@ -14656,7 +14916,15 @@ components:
           type: array
           x-stream-index: "005"
           x-stream-sort-fields:
+          - channel_role
+          - cid
           - created_at
+          - custom
+          - id
+          - is_moderator
+          - name
+          - updated_at
+          - user_id
         type:
           maxLength: 64
           type: string
@@ -14667,6 +14935,18 @@ components:
         user_id:
           type: string
           x-stream-index: "007.001"
+        user_id_gt:
+          type: string
+          x-stream-index: "006.004"
+        user_id_gte:
+          type: string
+          x-stream-index: "006.003"
+        user_id_lt:
+          type: string
+          x-stream-index: "006.006"
+        user_id_lte:
+          type: string
+          x-stream-index: "006.005"
       required:
       - type
       type: object
@@ -15876,6 +16156,18 @@ components:
               - $eq
               type: string
           x-stream-index: "001"
+        id_gt:
+          type: string
+          x-stream-index: "005.004"
+        id_gte:
+          type: string
+          x-stream-index: "005.003"
+        id_lt:
+          type: string
+          x-stream-index: "005.006"
+        id_lte:
+          type: string
+          x-stream-index: "005.005"
         include_deactivated_users:
           type: boolean
           x-stream-index: "004"
@@ -17042,6 +17334,10 @@ components:
       type: object
     RunStats:
       properties:
+        activities_deleted:
+          format: int64
+          type: integer
+          x-stream-index: "003"
         channels_deleted:
           format: int64
           type: integer
@@ -17195,6 +17491,8 @@ components:
               - $lte
               type: boolean
             has_unread:
+              accepted_values:
+              - true
               operators:
               - $eq
               type: boolean
@@ -17489,7 +17787,9 @@ components:
           x-stream-index: "007"
           x-stream-sort-fields:
           - created_at
+          - custom
           - id
+          - relevance
           - updated_at
       required:
       - filter_conditions
@@ -18119,7 +18419,6 @@ components:
       properties:
         max_age_hours:
           format: int32
-          maximum: 43800
           minimum: 24
           type: integer
           x-stream-index: "002"
@@ -19041,6 +19340,23 @@ components:
       required:
       - language
       type: object
+    TranslateMessageResponse:
+      description: Basic response information
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        message:
+          $ref: '#/components/schemas/MessageResponse'
+          x-stream-index: "001"
+      required:
+      - message
+      - duration
+      title: Response
+      type: object
     TranslationSettings:
       properties:
         enabled:
@@ -19081,6 +19397,47 @@ components:
             - ms
             - "no"
             - uk
+            - af
+            - sq
+            - am
+            - hy
+            - az
+            - bn
+            - bs
+            - bg
+            - zh-TW
+            - et
+            - fa
+            - fr-CA
+            - ka
+            - gu
+            - ht
+            - ha
+            - is
+            - ga
+            - kn
+            - kk
+            - lv
+            - lt
+            - mk
+            - ml
+            - mt
+            - mr
+            - mn
+            - ps
+            - pt-PT
+            - pa
+            - sr
+            - si
+            - sk
+            - sl
+            - so
+            - sw
+            - te
+            - ur
+            - uz
+            - vi
+            - cy
             type: string
           type: array
           x-stream-index: "002"
@@ -19518,6 +19875,7 @@ components:
             items:
               type: string
             type: array
+          nullable: true
           type: object
           x-stream-index: "001.037"
         guest_user_creation_disabled:
@@ -19552,6 +19910,9 @@ components:
         member_custom_on_messages_enabled:
           type: boolean
           x-stream-index: "001.055"
+        member_custom_on_typing_events_enabled:
+          type: boolean
+          x-stream-index: "001.061"
         migrate_permissions_to_v2:
           type: boolean
           x-stream-index: "001.038"
@@ -20028,6 +20389,7 @@ components:
             items:
               type: string
             type: array
+          nullable: true
           type: object
           x-stream-index: "004"
         mark_messages_pending:
@@ -20064,13 +20426,17 @@ components:
           type: boolean
           x-stream-index: 009.001.017
         push_level:
+          description: Sets the push notification level for a channel type
           enum:
           - all
           - all_mentions
           - mentions
           - direct_mentions
           - none
+          title: Push notification level
           type: string
+          x-stream-deprecated-enum-values:
+            mentions: direct_mentions
           x-stream-index: 009.001.033
         push_notifications:
           type: boolean
@@ -20117,6 +20483,7 @@ components:
       - automod_behavior
       type: object
     UpdateChannelTypeResponse:
+      description: Basic response information
       nullable: true
       properties:
         allowed_flag_reasons:
@@ -20181,6 +20548,8 @@ components:
           type: boolean
           x-stream-index: 003.001.005
         duration:
+          description: Duration of the request in milliseconds
+          title: Duration
           type: string
           x-stream-index: "004.001"
         grants:
@@ -20188,6 +20557,7 @@ components:
             items:
               type: string
             type: array
+          nullable: true
           type: object
           x-stream-index: "002"
         mark_messages_pending:
@@ -20226,13 +20596,17 @@ components:
           type: boolean
           x-stream-index: 003.001.017
         push_level:
+          description: Sets the push notification level for a channel type
           enum:
           - all
           - all_mentions
           - mentions
           - direct_mentions
           - none
+          title: Push notification level
           type: string
+          x-stream-deprecated-enum-values:
+            mentions: direct_mentions
           x-stream-index: 003.001.033
         push_notifications:
           type: boolean
@@ -20822,6 +21196,8 @@ components:
               - $lte
               type: boolean
             has_unread:
+              accepted_values:
+              - true
               operators:
               - $eq
               type: boolean
@@ -21189,7 +21565,16 @@ components:
           type: string
           x-stream-index: "003.001"
         membership_deletion_task_id:
+          deprecated: true
+          description: 'Deprecated: Always empty. Removing a user from a team no longer
+            deletes their memberships in that team''s channels, so there is no task
+            to poll.'
+          title: Membership Deletion Task ID
           type: string
+          x-stream-deprecated: true
+          x-stream-deprecated-message: Always empty. Removing a user from a team no
+            longer deletes their memberships in that team's channels, so there is
+            no task to poll.
           x-stream-index: "002"
         users:
           additionalProperties:
@@ -23231,6 +23616,24 @@ components:
         gcs_path:
           type: string
           x-stream-index: "003"
+        s3_api_key:
+          type: string
+          x-stream-index: "008"
+        s3_bucket:
+          type: string
+          x-stream-index: "005"
+        s3_path:
+          type: string
+          x-stream-index: "006"
+        s3_region:
+          type: string
+          x-stream-index: "007"
+        s3_role_arn:
+          type: string
+          x-stream-index: "010"
+        s3_secret:
+          type: string
+          x-stream-index: "009"
         type:
           type: string
           x-stream-index: "001"
@@ -23350,7 +23753,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v237.7.0
+  version: v239.23.0
 openapi: 3.0.3
 paths:
   /app:
@@ -24022,8 +24425,21 @@ paths:
       - in: query
         name: hard_delete
         schema:
+          description: Server-side only. When true, the channel and all its resources
+            are permanently deleted instead of soft-deleted.
+          title: Hard delete
           type: boolean
           x-stream-index: "002"
+      - in: query
+        name: skip_truncate
+        schema:
+          description: Server-side only. When true, the soft delete preserves message
+            history instead of hiding it, so a later recreation of the same channel
+            ID restores the full history. Only supported for distinct channels. Cannot
+            be combined with hard_delete.
+          title: Skip truncate
+          type: boolean
+          x-stream-index: "003"
       responses:
         "200":
           content:
@@ -25343,7 +25759,7 @@ paths:
   /channels/batch:
     put:
       description: |
-        Update channels in batch
+        Update channels in batch. By default returns task_id for an asynchronous task. With synchronous: true, updateData accepts at most 100 explicit CIDs and returns a positive success_channels_count of channels selected for update after the database write completes, without task_id. Always poll a returned task_id, including when an older node ignores synchronous.
 
         Sends events:
         - channel.frozen
@@ -25367,7 +25783,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ChannelBatchUpdateResponse'
-          description: Response
+          description: Successful response
         "400":
           content:
             application/json:
@@ -27389,7 +27805,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MessageActionResponse'
+                $ref: '#/components/schemas/TranslateMessageResponse'
           description: Response
         "400":
           content:
@@ -27686,8 +28102,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReminderResponseData'
-          description: Successful response
+                $ref: '#/components/schemas/CreateReminderResponse'
+          description: Response
         "400":
           content:
             application/json:
@@ -28730,7 +29146,7 @@ paths:
           maxLength: 255
           title: string
           type: string
-          x-stream-index: "001"
+          x-stream-index: "002"
       - in: path
         name: option_id
         required: true
@@ -28739,7 +29155,13 @@ paths:
           maxLength: 255
           title: string
           type: string
-          x-stream-index: "002"
+          x-stream-index: "003"
+      - in: query
+        name: user_id
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
       responses:
         "200":
           content:
@@ -29388,6 +29810,22 @@ paths:
           writeOnly: true
           x-stream-index: "005"
       - in: query
+        name: unity_desktop
+        schema:
+          description: Whether to include Unity desktop platform limits or not
+          title: Unity desktop
+          type: boolean
+          writeOnly: true
+          x-stream-index: "006"
+      - in: query
+        name: unity_console
+        schema:
+          description: Whether to include Unity console platform limits or not
+          title: Unity console
+          type: boolean
+          writeOnly: true
+          x-stream-index: "007"
+      - in: query
         name: endpoints
         schema:
           description: Specific endpoints to show limits for, as a comma-separated
@@ -29395,7 +29833,7 @@ paths:
           title: Endpoints
           type: string
           writeOnly: true
-          x-stream-index: "006"
+          x-stream-index: "008"
       responses:
         "200":
           content:
