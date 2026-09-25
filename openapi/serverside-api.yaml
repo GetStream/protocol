@@ -4028,7 +4028,7 @@ components:
           type: string
           x-stream-index: "002.001"
         type:
-          default: export.channels.error
+          default: export.moderation_logs.error
           type: string
           x-stream-index: "003.002"
       required:
@@ -17654,6 +17654,30 @@ components:
       - duration
       title: Delete Feeds Batch Response
       type: object
+    DeleteFeedsRetentionPolicyRequest:
+      nullable: true
+      properties:
+        policy:
+          enum:
+          - old-activities
+          type: string
+          x-stream-index: "001"
+      required:
+      - policy
+      type: object
+    DeleteFeedsRetentionPolicyResponse:
+      description: Basic response information
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      title: Response
+      type: object
     DeleteImportV2TaskResponse:
       description: Basic response information
       nullable: true
@@ -21218,6 +21242,27 @@ components:
       - created_at
       - updated_at
       type: object
+    FeedsRetentionRunResponse:
+      properties:
+        app_pk:
+          format: int64
+          type: integer
+          x-stream-index: "001"
+        date:
+          type: string
+          x-stream-index: "003"
+        policy:
+          type: string
+          x-stream-index: "002"
+        stats:
+          $ref: '#/components/schemas/RunStats'
+          x-stream-index: "004"
+      required:
+      - app_pk
+      - policy
+      - date
+      - stats
+      type: object
     FeedsShareResponse:
       properties:
         activity_id:
@@ -23793,6 +23838,111 @@ components:
       required:
       - duration
       title: Get Feeds Rate Limits Response
+      type: object
+    GetFeedsRetentionPolicyResponse:
+      description: Basic response information
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "003.001"
+        enabled:
+          type: boolean
+          x-stream-index: "002"
+        policies:
+          items:
+            $ref: '#/components/schemas/RetentionPolicy'
+          type: array
+          x-stream-index: "001"
+      required:
+      - policies
+      - enabled
+      - duration
+      title: Response
+      type: object
+    GetFeedsRetentionPolicyRunsRequest:
+      nullable: true
+      properties:
+        filter_conditions:
+          additionalProperties: {}
+          description: Filter conditions to apply to the query
+          title: Filter
+          type: object
+          x-stream-filter-fields:
+            date:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: date
+            policy:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
+          x-stream-index: "001"
+        limit:
+          format: int32
+          maximum: 100
+          minimum: 0
+          type: integer
+          x-stream-index: "003.001"
+        next:
+          type: string
+          x-stream-index: "003.002"
+        prev:
+          type: string
+          x-stream-index: "003.003"
+        sort:
+          description: Array of sort parameters
+          items:
+            $ref: '#/components/schemas/SortParamRequest'
+          maxItems: 2
+          title: Sort
+          type: array
+          x-stream-index: "002"
+          x-stream-sort-combinations:
+          - - policy
+          - - date
+          x-stream-sort-fields:
+          - date
+          - policy
+      type: object
+    GetFeedsRetentionPolicyRunsResponse:
+      description: Basic response information
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "003.001"
+        next:
+          type: string
+          x-stream-index: "002.001"
+        prev:
+          type: string
+          x-stream-index: "002.002"
+        runs:
+          items:
+            $ref: '#/components/schemas/FeedsRetentionRunResponse'
+          type: array
+          x-stream-index: "001"
+      required:
+      - runs
+      - duration
+      title: Response
       type: object
     GetFlagCountRequest:
       nullable: true
@@ -45396,6 +45546,47 @@ components:
       - code
       - warning
       type: object
+    SetFeedsRetentionPolicyRequest:
+      nullable: true
+      properties:
+        enabled:
+          type: boolean
+          x-stream-index: "003"
+        max_age_hours:
+          format: int32
+          minimum: 24
+          type: integer
+          x-stream-index: "002"
+        policy:
+          enum:
+          - old-activities
+          type: string
+          x-stream-index: "001"
+      required:
+      - policy
+      - max_age_hours
+      type: object
+    SetFeedsRetentionPolicyResponse:
+      description: Basic response information
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "003.001"
+        enabled:
+          type: boolean
+          x-stream-index: "002"
+        policy:
+          $ref: '#/components/schemas/RetentionPolicy'
+          x-stream-index: "001"
+      required:
+      - policy
+      - enabled
+      - duration
+      title: Response
+      type: object
     SetRetentionPolicyRequest:
       nullable: true
       properties:
@@ -55510,7 +55701,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v239.30.0
+  version: v239.31.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -65299,6 +65490,131 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Query membership levels
+      tags:
+      - product:feeds
+  /api/v2/feeds/retention_policy:
+    get:
+      description: |
+        Returns the feeds retention policies configured for the app. Server-side only.
+      operationId: FeedsGetRetentionPolicy
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetFeedsRetentionPolicyResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get feeds retention policy
+      tags:
+      - product:feeds
+    post:
+      description: |
+        Creates or updates the feeds retention policy for the app. Server-side only.
+      operationId: FeedsSetRetentionPolicy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetFeedsRetentionPolicyRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetFeedsRetentionPolicyResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Set feeds retention policy
+      tags:
+      - product:feeds
+  /api/v2/feeds/retention_policy/delete:
+    post:
+      description: |
+        Removes the feeds retention policy for the app. Server-side only.
+      operationId: FeedsDeleteRetentionPolicy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteFeedsRetentionPolicyRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteFeedsRetentionPolicyResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Delete feeds retention policy
+      tags:
+      - product:feeds
+  /api/v2/feeds/retention_policy/runs:
+    post:
+      description: |
+        Returns filtered and sorted feeds retention cleanup run history for the app. Supports filter_conditions on 'policy' (possible values: 'old-activities') and 'date' fields. Server-side only.
+      operationId: FeedsGetRetentionPolicyRuns
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetFeedsRetentionPolicyRunsRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetFeedsRetentionPolicyRunsResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get feeds retention policy runs
       tags:
       - product:feeds
   /api/v2/feeds/revisions/query:
