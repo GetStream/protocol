@@ -950,7 +950,7 @@ components:
           type: string
           x-stream-index: "002.001"
         type:
-          default: export.bulk_image_moderation.error
+          default: export.review_queue.error
           type: string
           x-stream-index: "003.002"
       required:
@@ -3139,7 +3139,37 @@ components:
       properties:
         duration:
           type: string
-          x-stream-index: "007.001"
+          x-stream-index: "011.001"
+        intent_matched_topic:
+          description: Intent topic label matched by this request's text (test mode
+            only; omitted when no topic matched)
+          title: Intent Matched Topic
+          type: string
+          x-stream-index: "007"
+        intent_score:
+          description: Stage 2 conversation score (0-100) computed synchronously against
+            this request's texts (test mode only). Omitted -- not zero -- when intent_matched_topic
+            is set but scoring could not be completed (matched topic disabled/removed,
+            or the scoring call itself failed); only present when a real score was
+            computed
+          format: double
+          title: Intent Score
+          type: number
+          x-stream-index: "008"
+        intent_score_threshold:
+          description: The matched topic's configured score_threshold, for comparison
+            against intent_score (test mode only). Same omitted-not-zero rule as intent_score
+          format: double
+          title: Intent Score Threshold
+          type: number
+          x-stream-index: "009"
+        intent_would_fire:
+          description: Whether intent_score clears intent_score_threshold, i.e. whether
+            this would fire moderation.intent_detected in production (test mode only).
+            Same omitted-not-zero rule as intent_score
+          title: Intent Would Fire
+          type: boolean
+          x-stream-index: "010"
         item:
           $ref: '#/components/schemas/ReviewQueueItemResponse'
           description: Review queue item (present if action != keep)
@@ -3325,7 +3355,7 @@ components:
             $ref: '#/components/schemas/AIImageLabelDefinition'
           title: AI Image Label Definitions
           type: array
-          x-stream-index: "020"
+          x-stream-index: "021"
         ai_image_subclassifications:
           additionalProperties:
             items:
@@ -3335,7 +3365,7 @@ components:
             based on the active provider
           title: AI Image Subclassifications
           type: object
-          x-stream-index: "019"
+          x-stream-index: "020"
         ai_text_config:
           $ref: '#/components/schemas/AITextConfig'
           description: Configuration for AI text analysis
@@ -3374,7 +3404,7 @@ components:
             $ref: '#/components/schemas/BodyguardProfileSummary'
           title: Available Bodyguard Profiles
           type: array
-          x-stream-index: "021"
+          x-stream-index: "022"
         block_list_config:
           $ref: '#/components/schemas/BlockListConfig'
           description: Configuration for block list filtering
@@ -3385,13 +3415,19 @@ components:
           format: date-time
           title: Created At
           type: number
-          x-stream-index: "015"
+          x-stream-index: "016"
         flood_config:
           $ref: '#/components/schemas/FloodConfig'
           description: Per-user flood detection for the /labels endpoint (identical
             and similar message detectors)
           title: Flood Config
           x-stream-index: "014"
+        intent_config:
+          $ref: '#/components/schemas/IntentConfigResponse'
+          description: Configuration for conversation-level intent analysis (topics,
+            capture cap, cooldowns, score threshold)
+          title: Intent Config
+          x-stream-index: "015"
         key:
           description: Unique identifier for the moderation configuration
           title: Key
@@ -3406,7 +3442,7 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "018"
+          x-stream-index: "019"
         team:
           description: Team associated with the configuration
           title: Team
@@ -3417,7 +3453,7 @@ components:
           format: date-time
           title: Updated At
           type: number
-          x-stream-index: "016"
+          x-stream-index: "017"
         velocity_filter_config:
           $ref: '#/components/schemas/VelocityFilterConfig'
           description: Configuration for velocity-based filtering
@@ -3425,7 +3461,7 @@ components:
           x-stream-index: "013"
         video_call_rule_config:
           $ref: '#/components/schemas/VideoCallRuleConfig'
-          x-stream-index: "017"
+          x-stream-index: "018"
       required:
       - key
       - team
@@ -5694,6 +5730,233 @@ components:
       required:
       - duration
       title: Insert Action Log Response
+      type: object
+    IntentBufferedItem:
+      properties:
+        author_user_id:
+          description: The ID of the user who authored the buffered message or comment
+          title: AuthorUserID
+          type: string
+          x-stream-index: "004"
+        created_at:
+          description: When the buffered message or comment was created
+          format: date-time
+          title: CreatedAt
+          type: number
+          x-stream-index: "003"
+        id:
+          description: The ID of the buffered message or comment
+          title: ID
+          type: string
+          x-stream-index: "001"
+        text:
+          description: The text of the buffered message or comment
+          title: Text
+          type: string
+          x-stream-index: "002"
+      required:
+      - id
+      - text
+      - created_at
+      - author_user_id
+      type: object
+    IntentConfigRequest:
+      properties:
+        topics:
+          description: Topics to classify conversation text against (max 20, labels
+            must be unique)
+          items:
+            $ref: '#/components/schemas/IntentTopicRequest'
+          title: Topics
+          type: array
+          x-stream-index: "001"
+      type: object
+    IntentConfigResponse:
+      properties:
+        topics:
+          description: Topics conversation text is classified against
+          items:
+            $ref: '#/components/schemas/IntentTopicResponse'
+          title: Topics
+          type: array
+          x-stream-index: "001"
+      required:
+      - topics
+      type: object
+    IntentDetectedEvent:
+      description: This event is sent when a buffered conversation's intent score
+        clears the configured threshold
+      nullable: true
+      properties:
+        conversation_id:
+          description: The channel CID (chat) or feed ID (feeds) the buffered conversation
+            belongs to
+          title: ConversationID
+          type: string
+          x-stream-index: "007"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "001.003"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "001.007"
+        entity_id:
+          description: The ID of the most recently buffered entity
+          title: EntityID
+          type: string
+          x-stream-index: "006"
+        entity_type:
+          description: The type of the most recently buffered entity (chat message
+            or feed comment)
+          title: EntityType
+          type: string
+          x-stream-index: "005"
+        items:
+          description: The buffered items that were scored, in the order they were
+            captured
+          items:
+            $ref: '#/components/schemas/IntentBufferedItem'
+          title: Items
+          type: array
+          x-stream-index: "008"
+        matched_topic:
+          description: The configured intent topic label that started the buffer
+          title: MatchedTopic
+          type: string
+          x-stream-index: "002"
+        received_at:
+          format: date-time
+          type: number
+          x-stream-index: "001.004"
+        score:
+          description: The Stage 2 conversation score (0-100) that cleared score_threshold
+          format: double
+          title: Score
+          type: number
+          x-stream-index: "003"
+        type:
+          default: moderation.intent_detected
+          type: string
+          x-stream-index: "001.002"
+        user_id:
+          description: The ID of the user whose conversation was scored
+          title: UserID
+          type: string
+          x-stream-index: "004"
+      required:
+      - type
+      - created_at
+      - custom
+      - matched_topic
+      - score
+      - user_id
+      - entity_type
+      - entity_id
+      - conversation_id
+      - items
+      title: IntentDetectedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    IntentTopicRequest:
+      properties:
+        analysis_cooldown_seconds:
+          description: How long the buffer collects items before scoring runs
+          format: int32
+          title: Analysis Cooldown Seconds
+          type: integer
+          x-stream-index: "005"
+        description:
+          description: Optional description used in the classification prompt; the
+            label alone is used when empty
+          title: Description
+          type: string
+          x-stream-index: "002"
+        enabled:
+          description: Whether this topic is evaluated
+          title: Enabled
+          type: boolean
+          x-stream-index: "003"
+        label:
+          description: Unique topic label (e.g. purchase_intent)
+          title: Label
+          type: string
+          x-stream-index: "001"
+        max_captured_items:
+          description: Items buffered per conversation before scoring runs early
+          format: int32
+          title: Max Captured Items
+          type: integer
+          x-stream-index: "004"
+        refire_cooldown_seconds:
+          description: Suppresses this topic for a user and conversation after it
+            fires; 0 uses the default
+          format: int32
+          title: Refire Cooldown Seconds
+          type: integer
+          x-stream-index: "007"
+        score_threshold:
+          description: Conversation score (0-100) required to fire moderation.intent_detected
+          format: double
+          title: Score Threshold
+          type: number
+          x-stream-index: "006"
+      required:
+      - label
+      type: object
+    IntentTopicResponse:
+      properties:
+        analysis_cooldown_seconds:
+          description: How long the buffer collects items before scoring runs
+          format: int32
+          title: Analysis Cooldown Seconds
+          type: integer
+          x-stream-index: "005"
+        description:
+          description: Optional description used in the classification prompt; the
+            label alone is used when empty
+          title: Description
+          type: string
+          x-stream-index: "002"
+        enabled:
+          description: Whether this topic is evaluated
+          title: Enabled
+          type: boolean
+          x-stream-index: "003"
+        label:
+          description: Unique topic label (e.g. purchase_intent)
+          title: Label
+          type: string
+          x-stream-index: "001"
+        max_captured_items:
+          description: Items buffered per conversation before scoring runs early
+          format: int32
+          title: Max Captured Items
+          type: integer
+          x-stream-index: "004"
+        refire_cooldown_seconds:
+          description: Suppresses this topic for a user and conversation after it
+            fires; 0 uses the default
+          format: int32
+          title: Refire Cooldown Seconds
+          type: integer
+          x-stream-index: "007"
+        score_threshold:
+          description: Conversation score (0-100) required to fire moderation.intent_detected
+          format: double
+          title: Score Threshold
+          type: number
+          x-stream-index: "006"
+      required:
+      - label
+      - enabled
+      - max_captured_items
+      - analysis_cooldown_seconds
+      - score_threshold
       type: object
     KeyframeOCRRuleParameters:
       properties:
@@ -11418,7 +11681,7 @@ components:
           x-stream-index: "004"
         aws_rekognition_config:
           $ref: '#/components/schemas/AIImageConfig'
-          x-stream-index: "018"
+          x-stream-index: "019"
         block_list_config:
           $ref: '#/components/schemas/BlockListConfig'
           description: Configuration for block list filtering
@@ -11426,7 +11689,7 @@ components:
           x-stream-index: "007"
         bodyguard_config:
           $ref: '#/components/schemas/AITextConfig'
-          x-stream-index: "017"
+          x-stream-index: "018"
         flood_config:
           $ref: '#/components/schemas/FloodConfig'
           description: Per-user flood detection for the /labels endpoint (identical
@@ -11438,6 +11701,12 @@ components:
           description: Configuration for Google Vision integration
           title: Google Vision Config
           x-stream-index: "010"
+        intent_config:
+          $ref: '#/components/schemas/IntentConfigRequest'
+          description: Configuration for conversation-level intent analysis (topics,
+            capture cap, cooldowns, score threshold)
+          title: Intent Config
+          x-stream-index: "017"
         key:
           description: Unique identifier for the moderation configuration
           title: Key
@@ -11463,12 +11732,12 @@ components:
           x-stream-index: "002"
         user:
           $ref: '#/components/schemas/UserRequest'
-          x-stream-index: "020.002"
+          x-stream-index: "021.002"
         user_id:
           description: Optional user ID to associate with the audit log entry
           title: User ID
           type: string
-          x-stream-index: "020.001"
+          x-stream-index: "021.001"
         velocity_filter_config:
           $ref: '#/components/schemas/VelocityFilterConfig'
           description: Configuration for velocity-based filtering
@@ -11476,7 +11745,7 @@ components:
           x-stream-index: "014"
         video_call_rule_config:
           $ref: '#/components/schemas/VideoCallRuleConfig'
-          x-stream-index: "019"
+          x-stream-index: "020"
       required:
       - key
       type: object
@@ -12205,6 +12474,7 @@ components:
           moderation.custom_action: '#/components/schemas/ModerationCustomActionEvent'
           moderation.flagged: '#/components/schemas/ModerationFlaggedEvent'
           moderation.image_analysis.complete: '#/components/schemas/ModerationImageAnalysisCompleteEvent'
+          moderation.intent_detected: '#/components/schemas/IntentDetectedEvent'
           moderation.mark_reviewed: '#/components/schemas/ModerationMarkReviewedEvent'
           moderation.text_analysis.complete: '#/components/schemas/ModerationTextAnalysisCompleteEvent'
           moderation_check.completed: '#/components/schemas/ModerationCheckCompletedEvent'
@@ -12222,6 +12492,7 @@ components:
       - $ref: '#/components/schemas/AsyncExportErrorEvent'
       - $ref: '#/components/schemas/AsyncExportModerationLogsEvent'
       - $ref: '#/components/schemas/AsyncExportReviewQueueEvent'
+      - $ref: '#/components/schemas/IntentDetectedEvent'
       - $ref: '#/components/schemas/ModerationAnalysisFailedEvent'
       - $ref: '#/components/schemas/ModerationCheckCompletedEvent'
       - $ref: '#/components/schemas/ModerationCustomActionEvent'
@@ -12273,7 +12544,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v239.36.0
+  version: v239.37.0
 openapi: 3.0.3
 paths:
   /api/v2/moderation/action_config:
