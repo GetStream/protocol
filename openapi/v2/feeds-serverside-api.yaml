@@ -1428,14 +1428,14 @@ components:
           format: int32
           title: Bookmark Count
           type: integer
-          x-stream-index: "033"
+          x-stream-index: "034"
         collections:
           additionalProperties:
             $ref: '#/components/schemas/EnrichedCollectionResponse'
           description: Enriched collection data referenced by this activity
           title: Collections
           type: object
-          x-stream-index: "042"
+          x-stream-index: "043"
         comment_count:
           description: Number of comments on the activity
           format: int32
@@ -1461,7 +1461,7 @@ components:
             only to one feed, it's always set. If an activity is added to multiple
             feeds, it's only set when calling the GetOrCreateFeed endpoint.
           title: Current Feed
-          x-stream-index: "045"
+          x-stream-index: "046"
         custom:
           additionalProperties: {}
           description: Custom data for the activity
@@ -1505,7 +1505,7 @@ components:
           format: int32
           title: Friend Reaction Count
           type: integer
-          x-stream-index: "044"
+          x-stream-index: "045"
         friend_reactions:
           description: Reactions from users the current user follows or has mutual
             follows with
@@ -1513,12 +1513,12 @@ components:
             $ref: '#/components/schemas/FeedsReactionResponse'
           title: Friend Reactions
           type: array
-          x-stream-index: "043"
+          x-stream-index: "044"
         hidden:
           description: If this activity is hidden by this user (using activity feedback)
           title: Hidden
           type: boolean
-          x-stream-index: "046"
+          x-stream-index: "047"
         i18n:
           additionalProperties:
             type: string
@@ -1541,30 +1541,30 @@ components:
             with notification config (track_seen/track_read enabled).
           title: Is Read
           type: boolean
-          x-stream-index: "050"
+          x-stream-index: "051"
         is_seen:
           description: Whether this activity has been seen. Only set for feed groups
             with notification config (track_seen/track_read enabled).
           title: Is Seen
           type: boolean
-          x-stream-index: "049"
+          x-stream-index: "050"
         is_watched:
           type: boolean
-          x-stream-index: "048"
+          x-stream-index: "049"
         latest_reactions:
           description: Recent reactions to the activity
           items:
             $ref: '#/components/schemas/FeedsReactionResponse'
           title: Latest Reactions
           type: array
-          x-stream-index: "037"
+          x-stream-index: "038"
         latest_shares:
           description: Recent shares of the activity, one entry per share (org-gated)
           items:
             $ref: '#/components/schemas/ShareResponse'
           title: Latest Shares
           type: array
-          x-stream-index: "038"
+          x-stream-index: "039"
         location:
           $ref: '#/components/schemas/Location'
           description: Geographic location related to the activity
@@ -1582,7 +1582,7 @@ components:
             format: int64
             type: integer
           type: object
-          x-stream-index: "036"
+          x-stream-index: "037"
         moderation:
           $ref: '#/components/schemas/ModerationV2Response'
           description: Moderation information
@@ -1603,14 +1603,14 @@ components:
             $ref: '#/components/schemas/BookmarkResponse'
           title: Own Bookmarks
           type: array
-          x-stream-index: "041"
+          x-stream-index: "042"
         own_reactions:
           description: Current user's reactions to this activity
           items:
             $ref: '#/components/schemas/FeedsReactionResponse'
           title: Own Reactions
           type: array
-          x-stream-index: "040"
+          x-stream-index: "041"
         parent:
           $ref: '#/components/schemas/ActivityResponse'
           description: Parent activity (if this is a reply/comment)
@@ -1632,20 +1632,20 @@ components:
             where you want to show a preview
           title: Preview
           type: boolean
-          x-stream-index: "047"
+          x-stream-index: "048"
         reaction_count:
           description: Number of reactions to the activity
           format: int32
           title: Reaction Count
           type: integer
-          x-stream-index: "035"
+          x-stream-index: "036"
         reaction_groups:
           additionalProperties:
             $ref: '#/components/schemas/FeedsReactionGroupResponse'
           description: Grouped reactions by type
           title: Reaction Groups
           type: object
-          x-stream-index: "039"
+          x-stream-index: "040"
         restrict_replies:
           description: 'Controls who can add comments/replies to this activity. One
             of: everyone, people_i_follow, nobody'
@@ -1687,12 +1687,21 @@ components:
           format: int32
           title: Share Count
           type: integer
-          x-stream-index: "034"
+          x-stream-index: "035"
         text:
           description: Text content of the activity
           title: Text
           type: string
           x-stream-index: "019"
+        top_level_comment_count:
+          description: Number of top-level comments (comments directly on the activity,
+            excluding replies). Only returned by GetActivity when include_top_level_comment_count=true;
+            never set on feed reads or events. Same status/deletion rules as comment_count;
+            not adjusted per viewer.
+          format: int32
+          title: Top Level Comment Count
+          type: integer
+          x-stream-index: "033"
         type:
           description: Type of activity
           title: Type
@@ -1846,6 +1855,17 @@ components:
         params:
           additionalProperties: {}
           type: object
+          x-stream-index: "011"
+        ranking_candidate_limit:
+          description: Maximum number of candidate activities this selector contributes
+            to a ranked feed (1-1000). Omit to use the default ranking buffer. Only
+            supported on the popular, proximity, interest and query selectors, and
+            ignored on feeds without ranking
+          format: int32
+          maximum: 1000
+          minimum: 1
+          title: Ranking Candidate Limit
+          type: integer
           x-stream-index: "010"
         sort:
           description: Sort parameters for activity selection
@@ -1909,6 +1929,13 @@ components:
           description: Generic params for selector-specific configuration
           title: Params
           type: object
+          x-stream-index: "009"
+        ranking_candidate_limit:
+          description: Maximum number of candidate activities this selector contributes
+            to a ranked feed
+          format: int32
+          title: Ranking Candidate Limit
+          type: integer
           x-stream-index: "008"
         sort:
           description: Sort parameters for activity selection
@@ -3828,7 +3855,7 @@ components:
           type: string
           x-stream-index: "002.001"
         type:
-          default: export.bulk_image_moderation.error
+          default: export.moderation_logs.error
           type: string
           x-stream-index: "003.002"
       required:
@@ -3934,6 +3961,110 @@ components:
       - created_at
       - custom
       title: AsyncExportReviewQueueEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    AsyncImportErrorEvent:
+      nullable: true
+      properties:
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: 002.006.003
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 002.006.007
+        error:
+          type: string
+          x-stream-index: "001"
+        finished_at:
+          format: date-time
+          type: number
+          x-stream-index: "002.005"
+        product:
+          type: string
+          x-stream-index: "002.002"
+        received_at:
+          format: date-time
+          type: number
+          x-stream-index: 002.006.004
+        started_at:
+          format: date-time
+          type: number
+          x-stream-index: "002.004"
+        state:
+          type: string
+          x-stream-index: "002.003"
+        task_id:
+          type: string
+          x-stream-index: "002.001"
+        type:
+          default: import.error
+          type: string
+          x-stream-index: 002.006.002
+      required:
+      - error
+      - task_id
+      - product
+      - state
+      - finished_at
+      - type
+      - created_at
+      - custom
+      title: AsyncImportErrorEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    AsyncImportSuccessEvent:
+      nullable: true
+      properties:
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: 001.006.003
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.006.007
+        finished_at:
+          format: date-time
+          type: number
+          x-stream-index: "001.005"
+        product:
+          type: string
+          x-stream-index: "001.002"
+        received_at:
+          format: date-time
+          type: number
+          x-stream-index: 001.006.004
+        started_at:
+          format: date-time
+          type: number
+          x-stream-index: "001.004"
+        state:
+          type: string
+          x-stream-index: "001.003"
+        task_id:
+          type: string
+          x-stream-index: "001.001"
+        type:
+          default: import.success
+          type: string
+          x-stream-index: 001.006.002
+      required:
+      - task_id
+      - product
+      - state
+      - finished_at
+      - type
+      - created_at
+      - custom
+      title: AsyncImportSuccessEvent
       type: object
       x-stream-event-client-type: true
       x-stream-event-doc-group: other
@@ -7356,7 +7487,37 @@ components:
       properties:
         duration:
           type: string
-          x-stream-index: "007.001"
+          x-stream-index: "011.001"
+        intent_matched_topic:
+          description: Intent topic label matched by this request's text (test mode
+            only; omitted when no topic matched)
+          title: Intent Matched Topic
+          type: string
+          x-stream-index: "007"
+        intent_score:
+          description: Stage 2 conversation score (0-100) computed synchronously against
+            this request's texts (test mode only). Omitted -- not zero -- when intent_matched_topic
+            is set but scoring could not be completed (matched topic disabled/removed,
+            or the scoring call itself failed); only present when a real score was
+            computed
+          format: double
+          title: Intent Score
+          type: number
+          x-stream-index: "008"
+        intent_score_threshold:
+          description: The matched topic's configured score_threshold, for comparison
+            against intent_score (test mode only). Same omitted-not-zero rule as intent_score
+          format: double
+          title: Intent Score Threshold
+          type: number
+          x-stream-index: "009"
+        intent_would_fire:
+          description: Whether intent_score clears intent_score_threshold, i.e. whether
+            this would fire moderation.intent_detected in production (test mode only).
+            Same omitted-not-zero rule as intent_score
+          title: Intent Would Fire
+          type: boolean
+          x-stream-index: "010"
         item:
           $ref: '#/components/schemas/ReviewQueueItemResponse'
           description: Review queue item (present if action != keep)
@@ -8271,7 +8432,7 @@ components:
             $ref: '#/components/schemas/AIImageLabelDefinition'
           title: AI Image Label Definitions
           type: array
-          x-stream-index: "020"
+          x-stream-index: "021"
         ai_image_subclassifications:
           additionalProperties:
             items:
@@ -8281,7 +8442,7 @@ components:
             based on the active provider
           title: AI Image Subclassifications
           type: object
-          x-stream-index: "019"
+          x-stream-index: "020"
         ai_text_config:
           $ref: '#/components/schemas/AITextConfig'
           description: Configuration for AI text analysis
@@ -8320,7 +8481,7 @@ components:
             $ref: '#/components/schemas/BodyguardProfileSummary'
           title: Available Bodyguard Profiles
           type: array
-          x-stream-index: "021"
+          x-stream-index: "022"
         block_list_config:
           $ref: '#/components/schemas/BlockListConfig'
           description: Configuration for block list filtering
@@ -8331,13 +8492,19 @@ components:
           format: date-time
           title: Created At
           type: number
-          x-stream-index: "015"
+          x-stream-index: "016"
         flood_config:
           $ref: '#/components/schemas/FloodConfig'
           description: Per-user flood detection for the /labels endpoint (identical
             and similar message detectors)
           title: Flood Config
           x-stream-index: "014"
+        intent_config:
+          $ref: '#/components/schemas/IntentConfigResponse'
+          description: Configuration for conversation-level intent analysis (topics,
+            capture cap, cooldowns, score threshold)
+          title: Intent Config
+          x-stream-index: "015"
         key:
           description: Unique identifier for the moderation configuration
           title: Key
@@ -8352,7 +8519,7 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "018"
+          x-stream-index: "019"
         team:
           description: Team associated with the configuration
           title: Team
@@ -8363,7 +8530,7 @@ components:
           format: date-time
           title: Updated At
           type: number
-          x-stream-index: "016"
+          x-stream-index: "017"
         velocity_filter_config:
           $ref: '#/components/schemas/VelocityFilterConfig'
           description: Configuration for velocity-based filtering
@@ -8371,7 +8538,7 @@ components:
           x-stream-index: "013"
         video_call_rule_config:
           $ref: '#/components/schemas/VideoCallRuleConfig'
-          x-stream-index: "017"
+          x-stream-index: "018"
       required:
       - key
       - team
@@ -13538,6 +13705,17 @@ components:
           title: AI Image Labels
           type: array
           x-stream-index: "003"
+        ai_image_ocr_labels:
+          description: Labels the image OCR pipeline can flag, available as filter
+            values on the `label` field under the ai_image category. The app's LLM
+            labels when LLM configurability is enabled, otherwise the AI text labels.
+            OCR and image-classification labels share the `label` field, so a name
+            present in both matches either.
+          items:
+            type: string
+          title: AI Image OCR Labels
+          type: array
+          x-stream-index: "005"
         ai_image_taxonomy:
           additionalProperties:
             items:
@@ -13564,7 +13742,7 @@ components:
             type: string
           title: Config Keys
           type: array
-          x-stream-index: "005"
+          x-stream-index: "006"
         filterable_custom_keys:
           description: The moderation_payload.custom keys the app has configured as
             review-queue filter chips (via moderation_dashboard_preferences.filterable_custom_keys).
@@ -13574,7 +13752,7 @@ components:
             type: string
           title: Filterable Custom Keys
           type: array
-          x-stream-index: "007"
+          x-stream-index: "008"
         llm_labels:
           description: LLM moderation labels available as filter values
           items:
@@ -13593,7 +13771,7 @@ components:
             type: string
           title: Rule Names
           type: array
-          x-stream-index: "006"
+          x-stream-index: "007"
       required:
       - llm_labels
       type: object
@@ -14553,6 +14731,13 @@ components:
     GetCommentsResponse:
       nullable: true
       properties:
+        comment_count:
+          description: Total number of comments on the object, including replies at
+            every depth
+          format: int32
+          title: Comment Count
+          type: integer
+          x-stream-index: "003"
         comments:
           description: Threaded listing for the activity
           items:
@@ -14562,21 +14747,30 @@ components:
           x-stream-index: "001"
         duration:
           type: string
-          x-stream-index: "004.001"
+          x-stream-index: "006.001"
         next:
           type: string
-          x-stream-index: "003.001"
+          x-stream-index: "005.001"
         prev:
           type: string
-          x-stream-index: "003.002"
+          x-stream-index: "005.002"
         sort:
           description: Sort order used for the comments (first, last, top, best, controversial)
           title: Sort Order
           type: string
           x-stream-index: "002"
+        top_level_comment_count:
+          description: Number of comments directly on the object, excluding replies.
+            Independent of depth, replies_limit and id_around, and not adjusted per
+            viewer. Only present when include_top_level_comment_count is set
+          format: int32
+          title: Top Level Comment Count
+          type: integer
+          x-stream-index: "004"
       required:
       - comments
       - sort
+      - comment_count
       - duration
       title: Get  Comments Response
       type: object
@@ -16382,6 +16576,233 @@ components:
       required:
       - duration
       title: Insert Action Log Response
+      type: object
+    IntentBufferedItem:
+      properties:
+        author_user_id:
+          description: The ID of the user who authored the buffered message or comment
+          title: AuthorUserID
+          type: string
+          x-stream-index: "004"
+        created_at:
+          description: When the buffered message or comment was created
+          format: date-time
+          title: CreatedAt
+          type: number
+          x-stream-index: "003"
+        id:
+          description: The ID of the buffered message or comment
+          title: ID
+          type: string
+          x-stream-index: "001"
+        text:
+          description: The text of the buffered message or comment
+          title: Text
+          type: string
+          x-stream-index: "002"
+      required:
+      - id
+      - text
+      - created_at
+      - author_user_id
+      type: object
+    IntentConfigRequest:
+      properties:
+        topics:
+          description: Topics to classify conversation text against (max 20, labels
+            must be unique)
+          items:
+            $ref: '#/components/schemas/IntentTopicRequest'
+          title: Topics
+          type: array
+          x-stream-index: "001"
+      type: object
+    IntentConfigResponse:
+      properties:
+        topics:
+          description: Topics conversation text is classified against
+          items:
+            $ref: '#/components/schemas/IntentTopicResponse'
+          title: Topics
+          type: array
+          x-stream-index: "001"
+      required:
+      - topics
+      type: object
+    IntentDetectedEvent:
+      description: This event is sent when a buffered conversation's intent score
+        clears the configured threshold
+      nullable: true
+      properties:
+        conversation_id:
+          description: The channel CID (chat) or feed ID (feeds) the buffered conversation
+            belongs to
+          title: ConversationID
+          type: string
+          x-stream-index: "007"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "001.003"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "001.007"
+        entity_id:
+          description: The ID of the most recently buffered entity
+          title: EntityID
+          type: string
+          x-stream-index: "006"
+        entity_type:
+          description: The type of the most recently buffered entity (chat message
+            or feed comment)
+          title: EntityType
+          type: string
+          x-stream-index: "005"
+        items:
+          description: The buffered items that were scored, in the order they were
+            captured
+          items:
+            $ref: '#/components/schemas/IntentBufferedItem'
+          title: Items
+          type: array
+          x-stream-index: "008"
+        matched_topic:
+          description: The configured intent topic label that started the buffer
+          title: MatchedTopic
+          type: string
+          x-stream-index: "002"
+        received_at:
+          format: date-time
+          type: number
+          x-stream-index: "001.004"
+        score:
+          description: The Stage 2 conversation score (0-100) that cleared score_threshold
+          format: double
+          title: Score
+          type: number
+          x-stream-index: "003"
+        type:
+          default: moderation.intent_detected
+          type: string
+          x-stream-index: "001.002"
+        user_id:
+          description: The ID of the user whose conversation was scored
+          title: UserID
+          type: string
+          x-stream-index: "004"
+      required:
+      - type
+      - created_at
+      - custom
+      - matched_topic
+      - score
+      - user_id
+      - entity_type
+      - entity_id
+      - conversation_id
+      - items
+      title: IntentDetectedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    IntentTopicRequest:
+      properties:
+        analysis_cooldown_seconds:
+          description: How long the buffer collects items before scoring runs
+          format: int32
+          title: Analysis Cooldown Seconds
+          type: integer
+          x-stream-index: "005"
+        description:
+          description: Optional description used in the classification prompt; the
+            label alone is used when empty
+          title: Description
+          type: string
+          x-stream-index: "002"
+        enabled:
+          description: Whether this topic is evaluated
+          title: Enabled
+          type: boolean
+          x-stream-index: "003"
+        label:
+          description: Unique topic label (e.g. purchase_intent)
+          title: Label
+          type: string
+          x-stream-index: "001"
+        max_captured_items:
+          description: Items buffered per conversation before scoring runs early
+          format: int32
+          title: Max Captured Items
+          type: integer
+          x-stream-index: "004"
+        refire_cooldown_seconds:
+          description: Suppresses this topic for a user and conversation after it
+            fires; 0 uses the default
+          format: int32
+          title: Refire Cooldown Seconds
+          type: integer
+          x-stream-index: "007"
+        score_threshold:
+          description: Conversation score (0-100) required to fire moderation.intent_detected
+          format: double
+          title: Score Threshold
+          type: number
+          x-stream-index: "006"
+      required:
+      - label
+      type: object
+    IntentTopicResponse:
+      properties:
+        analysis_cooldown_seconds:
+          description: How long the buffer collects items before scoring runs
+          format: int32
+          title: Analysis Cooldown Seconds
+          type: integer
+          x-stream-index: "005"
+        description:
+          description: Optional description used in the classification prompt; the
+            label alone is used when empty
+          title: Description
+          type: string
+          x-stream-index: "002"
+        enabled:
+          description: Whether this topic is evaluated
+          title: Enabled
+          type: boolean
+          x-stream-index: "003"
+        label:
+          description: Unique topic label (e.g. purchase_intent)
+          title: Label
+          type: string
+          x-stream-index: "001"
+        max_captured_items:
+          description: Items buffered per conversation before scoring runs early
+          format: int32
+          title: Max Captured Items
+          type: integer
+          x-stream-index: "004"
+        refire_cooldown_seconds:
+          description: Suppresses this topic for a user and conversation after it
+            fires; 0 uses the default
+          format: int32
+          title: Refire Cooldown Seconds
+          type: integer
+          x-stream-index: "007"
+        score_threshold:
+          description: Conversation score (0-100) required to fire moderation.intent_detected
+          format: double
+          title: Score Threshold
+          type: number
+          x-stream-index: "006"
+      required:
+      - label
+      - enabled
+      - max_captured_items
+      - analysis_cooldown_seconds
+      - score_threshold
       type: object
     InterestTagResponse:
       description: An interest tag of a user with its ranking weight and, for computed
@@ -29429,7 +29850,7 @@ components:
           x-stream-index: "004"
         aws_rekognition_config:
           $ref: '#/components/schemas/AIImageConfig'
-          x-stream-index: "018"
+          x-stream-index: "019"
         block_list_config:
           $ref: '#/components/schemas/BlockListConfig'
           description: Configuration for block list filtering
@@ -29437,7 +29858,7 @@ components:
           x-stream-index: "007"
         bodyguard_config:
           $ref: '#/components/schemas/AITextConfig'
-          x-stream-index: "017"
+          x-stream-index: "018"
         flood_config:
           $ref: '#/components/schemas/FloodConfig'
           description: Per-user flood detection for the /labels endpoint (identical
@@ -29449,6 +29870,12 @@ components:
           description: Configuration for Google Vision integration
           title: Google Vision Config
           x-stream-index: "010"
+        intent_config:
+          $ref: '#/components/schemas/IntentConfigRequest'
+          description: Configuration for conversation-level intent analysis (topics,
+            capture cap, cooldowns, score threshold)
+          title: Intent Config
+          x-stream-index: "017"
         key:
           description: Unique identifier for the moderation configuration
           title: Key
@@ -29474,12 +29901,12 @@ components:
           x-stream-index: "002"
         user:
           $ref: '#/components/schemas/UserRequest'
-          x-stream-index: "020.002"
+          x-stream-index: "021.002"
         user_id:
           description: Optional user ID to associate with the audit log entry
           title: User ID
           type: string
-          x-stream-index: "020.001"
+          x-stream-index: "021.001"
         velocity_filter_config:
           $ref: '#/components/schemas/VelocityFilterConfig'
           description: Configuration for velocity-based filtering
@@ -29487,7 +29914,7 @@ components:
           x-stream-index: "014"
         video_call_rule_config:
           $ref: '#/components/schemas/VideoCallRuleConfig'
-          x-stream-index: "019"
+          x-stream-index: "020"
       required:
       - key
       type: object
@@ -31084,10 +31511,13 @@ components:
           feeds.follow.updated: '#/components/schemas/FollowUpdatedEvent'
           feeds.notification_feed.updated: '#/components/schemas/NotificationFeedUpdatedEvent'
           feeds.stories_feed.updated: '#/components/schemas/StoriesFeedUpdatedEvent'
+          import.error: '#/components/schemas/AsyncImportErrorEvent'
+          import.success: '#/components/schemas/AsyncImportSuccessEvent'
           moderation.analysis.failed: '#/components/schemas/ModerationAnalysisFailedEvent'
           moderation.custom_action: '#/components/schemas/ModerationCustomActionEvent'
           moderation.flagged: '#/components/schemas/ModerationFlaggedEvent'
           moderation.image_analysis.complete: '#/components/schemas/ModerationImageAnalysisCompleteEvent'
+          moderation.intent_detected: '#/components/schemas/IntentDetectedEvent'
           moderation.mark_reviewed: '#/components/schemas/ModerationMarkReviewedEvent'
           moderation.text_analysis.complete: '#/components/schemas/ModerationTextAnalysisCompleteEvent'
           moderation_check.completed: '#/components/schemas/ModerationCheckCompletedEvent'
@@ -31122,6 +31552,8 @@ components:
       - $ref: '#/components/schemas/AsyncExportErrorEvent'
       - $ref: '#/components/schemas/AsyncExportModerationLogsEvent'
       - $ref: '#/components/schemas/AsyncExportReviewQueueEvent'
+      - $ref: '#/components/schemas/AsyncImportErrorEvent'
+      - $ref: '#/components/schemas/AsyncImportSuccessEvent'
       - $ref: '#/components/schemas/BookmarkAddedEvent'
       - $ref: '#/components/schemas/BookmarkDeletedEvent'
       - $ref: '#/components/schemas/BookmarkFolderDeletedEvent'
@@ -31146,6 +31578,7 @@ components:
       - $ref: '#/components/schemas/FollowCreatedEvent'
       - $ref: '#/components/schemas/FollowDeletedEvent'
       - $ref: '#/components/schemas/FollowUpdatedEvent'
+      - $ref: '#/components/schemas/IntentDetectedEvent'
       - $ref: '#/components/schemas/ModerationAnalysisFailedEvent'
       - $ref: '#/components/schemas/ModerationCheckCompletedEvent'
       - $ref: '#/components/schemas/ModerationCustomActionEvent'
@@ -31264,7 +31697,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v239.34.0
+  version: v239.43.1
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -32646,6 +33079,15 @@ paths:
           type: boolean
           writeOnly: true
           x-stream-index: "006.002"
+      - in: query
+        name: include_top_level_comment_count
+        schema:
+          description: 'If true, returns activity.top_level_comment_count: the number
+            of comments directly on the activity, excluding replies'
+          title: Include Top Level Comment Count
+          type: boolean
+          writeOnly: true
+          x-stream-index: "007"
       responses:
         "200":
           content:
@@ -33561,6 +34003,17 @@ paths:
           type: string
           writeOnly: true
           x-stream-index: "009.003"
+      - in: query
+        name: include_top_level_comment_count
+        schema:
+          description: 'If true, returns top_level_comment_count: the number of comments
+            directly on the object, excluding replies. Set this on the first page
+            only (for an id_around deep link, that is the id_around request); the
+            value does not change between pages'
+          title: Include Top Level Comment Count
+          type: boolean
+          writeOnly: true
+          x-stream-index: "010"
       responses:
         "200":
           content:
