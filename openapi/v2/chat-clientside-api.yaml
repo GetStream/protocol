@@ -298,7 +298,6 @@ components:
       - rules
       type: object
     APIError:
-      nullable: true
       properties:
         StatusCode:
           description: Response HTTP status code
@@ -4538,6 +4537,75 @@ components:
       required:
       - id
       type: object
+    ConnectedEvent:
+      description: This event is sent when the WS connection is established and authenticated,
+        this event contains the full user object as it is stored on the server
+      properties:
+        connection_id:
+          description: The connection_id for this client
+          title: Connection ID
+          type: string
+          x-stream-index: "002"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "001.002"
+        me:
+          $ref: '#/components/schemas/OwnUserResponse'
+          description: The full user object as it is stored on the server
+          title: OwnUserResponse
+          x-stream-index: "003"
+        type:
+          default: connection.ok
+          description: 'The type of event: "connection.ok" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - connection_id
+      - me
+      title: ConnectedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-throttle-group: critical
+      x-stream-ws-base-event-name: VideoEvent
+    ConnectionErrorEvent:
+      description: This event is sent when the WS connection fails
+      properties:
+        connection_id:
+          type: string
+          x-stream-index: "002"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "001.002"
+        error:
+          $ref: '#/components/schemas/APIError'
+          description: The error that caused the connection to fail
+          title: Error
+          x-stream-index: "003"
+        type:
+          default: connection.error
+          description: 'The type of event: "connection.error" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - connection_id
+      - error
+      title: ConnectionErrorEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-throttle-group: critical
+      x-stream-ws-base-event-name: VideoEvent
     ContentCountRuleParameters:
       properties:
         threshold:
@@ -22382,6 +22450,8 @@ components:
           channel.unfrozen: '#/components/schemas/ChannelUnFrozenEvent'
           channel.updated: '#/components/schemas/ChannelUpdatedEvent'
           channel.visible: '#/components/schemas/ChannelVisibleEvent'
+          connection.error: '#/components/schemas/ConnectionErrorEvent'
+          connection.ok: '#/components/schemas/ConnectedEvent'
           draft.deleted: '#/components/schemas/DraftDeletedEvent'
           draft.updated: '#/components/schemas/DraftUpdatedEvent'
           health.check: '#/components/schemas/HealthCheckEvent'
@@ -22458,6 +22528,8 @@ components:
       - $ref: '#/components/schemas/ChannelUnFrozenEvent'
       - $ref: '#/components/schemas/ChannelUpdatedEvent'
       - $ref: '#/components/schemas/ChannelVisibleEvent'
+      - $ref: '#/components/schemas/ConnectedEvent'
+      - $ref: '#/components/schemas/ConnectionErrorEvent'
       - $ref: '#/components/schemas/CustomEvent'
       - $ref: '#/components/schemas/DraftDeletedEvent'
       - $ref: '#/components/schemas/DraftUpdatedEvent'
@@ -22609,7 +22681,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v239.42.0
+  version: v239.43.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
