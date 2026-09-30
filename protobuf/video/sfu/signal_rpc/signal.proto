@@ -36,6 +36,65 @@ service SignalServer {
   rpc StopNoiseCancellation(StopNoiseCancellationRequest) returns (StopNoiseCancellationResponse);
 }
 
+// FastJoinServer is separate from SignalServer so that existing SignalServer
+// implementations keep compiling, and because FastJoin runs before the call
+// and the participant exist on the SFU.
+service FastJoinServer {
+  // FastJoin joins the call in one request: it creates the call on this SFU
+  // from the setup grant if needed, creates the participant, answers the
+  // publisher offer and returns the subscriber offer. The client then opens
+  // the websocket with JoinRequest.attach_fast_join set, and answers the
+  // subscriber offer with SendAnswer.
+  rpc FastJoin(FastJoinRequest) returns (FastJoinResponse);
+}
+
+message FastJoinRequest {
+  // SFU token, audience = this SFU; same token as JoinRequest.token
+  string token = 1;
+  // coordinator-signed call parameters that let this SFU get-or-create the call;
+  // carries no credentials
+  string setup_grant = 2;
+  string session_id = 3;
+  // same as JoinRequest.unified_session_id
+  string unified_session_id = 4;
+  // publisher offer, complete (no trickle); empty for receive-only clients
+  string publisher_sdp = 5;
+  // tracks in publisher_sdp, as in SetPublisherRequest.tracks
+  repeated models.TrackInfo tracks = 6;
+  // receive-only SDP listing the codecs the client decodes, as in JoinRequest.subscriber_sdp
+  string subscriber_sdp = 7;
+  // number of audio transceivers without a track to add to the subscriber offer,
+  // bound to audio tracks as they are published; 0 = none
+  uint32 audio_receive_slots = 8;
+  models.ClientDetails client_details = 9;
+  repeated models.ClientCapability capabilities = 10;
+  models.ParticipantSource source = 11;
+  repeated models.PublishOption preferred_publish_options = 12;
+  repeated models.SubscribeOption preferred_subscribe_options = 13;
+}
+
+message FastJoinResponse {
+  // publisher answer; empty when the request had no publisher_sdp
+  string publisher_sdp = 1;
+  // subscriber offer; answer it with SendAnswer (peer_type subscriber)
+  string subscriber_sdp = 2;
+  // negotiation_id to put in the SendAnswer for subscriber_sdp
+  uint32 subscriber_negotiation_id = 3;
+  models.CallState call_state = 4;
+  repeated models.PublishOption publish_options = 5;
+  int32 fast_reconnect_deadline_seconds = 6;
+  // server-side steps of the join, in order
+  repeated ServerTiming server_timings = 7;
+  // set when the join failed and no participant was created.
+  // ERROR_CODE_SFU_FULL and ERROR_CODE_SFU_SHUTTING_DOWN: try the next SFU.
+  models.Error error = 8;
+}
+
+message ServerTiming {
+  string name = 1;
+  double duration_ms = 2;
+}
+
 message StartNoiseCancellationRequest {
   string session_id = 1;
 }
