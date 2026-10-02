@@ -2,26 +2,69 @@ components:
   schemas:
     AIAudioConfigRequest:
       properties:
+        ai_text_config:
+          $ref: '#/components/schemas/AITextConfig'
+          description: Rules applied to transcripts when LLM configurability is disabled
+          title: AITextConfig
+          x-stream-index: "003"
+        llm_config:
+          $ref: '#/components/schemas/LLMConfig'
+          description: Rules applied to transcripts when LLM configurability is enabled
+          title: LLMConfig
+          x-stream-index: "004"
         profile:
+          description: Bodyguard credentials profile to classify transcripts with.
+            Applies to the NLP engine only; ignored when LLM configurability is enabled.
+            Empty falls back to the app-pinned profile, then the organization's top-level
+            credentials
+          title: Profile
           type: string
           x-stream-index: "001"
         rules:
+          description: Deprecated pre-split rule list. Still the live config while
+            no engine config exists; once one does it is kept as a fallback for whichever
+            engine has none of its own
           items:
             $ref: '#/components/schemas/BodyguardRule'
+          title: Rules
           type: array
           x-stream-index: "002"
       type: object
     AIAudioConfigResponse:
       properties:
+        ai_text_config:
+          $ref: '#/components/schemas/AITextConfig'
+          description: The rules applied to transcripts when LLM configurability is
+            disabled. Present only when a config for that engine is stored; a policy
+            still on the pre-split flat shape returns rules alone
+          title: AITextConfig
+          x-stream-index: "004"
         enabled:
+          description: Whether the engine selected by the application's LLM configurability
+            flag has a rule that does something. Derived, not stored
+          title: Enabled
           type: boolean
           x-stream-index: "001"
+        llm_config:
+          $ref: '#/components/schemas/LLMConfig'
+          description: The rules applied to transcripts when LLM configurability is
+            enabled. Present only when a config for that engine is stored; a policy
+            still on the pre-split flat shape returns rules alone
+          title: LLMConfig
+          x-stream-index: "005"
         profile:
+          description: Bodyguard credentials profile transcripts are classified with.
+            Applies to the NLP engine only
+          title: Profile
           type: string
           x-stream-index: "002"
         rules:
+          description: The active engine's rules, flattened into the pre-split shape
+            for clients that predate the per-engine configs. This is the whole config
+            for a policy that has no per-engine config stored
           items:
             $ref: '#/components/schemas/BodyguardRule'
+          title: Rules
           type: array
           x-stream-index: "003"
       required:
@@ -1032,6 +1075,7 @@ components:
           type: string
           x-stream-index: "002"
         label:
+          maxLength: 128
           type: string
           x-stream-index: "001"
         severity_rules:
@@ -1389,7 +1433,6 @@ components:
           x-stream-index: 001.002.016
         max_message_length:
           format: int32
-          maximum: 20000
           type: integer
           x-stream-index: 001.002.022
         message_retention:
@@ -4816,6 +4859,7 @@ components:
           type: string
           x-stream-index: "002"
         label:
+          maxLength: 128
           type: string
           x-stream-index: "001"
         severity_rules:
@@ -8854,7 +8898,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v239.45.0
+  version: v239.46.0
 openapi: 3.0.3
 paths:
   /api/v2/moderation/action_config:
