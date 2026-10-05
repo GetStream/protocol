@@ -3909,7 +3909,7 @@ components:
           type: string
           x-stream-index: "002.001"
         type:
-          default: export.moderation_logs.error
+          default: export.bulk_image_moderation.error
           type: string
           x-stream-index: "003.002"
       required:
@@ -21408,7 +21408,7 @@ components:
       properties:
         enrich_own_fields:
           type: boolean
-          x-stream-index: "006"
+          x-stream-index: "007"
         filter:
           additionalProperties: {}
           description: Filters to apply to the query. Supports location-based queries
@@ -21521,11 +21521,18 @@ components:
           title: Include Expired Activities
           type: boolean
           x-stream-index: "004"
+        include_moderated_activities:
+          description: When true, include activities hidden by moderation (shadowed
+            or removed). Server-side only; not allowed when a user is set.
+          title: Include Moderated Activities
+          type: boolean
+          x-stream-index: "006"
         include_private_activities:
           type: boolean
           x-stream-index: "003"
         include_soft_deleted_activities:
-          description: When true, include soft-deleted activities in the result.
+          description: When true, include soft-deleted activities in the result. Server-side
+            only; not allowed when a user is set.
           title: Include Soft Deleted Activities
           type: boolean
           x-stream-index: "005"
@@ -21534,13 +21541,13 @@ components:
           maximum: 100
           minimum: 0
           type: integer
-          x-stream-index: "008.001"
+          x-stream-index: "009.001"
         next:
           type: string
-          x-stream-index: "008.002"
+          x-stream-index: "009.002"
         prev:
           type: string
-          x-stream-index: "008.003"
+          x-stream-index: "009.003"
         sort:
           description: Sorting parameters for the query
           items:
@@ -21551,10 +21558,10 @@ components:
           x-stream-index: "002"
         user:
           $ref: '#/components/schemas/UserRequest'
-          x-stream-index: "010.002"
+          x-stream-index: "011.002"
         user_id:
           type: string
-          x-stream-index: "010.001"
+          x-stream-index: "011.001"
       title: Query Activities Request
       type: object
     QueryActivitiesResponse:
@@ -22377,6 +22384,15 @@ components:
           title: ID Around
           type: string
           x-stream-index: "003"
+        include_soft_deleted_comments:
+          description: When true, include soft-deleted comments in the result. Server-side
+            only, and requires an object_id filter. Covers comments removed via deleteComment
+            and via soft user-data deletion. Moderation-actioned comments (removed,
+            hidden, shadow_blocked) remain excluded, as are comments whose parent
+            activity is itself deleted.
+          title: Include Soft Deleted Comments
+          type: boolean
+          x-stream-index: "004"
         limit:
           description: Maximum number of comments to return
           format: int32
@@ -22384,13 +22400,13 @@ components:
           minimum: 0
           title: Limit
           type: integer
-          x-stream-index: "005.001"
+          x-stream-index: "006.001"
         next:
           type: string
-          x-stream-index: "005.002"
+          x-stream-index: "006.002"
         prev:
           type: string
-          x-stream-index: "005.003"
+          x-stream-index: "006.003"
         sort:
           description: Array of sort parameters
           enum:
@@ -22418,10 +22434,10 @@ components:
           - upvote_count
         user:
           $ref: '#/components/schemas/UserRequest'
-          x-stream-index: "007.002"
+          x-stream-index: "008.002"
         user_id:
           type: string
-          x-stream-index: "007.001"
+          x-stream-index: "008.001"
       required:
       - filter
       title: Query Comments Request
@@ -23863,18 +23879,37 @@ components:
               - $in
               type: string
           x-stream-index: "003"
+        include_expired_activities:
+          description: When true, return pinned activities even if they have expired.
+            Server-side only; not allowed when a user is set.
+          title: Include Expired Activities
+          type: boolean
+          x-stream-index: "008"
+        include_moderated_activities:
+          description: When true, return pinned activities even if moderation hides
+            them (shadowed or removed). Server-side only; not allowed when a user
+            is set.
+          title: Include Moderated Activities
+          type: boolean
+          x-stream-index: "007"
+        include_soft_deleted_activities:
+          description: When true, return pinned activities even if they are soft-deleted.
+            Server-side only; not allowed when a user is set.
+          title: Include Soft Deleted Activities
+          type: boolean
+          x-stream-index: "006"
         limit:
           format: int32
           maximum: 100
           minimum: 0
           type: integer
-          x-stream-index: "007.001"
+          x-stream-index: "010.001"
         next:
           type: string
-          x-stream-index: "007.002"
+          x-stream-index: "010.002"
         prev:
           type: string
-          x-stream-index: "007.003"
+          x-stream-index: "010.003"
         sort:
           description: Sorting parameters for the query
           items:
@@ -23883,6 +23918,12 @@ components:
           title: Sort
           type: array
           x-stream-index: "004"
+        user:
+          $ref: '#/components/schemas/UserRequest'
+          x-stream-index: "012.002"
+        user_id:
+          type: string
+          x-stream-index: "012.001"
       title: Query Pinned Activities Request
       type: object
     QueryPinnedActivitiesResponse:
@@ -30730,6 +30771,87 @@ components:
       x-stream-event-doc-group: other
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    UserDeletedEvent:
+      description: This event is sent when a user gets deleted. The event contains
+        information about the user that was deleted and the deletion options that
+        were used.
+      nullable: true
+      properties:
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: number
+          x-stream-index: "001.003"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "001.007"
+        delete_conversation:
+          description: 'The type of deletion that was used for the user''s conversations.
+            One of: hard, soft, pruning, (empty string)'
+          title: Delete conversation
+          type: string
+          x-stream-index: "004"
+        delete_conversation_channels:
+          description: Whether the user's conversation channels were deleted
+          title: Delete conversation channels
+          type: boolean
+          x-stream-index: "008"
+        delete_messages:
+          description: 'The type of deletion that was used for the user''s messages.
+            One of: hard, soft, pruning, (empty string)'
+          title: Delete messages
+          type: string
+          x-stream-index: "003"
+        delete_user:
+          description: 'The type of deletion that was used for the user. One of: hard,
+            soft, pruning, (empty string)'
+          title: Delete user
+          type: string
+          x-stream-index: "005"
+        hard_delete:
+          description: Whether the user was hard deleted
+          title: Hard delete
+          type: boolean
+          x-stream-index: "006"
+        mark_messages_deleted:
+          description: Whether the user's messages were marked as deleted
+          title: Mark messages deleted
+          type: boolean
+          x-stream-index: "007"
+        received_at:
+          format: date-time
+          type: number
+          x-stream-index: "001.004"
+        type:
+          default: user.deleted
+          description: 'The type of event: "user.deleted" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.002"
+        user:
+          $ref: '#/components/schemas/UserResponseCommonFields'
+          description: The user that was deleted
+          title: User
+          x-stream-index: "002.001"
+      required:
+      - type
+      - created_at
+      - custom
+      - user
+      - delete_messages
+      - delete_conversation
+      - delete_user
+      - hard_delete
+      - mark_messages_deleted
+      - delete_conversation_channels
+      title: UserDeletedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     UserGroupMember:
       nullable: true
       properties:
@@ -31700,6 +31822,7 @@ components:
           review_queue_item.updated: '#/components/schemas/ReviewQueueItemUpdatedEvent'
           user.banned: '#/components/schemas/UserBannedEvent'
           user.deactivated: '#/components/schemas/UserDeactivatedEvent'
+          user.deleted: '#/components/schemas/UserDeletedEvent'
           user.reactivated: '#/components/schemas/UserReactivatedEvent'
           user.unbanned: '#/components/schemas/UserUnbannedEvent'
           user.updated: '#/components/schemas/UserUpdatedEvent'
@@ -31767,6 +31890,7 @@ components:
       - $ref: '#/components/schemas/StoriesFeedUpdatedEvent'
       - $ref: '#/components/schemas/UserBannedEvent'
       - $ref: '#/components/schemas/UserDeactivatedEvent'
+      - $ref: '#/components/schemas/UserDeletedEvent'
       - $ref: '#/components/schemas/UserReactivatedEvent'
       - $ref: '#/components/schemas/UserUnbannedEvent'
       - $ref: '#/components/schemas/UserUpdatedEvent'
@@ -31871,7 +31995,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v239.49.0
+  version: v239.50.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -33262,6 +33386,24 @@ paths:
           type: boolean
           writeOnly: true
           x-stream-index: "007"
+      - in: query
+        name: include_soft_deleted_activities
+        schema:
+          description: When true, return the activity even if it is soft-deleted.
+            Server-side only; not allowed when a user is set.
+          title: Include Soft Deleted Activities
+          type: boolean
+          writeOnly: true
+          x-stream-index: "008"
+      - in: query
+        name: include_moderated_activities
+        schema:
+          description: When true, return the activity even if moderation hides it
+            (shadowed or removed). Server-side only; not allowed when a user is set.
+          title: Include Moderated Activities
+          type: boolean
+          writeOnly: true
+          x-stream-index: "009"
       responses:
         "200":
           content:
@@ -33617,13 +33759,13 @@ paths:
         schema:
           type: string
           writeOnly: true
-          x-stream-index: "007.001"
+          x-stream-index: "008.001"
       - in: query
         name: translate_text
         schema:
           type: boolean
           writeOnly: true
-          x-stream-index: "007.002"
+          x-stream-index: "008.002"
       requestBody:
         content:
           application/json:
@@ -34970,13 +35112,13 @@ paths:
         schema:
           type: string
           writeOnly: true
-          x-stream-index: "004.001"
+          x-stream-index: "005.001"
       - in: query
         name: translate_text
         schema:
           type: boolean
           writeOnly: true
-          x-stream-index: "004.002"
+          x-stream-index: "005.002"
       requestBody:
         content:
           application/json:
@@ -35785,13 +35927,13 @@ paths:
         schema:
           type: string
           writeOnly: true
-          x-stream-index: "006.001"
+          x-stream-index: "009.001"
       - in: query
         name: translate_text
         schema:
           type: boolean
           writeOnly: true
-          x-stream-index: "006.002"
+          x-stream-index: "009.002"
       requestBody:
         content:
           application/json:
