@@ -736,7 +736,7 @@ components:
           type: string
           x-stream-index: "002.001"
         type:
-          default: export.users.error
+          default: export.channels.error
           type: string
           x-stream-index: "003.002"
       required:
@@ -14049,6 +14049,79 @@ components:
       - total_participants
       - duration
       type: object
+    QueryCallRingAttemptsRequest:
+      nullable: true
+      properties:
+        call_session_id:
+          description: Limit the attempts to one call session; omit to read every
+            session of the call
+          maxLength: 64
+          title: CallSessionID
+          type: string
+          x-stream-index: "003"
+        id:
+          description: Call ID
+          maxLength: 64
+          title: ID
+          type: string
+          x-stream-index: "001.002"
+        type:
+          description: The type of call
+          maxLength: 64
+          title: Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - id
+      title: QueryCallRingAttemptsRequest
+      type: object
+    QueryCallRingAttemptsResponse:
+      description: The ring attempts of a call, newest first.
+      nullable: true
+      properties:
+        call_id:
+          description: The ID of the call the attempts belong to
+          title: CallID
+          type: string
+          x-stream-index: "002"
+        call_session_id:
+          description: The call session the attempts were limited to, null when every
+            session was read
+          title: CallSessionID
+          type: string
+          x-stream-index: "003"
+        call_type:
+          description: The type of the call the attempts belong to
+          title: CallType
+          type: string
+          x-stream-index: "004"
+        count:
+          description: The number of attempts returned
+          format: int32
+          title: Count
+          type: integer
+          x-stream-index: "005"
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+        ring_attempts:
+          description: The attempts, newest first
+          items:
+            $ref: '#/components/schemas/RingAttemptResponse'
+          title: RingAttempts
+          type: array
+          x-stream-index: "006"
+      required:
+      - duration
+      - call_id
+      - call_type
+      - count
+      - ring_attempts
+      title: QueryCallRingAttemptsResponse
+      type: object
     QueryCallSessionParticipantStatsResponse:
       description: Basic response information
       nullable: true
@@ -15970,6 +16043,112 @@ components:
       required:
       - user_ids
       type: object
+    RingAttemptResponse:
+      description: 'One ring of a call session: who was rung, what each target did
+        about it, and how the ring settled.'
+      properties:
+        app_pk:
+          description: The application this ring belongs to
+          format: int32
+          title: AppPK
+          type: integer
+          x-stream-index: "001"
+        call_id:
+          description: The ID of the call that was rung
+          title: CallID
+          type: string
+          x-stream-index: "004"
+        call_type:
+          description: The type of the call that was rung
+          title: CallType
+          type: string
+          x-stream-index: "003"
+        created_at:
+          description: When the ring went out
+          format: date-time
+          title: CreatedAt
+          type: number
+          x-stream-index: "007"
+        custom:
+          additionalProperties: {}
+          description: Opaque context stored on the ring by the caller
+          title: Custom
+          type: object
+          x-stream-index: "014"
+        deleted_at:
+          description: When the ring was deleted
+          format: date-time
+          title: DeletedAt
+          type: number
+          x-stream-index: "009"
+        expires_at:
+          description: When the ring expires, i.e. when the missed call deadline fires
+          format: date-time
+          title: ExpiresAt
+          type: number
+          x-stream-index: "008"
+        initiated_by:
+          description: The user that started the ring
+          title: InitiatedBy
+          type: string
+          x-stream-index: "006"
+        outcome:
+          description: 'The derived outcome: ringing, answered_some, answered_all,
+            rejected_all, missed_all, cancelled or mixed'
+          title: Outcome
+          type: string
+          x-stream-index: "010"
+        ring_id:
+          description: The ring, as published in the ring_id of the call.ring event
+          title: RingID
+          type: string
+          x-stream-index: "002"
+        session_id:
+          description: The call session that was rung
+          title: SessionID
+          type: string
+          x-stream-index: "005"
+        settle_reason:
+          description: 'Why the ring settled: answered, rejected, cancel, timeout,
+            ended or auto_end; empty while it is still ringing'
+          title: SettleReason
+          type: string
+          x-stream-index: "013"
+        settled_at:
+          description: When the outcome left ringing
+          format: date-time
+          title: SettledAt
+          type: number
+          x-stream-index: "011"
+        settled_by:
+          description: The user that settled the ring, or 'server'; empty while it
+            is still ringing
+          title: SettledBy
+          type: string
+          x-stream-index: "012"
+        targets:
+          additionalProperties:
+            $ref: '#/components/schemas/RingTargetResponse'
+          description: The rung users, keyed by user ID
+          title: Targets
+          type: object
+          x-stream-index: "015"
+      required:
+      - app_pk
+      - ring_id
+      - call_type
+      - call_id
+      - session_id
+      - initiated_by
+      - created_at
+      - expires_at
+      - outcome
+      - settled_by
+      - settle_reason
+      - custom
+      - targets
+      title: RingAttemptResponse
+      type: object
     RingCallRequest:
       nullable: true
       properties:
@@ -16018,6 +16197,57 @@ components:
       - duration
       - members_ids
       title: RingCallResponse
+      type: object
+    RingDeliveryResponse:
+      description: One dispatch of a ring to one device over one channel.
+      properties:
+        acked_at:
+          description: When the device acknowledged the ring; not populated yet
+          format: date-time
+          title: AckedAt
+          type: number
+          x-stream-index: "006"
+        channel:
+          description: 'The transport the ring was dispatched over: ws, apns_voip,
+            apns or fcm'
+          title: Channel
+          type: string
+          x-stream-index: "002"
+        device_id:
+          description: The device the ring was dispatched to, empty for websocket
+            deliveries which fan out to every connection
+          title: DeviceID
+          type: string
+          x-stream-index: "001"
+        displayed_at:
+          description: When the device displayed the ring; not populated yet
+          format: date-time
+          title: DisplayedAt
+          type: number
+          x-stream-index: "007"
+        fetched_at:
+          description: When the device fetched the call; not populated yet
+          format: date-time
+          title: FetchedAt
+          type: number
+          x-stream-index: "005"
+        provider_accepted_at:
+          description: When the push provider accepted the dispatch; not populated
+            yet
+          format: date-time
+          title: ProviderAcceptedAt
+          type: number
+          x-stream-index: "004"
+        sent_at:
+          description: When the ring was dispatched
+          format: date-time
+          title: SentAt
+          type: number
+          x-stream-index: "003"
+      required:
+      - channel
+      - sent_at
+      title: RingDeliveryResponse
       type: object
     RingSettings:
       properties:
@@ -16106,6 +16336,41 @@ components:
       required:
       - state
       - state_at
+      type: object
+    RingTargetResponse:
+      description: What one rung user did about one ring, and which devices the ring
+        reached.
+      properties:
+        deliveries:
+          description: The dispatches of this ring to the target's devices
+          items:
+            $ref: '#/components/schemas/RingDeliveryResponse'
+          title: Deliveries
+          type: array
+          x-stream-index: "004"
+        reason:
+          description: The reject or cancel reason, empty otherwise
+          title: Reason
+          type: string
+          x-stream-index: "003"
+        state:
+          description: 'The target''s state for this ring: pending, accepted, rejected,
+            missed or cancelled'
+          title: State
+          type: string
+          x-stream-index: "001"
+        state_at:
+          description: When the target last changed state
+          format: date-time
+          title: StateAt
+          type: number
+          x-stream-index: "002"
+      required:
+      - state
+      - state_at
+      - reason
+      - deliveries
+      title: RingTargetResponse
       type: object
     Role:
       properties:
@@ -20982,7 +21247,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v239.50.0
+  version: v239.51.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -26861,6 +27126,40 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Query call members
+      tags:
+      - product:video
+  /api/v2/video/call/ring_attempts:
+    post:
+      description: |
+        Returns a call's ring attempts, newest first. A session can be rung more than once, and the session-level accepted_by / rejected_by / missed_by maps flatten every ring together; an attempt says which ring a user acted on, which devices it reached, and who settled it and why. Pass call_session_id to limit the read to one session.
+      operationId: QueryCallRingAttempts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryCallRingAttemptsRequest'
+        description: QueryCallRingAttemptsRequest
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryCallRingAttemptsResponse'
+          description: QueryCallRingAttemptsResponse
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Query Call Ring Attempts
       tags:
       - product:video
   /api/v2/video/call/stats:
