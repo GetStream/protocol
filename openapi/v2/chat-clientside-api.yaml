@@ -1273,6 +1273,12 @@ components:
     BanRequest:
       nullable: true
       properties:
+        ban_from_future_channels:
+          description: Whether to also ban the user from future channels created by
+            the banner
+          title: Ban From Future Channels
+          type: boolean
+          x-stream-index: "011"
         channel_cid:
           description: Channel where the ban applies
           title: Channel CID
@@ -1285,6 +1291,12 @@ components:
           - hard
           type: string
           x-stream-index: "009"
+        delete_reactions:
+          description: Whether to delete reactions by the banned user on other users'
+            messages
+          title: Delete Reactions
+          type: boolean
+          x-stream-index: "010"
         ip_ban:
           description: Whether to ban the user's IP address
           title: IP Ban
@@ -4720,6 +4732,17 @@ components:
           type: string
           x-stream-index: "002"
       type: object
+    ContentCountryCodeParameters:
+      properties:
+        country_codes:
+          items:
+            type: string
+          type: array
+          x-stream-index: "002"
+        operator:
+          type: string
+          x-stream-index: "001"
+      type: object
     ContentCustomPropertyCountParameters:
       properties:
         operator:
@@ -6763,19 +6786,19 @@ components:
         bookmark_count:
           format: int32
           type: integer
-          x-stream-index: "023"
+          x-stream-index: "024"
         confidence_score:
           format: double
           type: number
-          x-stream-index: "025"
+          x-stream-index: "026"
         controversy_score:
           format: double
           type: number
-          x-stream-index: "026"
+          x-stream-index: "027"
         created_at:
           format: date-time
           type: number
-          x-stream-index: "015"
+          x-stream-index: "016"
         custom:
           additionalProperties: {}
           type: object
@@ -6783,15 +6806,18 @@ components:
         deleted_at:
           format: date-time
           type: number
-          x-stream-index: "018"
+          x-stream-index: "019"
         downvote_count:
           format: int32
           type: integer
-          x-stream-index: "022"
+          x-stream-index: "023"
         edited_at:
           format: date-time
           type: number
-          x-stream-index: "017"
+          x-stream-index: "018"
+        hidden:
+          type: boolean
+          x-stream-index: "014"
         i18n:
           additionalProperties:
             type: string
@@ -6812,7 +6838,7 @@ components:
           x-stream-index: "013"
         moderation:
           $ref: '#/components/schemas/ModerationV2Response'
-          x-stream-index: "019"
+          x-stream-index: "020"
         object_id:
           type: string
           x-stream-index: "002"
@@ -6823,7 +6849,7 @@ components:
           items:
             $ref: '#/components/schemas/FeedsReactionResponse'
           type: array
-          x-stream-index: "027"
+          x-stream-index: "028"
         parent_id:
           type: string
           x-stream-index: "008"
@@ -6839,25 +6865,25 @@ components:
         reply_count:
           format: int32
           type: integer
-          x-stream-index: "020"
+          x-stream-index: "021"
         score:
           format: int32
           type: integer
-          x-stream-index: "024"
+          x-stream-index: "025"
         status:
           type: string
-          x-stream-index: "014"
+          x-stream-index: "015"
         text:
           type: string
           x-stream-index: "005"
         updated_at:
           format: date-time
           type: number
-          x-stream-index: "016"
+          x-stream-index: "017"
         upvote_count:
           format: int32
           type: integer
-          x-stream-index: "021"
+          x-stream-index: "022"
         user:
           $ref: '#/components/schemas/UserResponse'
           x-stream-index: "004"
@@ -6868,6 +6894,7 @@ components:
       - user
       - reaction_count
       - mentioned_users
+      - hidden
       - status
       - created_at
       - updated_at
@@ -15397,6 +15424,16 @@ components:
               - $in
               - $q
               type: string
+            country_code:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
             created_at:
               operators:
               - $eq
@@ -17089,35 +17126,35 @@ components:
             $ref: '#/components/schemas/ActionLogResponse'
           title: Actions
           type: array
-          x-stream-index: "026"
+          x-stream-index: "027"
         activity:
           $ref: '#/components/schemas/EnrichedActivity'
-          x-stream-index: "018"
+          x-stream-index: "019"
         ai_text_severity:
           description: AI-determined text severity
           title: AI Text Severity
           type: string
-          x-stream-index: "014"
+          x-stream-index: "015"
         appeal:
           $ref: '#/components/schemas/AppealItemResponse'
           description: Appeal submitted for this item if it exists
           title: Appeal
-          x-stream-index: "027"
+          x-stream-index: "028"
         assigned_to:
           $ref: '#/components/schemas/UserResponse'
           description: Moderator assigned to review this item
           title: Assigned To
-          x-stream-index: "023"
+          x-stream-index: "024"
         bans:
           description: Associated ban records
           items:
             $ref: '#/components/schemas/BanInfoResponse'
           title: Bans
           type: array
-          x-stream-index: "024"
+          x-stream-index: "025"
         call:
           $ref: '#/components/schemas/ModerationCallResponse'
-          x-stream-index: "020"
+          x-stream-index: "021"
         completed_at:
           description: When the review was completed
           format: date-time
@@ -17130,10 +17167,13 @@ components:
           format: double
           title: Confidence Score
           type: number
-          x-stream-index: "016"
+          x-stream-index: "017"
         config_key:
           type: string
-          x-stream-index: "033"
+          x-stream-index: "034"
+        country_code:
+          type: string
+          x-stream-index: "013"
         created_at:
           description: When the item was created
           format: date-time
@@ -17144,12 +17184,12 @@ components:
           $ref: '#/components/schemas/EntityCreatorResponse'
           description: Details about who created the entity
           title: Entity Creator
-          x-stream-index: "021"
+          x-stream-index: "022"
         entity_creator_id:
           description: ID of who created the entity
           title: Entity Creator ID
           type: string
-          x-stream-index: "022"
+          x-stream-index: "023"
         entity_id:
           description: ID of the entity being reviewed
           title: Entity ID
@@ -17164,50 +17204,50 @@ components:
           description: Whether the item has been escalated
           title: Escalated
           type: boolean
-          x-stream-index: "035"
+          x-stream-index: "036"
         escalated_at:
           description: When the item was escalated
           format: date-time
           title: Escalated At
           type: number
-          x-stream-index: "038"
+          x-stream-index: "039"
         escalated_by:
           description: ID of the moderator who escalated the item
           title: Escalated By
           type: string
-          x-stream-index: "037"
+          x-stream-index: "038"
         escalation_metadata:
           $ref: '#/components/schemas/EscalationMetadata'
           description: Escalation details including reason, notes, and priority
           title: Escalation Metadata
-          x-stream-index: "036"
+          x-stream-index: "037"
         feeds_v2_activity:
           $ref: '#/components/schemas/EnrichedActivity'
           description: Associated feed activity
           title: Feeds V2 Activity
-          x-stream-index: "028"
+          x-stream-index: "029"
         feeds_v2_reaction:
           $ref: '#/components/schemas/Reaction'
           description: Associated feed reaction
           title: Feeds V2 Reaction
-          x-stream-index: "029"
+          x-stream-index: "030"
         feeds_v3_activity:
           $ref: '#/components/schemas/FeedsV3ActivityResponse'
-          x-stream-index: "030"
+          x-stream-index: "031"
         feeds_v3_comment:
           $ref: '#/components/schemas/FeedsV3CommentResponse'
-          x-stream-index: "031"
+          x-stream-index: "032"
         flags:
           description: Associated flag records
           items:
             $ref: '#/components/schemas/ModerationFlagResponse'
           title: Flags
           type: array
-          x-stream-index: "025"
+          x-stream-index: "026"
         flags_count:
           format: int32
           type: integer
-          x-stream-index: "034"
+          x-stream-index: "035"
         id:
           description: Unique identifier of the review queue item
           title: ID
@@ -17222,12 +17262,12 @@ components:
           x-stream-index: "012"
         latest_moderator_action:
           type: string
-          x-stream-index: "015"
+          x-stream-index: "016"
         message:
           $ref: '#/components/schemas/ChatMessageResponse'
           description: Associated message details
           title: Message
-          x-stream-index: "017"
+          x-stream-index: "018"
         moderation_payload:
           $ref: '#/components/schemas/ModerationPayloadResponse'
           description: Content being moderated
@@ -17235,7 +17275,7 @@ components:
           x-stream-index: "006"
         reaction:
           $ref: '#/components/schemas/Reaction'
-          x-stream-index: "019"
+          x-stream-index: "020"
         recommended_action:
           description: Suggested moderation action
           title: Recommended Action
@@ -17257,7 +17297,7 @@ components:
           format: int32
           title: Severity
           type: integer
-          x-stream-index: "013"
+          x-stream-index: "014"
         status:
           description: Current status of the review
           title: Status
@@ -17269,7 +17309,7 @@ components:
             type: string
           title: Teams
           type: array
-          x-stream-index: "032"
+          x-stream-index: "033"
         updated_at:
           description: When the item was last updated
           format: date-time
@@ -17377,19 +17417,19 @@ components:
       properties:
         call_custom_property_params:
           $ref: '#/components/schemas/CallCustomPropertyParameters'
-          x-stream-index: "029"
+          x-stream-index: "030"
         call_type_rule_params:
           $ref: '#/components/schemas/CallTypeRuleParameters'
-          x-stream-index: "028"
+          x-stream-index: "029"
         call_violation_count_params:
           $ref: '#/components/schemas/CallViolationCountParameters'
-          x-stream-index: "030"
+          x-stream-index: "031"
         channel_message_count_rule_params:
           $ref: '#/components/schemas/ChannelMessageCountRuleParameters'
           x-stream-index: "008"
         closed_caption_rule_params:
           $ref: '#/components/schemas/ClosedCaptionRuleParameters'
-          x-stream-index: "027"
+          x-stream-index: "028"
         confidence:
           format: double
           type: number
@@ -17397,6 +17437,9 @@ components:
         content_count_rule_params:
           $ref: '#/components/schemas/ContentCountRuleParameters'
           x-stream-index: "007"
+        content_country_code_params:
+          $ref: '#/components/schemas/ContentCountryCodeParameters'
+          x-stream-index: "016"
         content_custom_property_count_params:
           $ref: '#/components/schemas/ContentCustomPropertyCountParameters'
           x-stream-index: "014"
@@ -17414,28 +17457,28 @@ components:
           x-stream-index: "013"
         image_content_params:
           $ref: '#/components/schemas/ImageContentParameters'
-          x-stream-index: "019"
+          x-stream-index: "020"
         image_rule_params:
           $ref: '#/components/schemas/ImageRuleParameters'
           x-stream-index: "004"
         ip_content_count_rule_params:
           $ref: '#/components/schemas/IPContentCountRuleParameters'
-          x-stream-index: "016"
+          x-stream-index: "017"
         ip_flag_count_rule_params:
           $ref: '#/components/schemas/IPFlagCountRuleParameters'
-          x-stream-index: "017"
+          x-stream-index: "018"
         keyframe_ocr_rule_params:
           $ref: '#/components/schemas/KeyframeOCRRuleParameters'
-          x-stream-index: "026"
+          x-stream-index: "027"
         keyframe_rule_params:
           $ref: '#/components/schemas/KeyframeRuleParameters'
-          x-stream-index: "025"
+          x-stream-index: "026"
         ocr_content_params:
           $ref: '#/components/schemas/OCRContentParameters'
-          x-stream-index: "021"
+          x-stream-index: "022"
         text_content_params:
           $ref: '#/components/schemas/TextContentParameters'
-          x-stream-index: "018"
+          x-stream-index: "019"
         text_rule_params:
           $ref: '#/components/schemas/TextRuleParameters'
           x-stream-index: "003"
@@ -17444,13 +17487,13 @@ components:
           x-stream-index: "001"
         user_channel_count_params:
           $ref: '#/components/schemas/UserChannelCountRuleParameters'
-          x-stream-index: "033"
+          x-stream-index: "034"
         user_created_within_params:
           $ref: '#/components/schemas/UserCreatedWithinParameters'
-          x-stream-index: "022"
+          x-stream-index: "023"
         user_custom_property_params:
           $ref: '#/components/schemas/UserCustomPropertyParameters'
-          x-stream-index: "023"
+          x-stream-index: "024"
         user_flag_count_rule_params:
           $ref: '#/components/schemas/FlagCountRuleParameters'
           x-stream-index: "009"
@@ -17459,19 +17502,19 @@ components:
           x-stream-index: "011"
         user_identical_image_count_params:
           $ref: '#/components/schemas/UserIdenticalImageCountParameters'
-          x-stream-index: "032"
+          x-stream-index: "033"
         user_reaction_count_params:
           $ref: '#/components/schemas/UserReactionCountRuleParameters'
-          x-stream-index: "031"
+          x-stream-index: "032"
         user_role_params:
           $ref: '#/components/schemas/UserRoleParameters'
-          x-stream-index: "024"
+          x-stream-index: "025"
         user_rule_params:
           $ref: '#/components/schemas/UserRuleParameters'
           x-stream-index: "006"
         video_content_params:
           $ref: '#/components/schemas/VideoContentParameters'
-          x-stream-index: "020"
+          x-stream-index: "021"
         video_rule_params:
           $ref: '#/components/schemas/VideoRuleParameters'
           x-stream-index: "005"
@@ -22887,7 +22930,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v239.51.0
+  version: v239.52.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
