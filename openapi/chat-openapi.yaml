@@ -660,7 +660,7 @@ components:
           type: string
           x-stream-index: "002.001"
         type:
-          default: export.channels.error
+          default: export.moderation_logs.error
           type: string
           x-stream-index: "003.002"
       required:
@@ -4418,6 +4418,53 @@ components:
       - file_url
       title: Response
       type: object
+    CheckGCPPubSubRequest:
+      nullable: true
+      properties:
+        gcp_pubsub_event_based_ordering_key_enabled:
+          description: Publish the test message with an ordering key through the regional
+            endpoint, as a hook with ordering enabled would; requires gcp_pubsub_region
+          title: Pub/Sub ordering
+          type: boolean
+          x-stream-index: "003"
+        gcp_pubsub_region:
+          description: GCP region used for the regional Pub/Sub endpoint when ordering
+            is enabled
+          title: Pub/Sub region
+          type: string
+          x-stream-index: "002"
+        gcp_pubsub_topic:
+          description: Fully qualified GCP Pub/Sub topic name (projects/{project}/topics/{topic})
+          title: Pub/Sub topic
+          type: string
+          x-stream-index: "001"
+      type: object
+    CheckGCPPubSubResponse:
+      nullable: true
+      properties:
+        data:
+          additionalProperties: {}
+          description: Error data
+          title: ReadOnlyData
+          type: object
+          x-stream-index: "003"
+        duration:
+          type: string
+          x-stream-index: "004.001"
+        error:
+          description: Error text
+          title: Error
+          type: string
+          x-stream-index: "002"
+        status:
+          description: 'Validation result. One of: ok, error'
+          title: Status
+          type: string
+          x-stream-index: "001"
+      required:
+      - status
+      - duration
+      type: object
     CheckPushRequest:
       description: Check push request
       nullable: true
@@ -6986,11 +7033,11 @@ components:
       properties:
         callback:
           $ref: '#/components/schemas/AsyncModerationCallbackConfig'
-          x-stream-index: 020.001.002
+          x-stream-index: 023.001.002
         created_at:
           format: date-time
           type: string
-          x-stream-index: "021"
+          x-stream-index: "024"
         enabled:
           type: boolean
           x-stream-index: "003"
@@ -7001,7 +7048,19 @@ components:
           x-stream-index: "004"
         failover_config:
           $ref: '#/components/schemas/WebhookFailoverConfig'
-          x-stream-index: "020.004"
+          x-stream-index: "023.005"
+        gcp_pubsub_auth_type:
+          type: string
+          x-stream-index: "019"
+        gcp_pubsub_event_based_ordering_key_enabled:
+          type: boolean
+          x-stream-index: "023.004"
+        gcp_pubsub_region:
+          type: string
+          x-stream-index: "020"
+        gcp_pubsub_topic:
+          type: string
+          x-stream-index: "018"
         hook_type:
           type: string
           x-stream-index: "002"
@@ -7010,16 +7069,16 @@ components:
           x-stream-index: "001"
         product:
           type: string
-          x-stream-index: "018"
+          x-stream-index: "021"
         should_send_custom_events:
           type: boolean
-          x-stream-index: "019"
+          x-stream-index: "022"
         sns_auth_type:
           type: string
           x-stream-index: "014"
         sns_event_based_message_group_id_enabled:
           type: boolean
-          x-stream-index: "020.002"
+          x-stream-index: "023.002"
         sns_key:
           type: string
           x-stream-index: "015"
@@ -7040,7 +7099,7 @@ components:
           x-stream-index: "008"
         sqs_event_based_message_group_id_enabled:
           type: boolean
-          x-stream-index: "020.003"
+          x-stream-index: "023.003"
         sqs_key:
           type: string
           x-stream-index: "009"
@@ -7059,11 +7118,11 @@ components:
         timeout_ms:
           format: int32
           type: integer
-          x-stream-index: 020.001.001
+          x-stream-index: 023.001.001
         updated_at:
           format: date-time
           type: string
-          x-stream-index: "022"
+          x-stream-index: "025"
         webhook_url:
           type: string
           x-stream-index: "005"
@@ -24025,7 +24084,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v239.51.0
+  version: v239.52.0
 openapi: 3.0.3
 paths:
   /app:
@@ -26388,6 +26447,39 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Update channel type
+      tags:
+      - product:chat
+  /check_gcp_pubsub:
+    post:
+      description: |
+        Validates that Stream can publish to a customer-owned GCP Pub/Sub topic
+      operationId: CheckGCPPubSub
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckGCPPubSubRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckGCPPubSubResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Check Pub/Sub
       tags:
       - product:chat
   /check_push:
