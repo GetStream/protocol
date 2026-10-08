@@ -2250,6 +2250,9 @@ components:
           title: Skip URL Enrichment
           type: boolean
           x-stream-index: "001.021"
+        skip_existing:
+          type: boolean
+          x-stream-index: "005"
         skip_push:
           description: Whether to skip push notifications
           title: Skip Push
@@ -2298,12 +2301,12 @@ components:
       properties:
         activity:
           $ref: '#/components/schemas/ActivityResponse'
-          description: The created activity
+          description: The created activity, or the stored one when it was skipped
           title: Activity
           x-stream-index: "001"
         duration:
           type: string
-          x-stream-index: "003.001"
+          x-stream-index: "004.001"
         mention_notifications_created:
           description: Number of mention notification activities created for mentioned
             users
@@ -2311,6 +2314,14 @@ components:
           title: Mention Notifications Created
           type: integer
           x-stream-index: "002"
+        skipped_existing:
+          description: Contains the activity ID when skip_existing is true and the
+            activity already existed, so it was left unchanged.
+          items:
+            type: string
+          title: Skipped Existing
+          type: array
+          x-stream-index: "003"
       required:
       - activity
       - duration
@@ -3911,7 +3922,7 @@ components:
           type: string
           x-stream-index: "002.001"
         type:
-          default: export.review_queue.error
+          default: export.label_results.error
           type: string
           x-stream-index: "003.002"
       required:
@@ -23776,6 +23787,11 @@ components:
               operators:
               - $in
               type: string
+            config_key:
+              operators:
+              - $eq
+              - $in
+              type: string
             created_at:
               operators:
               - $eq
@@ -23803,6 +23819,11 @@ components:
               - $in
               - $lt
               - $lte
+              type: string
+            label:
+              operators:
+              - $eq
+              - $in
               type: string
             moderation_category:
               operators:
@@ -30255,6 +30276,15 @@ components:
           title: Force Moderation
           type: boolean
           x-stream-index: "003"
+        skip_existing:
+          description: 'Server-side only. If true, activities whose id already exists
+            are left unchanged instead of updated: no write, events or notifications.
+            They are listed in skipped_existing and returned as stored. Soft-deleted
+            activities count as existing and are returned with deleted_at set. Default:
+            false.'
+          title: Skip Existing
+          type: boolean
+          x-stream-index: "005"
       required:
       - activities
       title: Upsert Activities Request
@@ -30271,7 +30301,7 @@ components:
           x-stream-index: "001"
         duration:
           type: string
-          x-stream-index: "003.001"
+          x-stream-index: "004.001"
         mention_notifications_created:
           description: Total number of mention notification activities created for
             mentioned users across all activities
@@ -30279,6 +30309,14 @@ components:
           title: Mention Notifications Created
           type: integer
           x-stream-index: "002"
+        skipped_existing:
+          description: IDs of activities left unchanged because they already existed.
+            Only set when skip_existing is true.
+          items:
+            type: string
+          title: Skipped Existing
+          type: array
+          x-stream-index: "003"
       required:
       - activities
       - duration
@@ -32299,7 +32337,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v239.55.0
+  version: v239.56.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
