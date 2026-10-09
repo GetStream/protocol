@@ -1898,7 +1898,7 @@ components:
         params:
           additionalProperties: {}
           type: object
-          x-stream-index: "011"
+          x-stream-index: "012"
         ranking_candidate_limit:
           description: Maximum number of candidate activities this selector contributes
             to a ranked feed (1-1000). Omit to use the default ranking buffer. Only
@@ -1917,6 +1917,19 @@ components:
           title: Sort
           type: array
           x-stream-index: "003"
+        time_budget_ms:
+          description: Maximum time in milliseconds this selector may take (25-5000).
+            A selector that runs over its budget is dropped from that read instead
+            of failing it, and stays out for the rest of that pagination session.
+            The budget can only tighten the default, never extend it. Omit to use
+            the default. Only supported on the popular, proximity, interest, query
+            and follow_suggestion selectors
+          format: int32
+          maximum: 5000
+          minimum: 25
+          title: Time Budget (ms)
+          type: integer
+          x-stream-index: "011"
         type:
           description: 'Type of selector. One of: popular, proximity, following, current_feed,
             query, interest, follow_suggestion'
@@ -1972,7 +1985,7 @@ components:
           description: Generic params for selector-specific configuration
           title: Params
           type: object
-          x-stream-index: "009"
+          x-stream-index: "010"
         ranking_candidate_limit:
           description: Maximum number of candidate activities this selector contributes
             to a ranked feed
@@ -1987,6 +2000,13 @@ components:
           title: Sort
           type: array
           x-stream-index: "003"
+        time_budget_ms:
+          description: Maximum time in milliseconds this selector may take before
+            it is dropped from the read
+          format: int32
+          title: Time Budget (ms)
+          type: integer
+          x-stream-index: "009"
         type:
           description: Type of selector
           enum:
@@ -3922,7 +3942,7 @@ components:
           type: string
           x-stream-index: "002.001"
         type:
-          default: export.label_results.error
+          default: export.review_queue.error
           type: string
           x-stream-index: "003.002"
       required:
@@ -16036,7 +16056,6 @@ components:
       title: Get Or Create Feed Request
       type: object
     GetOrCreateFeedResponse:
-      description: Basic response information
       nullable: true
       properties:
         activities:
@@ -16051,12 +16070,22 @@ components:
           x-stream-index: "003"
         created:
           type: boolean
+          x-stream-index: "013"
+        degraded_selectors:
+          description: Activity selectors dropped from this read because they exceeded
+            their time budget (see the time_budget_ms selector setting). Their activities
+            are missing from this page, and they stay out for the rest of this pagination
+            session. Omitted when every selector completed
+          items:
+            type: string
+          title: Degraded Selectors
+          type: array
           x-stream-index: "012"
         duration:
           description: Duration of the request in milliseconds
           title: Duration
           type: string
-          x-stream-index: "014.001"
+          x-stream-index: "015.001"
         feed:
           $ref: '#/components/schemas/FeedResponse'
           x-stream-index: "001"
@@ -16086,7 +16115,7 @@ components:
           x-stream-index: "004"
         next:
           type: string
-          x-stream-index: "013.001"
+          x-stream-index: "014.001"
         notification_status:
           $ref: '#/components/schemas/NotificationStatusResponse'
           x-stream-index: "011"
@@ -16097,7 +16126,7 @@ components:
           x-stream-index: "007"
         prev:
           type: string
-          x-stream-index: "013.002"
+          x-stream-index: "014.002"
       required:
       - feed
       - activities
@@ -16108,7 +16137,7 @@ components:
       - pinned_activities
       - created
       - duration
-      title: Response
+      title: Get Or Create Feed Response
       type: object
     GetOrCreateFeedViewRequest:
       nullable: true
@@ -32434,7 +32463,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v239.61.0
+  version: v239.62.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -35885,7 +35914,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetOrCreateFeedResponse'
-          description: Response
+          description: Get Or Create Feed Response
         "400":
           content:
             application/json:
