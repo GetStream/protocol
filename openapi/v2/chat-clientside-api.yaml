@@ -627,6 +627,24 @@ components:
       - duration
       title: AddUserGroupMembersResponse
       type: object
+    AppDefaults:
+      description: Request limit defaults applied by the server when the corresponding
+        field is omitted.
+      properties:
+        get_or_create_channel:
+          $ref: '#/components/schemas/GetOrCreateChannelDefaults'
+          description: Defaults applied by the get-or-create channel endpoint.
+          title: Get or create channel
+          x-stream-index: "002"
+        query_channels:
+          $ref: '#/components/schemas/QueryChannelsDefaults'
+          description: Defaults applied by the query channels endpoint.
+          title: Query channels
+          x-stream-index: "001"
+      required:
+      - query_channels
+      - get_or_create_channel
+      type: object
     AppEventResponse:
       properties:
         async_url_enrich_enabled:
@@ -671,6 +689,12 @@ components:
           title: Auto translation enabled
           type: boolean
           x-stream-index: "023"
+        defaults:
+          $ref: '#/components/schemas/AppDefaults'
+          description: Request limit defaults the server applies when the corresponding
+            field is omitted.
+          title: Defaults
+          x-stream-index: "038"
         file_upload_config:
           $ref: '#/components/schemas/FileUploadConfig'
           description: The file uploading configuration.
@@ -701,6 +725,7 @@ components:
       - auto_translation_enabled
       - file_upload_config
       - image_upload_config
+      - defaults
       type: object
     AppUpdatedEvent:
       description: Emitted when app settings are updated
@@ -1914,6 +1939,68 @@ components:
           title: VoteData
           x-stream-index: "004"
       type: object
+    ChannelBanResponse:
+      nullable: true
+      properties:
+        channel_ban:
+          $ref: '#/components/schemas/ChannelBanScopeResponse'
+          x-stream-index: "004"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "002"
+        future_channel_ban:
+          $ref: '#/components/schemas/ChannelBanScopeResponse'
+          x-stream-index: "005"
+        scopes:
+          items:
+            type: string
+          type: array
+          x-stream-index: "003"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          x-stream-index: "001"
+      required:
+      - created_at
+      - scopes
+      type: object
+    ChannelBanScopeResponse:
+      properties:
+        banned_by:
+          $ref: '#/components/schemas/UserResponse'
+          x-stream-index: "001"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "005"
+        expires:
+          format: date-time
+          type: number
+          x-stream-index: "002"
+        reason:
+          type: string
+          x-stream-index: "003"
+        shadow:
+          type: boolean
+          x-stream-index: "004"
+      required:
+      - shadow
+      - created_at
+      type: object
+    ChannelBansScopeTotals:
+      properties:
+        channel:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+        future_channel:
+          format: int32
+          type: integer
+          x-stream-index: "002"
+      required:
+      - channel
+      - future_channel
+      type: object
     ChannelConfigOverrides:
       description: Channel configuration overrides
       properties:
@@ -2901,6 +2988,7 @@ components:
           type: string
           x-stream-index: "001"
       required:
+      - user_id
       - custom
       - created_at
       - updated_at
@@ -7795,6 +7883,23 @@ components:
       title: Get OG Attachment
       type: object
       x-stream-docs-page-id: og
+    GetOrCreateChannelDefaults:
+      description: Defaults applied by the get-or-create channel endpoint.
+      properties:
+        members:
+          $ref: '#/components/schemas/PagerDefaults'
+          description: Defaults for the `members` pagination object.
+          title: Members
+          x-stream-index: "002"
+        messages:
+          $ref: '#/components/schemas/PagerDefaults'
+          description: Defaults for the `messages` pagination object.
+          title: Messages
+          x-stream-index: "001"
+      required:
+      - messages
+      - members
+      type: object
     GetPinnedMessagesResponse:
       nullable: true
       properties:
@@ -12903,6 +13008,19 @@ components:
       - total_unread_count
       - unread_channels
       - unread_threads
+      - blocked_user_ids
+      type: object
+    PagerDefaults:
+      description: Resolved defaults for a nested pagination object.
+      properties:
+        limit:
+          description: Number of records returned when `limit` is omitted.
+          format: int32
+          title: Limit
+          type: integer
+          x-stream-index: "001"
+      required:
+      - limit
       type: object
     PaginationParams:
       properties:
@@ -14074,6 +14192,125 @@ components:
       required:
       - bans
       - duration
+      type: object
+    QueryChannelBansRequest:
+      nullable: true
+      properties:
+        exclude_expired_bans:
+          description: Whether to exclude expired bans or not
+          title: Exclude expired bans
+          type: boolean
+          x-stream-index: "002"
+        filter_conditions:
+          additionalProperties: {}
+          description: Filter conditions to apply to the query
+          title: Filter
+          type: object
+          x-stream-filter-fields:
+            user_id:
+              operators:
+              - $autocomplete
+              - $eq
+              - $in
+              type: string
+          x-stream-index: "001"
+        include_total:
+          description: 'When true, the response includes total and total_by_scope:
+            the number of banned users overall and per scope, independent of paging'
+          title: Include total
+          type: boolean
+          x-stream-index: "003"
+        limit:
+          format: int32
+          maximum: 100
+          minimum: 0
+          type: integer
+          x-stream-index: "007.001"
+        next:
+          type: string
+          x-stream-index: "007.002"
+        prev:
+          type: string
+          x-stream-index: "007.003"
+      type: object
+    QueryChannelBansResponse:
+      nullable: true
+      properties:
+        bans:
+          description: Users banned from the channel, one entry per user, newest ban
+            first
+          items:
+            $ref: '#/components/schemas/ChannelBanResponse'
+          title: ChannelBanResponse
+          type: array
+          x-stream-index: "001"
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "005.001"
+        next:
+          type: string
+          x-stream-index: "004.001"
+        prev:
+          type: string
+          x-stream-index: "004.002"
+        total:
+          description: Number of banned users, each counted once, ignoring paging.
+            Counted per scope with a cap of 100000 each, so it can reach 200000. Only
+            present when include_total is set on the request; omitted when counting
+            timed out
+          format: int32
+          title: Total
+          type: integer
+          x-stream-index: "002"
+        total_by_scope:
+          $ref: '#/components/schemas/ChannelBansScopeTotals'
+          description: Number of banned users per scope, ignoring paging and capped
+            at 100000 per scope. Present together with total
+          title: Total by scope
+          x-stream-index: "003"
+      required:
+      - bans
+      - duration
+      type: object
+    QueryChannelsDefaults:
+      description: Defaults applied by the query channels endpoint.
+      properties:
+        limit:
+          description: Number of channels returned when `limit` is omitted.
+          format: int32
+          title: Limit
+          type: integer
+          x-stream-index: "001"
+        max_limit:
+          description: Largest number of channels returned for one request. A bigger
+            `limit` is silently clamped to this value rather than rejected. An app
+            with no per-app override gets a higher ceiling for the narrow case of
+            a request asking for at most one message and one member per channel.
+          format: int32
+          title: Max limit
+          type: integer
+          x-stream-index: "002"
+        member_limit:
+          description: Number of members returned per channel when `member_limit`
+            is omitted.
+          format: int32
+          title: Member limit
+          type: integer
+          x-stream-index: "004"
+        message_limit:
+          description: Number of messages returned per channel when `message_limit`
+            is omitted.
+          format: int32
+          title: Message limit
+          type: integer
+          x-stream-index: "003"
+      required:
+      - limit
+      - max_limit
+      - message_limit
+      - member_limit
       type: object
     QueryChannelsRequest:
       nullable: true
@@ -23041,6 +23278,15 @@ components:
       description: Websocket auth message
       nullable: true
       properties:
+        event_protocol:
+          description: Realtime event protocol version. 3 omits channel.members from
+            channel.updated, member.*, notification.message_new and notification.added_to_channel
+            of channels with more than 100 members and sets members_included:false.
+            Values above the newest supported version negotiate down to it.
+          format: int32
+          title: Event Protocol
+          type: integer
+          x-stream-index: "005"
         member_custom_include:
           description: Channel-member custom keys to project onto message.member for
             messages this connection receives (opt-in; capped, off by default).
@@ -23517,7 +23763,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v239.67.1
+  version: v239.68.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -24061,6 +24307,58 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Update channel
+      tags:
+      - product:chat
+  /api/v2/chat/channels/{type}/{id}/bans/query:
+    post:
+      description: |
+        Lists the users banned from a channel, by a ban on the channel or by a future channel ban issued by the channel's creator, with one entry per user
+      operationId: QueryChannelBans
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          description: Channel type to interact with
+          title: Channel type
+          type: string
+          writeOnly: true
+          x-stream-index: "004.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Channel ID to interact with
+          title: Channel ID
+          type: string
+          writeOnly: true
+          x-stream-index: "004.002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryChannelBansRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryChannelBansResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Query channel bans
       tags:
       - product:chat
   /api/v2/chat/channels/{type}/{id}/draft:
