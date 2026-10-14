@@ -628,6 +628,7 @@ type Error struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// error.should_retry is not set on this event; follow reconnect_strategy.
 	Error *models.Error `protobuf:"bytes,4,opt,name=error,proto3" json:"error,omitempty"`
 	// returns the reconnect strategy to be used by the client
 	ReconnectStrategy models.WebsocketReconnectStrategy `protobuf:"varint,5,opt,name=reconnect_strategy,json=reconnectStrategy,proto3,enum=stream.video.sfu.models.WebsocketReconnectStrategy" json:"reconnect_strategy,omitempty"`

@@ -2085,9 +2085,13 @@ type Error struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Code        ErrorCode `protobuf:"varint,1,opt,name=code,proto3,enum=stream.video.sfu.models.ErrorCode" json:"code,omitempty"`
-	Message     string    `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
-	ShouldRetry bool      `protobuf:"varint,3,opt,name=should_retry,json=shouldRetry,proto3" json:"should_retry,omitempty"`
+	Code    ErrorCode `protobuf:"varint,1,opt,name=code,proto3,enum=stream.video.sfu.models.ErrorCode" json:"code,omitempty"`
+	Message string    `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	// Only meaningful in RPC responses: true means the client may retry the same
+	// request. On a websocket error event (stream.video.sfu.event.Error) the SFU
+	// never sets it and clients must ignore it: reconnect_strategy decides what
+	// the client does.
+	ShouldRetry bool `protobuf:"varint,3,opt,name=should_retry,json=shouldRetry,proto3" json:"should_retry,omitempty"`
 }
 
 func (x *Error) Reset() {
