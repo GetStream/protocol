@@ -9232,7 +9232,8 @@ components:
           type: string
           x-stream-index: "003.002"
         unread_channels:
-          description: Unread channels currently classified into this bucket
+          description: Total unread channels matching this bucket and its filters,
+            independent of page size
           format: int32
           title: Unread Channels
           type: integer
@@ -9243,18 +9244,50 @@ components:
       type: object
     GroupedChannelsGroupRequest:
       properties:
+        filter_conditions:
+          additionalProperties: {}
+          description: Optional query_timestamp $gte bound for a stored group, requiring
+            query_timestamp sort; do not repeat its group name. For all, combine group
+            equality/$in and date bounds with $or, or use one standalone group $ne
+            exclusion. An empty object matches a stored group; omitted or null preserves
+            legacy grouping.
+          title: Filter
+          type: object
+          x-stream-filter-fields:
+            group:
+              operators:
+              - $eq
+              - $in
+              - $ne
+              type: string
+            query_timestamp:
+              operators:
+              - $gte
+              type: date
+          x-stream-go-pointer: true
+          x-stream-index: "004"
         limit:
+          description: Max channels for this group; omitted or zero uses the request
+            limit
           format: int32
           maximum: 10
           minimum: 0
+          title: Limit
           type: integer
           x-stream-index: "001"
         next:
+          description: Cursor for the next page; only allowed when requesting one
+            group
+          title: Next
           type: string
           x-stream-index: "002"
         prev:
+          description: Cursor for the previous page; only allowed when requesting
+            one group
+          title: Previous
           type: string
           x-stream-index: "003"
+      title: Grouped Channels Group Request
       type: object
     GroupedQueryChannelsRequest:
       nullable: true
@@ -9262,9 +9295,11 @@ components:
         groups:
           additionalProperties:
             $ref: '#/components/schemas/GroupedChannelsGroupRequest'
-          description: Groups to return, keyed by group name. Each group can define
-            limit, next, or prev. 'next' and 'prev' cursors are only allowed when
-            the request contains exactly one group; multi-group pagination is rejected.
+          description: 'Groups to return, keyed by stored group name. Each entry can
+            define limit, next, prev, and optional filter_conditions: date bounds
+            for stored groups; all supports combined group/date branches or one group
+            $ne exclusion. Cursors are only allowed when requesting exactly one group.
+            Omitted or null filters preserve legacy grouping, including all.'
           title: Groups
           type: object
           x-stream-index: "002"
@@ -9275,6 +9310,15 @@ components:
           title: Limit
           type: integer
           x-stream-index: "001"
+        sort:
+          description: Optional query_timestamp descending with NULLS LAST when enabled.
+            Omitted sort preserves existing last_updated ordering and cursor formats
+          items:
+            $ref: '#/components/schemas/SortParamRequest'
+          maxItems: 1
+          title: Sort
+          type: array
+          x-stream-index: "009"
         user:
           $ref: '#/components/schemas/UserRequest'
           x-stream-index: "007.002"
@@ -9295,7 +9339,7 @@ components:
         groups:
           additionalProperties:
             $ref: '#/components/schemas/GroupedChannelsBucket'
-          description: Predefined channel groups keyed by group name
+          description: Groups keyed by the requested stored group name
           title: Groups
           type: object
           x-stream-index: "001"
@@ -19235,6 +19279,15 @@ components:
             type: string
           type: object
           x-stream-index: "005"
+        scheduled_at:
+          description: 'When set, the message is not sent now: it is stored and sent
+            at this time (UTC). The response then carries scheduled_message. Must
+            be at least 1 minute and at most the app''s maximum lead time (120 days
+            by default) from now. Slash commands cannot be scheduled'
+          format: date-time
+          title: Scheduled at
+          type: string
+          x-stream-index: "011"
         skip_enrich_url:
           type: boolean
           x-stream-index: "003"
@@ -19285,6 +19338,12 @@ components:
           title: Pending message metadata
           type: object
           x-stream-index: "002"
+        scheduled_message:
+          $ref: '#/components/schemas/ScheduledMessageResponse'
+          description: The scheduled message. Only set when the request had scheduled_at;
+            message then holds the content as it will be sent and is not in the channel
+          title: Scheduled message
+          x-stream-index: "006"
       required:
       - message
       - duration
@@ -24790,7 +24849,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v239.69.0
+  version: v239.70.0
 openapi: 3.0.3
 paths:
   /app:
@@ -26245,6 +26304,7 @@ paths:
         - channel.visible
         - message.new
         - message.updated
+        - scheduled_message.created
       operationId: SendMessage
       parameters:
       - in: path
@@ -26255,7 +26315,7 @@ paths:
           title: Channel type
           type: string
           writeOnly: true
-          x-stream-index: "011.001"
+          x-stream-index: "012.001"
       - in: path
         name: id
         required: true
@@ -26264,7 +26324,7 @@ paths:
           title: Channel ID
           type: string
           writeOnly: true
-          x-stream-index: "011.002"
+          x-stream-index: "012.002"
       requestBody:
         content:
           application/json:
@@ -26480,16 +26540,19 @@ paths:
           title: Pinned at around
           type: string
           x-stream-index: "001.012"
-      - in: query
+      - content:
+          application/json:
+            schema:
+              description: Sort parameter, at most one field. Defaults to pinned_at
+                descending
+              items:
+                $ref: '#/components/schemas/SortParamRequest'
+              maxItems: 1
+              title: Sort
+              type: array
+              x-stream-index: "002"
+        in: query
         name: sort
-        schema:
-          description: Sort parameter, at most one field. Defaults to pinned_at descending
-          items:
-            $ref: '#/components/schemas/SortParamRequest'
-          maxItems: 1
-          title: Sort
-          type: array
-          x-stream-index: "002"
       - in: query
         name: member_custom_include
         schema:
@@ -29254,15 +29317,17 @@ paths:
           type: string
           writeOnly: true
           x-stream-index: "001"
-      - in: query
+      - content:
+          application/json:
+            schema:
+              items:
+                $ref: '#/components/schemas/SortParamRequest'
+              maxItems: 1
+              type: array
+              writeOnly: true
+              x-stream-index: "002"
+        in: query
         name: sort
-        schema:
-          items:
-            $ref: '#/components/schemas/SortParamRequest'
-          maxItems: 1
-          type: array
-          writeOnly: true
-          x-stream-index: "002"
       - in: query
         name: limit
         schema:
@@ -30401,16 +30466,18 @@ paths:
         Get all predefined filters with optional sorting by created_at, updated_at, name, or operation
       operationId: GetPredefinedFilters
       parameters:
-      - in: query
+      - content:
+          application/json:
+            schema:
+              description: Array of sort parameters
+              items:
+                $ref: '#/components/schemas/SortParamRequest'
+              title: Sort
+              type: array
+              writeOnly: true
+              x-stream-index: "001"
+        in: query
         name: sort
-        schema:
-          description: Array of sort parameters
-          items:
-            $ref: '#/components/schemas/SortParamRequest'
-          title: Sort
-          type: array
-          writeOnly: true
-          x-stream-index: "001"
       - in: query
         name: include_stats
         schema:
