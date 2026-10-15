@@ -7609,13 +7609,21 @@ components:
           x-stream-index: "002"
         event_type:
           description: 'Type of event for push templates (default: message.new). One
-            of: message.new, message.updated, reaction.new, reaction.updated, notification.reminder_due'
+            of: message.new, message.updated, reaction.new, reaction.updated, notification.reminder_due,
+            feeds.activity.added, feeds.comment.added, feeds.activity.reaction.added,
+            feeds.comment.reaction.added, feeds.follow.created, feeds.notification_feed.updated'
           enum:
           - message.new
           - message.updated
           - reaction.new
           - reaction.updated
           - notification.reminder_due
+          - feeds.activity.added
+          - feeds.comment.added
+          - feeds.activity.reaction.added
+          - feeds.comment.reaction.added
+          - feeds.follow.created
+          - feeds.notification_feed.updated
           title: Event type
           type: string
           x-stream-index: "008"
@@ -12076,69 +12084,69 @@ components:
       properties:
         activity_filter:
           $ref: '#/components/schemas/ActivityFilterConfig'
-          x-stream-index: "020"
+          x-stream-index: "021"
         activity_processors:
           items:
             $ref: '#/components/schemas/ActivityProcessorConfig'
           type: array
-          x-stream-index: "014"
+          x-stream-index: "015"
         activity_selectors:
           items:
             $ref: '#/components/schemas/ActivitySelectorConfig'
           type: array
-          x-stream-index: "015"
+          x-stream-index: "016"
         aggregation:
           $ref: '#/components/schemas/AggregationConfig'
-          x-stream-index: "017"
+          x-stream-index: "018"
         aggregation_version:
           format: int32
           type: integer
-          x-stream-index: "018"
+          x-stream-index: "019"
         app_pk:
           format: int32
           type: integer
-          x-stream-index: "002"
+          x-stream-index: "003"
         created_at:
           format: date-time
           type: number
-          x-stream-index: "010"
+          x-stream-index: "011"
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "009"
+          x-stream-index: "010"
         default_follower_role:
           type: string
-          x-stream-index: "008"
+          x-stream-index: "009"
         default_visibility:
           type: string
-          x-stream-index: "007"
+          x-stream-index: "008"
         deleted_at:
           format: date-time
           type: number
-          x-stream-index: "012"
+          x-stream-index: "013"
         group_id:
           type: string
-          x-stream-index: "003"
+          x-stream-index: "004"
         last_feed_get_at:
           format: date-time
           type: number
-          x-stream-index: "019"
+          x-stream-index: "020"
         notification:
           $ref: '#/components/schemas/NotificationConfig'
-          x-stream-index: "004"
+          x-stream-index: "005"
         push_notification:
           $ref: '#/components/schemas/PushNotificationConfig'
-          x-stream-index: "006"
+          x-stream-index: "007"
         ranking:
           $ref: '#/components/schemas/RankingConfig'
-          x-stream-index: "016"
+          x-stream-index: "017"
         stories:
           $ref: '#/components/schemas/StoriesConfig'
-          x-stream-index: "013"
+          x-stream-index: "014"
         updated_at:
           format: date-time
           type: number
-          x-stream-index: "011"
+          x-stream-index: "012"
       required:
       - app_pk
       - group_id
@@ -23421,18 +23429,27 @@ components:
               - $in
               type: string
           x-stream-index: "001"
+        include_group_counts:
+          description: 'When true (server-side only), the response includes group_counts:
+            accepted following counts keyed by the followed feed''s group. Requires
+            exactly one source_feed / source_fid string equality. HTTP 400 if target_feed
+            appears, if two source FIDs are given, or if $in / $or / $nor mentions
+            those keys. Independent of paging and of other filters, including status.'
+          title: Include Group Counts
+          type: boolean
+          x-stream-index: "003"
         limit:
           format: int32
           maximum: 100
           minimum: 0
           type: integer
-          x-stream-index: "003.001"
+          x-stream-index: "004.001"
         next:
           type: string
-          x-stream-index: "003.002"
+          x-stream-index: "004.002"
         prev:
           type: string
-          x-stream-index: "003.003"
+          x-stream-index: "004.003"
         sort:
           description: Sorting parameters for the query
           items:
@@ -23448,7 +23465,7 @@ components:
       properties:
         duration:
           type: string
-          x-stream-index: "003.001"
+          x-stream-index: "004.001"
         follows:
           description: List of follow relationships matching the query
           items:
@@ -23456,16 +23473,29 @@ components:
           title: Follows
           type: array
           x-stream-index: "001"
+        group_counts:
+          additionalProperties:
+            format: int32
+            type: integer
+          description: Accepted following counts keyed by followed feed group. Present
+            only when include_group_counts is set with a source_feed equality.
+          title: Group Counts
+          type: object
+          x-stream-index: "002"
+          x-stream-map:
+            description: Number of accepted follows for this feed group
+            key: group_id
+            title: Count
         next:
           description: Cursor for next page
           title: Next
           type: string
-          x-stream-index: "002.001"
+          x-stream-index: "003.001"
         prev:
           description: Cursor for previous page
           title: Previous
           type: string
-          x-stream-index: "002.002"
+          x-stream-index: "003.002"
       required:
       - follows
       - duration
@@ -32621,7 +32651,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v239.71.0
+  version: v239.72.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -37749,7 +37779,7 @@ paths:
   /api/v2/feeds/follows/query:
     post:
       description: |
-        Query follows based on filters with pagination and sorting options
+        Query follows based on filters with pagination and sorting options. Server-side callers may set include_group_counts to also receive accepted following counts keyed by followed feed group. Requires exactly one source_feed / source_fid string equality. HTTP 400 if target_feed appears, if two source FIDs are given, or if $in / $or / $nor mentions those keys.
       operationId: QueryFollows
       requestBody:
         content:
