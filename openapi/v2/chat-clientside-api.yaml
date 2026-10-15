@@ -2537,6 +2537,14 @@ components:
           title: Hide for creator
           type: boolean
           x-stream-index: "007"
+        include_scheduled_messages:
+          description: 'Adds scheduled_messages to the response: the caller''s own
+            scheduled, sending and failed messages in this channel. Client-side only.
+            Absent from the response when there are more than 100 or they could not
+            be loaded; use the scheduled messages query then'
+          title: Include scheduled messages
+          type: boolean
+          x-stream-index: "013"
         member_custom_include:
           description: Top-level keys of the message sender's channel-member custom
             data to include under member.custom (max 8 keys, 64 chars each)
@@ -3367,15 +3375,21 @@ components:
       nullable: true
       properties:
         active_live_locations:
+          description: Active live locations in the channel
           items:
             $ref: '#/components/schemas/SharedLocationResponseData'
+          title: Active Live Locations
           type: array
           x-stream-index: "001.015"
         channel:
           $ref: '#/components/schemas/ChannelResponse'
           x-stream-index: "001.001"
         cooldown_remaining_ms:
+          description: Milliseconds until the current user's slow mode cool down period
+            ends. Only set on client-side get or create channel and get channel requests
+            while the user is under cool down
           format: int64
+          title: Cooldown remaining ms
           type: integer
           x-stream-index: "001.016"
         draft:
@@ -3385,55 +3399,86 @@ components:
           type: string
           x-stream-index: "002.001"
         hidden:
+          description: Whether this channel is hidden or not
+          title: Hidden
           type: boolean
           x-stream-index: "001.011"
         hide_messages_before:
+          description: Messages before this date are hidden from the user
           format: date-time
+          title: Hide messages before
           type: number
           x-stream-index: "001.012"
         members:
+          description: List of channel members
           items:
             $ref: '#/components/schemas/ChannelMemberResponse'
+          title: Members
           type: array
           x-stream-index: "001.007"
         membership:
           $ref: '#/components/schemas/ChannelMemberResponse'
+          description: Current user membership object
+          title: Membership
           x-stream-index: "001.008"
         messages:
+          description: List of channel messages
           items:
             $ref: '#/components/schemas/MessageResponse'
+          title: Message
           type: array
           x-stream-index: "001.002"
         pending_messages:
+          description: Pending messages that this user has sent
           items:
             $ref: '#/components/schemas/PendingMessageResponse'
+          title: Pending messages
           type: array
           x-stream-index: "001.013"
         pinned_messages:
+          description: List of pinned messages in the channel
           items:
             $ref: '#/components/schemas/MessageResponse'
+          title: Pinned messages
           type: array
+          x-stream-docs-page-id: pinned_messages
           x-stream-index: "001.003"
         push_preferences:
           $ref: '#/components/schemas/ChannelPushPreferencesResponse'
           x-stream-index: "001.009"
         read:
+          description: List of read states
           items:
             $ref: '#/components/schemas/ReadStateResponse'
+          title: Read
           type: array
           x-stream-index: "001.006"
+        scheduled_messages:
+          description: The caller's own scheduled, sending and failed messages in
+            this channel. Set only by a client-side GetOrCreateChannel with include_scheduled_messages;
+            absent when not requested or not known, in which case use the scheduled
+            messages query
+          items:
+            $ref: '#/components/schemas/ScheduledMessageResponse'
+          title: Scheduled messages
+          type: array
+          x-stream-index: "003"
         threads:
           items:
             $ref: '#/components/schemas/ThreadStateResponse'
           type: array
           x-stream-index: "001.010"
         watcher_count:
+          description: Number of channel watchers
           format: int32
+          title: Watcher count
           type: integer
           x-stream-index: "001.004"
         watchers:
+          description: List of user who is watching the channel
           items:
             $ref: '#/components/schemas/UserResponse'
+          title: Watchers
           type: array
           x-stream-index: "001.005"
       required:
@@ -5619,6 +5664,23 @@ components:
       required:
       - duration
       title: Response
+      type: object
+    DeleteScheduledMessageResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        scheduled_message:
+          $ref: '#/components/schemas/ScheduledMessageResponse'
+          description: The scheduled message
+          title: Scheduled message
+          x-stream-index: "001"
+      required:
+      - scheduled_message
+      - duration
       type: object
     DeleteUserMessagesRequestPayload:
       description: Configuration for deleting all of a user's chat messages without
@@ -16105,6 +16167,62 @@ components:
       - stats
       - duration
       type: object
+    QueryScheduledMessagesRequest:
+      nullable: true
+      properties:
+        filter:
+          $ref: '#/components/schemas/ScheduledMessagesFilter'
+          description: Narrows the result by channel and status
+          title: Filter
+          x-stream-index: "001"
+        limit:
+          description: Page size, 1 to 100. Defaults to 20
+          format: int32
+          maximum: 100
+          minimum: 1
+          title: Limit
+          type: integer
+          x-stream-index: "003"
+        next:
+          description: Cursor from the previous page
+          maxLength: 1024
+          title: Next
+          type: string
+          x-stream-index: "004"
+        sort:
+          description: Only scheduled_at ascending is supported. Pending messages
+            come before failed ones
+          items:
+            $ref: '#/components/schemas/SortParamRequest'
+          maxItems: 1
+          title: Sort
+          type: array
+          x-stream-index: "002"
+      type: object
+    QueryScheduledMessagesResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "003.001"
+        next:
+          description: Cursor for the next page; empty on the last page
+          title: Next
+          type: string
+          x-stream-index: "002"
+        scheduled_messages:
+          description: Pending messages first, then failed ones, each by scheduled_at
+          items:
+            $ref: '#/components/schemas/ScheduledMessageResponse'
+          title: Scheduled messages
+          type: array
+          x-stream-index: "001"
+      required:
+      - scheduled_messages
+      - duration
+      type: object
     QueryThreadsRequest:
       nullable: true
       properties:
@@ -17922,6 +18040,40 @@ components:
       required:
       - rule_type
       type: object
+    ScheduledMessageChannelResponse:
+      description: The channel of a scheduled message
+      properties:
+        cid:
+          description: Channel CID (<type>:<id>)
+          title: CID
+          type: string
+          x-stream-index: "001"
+        id:
+          description: Channel ID
+          title: ID
+          type: string
+          x-stream-index: "003"
+        image:
+          description: Channel image, from its custom data
+          title: Image
+          type: string
+          x-stream-index: "005"
+        name:
+          description: Channel name, from its custom data
+          title: Name
+          type: string
+          x-stream-index: "004"
+        type:
+          description: Channel type
+          title: Type
+          type: string
+          x-stream-index: "002"
+      required:
+      - cid
+      - type
+      - id
+      title: Scheduled Message Channel
+      type: object
     ScheduledMessageContentResponse:
       description: The message a scheduled message will send
       properties:
@@ -18234,6 +18386,11 @@ components:
     ScheduledMessageResponse:
       description: A message scheduled to be sent later
       properties:
+        channel:
+          $ref: '#/components/schemas/ScheduledMessageChannelResponse'
+          description: The channel of the scheduled message. Only set in query results
+          title: Channel
+          x-stream-index: "010"
         cid:
           description: The CID of the channel the message will be sent to
           title: Channel CID
@@ -18271,7 +18428,9 @@ components:
           x-stream-index: "005"
         status:
           description: 'Status of the scheduled message. One of: scheduled, sending,
-            failed, canceled, sent'
+            failed, canceled, sent. A message is sending from its first send attempt
+            until it is sent or fails, including while it waits to retry a failed
+            attempt; it cannot be edited, canceled or sent now while sending'
           title: Status
           type: string
           x-stream-index: "006"
@@ -18405,6 +18564,30 @@ components:
       x-stream-is-event: true
       x-stream-throttle-group: ordered
       x-stream-ws-base-event-name: VideoEvent
+    ScheduledMessagesFilter:
+      description: Filter for querying scheduled messages
+      properties:
+        cid:
+          description: Only scheduled messages of this channel
+          maxLength: 255
+          title: Channel CID
+          type: string
+          x-stream-index: "001"
+        status:
+          description: 'Only these statuses, as reported in each scheduled message''s
+            status. One or more of: scheduled, sending, failed'
+          items:
+            enum:
+            - scheduled
+            - sending
+            - failed
+            type: string
+          maxItems: 3
+          title: Status
+          type: array
+          x-stream-index: "002"
+      title: Scheduled Messages Filter
+      type: object
     SearchPayload:
       properties:
         filter_conditions:
@@ -19271,6 +19454,26 @@ components:
       - reaction
       - duration
       title: Response
+      type: object
+    SendScheduledMessageNowRequest:
+      nullable: true
+      type: object
+    SendScheduledMessageNowResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        scheduled_message:
+          $ref: '#/components/schemas/ScheduledMessageResponse'
+          description: The scheduled message
+          title: Scheduled message
+          x-stream-index: "001"
+      required:
+      - scheduled_message
+      - duration
       type: object
     ShadowBlockActionRequestPayload:
       description: Configuration for shadow block action
@@ -21152,6 +21355,40 @@ components:
       - reminder
       - duration
       title: Response
+      type: object
+    UpdateScheduledMessageRequest:
+      nullable: true
+      properties:
+        message:
+          $ref: '#/components/schemas/MessageRequest'
+          description: Replaces the scheduled message as a whole. Fields only a server-side
+            caller may set (html, system type) are rejected on client-side requests
+          title: Message
+          x-stream-index: "002"
+        scheduled_at:
+          description: New send time (UTC). Must be at least 1 minute and at most
+            the app's maximum lead time from now
+          format: date-time
+          title: Scheduled at
+          type: string
+          x-stream-index: "003"
+      type: object
+    UpdateScheduledMessageResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        scheduled_message:
+          $ref: '#/components/schemas/ScheduledMessageResponse'
+          description: The scheduled message
+          title: Scheduled message
+          x-stream-index: "001"
+      required:
+      - scheduled_message
+      - duration
       type: object
     UpdateThreadPartialRequest:
       nullable: true
@@ -23823,7 +24060,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v239.71.0
+  version: v239.72.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -25260,7 +25497,7 @@ paths:
             Body or URL parameter
           title: Connection ID
           type: string
-          x-stream-index: "013.003"
+          x-stream-index: "014.003"
       requestBody:
         content:
           application/json:
@@ -25580,7 +25817,7 @@ paths:
             Body or URL parameter
           title: Connection ID
           type: string
-          x-stream-index: "013.003"
+          x-stream-index: "014.003"
       requestBody:
         content:
           application/json:
@@ -26833,6 +27070,173 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Query reminders
+      tags:
+      - product:chat
+  /api/v2/chat/scheduled_messages/{id}:
+    delete:
+      description: |
+        Cancels a scheduled message so it is never sent, or removes a failed one. Returns 409 while the message is being sent
+
+        Sends events:
+        - scheduled_message.deleted
+      operationId: DeleteScheduledMessage
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: ID of the scheduled message
+          maxLength: 255
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteScheduledMessageResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Delete a scheduled message
+      tags:
+      - product:chat
+    patch:
+      description: |
+        Replaces the message and/or the send time of a scheduled message. The scheduling checks run again, and the message is then sent, under the caller's auth mode. A request that changes only scheduled_at keeps the auth mode the message was scheduled with. Returns 409 while the message is being sent
+
+        Sends events:
+        - scheduled_message.updated
+      operationId: UpdateScheduledMessage
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: ID of the scheduled message
+          maxLength: 255
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateScheduledMessageRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateScheduledMessageResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Update a scheduled message
+      tags:
+      - product:chat
+  /api/v2/chat/scheduled_messages/{id}/send_now:
+    post:
+      description: |
+        Moves the send time of a scheduled message to now and queues the send. Every send check runs when it is sent. Returns 409 while the message is being sent
+
+        Sends events:
+        - scheduled_message.updated
+      operationId: SendScheduledMessageNow
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: ID of the scheduled message
+          maxLength: 255
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendScheduledMessageNowRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendScheduledMessageNowResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Send a scheduled message now
+      tags:
+      - product:chat
+  /api/v2/chat/scheduled_messages/query:
+    post:
+      description: |
+        Lists the scheduled messages of one user across channels: pending ones first, then failed ones, each by scheduled_at. Client-side requests return the caller's own; server-side requests require user_id
+      operationId: QueryScheduledMessages
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryScheduledMessagesRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryScheduledMessagesResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Query scheduled messages
       tags:
       - product:chat
   /api/v2/chat/search:
