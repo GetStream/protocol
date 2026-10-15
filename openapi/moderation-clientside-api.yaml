@@ -6382,6 +6382,36 @@ components:
         feeds_preferences:
           $ref: '#/components/schemas/FeedsPreferencesResponse'
           x-stream-index: "005"
+        schedule:
+          $ref: '#/components/schemas/PushScheduleResponse'
+          description: The recurring quiet-hours schedule of the user, if one is set.
+            While a quiet window is active, push notifications for the user are suppressed
+            (dropped, not delayed).
+          title: Schedule
+          x-stream-index: "007"
+      type: object
+    PushScheduleResponse:
+      description: 'A recurring quiet-hours schedule: while any quiet window is active,
+        push notifications for the user are suppressed. Suppressed notifications are
+        dropped, not delayed.'
+      properties:
+        quiet_hours:
+          description: The quiet windows. Push is suppressed while any rule is active.
+          items:
+            $ref: '#/components/schemas/QuietHoursRuleResponse'
+          title: Quiet hours
+          type: array
+          x-stream-index: "002"
+        timezone:
+          description: IANA time zone name the quiet windows are evaluated in, for
+            example Europe/Amsterdam.
+          title: Timezone
+          type: string
+          x-stream-index: "001"
+      required:
+      - timezone
+      - quiet_hours
+      title: Push Schedule
       type: object
     QueryAppealsRequest:
       nullable: true
@@ -7108,6 +7138,38 @@ components:
       required:
       - duration
       title: Response
+      type: object
+    QuietHoursRuleResponse:
+      description: One recurring quiet window, expressed in local wall-clock time
+        in the schedule's timezone.
+      properties:
+        days:
+          description: 'The days of the week the window opens on, any of mon, tue,
+            wed, thu, fri, sat, sun. A window belongs to the day it opens: ["fri"]
+            with 22:00 to 07:00 is quiet from Friday 22:00 until Saturday 07:00. Omitted
+            means every day.'
+          items:
+            type: string
+          title: Days
+          type: array
+          x-stream-index: "001"
+        end:
+          description: When the window closes, as HH:MM local wall-clock time between
+            00:00 and 24:00. The end is exclusive. An end earlier than start wraps
+            past midnight into the next day.
+          title: End
+          type: string
+          x-stream-index: "003"
+        start:
+          description: When the window opens, as HH:MM local wall-clock time between
+            00:00 and 23:59.
+          title: Start
+          type: string
+          x-stream-index: "002"
+      required:
+      - start
+      - end
+      title: Quiet Hours Rule
       type: object
     Reaction:
       properties:
@@ -9653,7 +9715,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v239.72.1
+  version: v239.73.0
 openapi: 3.0.3
 paths:
   /api/v2/moderation/action_config:

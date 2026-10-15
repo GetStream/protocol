@@ -21475,6 +21475,34 @@ components:
           title: Remove Disable
           type: boolean
           x-stream-index: "009"
+        remove_schedule:
+          description: Remove the user's quiet-hours schedule, the counterpart of
+            remove_disable. It is applied before schedule, so sending both in one
+            item replaces the stored schedule instead of merging into it. Cannot be
+            combined with channel_cid. To switch from a schedule to a snooze, send
+            remove_schedule together with disabled_until.
+          title: Remove Schedule
+          type: boolean
+          x-stream-index: "011"
+        schedule:
+          $ref: '#/components/schemas/PushScheduleInput'
+          description: 'Set a recurring quiet-hours schedule for the user: while a
+            quiet window is active, push notifications are suppressed. Suppressed
+            notifications are dropped, not delayed or queued. A schedule reaches the
+            same notifications as disabled_until: chat message pushes, video call
+            pushes including ringing calls, and feeds pushes. Reminder pushes are
+            still delivered during quiet hours. The fields are merged into the stored
+            schedule one level deep: a non-empty timezone replaces the stored timezone,
+            and quiet_hours, when present, replaces all stored rules. Sending only
+            a timezone therefore keeps the rules, and sending only quiet_hours keeps
+            the timezone. The merged schedule must be complete, with a timezone and
+            1 to 7 rules, so the first schedule of a user has to set both. An empty
+            object is rejected. Schedules are user-level only. A schedule cannot be
+            combined with channel_cid, nor with disabled_until for the same user in
+            the same request, even in separate items; to switch from a snooze to a
+            schedule, send remove_disable together with schedule.'
+          title: Schedule
+          x-stream-index: "010"
         user_id:
           description: The user id for which to set the push preferences. Required
             when using server side auths, defaults to current user with client side
@@ -21510,6 +21538,13 @@ components:
         feeds_preferences:
           $ref: '#/components/schemas/FeedsPreferencesResponse'
           x-stream-index: "005"
+        schedule:
+          $ref: '#/components/schemas/PushScheduleResponse'
+          description: The recurring quiet-hours schedule of the user, if one is set.
+            While a quiet window is active, push notifications for the user are suppressed
+            (dropped, not delayed).
+          title: Schedule
+          x-stream-index: "007"
       type: object
     PushProvider:
       nullable: true
@@ -21789,6 +21824,60 @@ components:
       - type
       - created_at
       - updated_at
+      type: object
+    PushScheduleInput:
+      description: 'A recurring quiet-hours schedule: while any quiet window is active,
+        push notifications for the user are suppressed. Suppressed notifications are
+        dropped, not delayed.'
+      properties:
+        quiet_hours:
+          description: 'The quiet windows, 1 to 7 rules. Push is suppressed while
+            any rule is active. When present it replaces all stored rules; omit it
+            to keep them, for example to change only the timezone. An empty array
+            counts as omitted, so it cannot be used to clear the rules: use remove_schedule
+            for that.'
+          items:
+            $ref: '#/components/schemas/QuietHoursRuleInput'
+          maxItems: 7
+          minItems: 1
+          title: Quiet hours
+          type: array
+          x-stream-index: "002"
+        timezone:
+          description: IANA time zone name the quiet windows are evaluated in, for
+            example Europe/Amsterdam or America/New_York. Daylight saving time is
+            followed automatically for region-based names. Offsets such as +02:00
+            and the name "Local" are rejected; fixed-offset zones such as UTC or Etc/GMT-2
+            are accepted but never shift for daylight saving time. When updating an
+            existing schedule, a non-empty timezone replaces the stored one and leaves
+            the stored quiet_hours untouched.
+          title: Timezone
+          type: string
+          x-stream-index: "001"
+      title: Push Schedule
+      type: object
+    PushScheduleResponse:
+      description: 'A recurring quiet-hours schedule: while any quiet window is active,
+        push notifications for the user are suppressed. Suppressed notifications are
+        dropped, not delayed.'
+      properties:
+        quiet_hours:
+          description: The quiet windows. Push is suppressed while any rule is active.
+          items:
+            $ref: '#/components/schemas/QuietHoursRuleResponse'
+          title: Quiet hours
+          type: array
+          x-stream-index: "002"
+        timezone:
+          description: IANA time zone name the quiet windows are evaluated in, for
+            example Europe/Amsterdam.
+          title: Timezone
+          type: string
+          x-stream-index: "001"
+      required:
+      - timezone
+      - quiet_hours
+      title: Push Schedule
       type: object
     PushTemplate:
       nullable: true
@@ -25464,6 +25553,81 @@ components:
       required:
       - duration
       title: Response
+      type: object
+    QuietHoursRuleInput:
+      description: One recurring quiet window, expressed in local wall-clock time
+        in the schedule's timezone.
+      properties:
+        days:
+          description: 'The days of the week the window opens on, any of mon, tue,
+            wed, thu, fri, sat, sun, each at most once. A window belongs to the day
+            it opens: ["fri"] with 22:00 to 07:00 is quiet from Friday 22:00 until
+            Saturday 07:00, and not on Saturday night. Empty or omitted means every
+            day.'
+          items:
+            enum:
+            - mon
+            - tue
+            - wed
+            - thu
+            - fri
+            - sat
+            - sun
+            type: string
+          title: Days
+          type: array
+          x-stream-index: "001"
+        end:
+          description: 'When the window closes, as HH:MM local wall-clock time between
+            00:00 and 24:00. The end is exclusive: a window ending at 07:00 is already
+            over at 07:00. An end earlier than start wraps past midnight into the
+            next day (start 22:00, end 07:00). 24:00 means the end of the day, so
+            start 00:00 with end 24:00 covers the whole day.'
+          title: End
+          type: string
+          x-stream-index: "003"
+        start:
+          description: When the window opens, as HH:MM local wall-clock time between
+            00:00 and 23:59. Must differ from end.
+          title: Start
+          type: string
+          x-stream-index: "002"
+      required:
+      - start
+      - end
+      title: Quiet Hours Rule
+      type: object
+    QuietHoursRuleResponse:
+      description: One recurring quiet window, expressed in local wall-clock time
+        in the schedule's timezone.
+      properties:
+        days:
+          description: 'The days of the week the window opens on, any of mon, tue,
+            wed, thu, fri, sat, sun. A window belongs to the day it opens: ["fri"]
+            with 22:00 to 07:00 is quiet from Friday 22:00 until Saturday 07:00. Omitted
+            means every day.'
+          items:
+            type: string
+          title: Days
+          type: array
+          x-stream-index: "001"
+        end:
+          description: When the window closes, as HH:MM local wall-clock time between
+            00:00 and 24:00. The end is exclusive. An end earlier than start wraps
+            past midnight into the next day.
+          title: End
+          type: string
+          x-stream-index: "003"
+        start:
+          description: When the window opens, as HH:MM local wall-clock time between
+            00:00 and 23:59.
+          title: Start
+          type: string
+          x-stream-index: "002"
+      required:
+      - start
+      - end
+      title: Quiet Hours Rule
       type: object
     RTMPLocation:
       properties:
@@ -32651,7 +32815,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v239.72.1
+  version: v239.73.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
