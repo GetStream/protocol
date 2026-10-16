@@ -11912,6 +11912,12 @@ components:
     ChannelResponse:
       description: Represents channel in chat
       properties:
+        active_member_count:
+          description: Number of members who are not deactivated or deleted
+          format: int32
+          title: Active member count
+          type: integer
+          x-stream-index: "029"
         auto_translation_enabled:
           description: Whether auto translation is enabled or not
           title: Auto translation
@@ -18964,12 +18970,14 @@ components:
             Conversation channels delete mode.
             Conversation channel is any channel which only has two members one of which is the user being deleted.
 
-            * null or empty string - doesn't delete any conversation channels
+            * null or empty string - doesn't delete any conversation channels, unless user is 'hard', in which case it defaults to 'hard'
             * soft - marks all conversation channels as deleted (same effect as Delete Channels with 'hard' option disabled)
             * hard - deletes channel and all its data completely including messages (same effect as Delete Channels with 'hard' option enabled)
+            * keep - doesn't delete any conversation channels. Use it with user 'hard', where null or empty string defaults to 'hard'
           enum:
           - soft
           - hard
+          - keep
           title: Delete Conversations
           type: string
           x-stream-index: 001.002.003
@@ -19008,7 +19016,7 @@ components:
 
             * soft - marks user as deleted and retains all user data
             * pruning - marks user as deleted and nullifies user information
-            * hard - deletes user completely. Requires 'hard' option for messages and conversations as well
+            * hard - deletes user completely. Requires 'hard' option for messages, and 'hard' or 'keep' option for conversations
           enum:
           - soft
           - pruning
@@ -38894,6 +38902,11 @@ components:
           title: Filter Values
           type: object
           x-stream-index: "011"
+        include_active_member_count:
+          description: Whether to include active_member_count for each channel
+          title: Include active member count
+          type: boolean
+          x-stream-index: "014"
         limit:
           description: Number of channels to limit
           format: int32
@@ -38955,10 +38968,10 @@ components:
           x-stream-index: "004"
         user:
           $ref: '#/components/schemas/UserRequest'
-          x-stream-index: "014.002"
+          x-stream-index: "015.002"
         user_id:
           type: string
-          x-stream-index: "014.001"
+          x-stream-index: "015.001"
       title: Query Channels Request
       type: object
       x-stream-docs-page-id: query_channels
@@ -58807,7 +58820,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v239.73.0
+  version: v239.74.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
