@@ -15,6 +15,13 @@ components:
           title: Code
           type: integer
           x-stream-index: "001"
+        cooldown_remaining_ms:
+          description: Milliseconds until the user's slow mode cool down period ends.
+            Only set on code 60 (cool down) errors
+          format: int64
+          title: Cooldown remaining ms
+          type: integer
+          x-stream-index: "009"
         details:
           description: Additional error-specific information
           items:
@@ -84,7 +91,6 @@ components:
       - type
       type: object
     ActionLogResponse:
-      nullable: true
       properties:
         ai_providers:
           items:
@@ -336,6 +342,11 @@ components:
           title: Appeal Reason
           type: string
           x-stream-index: "006"
+        appeal_reason_language:
+          description: Detected language of the appeal_reason text itself
+          title: Appeal Reason Language
+          type: string
+          x-stream-index: "025"
         attachments:
           description: Attachments(e.g. Images) of the Appeal Item
           items:
@@ -344,7 +355,9 @@ components:
           type: array
           x-stream-index: "009"
         channel_cid:
-          description: CID of the channel the entity belongs to, if applicable
+          description: CID of the channel the entity belongs to (content appeals),
+            or of the channel ban being appealed (stream:user appeals). Empty for
+            a global ban appeal.
           title: Channel CID
           type: string
           x-stream-index: "016"
@@ -401,6 +414,13 @@ components:
         id:
           type: string
           x-stream-index: "001"
+        languages:
+          description: Detected languages in the content
+          items:
+            type: string
+          title: Languages
+          type: array
+          x-stream-index: "024"
         moderation_action:
           $ref: '#/components/schemas/ActionLogResponse'
           description: 'Latest non-automod action on the entity (deprecated: use original_moderation_action)'
@@ -567,7 +587,7 @@ components:
           type: string
           x-stream-index: "002.001"
         type:
-          default: export.bulk_image_moderation.error
+          default: export.review_queue.error
           type: string
           x-stream-index: "003.002"
       required:
@@ -579,6 +599,53 @@ components:
       - created_at
       - custom
       title: AsyncExportErrorEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    AsyncExportLabelResultsEvent:
+      nullable: true
+      properties:
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "003.003"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "003.007"
+        finished_at:
+          format: date-time
+          type: string
+          x-stream-index: "002.003"
+        received_at:
+          format: date-time
+          type: string
+          x-stream-index: "003.004"
+        started_at:
+          format: date-time
+          type: string
+          x-stream-index: "002.002"
+        task_id:
+          type: string
+          x-stream-index: "002.001"
+        type:
+          default: export.label_results.success
+          type: string
+          x-stream-index: "003.002"
+        url:
+          type: string
+          x-stream-index: "001"
+      required:
+      - url
+      - task_id
+      - started_at
+      - finished_at
+      - type
+      - created_at
+      - custom
+      title: AsyncExportLabelResultsEvent
       type: object
       x-stream-event-client-type: true
       x-stream-event-doc-group: other
@@ -910,7 +977,6 @@ components:
           x-stream-index: 001.002.016
         max_message_length:
           format: int32
-          maximum: 20000
           type: integer
           x-stream-index: 001.002.022
         message_retention:
@@ -936,13 +1002,17 @@ components:
           type: boolean
           x-stream-index: 001.002.017
         push_level:
+          description: Sets the push notification level for a channel type
           enum:
           - all
           - all_mentions
           - mentions
           - direct_mentions
           - none
+          title: Push notification level
           type: string
+          x-stream-deprecated-enum-values:
+            mentions: direct_mentions
           x-stream-index: 001.002.033
         push_notifications:
           type: boolean
@@ -1153,6 +1223,7 @@ components:
           type: string
           x-stream-index: "001"
       required:
+      - user_id
       - custom
       - created_at
       - updated_at
@@ -1202,7 +1273,7 @@ components:
       - custom
       type: object
     ChannelOwnCapability:
-      description: All possibility of string to use
+      description: An action that can be performed in a channel.
       enum:
       - ban-channel-members
       - cast-poll-vote
@@ -1226,6 +1297,7 @@ components:
       - query-poll-votes
       - quote-message
       - read-events
+      - schedule-message
       - search-messages
       - send-custom-events
       - send-links
@@ -1248,9 +1320,60 @@ components:
       - upload-file
       title: ChannelOwnCapability
       type: string
+      x-stream-enum-descriptions:
+        ban-channel-members: Ability to ban channel members.
+        cast-poll-vote: Ability to cast a poll vote.
+        connect-events: Ability to receive connect events.
+        create-attachment: Ability to attach files to messages.
+        create-mention: Ability to mention users in messages.
+        delete-any-message: Ability to delete any message from the channel.
+        delete-channel: Ability to delete the channel.
+        delete-own-message: Ability to delete own messages from the channel.
+        delivery-events: Ability to receive delivery events.
+        flag-message: Ability to flag a message.
+        freeze-channel: Ability to freeze or unfreeze the channel.
+        join-channel: Ability to join channel (add own membership).
+        leave-channel: Ability to leave the channel (remove own membership).
+        mute-channel: Ability to mute the channel.
+        notify-channel: Ability to notify all channel members using @channel mention.
+        notify-group: Ability to notify channel members using user group mentions.
+        notify-here: Ability to notify online channel members using @here mention.
+        notify-role: Ability to notify channel members using role mentions.
+        pin-message: Ability to pin a message.
+        query-poll-votes: Ability to query poll votes.
+        quote-message: Ability to quote a message.
+        read-events: Ability to receive read events.
+        schedule-message: Ability to schedule a message to be sent later.
+        search-messages: Ability to use message search.
+        send-custom-events: Ability to send custom events.
+        send-links: Ability to attach links to messages.
+        send-message: Ability to send a message.
+        send-poll: Ability to send a poll.
+        send-reaction: Ability to send reactions.
+        send-reply: Ability to thread reply to a message.
+        send-restricted-visibility-message: Ability to send a message with restricted
+          visibility.
+        send-typing-events: Ability to send and receive typing events.
+        set-channel-cooldown: Ability to enable or disable slow mode.
+        share-location: Ability to share location.
+        skip-slow-mode: Ability to skip the slow mode when it's active.
+        slow-mode: Indicates that channel slow mode is active.
+        typing-events: Ability to send and receive typing events.
+        update-any-message: Ability to update any message in the channel.
+        update-channel: Ability to update channel data.
+        update-channel-members: Ability to update channel members.
+        update-own-message: Ability to update own messages in the channel.
+        update-thread: Ability to update thread data.
+        upload-file: Ability to upload message attachments.
     ChannelResponse:
       description: Represents channel in chat
       properties:
+        active_member_count:
+          description: Number of members who are not deactivated or deleted
+          format: int32
+          title: Active member count
+          type: integer
+          x-stream-index: "029"
         auto_translation_enabled:
           description: Whether auto translation is enabled or not
           title: Auto translation
@@ -2136,6 +2259,7 @@ components:
       - id
       type: object
     DeliveryReceiptsResponse:
+      description: The settings for the delivery receipt events.
       properties:
         enabled:
           type: boolean
@@ -2144,11 +2268,11 @@ components:
       - enabled
       type: object
     DeviceResponse:
-      description: Response for Device
+      description: An object representing a device which can receive push notifications.
       nullable: true
       properties:
         created_at:
-          description: Date/time of creation
+          description: The date when the device was created.
           format: date-time
           title: Created at
           type: string
@@ -2170,7 +2294,7 @@ components:
           type: string
           x-stream-index: "008"
         id:
-          description: Device ID
+          description: The device identifier.
           title: ID
           type: string
           x-stream-index: "003"
@@ -2809,6 +2933,9 @@ components:
         id:
           type: string
           x-stream-index: "001"
+        parent_id:
+          type: string
+          x-stream-index: "005"
         user_id:
           type: string
           x-stream-index: "002"
@@ -3209,19 +3336,19 @@ components:
         bookmark_count:
           format: int32
           type: integer
-          x-stream-index: "023"
+          x-stream-index: "024"
         confidence_score:
           format: double
           type: number
-          x-stream-index: "025"
+          x-stream-index: "026"
         controversy_score:
           format: double
           type: number
-          x-stream-index: "026"
+          x-stream-index: "027"
         created_at:
           format: date-time
           type: string
-          x-stream-index: "015"
+          x-stream-index: "016"
         custom:
           additionalProperties: {}
           type: object
@@ -3229,15 +3356,18 @@ components:
         deleted_at:
           format: date-time
           type: string
-          x-stream-index: "018"
+          x-stream-index: "019"
         downvote_count:
           format: int32
           type: integer
-          x-stream-index: "022"
+          x-stream-index: "023"
         edited_at:
           format: date-time
           type: string
-          x-stream-index: "017"
+          x-stream-index: "018"
+        hidden:
+          type: boolean
+          x-stream-index: "014"
         i18n:
           additionalProperties:
             type: string
@@ -3258,7 +3388,7 @@ components:
           x-stream-index: "013"
         moderation:
           $ref: '#/components/schemas/ModerationV2Response'
-          x-stream-index: "019"
+          x-stream-index: "020"
         object_id:
           type: string
           x-stream-index: "002"
@@ -3269,7 +3399,7 @@ components:
           items:
             $ref: '#/components/schemas/FeedsReactionResponse'
           type: array
-          x-stream-index: "027"
+          x-stream-index: "028"
         parent_id:
           type: string
           x-stream-index: "008"
@@ -3285,25 +3415,25 @@ components:
         reply_count:
           format: int32
           type: integer
-          x-stream-index: "020"
+          x-stream-index: "021"
         score:
           format: int32
           type: integer
-          x-stream-index: "024"
+          x-stream-index: "025"
         status:
           type: string
-          x-stream-index: "014"
+          x-stream-index: "015"
         text:
           type: string
           x-stream-index: "005"
         updated_at:
           format: date-time
           type: string
-          x-stream-index: "016"
+          x-stream-index: "017"
         upvote_count:
           format: int32
           type: integer
-          x-stream-index: "021"
+          x-stream-index: "022"
         user:
           $ref: '#/components/schemas/UserResponse'
           x-stream-index: "004"
@@ -3314,6 +3444,7 @@ components:
       - user
       - reaction_count
       - mentioned_users
+      - hidden
       - status
       - created_at
       - updated_at
@@ -3397,6 +3528,84 @@ components:
       - fixed_width
       - fixed_width_still
       - fixed_width_downsampled
+      type: object
+    IntentConditionInfo:
+      properties:
+        passed:
+          description: Whether the score reached the threshold.
+          title: Passed
+          type: boolean
+          x-stream-index: "004"
+        score:
+          description: Final (damped) score of the topic in this analysis; 0 when
+            the topic is not defined in the policy.
+          format: int32
+          title: Score
+          type: integer
+          x-stream-index: "003"
+        threshold:
+          description: Minimum score (1-100) the condition requires.
+          format: int32
+          title: Threshold
+          type: integer
+          x-stream-index: "002"
+        topic:
+          description: Policy intent topic label the condition references.
+          title: Topic
+          type: string
+          x-stream-index: "001"
+      required:
+      - topic
+      - threshold
+      - score
+      - passed
+      type: object
+    IntentEvaluationInfo:
+      properties:
+        conditions:
+          description: One entry per `intent_rule` condition of the rule, flat conditions
+            first, then group conditions.
+          items:
+            $ref: '#/components/schemas/IntentConditionInfo'
+          title: Conditions
+          type: array
+          x-stream-index: "003"
+        conversation_id:
+          description: 'The analyzed conversation: the channel CID for chat, the object
+            ID for feeds.'
+          title: ConversationID
+          type: string
+          x-stream-index: "004"
+        message_count:
+          description: Number of conversation messages sent to the model.
+          format: int32
+          title: MessageCount
+          type: integer
+          x-stream-index: "005"
+        raw_scores:
+          additionalProperties:
+            format: int32
+            type: integer
+          description: Score (0-100) the model gave every topic in the analysis call,
+            keyed by topic label, before message-count damping.
+          title: RawScores
+          type: object
+          x-stream-index: "001"
+        scores:
+          additionalProperties:
+            format: int32
+            type: integer
+          description: Final score (0-100) of every topic after message-count damping,
+            keyed by topic label. Conditions compare against these.
+          title: Scores
+          type: object
+          x-stream-index: "002"
+      required:
+      - raw_scores
+      - scores
+      - conditions
+      - conversation_id
+      - message_count
       type: object
     LabelThresholds:
       properties:
@@ -4125,10 +4334,14 @@ components:
     ModerationFlagResponse:
       nullable: true
       properties:
-        created_at:
+        content_published_at:
           format: date-time
           type: string
           x-stream-index: "015"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "016"
         custom:
           additionalProperties: {}
           type: object
@@ -4171,7 +4384,7 @@ components:
         updated_at:
           format: date-time
           type: string
-          x-stream-index: "016"
+          x-stream-index: "017"
         user:
           $ref: '#/components/schemas/UserResponse'
           x-stream-index: "004"
@@ -4369,6 +4582,9 @@ components:
           maxItems: 10
           type: array
           x-stream-index: "004"
+        country_code:
+          type: string
+          x-stream-index: "011"
         custom:
           additionalProperties: {}
           type: object
@@ -4537,6 +4753,13 @@ components:
           title: EntityType
           type: string
           x-stream-index: "005"
+        intent:
+          $ref: '#/components/schemas/IntentEvaluationInfo'
+          description: 'Intent rules only: every topic score of the analysis call,
+            each `intent_rule` condition with its threshold, score and whether it
+            passed, and the analyzed conversation ID and message count.'
+          title: Intent
+          x-stream-index: "010"
         matched_contents:
           description: Ordered list of contents whose verdicts contributed to an aggregation
             rule's threshold. Populated only for aggregation rules when callers supplied
@@ -4707,13 +4930,18 @@ components:
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "003"
+          x-stream-index: "004"
         id:
           type: string
           x-stream-index: "001"
         text:
           type: string
           x-stream-index: "002"
+        text_i18n:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "003"
       required:
       - id
       - text
@@ -4723,83 +4951,93 @@ components:
       properties:
         allow_answers:
           type: boolean
-          x-stream-index: "008"
+          x-stream-index: "010"
         allow_user_suggested_options:
           type: boolean
-          x-stream-index: "007"
+          x-stream-index: "009"
         answers_count:
           format: int32
           type: integer
-          x-stream-index: "012"
+          x-stream-index: "014"
         created_at:
           format: date-time
           type: string
-          x-stream-index: "019"
+          x-stream-index: "021"
         created_by:
           $ref: '#/components/schemas/UserResponse'
-          x-stream-index: "018"
+          x-stream-index: "020"
         created_by_id:
           type: string
-          x-stream-index: "017"
+          x-stream-index: "019"
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "021"
+          x-stream-index: "023"
         description:
           type: string
-          x-stream-index: "003"
+          x-stream-index: "004"
+        description_i18n:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "005"
         enforce_unique_vote:
           type: boolean
-          x-stream-index: "005"
+          x-stream-index: "007"
         id:
           type: string
           x-stream-index: "001"
         is_closed:
           type: boolean
-          x-stream-index: "009"
+          x-stream-index: "011"
         latest_answers:
           items:
             $ref: '#/components/schemas/PollVoteResponseData'
           type: array
-          x-stream-index: "015"
+          x-stream-index: "017"
         latest_votes_by_option:
           additionalProperties:
             items:
               $ref: '#/components/schemas/PollVoteResponseData'
             type: array
           type: object
-          x-stream-index: "014"
+          x-stream-index: "016"
         max_votes_allowed:
           format: int32
           type: integer
-          x-stream-index: "006"
+          x-stream-index: "008"
         name:
           type: string
           x-stream-index: "002"
+        name_i18n:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "003"
         options:
           items:
             $ref: '#/components/schemas/PollOptionResponseData'
           type: array
-          x-stream-index: "011"
+          x-stream-index: "013"
         own_votes:
           items:
             $ref: '#/components/schemas/PollVoteResponseData'
           type: array
-          x-stream-index: "016"
+          x-stream-index: "018"
         updated_at:
           format: date-time
           type: string
-          x-stream-index: "020"
+          x-stream-index: "022"
         vote_count:
           format: int32
           type: integer
-          x-stream-index: "010"
+          x-stream-index: "012"
         vote_counts_by_option:
           additionalProperties:
             format: int32
             type: integer
           type: object
-          x-stream-index: "013"
+          x-stream-index: "015"
         voting_visibility:
           description: Voting visibility of the poll
           enum:
@@ -4807,7 +5045,7 @@ components:
           - public
           title: Voting visibility
           type: string
-          x-stream-index: "004"
+          x-stream-index: "006"
       required:
       - id
       - name
@@ -4834,10 +5072,15 @@ components:
         answer_text:
           type: string
           x-stream-index: "005"
+        answer_text_i18n:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "006"
         created_at:
           format: date-time
           type: string
-          x-stream-index: "008"
+          x-stream-index: "009"
         id:
           type: string
           x-stream-index: "002"
@@ -4853,13 +5096,13 @@ components:
         updated_at:
           format: date-time
           type: string
-          x-stream-index: "009"
+          x-stream-index: "010"
         user:
           $ref: '#/components/schemas/UserResponse'
-          x-stream-index: "007"
+          x-stream-index: "008"
         user_id:
           type: string
-          x-stream-index: "006"
+          x-stream-index: "007"
       required:
       - poll_id
       - id
@@ -4868,15 +5111,22 @@ components:
       - updated_at
       type: object
     PrivacySettingsResponse:
+      description: The privacy settings of the user.
       properties:
         delivery_receipts:
           $ref: '#/components/schemas/DeliveryReceiptsResponse'
+          description: The settings for the delivery receipt events.
+          title: Delivery receipts
           x-stream-index: "003"
         read_receipts:
           $ref: '#/components/schemas/ReadReceiptsResponse'
+          description: The settings for the read receipt events.
+          title: Read receipts
           x-stream-index: "002"
         typing_indicators:
           $ref: '#/components/schemas/TypingIndicatorsResponse'
+          description: The settings for typing indicator events.
+          title: Typing indicators
           x-stream-index: "001"
       type: object
     PushNotificationSettingsResponse:
@@ -5100,6 +5350,7 @@ components:
       - custom
       type: object
     ReadReceiptsResponse:
+      description: The settings for the read receipt events.
       properties:
         enabled:
           type: boolean
@@ -5111,20 +5362,24 @@ components:
       properties:
         channel:
           $ref: '#/components/schemas/ChannelResponse'
-          x-stream-index: "003"
+          x-stream-index: "004"
         channel_cid:
           type: string
-          x-stream-index: "002"
+          x-stream-index: "003"
         created_at:
           format: date-time
           type: string
-          x-stream-index: "008"
+          x-stream-index: "009"
+        expires_at:
+          format: date-time
+          type: string
+          x-stream-index: "002"
         message:
           $ref: '#/components/schemas/MessageResponse'
-          x-stream-index: "005"
+          x-stream-index: "006"
         message_id:
           type: string
-          x-stream-index: "004"
+          x-stream-index: "005"
         remind_at:
           format: date-time
           type: string
@@ -5132,13 +5387,13 @@ components:
         updated_at:
           format: date-time
           type: string
-          x-stream-index: "009"
+          x-stream-index: "010"
         user:
           $ref: '#/components/schemas/UserResponse'
-          x-stream-index: "007"
+          x-stream-index: "008"
         user_id:
           type: string
-          x-stream-index: "006"
+          x-stream-index: "007"
       required:
       - channel_cid
       - message_id
@@ -5201,44 +5456,54 @@ components:
             $ref: '#/components/schemas/ActionLogResponse'
           title: Actions
           type: array
-          x-stream-index: "025"
+          x-stream-index: "027"
         activity:
           $ref: '#/components/schemas/EnrichedActivity'
-          x-stream-index: "017"
+          x-stream-index: "019"
         ai_text_severity:
           description: AI-determined text severity
           title: AI Text Severity
           type: string
-          x-stream-index: "014"
+          x-stream-index: "015"
         appeal:
           $ref: '#/components/schemas/AppealItemResponse'
           description: Appeal submitted for this item if it exists
           title: Appeal
-          x-stream-index: "026"
+          x-stream-index: "028"
         assigned_to:
           $ref: '#/components/schemas/UserResponse'
           description: Moderator assigned to review this item
           title: Assigned To
-          x-stream-index: "022"
+          x-stream-index: "024"
         bans:
           description: Associated ban records
           items:
             $ref: '#/components/schemas/BanInfoResponse'
           title: Bans
           type: array
-          x-stream-index: "023"
+          x-stream-index: "025"
         call:
           $ref: '#/components/schemas/ModerationCallResponse'
-          x-stream-index: "019"
+          x-stream-index: "021"
         completed_at:
           description: When the review was completed
           format: date-time
           title: Completed At
           type: string
           x-stream-index: "009"
+        confidence_score:
+          description: Highest per-label confidence (0-1) any provider reported across
+            the item's flags; absent when no flag carried one
+          format: double
+          title: Confidence Score
+          type: number
+          x-stream-index: "017"
         config_key:
           type: string
-          x-stream-index: "032"
+          x-stream-index: "035"
+        country_code:
+          type: string
+          x-stream-index: "013"
         created_at:
           description: When the item was created
           format: date-time
@@ -5249,12 +5514,12 @@ components:
           $ref: '#/components/schemas/EntityCreatorResponse'
           description: Details about who created the entity
           title: Entity Creator
-          x-stream-index: "020"
+          x-stream-index: "022"
         entity_creator_id:
           description: ID of who created the entity
           title: Entity Creator ID
           type: string
-          x-stream-index: "021"
+          x-stream-index: "023"
         entity_id:
           description: ID of the entity being reviewed
           title: Entity ID
@@ -5269,50 +5534,50 @@ components:
           description: Whether the item has been escalated
           title: Escalated
           type: boolean
-          x-stream-index: "034"
+          x-stream-index: "037"
         escalated_at:
           description: When the item was escalated
           format: date-time
           title: Escalated At
           type: string
-          x-stream-index: "037"
+          x-stream-index: "040"
         escalated_by:
           description: ID of the moderator who escalated the item
           title: Escalated By
           type: string
-          x-stream-index: "036"
+          x-stream-index: "039"
         escalation_metadata:
           $ref: '#/components/schemas/EscalationMetadata'
           description: Escalation details including reason, notes, and priority
           title: Escalation Metadata
-          x-stream-index: "035"
+          x-stream-index: "038"
         feeds_v2_activity:
           $ref: '#/components/schemas/EnrichedActivity'
           description: Associated feed activity
           title: Feeds V2 Activity
-          x-stream-index: "027"
+          x-stream-index: "029"
         feeds_v2_reaction:
           $ref: '#/components/schemas/Reaction'
           description: Associated feed reaction
           title: Feeds V2 Reaction
-          x-stream-index: "028"
+          x-stream-index: "030"
         feeds_v3_activity:
           $ref: '#/components/schemas/FeedsV3ActivityResponse'
-          x-stream-index: "029"
+          x-stream-index: "031"
         feeds_v3_comment:
           $ref: '#/components/schemas/FeedsV3CommentResponse'
-          x-stream-index: "030"
+          x-stream-index: "032"
         flags:
           description: Associated flag records
           items:
             $ref: '#/components/schemas/ModerationFlagResponse'
           title: Flags
           type: array
-          x-stream-index: "024"
+          x-stream-index: "026"
         flags_count:
           format: int32
           type: integer
-          x-stream-index: "033"
+          x-stream-index: "036"
         id:
           description: Unique identifier of the review queue item
           title: ID
@@ -5327,20 +5592,26 @@ components:
           x-stream-index: "012"
         latest_moderator_action:
           type: string
-          x-stream-index: "015"
+          x-stream-index: "016"
         message:
           $ref: '#/components/schemas/ChatMessageResponse'
           description: Associated message details
           title: Message
-          x-stream-index: "016"
+          x-stream-index: "018"
         moderation_payload:
           $ref: '#/components/schemas/ModerationPayloadResponse'
           description: Content being moderated
           title: Moderation Payload
           x-stream-index: "006"
+        poll:
+          $ref: '#/components/schemas/PollResponseData'
+          description: Associated poll. Absent when the poll was never stored (rejected
+            create) or when a later poll reused the same client-supplied id.
+          title: Poll
+          x-stream-index: "033"
         reaction:
           $ref: '#/components/schemas/Reaction'
-          x-stream-index: "018"
+          x-stream-index: "020"
         recommended_action:
           description: Suggested moderation action
           title: Recommended Action
@@ -5362,7 +5633,7 @@ components:
           format: int32
           title: Severity
           type: integer
-          x-stream-index: "013"
+          x-stream-index: "014"
         status:
           description: Current status of the review
           title: Status
@@ -5374,7 +5645,7 @@ components:
             type: string
           title: Teams
           type: array
-          x-stream-index: "031"
+          x-stream-index: "034"
         updated_at:
           description: When the item was last updated
           format: date-time
@@ -5506,38 +5777,59 @@ components:
           $ref: '#/components/schemas/ChannelResponse'
           x-stream-index: "011"
         channel_cid:
+          description: The CID (type:id) of the channel that the location is attached
+            to.
+          title: Channel CID
           type: string
           x-stream-index: "001"
         created_at:
+          description: The date when the location was created.
           format: date-time
+          title: Created at
           type: string
           x-stream-index: "008"
         created_by_device_id:
+          description: The ID of the device that created the location.
+          title: Created by device ID
           type: string
           x-stream-index: "006"
         end_at:
+          description: |-
+            The date when the location sharing ends.
+            If it's empty, it means the location sharing is static instead of live.
           format: date-time
+          title: End at
           type: string
           x-stream-index: "007"
         latitude:
+          description: The latitude of the location.
           format: double
+          title: Latitude
           type: number
           x-stream-index: "004"
         longitude:
+          description: The longitude of the location.
           format: double
+          title: Longitude
           type: number
           x-stream-index: "005"
         message:
           $ref: '#/components/schemas/MessageResponse'
           x-stream-index: "010"
         message_id:
+          description: The ID of the message that the location is attached to.
+          title: Message ID
           type: string
           x-stream-index: "002"
         updated_at:
+          description: The date when the location was updated.
           format: date-time
+          title: Updated at
           type: string
           x-stream-index: "009"
         user_id:
+          description: The ID of the user that created the location.
+          title: User ID
           type: string
           x-stream-index: "003"
       required:
@@ -5802,6 +6094,7 @@ components:
       title: TriggerResponse
       type: object
     TypingIndicatorsResponse:
+      description: The settings for typing indicator events.
       properties:
         enabled:
           type: boolean
@@ -5871,6 +6164,237 @@ components:
       required:
       - id
       type: object
+    UserBannedEvent:
+      description: This event is sent when a user gets banned. The event contains
+        information about the user that was banned.
+      nullable: true
+      properties:
+        channel_custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.006
+        channel_id:
+          description: The ID of the channel where the target user was banned
+          title: Channel ID
+          type: string
+          x-stream-index: 001.002.002
+        channel_member_count:
+          format: int32
+          type: integer
+          x-stream-index: 001.001.004
+        channel_message_count:
+          format: int64
+          type: integer
+          x-stream-index: 001.001.005
+        channel_type:
+          description: The type of the channel where the target user was banned
+          title: Channel Type
+          type: string
+          x-stream-index: 001.002.001
+        cid:
+          description: The CID of the channel where the target user was banned
+          title: Channel CID
+          type: string
+          x-stream-index: 001.001.001.002
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: 001.001.001.001.003
+        created_by:
+          $ref: '#/components/schemas/UserResponseCommonFields'
+          description: The user that banned the target user
+          title: Created by
+          x-stream-index: "004"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.001.001.007
+        expiration:
+          description: The expiration date of the ban
+          format: date-time
+          title: Expiration
+          type: string
+          x-stream-index: "005"
+        reason:
+          description: The reason for the ban
+          title: Reason
+          type: string
+          x-stream-index: "003"
+        received_at:
+          format: date-time
+          type: string
+          x-stream-index: 001.001.001.001.004
+        review_queue_item_id:
+          description: ID of the review queue item (flagged message) that triggered
+            the ban, if the ban was applied from the moderation review queue
+          title: Review Queue Item ID
+          type: string
+          x-stream-index: "007"
+        shadow:
+          description: Whether the user was shadow banned
+          title: Shadow
+          type: boolean
+          x-stream-index: "006"
+        team:
+          description: The team of the channel where the target user was banned
+          title: Team
+          type: string
+          x-stream-index: 001.001.003
+        total_bans:
+          format: int32
+          type: integer
+          x-stream-index: "008"
+        type:
+          default: user.banned
+          description: 'The type of event: "user.banned" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: 001.001.001.001.002
+        user:
+          $ref: '#/components/schemas/UserResponseCommonFields'
+          description: The target user that was banned
+          title: User
+          x-stream-index: "002.001"
+      required:
+      - type
+      - created_at
+      - custom
+      - user
+      title: UserBannedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    UserDeactivatedEvent:
+      description: This event is sent when a user gets deactivated. The event contains
+        information about the user that was deactivated.
+      nullable: true
+      properties:
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: "001.003"
+        created_by:
+          $ref: '#/components/schemas/UserResponseCommonFields'
+          description: The user that deactivated the target user
+          title: Created by
+          x-stream-index: "003"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "001.007"
+        received_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.004"
+        type:
+          default: user.deactivated
+          description: 'The type of event: "user.deactivated" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.002"
+        user:
+          $ref: '#/components/schemas/UserResponseCommonFields'
+          description: The target user that was deactivated
+          title: User
+          x-stream-index: "002.001"
+      required:
+      - type
+      - created_at
+      - custom
+      - user
+      title: UserDeactivatedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    UserDeletedEvent:
+      description: This event is sent when a user gets deleted. The event contains
+        information about the user that was deleted and the deletion options that
+        were used.
+      nullable: true
+      properties:
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: "001.003"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "001.007"
+        delete_conversation:
+          description: 'The type of deletion that was used for the user''s conversations.
+            One of: hard, soft, pruning, (empty string)'
+          title: Delete conversation
+          type: string
+          x-stream-index: "004"
+        delete_conversation_channels:
+          description: Whether the user's conversation channels were deleted
+          title: Delete conversation channels
+          type: boolean
+          x-stream-index: "008"
+        delete_messages:
+          description: 'The type of deletion that was used for the user''s messages.
+            One of: hard, soft, pruning, (empty string)'
+          title: Delete messages
+          type: string
+          x-stream-index: "003"
+        delete_user:
+          description: 'The type of deletion that was used for the user. One of: hard,
+            soft, pruning, (empty string)'
+          title: Delete user
+          type: string
+          x-stream-index: "005"
+        hard_delete:
+          description: Whether the user was hard deleted
+          title: Hard delete
+          type: boolean
+          x-stream-index: "006"
+        mark_messages_deleted:
+          description: Whether the user's messages were marked as deleted
+          title: Mark messages deleted
+          type: boolean
+          x-stream-index: "007"
+        received_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.004"
+        type:
+          default: user.deleted
+          description: 'The type of event: "user.deleted" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.002"
+        user:
+          $ref: '#/components/schemas/UserResponseCommonFields'
+          description: The user that was deleted
+          title: User
+          x-stream-index: "002.001"
+      required:
+      - type
+      - created_at
+      - custom
+      - user
+      - delete_messages
+      - delete_conversation
+      - delete_user
+      - hard_delete
+      - mark_messages_deleted
+      - delete_conversation_channels
+      title: UserDeletedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     UserGroupResponse:
       nullable: true
       properties:
@@ -5903,6 +6427,52 @@ components:
       - created_at
       - updated_at
       type: object
+    UserReactivatedEvent:
+      description: This event is sent when a user gets reactivated. The event contains
+        information about the user that was reactivated.
+      nullable: true
+      properties:
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: "001.003"
+        created_by:
+          $ref: '#/components/schemas/UserResponseCommonFields'
+          description: The user that reactivated the target user
+          title: Created by
+          x-stream-index: "003"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "001.007"
+        received_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.004"
+        type:
+          default: user.reactivated
+          description: 'The type of event: "user.reactivated" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.002"
+        user:
+          $ref: '#/components/schemas/UserResponseCommonFields'
+          description: The target user that was reactivated
+          title: User
+          x-stream-index: "002.001"
+      required:
+      - type
+      - created_at
+      - custom
+      - user
+      title: UserReactivatedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     UserResponse:
       description: User response object
       properties:
@@ -6052,6 +6622,300 @@ components:
       - invisible
       title: UserResponse
       type: object
+    UserResponseCommonFields:
+      properties:
+        avg_response_time:
+          format: int32
+          type: integer
+          x-stream-index: "018"
+        banned:
+          type: boolean
+          x-stream-index: "012"
+        blocked_user_ids:
+          items:
+            type: string
+          type: array
+          x-stream-index: "017"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "009"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "004"
+        deactivated_at:
+          format: date-time
+          type: string
+          x-stream-index: "016"
+        deleted_at:
+          format: date-time
+          type: string
+          x-stream-index: "011"
+        id:
+          type: string
+          x-stream-index: "001"
+        image:
+          type: string
+          x-stream-index: "003"
+        language:
+          type: string
+          x-stream-index: "005"
+        last_active:
+          format: date-time
+          type: string
+          x-stream-index: "014"
+        name:
+          type: string
+          x-stream-index: "002"
+        online:
+          type: boolean
+          x-stream-index: "013"
+        revoke_tokens_issued_before:
+          format: date-time
+          type: string
+          x-stream-index: "015"
+        role:
+          type: string
+          x-stream-index: "006"
+        teams:
+          items:
+            type: string
+          type: array
+          x-stream-index: "007"
+        teams_role:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "008"
+        updated_at:
+          format: date-time
+          type: string
+          x-stream-index: "010"
+      required:
+      - id
+      - custom
+      - language
+      - role
+      - teams
+      - created_at
+      - updated_at
+      - banned
+      - online
+      - blocked_user_ids
+      type: object
+    UserResponsePrivacyFields:
+      properties:
+        avg_response_time:
+          format: int32
+          type: integer
+          x-stream-index: "001.018"
+        banned:
+          type: boolean
+          x-stream-index: "001.012"
+        blocked_user_ids:
+          items:
+            type: string
+          type: array
+          x-stream-index: "001.017"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.009"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "001.004"
+        deactivated_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.016"
+        deleted_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.011"
+        id:
+          type: string
+          x-stream-index: "001.001"
+        image:
+          type: string
+          x-stream-index: "001.003"
+        invisible:
+          type: boolean
+          x-stream-index: "003"
+        language:
+          type: string
+          x-stream-index: "001.005"
+        last_active:
+          format: date-time
+          type: string
+          x-stream-index: "001.014"
+        name:
+          type: string
+          x-stream-index: "001.002"
+        online:
+          type: boolean
+          x-stream-index: "001.013"
+        privacy_settings:
+          $ref: '#/components/schemas/PrivacySettingsResponse'
+          x-stream-index: "002"
+        revoke_tokens_issued_before:
+          format: date-time
+          type: string
+          x-stream-index: "001.015"
+        role:
+          type: string
+          x-stream-index: "001.006"
+        teams:
+          items:
+            type: string
+          type: array
+          x-stream-index: "001.007"
+        teams_role:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "001.008"
+        updated_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.010"
+      required:
+      - id
+      - custom
+      - language
+      - role
+      - teams
+      - created_at
+      - updated_at
+      - banned
+      - online
+      - blocked_user_ids
+      type: object
+    UserUnbannedEvent:
+      description: This event is sent when a user gets unbanned. The event contains
+        information about the user that was unbanned.
+      nullable: true
+      properties:
+        channel_custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.006
+        channel_id:
+          description: The ID of the channel where the target user was unbanned
+          title: Channel ID
+          type: string
+          x-stream-index: 001.002.002
+        channel_member_count:
+          format: int32
+          type: integer
+          x-stream-index: 001.001.004
+        channel_message_count:
+          format: int64
+          type: integer
+          x-stream-index: 001.001.005
+        channel_type:
+          description: The type of the channel where the target user was unbanned
+          title: Channel Type
+          type: string
+          x-stream-index: 001.002.001
+        cid:
+          description: The CID of the channel where the target user was unbanned
+          title: Channel CID
+          type: string
+          x-stream-index: 001.001.001.002
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: 001.001.001.001.003
+        created_by:
+          $ref: '#/components/schemas/UserResponseCommonFields'
+          description: The user who unbanned the target user
+          title: Created by
+          x-stream-index: "003"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.001.001.007
+        received_at:
+          format: date-time
+          type: string
+          x-stream-index: 001.001.001.001.004
+        shadow:
+          description: Whether the target user was shadow unbanned
+          title: Shadow
+          type: boolean
+          x-stream-index: "004"
+        team:
+          description: The team of the channel where the target user was unbanned
+          title: Team
+          type: string
+          x-stream-index: 001.001.003
+        type:
+          default: user.unbanned
+          description: 'The type of event: "user.unbanned" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: 001.001.001.001.002
+        user:
+          $ref: '#/components/schemas/UserResponseCommonFields'
+          description: The target user that was unbanned
+          title: User
+          x-stream-index: "002.001"
+      required:
+      - type
+      - created_at
+      - custom
+      - user
+      title: UserUnbannedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    UserUpdatedEvent:
+      description: This event is sent when a user gets updated. The event contains
+        information about the updated user.
+      nullable: true
+      properties:
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: "001.003"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "001.007"
+        received_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.004"
+        type:
+          default: user.updated
+          description: 'The type of event: "user.updated" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.002"
+        user:
+          $ref: '#/components/schemas/UserResponsePrivacyFields'
+          description: The updated user
+          title: User
+          x-stream-index: "002.001"
+      required:
+      - type
+      - created_at
+      - custom
+      - user
+      title: UserUpdatedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     WHEvent:
       description: The discriminator object for all webhook events, it maps events'
         payload to the final type
@@ -6062,6 +6926,8 @@ components:
           appeal.rejected: '#/components/schemas/AppealRejectedEvent'
           export.bulk_image_moderation.error: '#/components/schemas/AsyncExportErrorEvent'
           export.bulk_image_moderation.success: '#/components/schemas/AsyncBulkImageModerationEvent'
+          export.label_results.error: '#/components/schemas/AsyncExportErrorEvent'
+          export.label_results.success: '#/components/schemas/AsyncExportLabelResultsEvent'
           export.moderation_logs.error: '#/components/schemas/AsyncExportErrorEvent'
           export.moderation_logs.success: '#/components/schemas/AsyncExportModerationLogsEvent'
           export.review_queue.error: '#/components/schemas/AsyncExportErrorEvent'
@@ -6076,6 +6942,12 @@ components:
           moderation_rule.triggered: '#/components/schemas/ModerationRulesTriggeredEvent'
           review_queue_item.new: '#/components/schemas/ReviewQueueItemNewEvent'
           review_queue_item.updated: '#/components/schemas/ReviewQueueItemUpdatedEvent'
+          user.banned: '#/components/schemas/UserBannedEvent'
+          user.deactivated: '#/components/schemas/UserDeactivatedEvent'
+          user.deleted: '#/components/schemas/UserDeletedEvent'
+          user.reactivated: '#/components/schemas/UserReactivatedEvent'
+          user.unbanned: '#/components/schemas/UserUnbannedEvent'
+          user.updated: '#/components/schemas/UserUpdatedEvent'
         propertyName: type
       oneOf:
       - $ref: '#/components/schemas/AppealAcceptedEvent'
@@ -6085,6 +6957,8 @@ components:
       - $ref: '#/components/schemas/AsyncExportErrorEvent'
       - $ref: '#/components/schemas/AsyncExportErrorEvent'
       - $ref: '#/components/schemas/AsyncExportErrorEvent'
+      - $ref: '#/components/schemas/AsyncExportErrorEvent'
+      - $ref: '#/components/schemas/AsyncExportLabelResultsEvent'
       - $ref: '#/components/schemas/AsyncExportModerationLogsEvent'
       - $ref: '#/components/schemas/AsyncExportReviewQueueEvent'
       - $ref: '#/components/schemas/ModerationAnalysisFailedEvent'
@@ -6097,6 +6971,12 @@ components:
       - $ref: '#/components/schemas/ModerationTextAnalysisCompleteEvent'
       - $ref: '#/components/schemas/ReviewQueueItemNewEvent'
       - $ref: '#/components/schemas/ReviewQueueItemUpdatedEvent'
+      - $ref: '#/components/schemas/UserBannedEvent'
+      - $ref: '#/components/schemas/UserDeactivatedEvent'
+      - $ref: '#/components/schemas/UserDeletedEvent'
+      - $ref: '#/components/schemas/UserReactivatedEvent'
+      - $ref: '#/components/schemas/UserUnbannedEvent'
+      - $ref: '#/components/schemas/UserUpdatedEvent'
   securitySchemes:
     JWT:
       description: |
@@ -6138,7 +7018,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v237.9.1
+  version: v239.75.1
 openapi: 3.0.3
 paths:
   /api/v1/moderation/chat_message_tasks:

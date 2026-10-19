@@ -67,7 +67,7 @@ if [[ -z $DISABLE_SWIFT ]]; then
   if command -v swift &> /dev/null
   then
     echo "Installing swift protoc plugin"
-    git clone --depth 1 --branch 1.22.0 https://github.com/apple/swift-protobuf $PROTOC_DIR/.swift-protobuf
+    git clone --depth 1 --branch "${PROTO_SWIFT_VERSION}" https://github.com/apple/swift-protobuf $PROTOC_DIR/.swift-protobuf
     (cd $PROTOC_DIR/.swift-protobuf && swift build -c release)
     ln -s $PROTOC_DIR/.swift-protobuf/.build/release/protoc-gen-swift $PROTOC_DIR/bin/protoc-gen-swift
   else

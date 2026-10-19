@@ -5,22 +5,24 @@ import {{.Path}};
 
 {{range .Services}}
 class {{.ClassName}}: @unchecked Sendable {
-	private let httpClient: HTTPClient
-	let hostname: String
-	var token: String
-	let apiKey: String
+    private let httpClient: HTTPClient
+    let hostname: String
+    var token: String
+    let apiKey: String
     let syncQueue = DispatchQueue(label: "{{.ClassName}}", qos: .userInitiated)
-	let pathPrefix: String = "/{{.Package}}.{{.Name}}/"
-	init(httpClient: HTTPClient, apiKey: String, hostname: String, token: String) {
+    let pathPrefix: String = "/{{.Package}}.{{.Name}}/"
+    var httpConfig = HTTPConfig.default //TODO: move this
+
+    init(httpClient: HTTPClient, apiKey: String, hostname: String, token: String) {
         self.httpClient = httpClient
-		self.hostname = hostname
-		self.token = token
+        self.hostname = hostname
+        self.token = token
         self.apiKey = apiKey
-	}
+    }
     {{range .Methods}}
-	func {{.Name}}({{.InputArg}}: {{.InputType}}) async throws -> {{.OutputType}} {
+    func {{.Name}}({{.InputArg}}: {{.InputType}}) async throws -> {{.OutputType}} {
         return try await execute(request: {{.InputArg}}, path: "{{.Path}}")
-	}
+    }
     {{end}}
     func update(userToken: String) {
         syncQueue.async { [weak self] in
@@ -28,23 +30,42 @@ class {{.ClassName}}: @unchecked Sendable {
         }
     }
 
-    private func execute<Request: ProtoModel, Response: ProtoModel>(request: Request, path: String) async throws -> Response {
+    private func execute<Request: ProtoModel, Response: ProtoModelResponse>(request: Request, path: String, retries: Int = 0) async throws -> Response {
         let requestData = try request.serializedData()
-        var request = try makeRequest(for: path)
-        request.httpBody = requestData
-        let responseData = try await httpClient.execute(request: request)
-        let response = try Response.init(serializedData: responseData)
+        var urlRequest = try makeRequest(for: path)
+        urlRequest.httpBody = requestData
+        let responseData = try await httpClient.execute(request: urlRequest)
+        let response = try Response.init(serializedBytes: responseData)
+        if response.hasError {
+            if response.error.shouldRetry && retries < httpConfig.maxRetries {
+                let delay = httpConfig.retryStrategy.getDelayAfterTheFailure()
+                let delayNanoseconds = UInt64(delay * 1_000_000_000)
+                log.debug("Delaying retry for \(delay) seconds")
+                try await Task.sleep(nanoseconds: delayNanoseconds)
+                log.debug("Retrying request for path \(path)")
+                return try await execute(request: request, path: path, retries: retries + 1)
+            } else {
+                httpConfig.retryStrategy.resetConsecutiveFailures()
+                throw NSError(
+                    domain: "stream",
+                    code: response.error.code.rawValue,
+                    userInfo: ["message": response.error.message]
+                )
+            }
+        }
+        httpConfig.retryStrategy.resetConsecutiveFailures()
         return response
     }
 
     private func makeRequest(for path: String) throws -> URLRequest {
-    	let url = hostname + pathPrefix + path + "?api_key=\(apiKey)"
+        let url = hostname + pathPrefix + path + "?api_key=\(apiKey)"
         guard let url = URL(string: url) else {
             throw NSError(domain: "stream", code: 123)
         }
         var request = URLRequest(url: url)
         request.setValue("application/protobuf", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(token)", forHTTPHeaderField: "authorization")
+        request.setValue(SystemEnvironment.sdkIdentifier, forHTTPHeaderField: "X-Stream-Client")
         request.httpMethod = "POST"
         return request
     }

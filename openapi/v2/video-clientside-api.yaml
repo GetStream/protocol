@@ -14,6 +14,13 @@ components:
           title: Code
           type: integer
           x-stream-index: "001"
+        cooldown_remaining_ms:
+          description: Milliseconds until the user's slow mode cool down period ends.
+            Only set on code 60 (cool down) errors
+          format: int64
+          title: Cooldown remaining ms
+          type: integer
+          x-stream-index: "009"
         details:
           description: Additional error-specific information
           items:
@@ -154,6 +161,24 @@ components:
       - duration
       title: AddUserGroupMembersResponse
       type: object
+    AppDefaults:
+      description: Request limit defaults applied by the server when the corresponding
+        field is omitted.
+      properties:
+        get_or_create_channel:
+          $ref: '#/components/schemas/GetOrCreateChannelDefaults'
+          description: Defaults applied by the get-or-create channel endpoint.
+          title: Get or create channel
+          x-stream-index: "002"
+        query_channels:
+          $ref: '#/components/schemas/QueryChannelsDefaults'
+          description: Defaults applied by the query channels endpoint.
+          title: Query channels
+          x-stream-index: "001"
+      required:
+      - query_channels
+      - get_or_create_channel
+      type: object
     AppEventResponse:
       properties:
         async_url_enrich_enabled:
@@ -186,15 +211,28 @@ components:
       - auto_translation_enabled
       type: object
     AppResponseFields:
+      description: A type representing the app settings.
       properties:
         async_url_enrich_enabled:
+          description: A boolean value determining if async url enrichment is enabled.
+          title: Async URL enrich enabled
           type: boolean
           x-stream-index: "020"
         auto_translation_enabled:
+          description: A boolean value determining if auto translation is enabled.
+          title: Auto translation enabled
           type: boolean
           x-stream-index: "023"
+        defaults:
+          $ref: '#/components/schemas/AppDefaults'
+          description: Request limit defaults the server applies when the corresponding
+            field is omitted.
+          title: Defaults
+          x-stream-index: "038"
         file_upload_config:
           $ref: '#/components/schemas/FileUploadConfig'
+          description: The file uploading configuration.
+          title: File upload config
           x-stream-index: "036"
         id:
           format: int32
@@ -202,8 +240,12 @@ components:
           x-stream-index: "001"
         image_upload_config:
           $ref: '#/components/schemas/FileUploadConfig'
+          description: The image uploading configuration.
+          title: Image upload config
           x-stream-index: "037"
         name:
+          description: The name of the app.
+          title: Name
           type: string
           x-stream-index: "002"
         placement:
@@ -217,6 +259,7 @@ components:
       - auto_translation_enabled
       - file_upload_config
       - image_upload_config
+      - defaults
       type: object
     AppUpdatedEvent:
       description: Emitted when app settings are updated
@@ -546,7 +589,7 @@ components:
           x-stream-index: "007"
         type:
           description: 'Block list type. One of: regex, domain, domain_allowlist,
-            email, email_allowlist, word'
+            email, email_allowlist, word, word_allowlist'
           title: Type
           type: string
           x-stream-index: "005"
@@ -2523,6 +2566,11 @@ components:
           title: Members
           type: array
           x-stream-index: "006"
+        ring_id:
+          description: Identifies this ring of the call session
+          title: RingID
+          type: string
+          x-stream-index: "009"
         session_id:
           description: Call session ID
           title: Session ID
@@ -2979,6 +3027,9 @@ components:
         ingress:
           $ref: '#/components/schemas/IngressSettingsRequest'
           x-stream-index: "016"
+        lifecycle:
+          $ref: '#/components/schemas/LifecycleSettingsRequest'
+          x-stream-index: "018"
         limits:
           $ref: '#/components/schemas/LimitsSettingsRequest'
           x-stream-index: "014"
@@ -3033,6 +3084,9 @@ components:
         ingress:
           $ref: '#/components/schemas/IngressSettingsResponse'
           x-stream-index: "016"
+        lifecycle:
+          $ref: '#/components/schemas/LifecycleSettingsResponse'
+          x-stream-index: "018"
         limits:
           $ref: '#/components/schemas/LimitsSettingsResponse'
           x-stream-index: "014"
@@ -3077,6 +3131,7 @@ components:
       - limits
       - session
       - encryption
+      - lifecycle
       type: object
     CallStateResponseFields:
       description: CallStateResponseFields is the payload for call state response
@@ -3945,7 +4000,6 @@ components:
           x-stream-index: 001.002.016
         max_message_length:
           format: int32
-          maximum: 20000
           type: integer
           x-stream-index: 001.002.022
         message_retention:
@@ -3971,13 +4025,17 @@ components:
           type: boolean
           x-stream-index: 001.002.017
         push_level:
+          description: Sets the push notification level for a channel type
           enum:
           - all
           - all_mentions
           - mentions
           - direct_mentions
           - none
+          title: Push notification level
           type: string
+          x-stream-deprecated-enum-values:
+            mentions: direct_mentions
           x-stream-index: 001.002.033
         push_notifications:
           type: boolean
@@ -4188,6 +4246,7 @@ components:
           type: string
           x-stream-index: "001"
       required:
+      - user_id
       - custom
       - created_at
       - updated_at
@@ -4233,7 +4292,7 @@ components:
       - updated_at
       type: object
     ChannelOwnCapability:
-      description: All possibility of string to use
+      description: An action that can be performed in a channel.
       enum:
       - ban-channel-members
       - cast-poll-vote
@@ -4257,6 +4316,7 @@ components:
       - query-poll-votes
       - quote-message
       - read-events
+      - schedule-message
       - search-messages
       - send-custom-events
       - send-links
@@ -4279,23 +4339,80 @@ components:
       - upload-file
       title: ChannelOwnCapability
       type: string
+      x-stream-enum-descriptions:
+        ban-channel-members: Ability to ban channel members.
+        cast-poll-vote: Ability to cast a poll vote.
+        connect-events: Ability to receive connect events.
+        create-attachment: Ability to attach files to messages.
+        create-mention: Ability to mention users in messages.
+        delete-any-message: Ability to delete any message from the channel.
+        delete-channel: Ability to delete the channel.
+        delete-own-message: Ability to delete own messages from the channel.
+        delivery-events: Ability to receive delivery events.
+        flag-message: Ability to flag a message.
+        freeze-channel: Ability to freeze or unfreeze the channel.
+        join-channel: Ability to join channel (add own membership).
+        leave-channel: Ability to leave the channel (remove own membership).
+        mute-channel: Ability to mute the channel.
+        notify-channel: Ability to notify all channel members using @channel mention.
+        notify-group: Ability to notify channel members using user group mentions.
+        notify-here: Ability to notify online channel members using @here mention.
+        notify-role: Ability to notify channel members using role mentions.
+        pin-message: Ability to pin a message.
+        query-poll-votes: Ability to query poll votes.
+        quote-message: Ability to quote a message.
+        read-events: Ability to receive read events.
+        schedule-message: Ability to schedule a message to be sent later.
+        search-messages: Ability to use message search.
+        send-custom-events: Ability to send custom events.
+        send-links: Ability to attach links to messages.
+        send-message: Ability to send a message.
+        send-poll: Ability to send a poll.
+        send-reaction: Ability to send reactions.
+        send-reply: Ability to thread reply to a message.
+        send-restricted-visibility-message: Ability to send a message with restricted
+          visibility.
+        send-typing-events: Ability to send and receive typing events.
+        set-channel-cooldown: Ability to enable or disable slow mode.
+        share-location: Ability to share location.
+        skip-slow-mode: Ability to skip the slow mode when it's active.
+        slow-mode: Indicates that channel slow mode is active.
+        typing-events: Ability to send and receive typing events.
+        update-any-message: Ability to update any message in the channel.
+        update-channel: Ability to update channel data.
+        update-channel-members: Ability to update channel members.
+        update-own-message: Ability to update own messages in the channel.
+        update-thread: Ability to update thread data.
+        upload-file: Ability to upload message attachments.
     ChannelPushPreferencesResponse:
+      description: The push preference details.
       nullable: true
       properties:
         chat_level:
+          description: The scope level of the push notifications.
+          title: Chat level
           type: string
           x-stream-index: "001"
         chat_preferences:
           $ref: '#/components/schemas/ChatPreferencesResponse'
           x-stream-index: "002"
         disabled_until:
+          description: If provided the notifications will be disabled until the set
+            date.
           format: date-time
+          title: Disabled until
           type: number
           x-stream-index: "003"
       type: object
     ChannelResponse:
       description: Represents channel in chat
       properties:
+        active_member_count:
+          description: Number of members who are not deactivated or deleted
+          format: int32
+          title: Active member count
+          type: integer
+          x-stream-index: "029"
         auto_translation_enabled:
           description: Whether auto translation is enabled or not
           title: Auto translation
@@ -4589,7 +4706,7 @@ components:
           maxLength: 32
           title: Camera Permission Status
           type: string
-          x-stream-index: "027"
+          x-stream-index: "028"
         coordinator_connect_id:
           description: UUID generated by the client and shared across every event
             of the same coordinator connection. Required on every event except JoinInitiated,
@@ -4619,7 +4736,7 @@ components:
           maxLength: 32
           title: ICE State
           type: string
-          x-stream-index: "024"
+          x-stream-index: "025"
         id:
           description: Call ID associated with the event. Required on every stage
             except CoordinatorWS, where it is optional.
@@ -4643,13 +4760,29 @@ components:
           title: Join Reason
           type: string
           x-stream-index: "019"
+        leave_initiator:
+          description: 'Source of the leave that aborted a join: user, app, callkit,
+            remote_event, sdk_error, or unknown. Not validated against this set, so
+            SDKs may report new values. Optional; sent on failure events. Maximum
+            32 characters.'
+          maxLength: 32
+          title: Leave Initiator
+          type: string
+          x-stream-index: "029"
+        leave_reason:
+          description: Internal reason or triggering event for the leave that aborted
+            a join. Optional; sent on failure events. Maximum 200 characters.
+          maxLength: 200
+          title: Leave Reason
+          type: string
+          x-stream-index: "030"
         microphone_permission_status:
           description: 'Microphone permission status: INITIATED, FAILED, GRANTED,
             or NOT_INITIATED. Required on every MediaDevicePermission event.'
           maxLength: 32
           title: Microphone Permission Status
           type: string
-          x-stream-index: "026"
+          x-stream-index: "027"
         outcome:
           description: 'Resolution of a completed event: success or failure. Required
             on completed join events; forbidden on initiated join events.'
@@ -4686,21 +4819,21 @@ components:
           maxLength: 200
           title: Retry Failure Code
           type: string
-          x-stream-index: "023"
+          x-stream-index: "024"
         retry_failure_reason:
           description: Failure reason string. Required on CoordinatorJoin, CoordinatorWS,
             WSJoin, and PeerConnectionConnect failure.
           maxLength: 2000
           title: Retry Failure Reason
           type: string
-          x-stream-index: "022"
+          x-stream-index: "023"
         screen_share_status:
           description: 'Screen-share permission status: INITIATED, FAILED, GRANTED,
             or NOT_INITIATED. Optional on MediaDevicePermission events.'
           maxLength: 32
           title: Screen Share Status
           type: string
-          x-stream-index: "025"
+          x-stream-index: "026"
         sdk_version:
           description: Version of the client SDK
           maxLength: 50
@@ -4713,6 +4846,13 @@ components:
             and FirstVideoFrame.
           maxLength: 128
           title: SFU ID
+          type: string
+          x-stream-index: "021"
+        source:
+          description: Source of the coordinator join. Optional on CoordinatorJoin
+            events; omitted when not provided.
+          maxLength: 200
+          title: Source
           type: string
           x-stream-index: "020"
         stage:
@@ -4744,7 +4884,7 @@ components:
           maxLength: 128
           title: Track ID
           type: string
-          x-stream-index: "021"
+          x-stream-index: "022"
         type:
           description: Call type associated with the event. Required on every stage
             except CoordinatorWS, where it is optional.
@@ -5015,7 +5155,7 @@ components:
           x-stream-index: "003"
         type:
           default: connection.error
-          description: 'The type of event: "connection.ok" in this case'
+          description: 'The type of event: "connection.error" in this case'
           title: Event Type
           type: string
           x-stream-index: "001.001"
@@ -5112,7 +5252,7 @@ components:
           x-stream-index: "008"
         type:
           description: 'Block list type. One of: regex, domain, domain_allowlist,
-            email, email_allowlist, word'
+            email, email_allowlist, word, word_allowlist'
           enum:
           - regex
           - domain
@@ -5120,6 +5260,7 @@ components:
           - email
           - email_allowlist
           - word
+          - word_allowlist
           title: Type
           type: string
           x-stream-index: "007"
@@ -5264,7 +5405,7 @@ components:
           description: Custom data for this object
           title: Custom data
           type: object
-          x-stream-index: "011"
+          x-stream-index: "012"
         description:
           description: A description of the poll
           title: Description
@@ -5302,11 +5443,21 @@ components:
           maxItems: 100
           type: array
           x-stream-index: "004"
+        team:
+          maxLength: 255
+          type: string
+          x-stream-index: "011"
         voting_visibility:
+          description: Represents the visibility of votes in a poll.
           enum:
           - anonymous
           - public
+          title: Voting visibility
           type: string
+          x-stream-enum-descriptions:
+            anonymous: Votes are anonymous and cannot be attributed to individual
+              users.
+            public: Votes are public and can be seen by everyone.
           x-stream-index: "005"
       required:
       - name
@@ -5558,6 +5709,7 @@ components:
       title: DeleteTranscriptionResponse
       type: object
     DeliveryReceiptsResponse:
+      description: The settings for the delivery receipt events.
       properties:
         enabled:
           type: boolean
@@ -5603,11 +5755,11 @@ components:
       - outlier
       type: object
     DeviceResponse:
-      description: Response for Device
+      description: An object representing a device which can receive push notifications.
       nullable: true
       properties:
         created_at:
-          description: Date/time of creation
+          description: The date when the device was created.
           format: date-time
           title: Created at
           type: number
@@ -5629,7 +5781,7 @@ components:
           type: string
           x-stream-index: "008"
         id:
-          description: Device ID
+          description: The device identifier.
           title: ID
           type: string
           x-stream-index: "003"
@@ -6118,29 +6270,41 @@ components:
     FileUploadConfig:
       properties:
         allowed_file_extensions:
+          description: The allowed file extensions.
           items:
             type: string
+          title: Allowed file extensions
           type: array
           x-stream-index: "001"
         allowed_mime_types:
+          description: The allowed mime types.
           items:
             type: string
+          title: Allowed MIME types
           type: array
           x-stream-index: "003"
         blocked_file_extensions:
+          description: The blocked file extensions.
           items:
             type: string
+          title: Blocked file extensions
           type: array
           x-stream-index: "002"
         blocked_mime_types:
+          description: The blocked mime types.
           items:
             type: string
+          title: Blocked MIME types
           type: array
           x-stream-index: "004"
         size_limit:
+          description: |-
+            The file size limit allowed in Bytes. 0 means no app-specific limit.
+            This value is configurable from Stream's Dashboard App Settings.
           format: int32
           maximum: 104857600
           minimum: 0
+          title: Size limit
           type: integer
           x-stream-index: "005"
       required:
@@ -6324,10 +6488,6 @@ components:
         privacy_settings:
           $ref: '#/components/schemas/PrivacySettingsResponse'
           x-stream-index: "003"
-        revoke_tokens_issued_before:
-          format: date-time
-          type: number
-          x-stream-index: "001.015"
         role:
           type: string
           x-stream-index: "001.006"
@@ -6353,8 +6513,14 @@ components:
           type: integer
           x-stream-index: "010"
         unread_count:
+          deprecated: true
+          description: 'Deprecated: Use total_unread_count instead.'
           format: int32
+          title: Unread count
           type: integer
+          x-stream-deprecated: true
+          x-stream-deprecated-message: Use total_unread_count instead.
+          x-stream-deprecated-renamed: total_unread_count
           x-stream-index: "008"
         unread_threads:
           format: int32
@@ -6542,6 +6708,85 @@ components:
       - own_capabilities
       - duration
       title: GetCallResponse
+      type: object
+    GetCallRingStateResponse:
+      description: 'The ring state of a call session: who accepted, rejected, or missed
+        the ring.'
+      nullable: true
+      properties:
+        accepted_by:
+          additionalProperties:
+            format: date-time
+            type: number
+          description: Users that accepted the call, mapped to when they accepted
+          title: AcceptedBy
+          type: object
+          x-stream-index: "005"
+        call_cid:
+          description: The CID of the call
+          title: CallCID
+          type: string
+          x-stream-index: "002"
+        call_ended_at:
+          description: When the call ended
+          format: date-time
+          title: CallEndedAt
+          type: number
+          x-stream-index: "010"
+        created_by_user_id:
+          description: The user that created the call, i.e. the caller
+          title: CreatedByUserID
+          type: string
+          x-stream-index: "004"
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+        missed_by:
+          additionalProperties:
+            format: date-time
+            type: number
+          description: Users that missed the call, mapped to when they were marked
+            as missed
+          title: MissedBy
+          type: object
+          x-stream-index: "007"
+        rejected_by:
+          additionalProperties:
+            format: date-time
+            type: number
+          description: Users that rejected the call, mapped to when they rejected
+          title: RejectedBy
+          type: object
+          x-stream-index: "006"
+        session_ended_at:
+          description: When the call session ended
+          format: date-time
+          title: SessionEndedAt
+          type: number
+          x-stream-index: "009"
+        session_id:
+          description: The call session this state belongs to, empty when the call
+            has never rung
+          title: SessionID
+          type: string
+          x-stream-index: "003"
+        session_started_at:
+          description: When the call session started
+          format: date-time
+          title: SessionStartedAt
+          type: number
+          x-stream-index: "008"
+      required:
+      - duration
+      - call_cid
+      - session_id
+      - created_by_user_id
+      - accepted_by
+      - rejected_by
+      - missed_by
+      title: GetCallRingStateResponse
       type: object
     GetCallSessionParticipantStatsDetailsResponse:
       description: Basic response information
@@ -6772,6 +7017,23 @@ components:
       - created
       - duration
       title: GetOrCreateCallResponse
+      type: object
+    GetOrCreateChannelDefaults:
+      description: Defaults applied by the get-or-create channel endpoint.
+      properties:
+        members:
+          $ref: '#/components/schemas/PagerDefaults'
+          description: Defaults for the `members` pagination object.
+          title: Members
+          x-stream-index: "002"
+        messages:
+          $ref: '#/components/schemas/PagerDefaults'
+          description: Defaults for the `messages` pagination object.
+          title: Messages
+          x-stream-index: "001"
+      required:
+      - messages
+      - members
       type: object
     GetUserGroupResponse:
       description: Response for getting a user group
@@ -7814,6 +8076,39 @@ components:
       required:
       - name
       type: object
+    LifecycleSettingsRequest:
+      properties:
+        mode:
+          description: 'Call lifecycle mode. One of: reusable, single_use. A single_use
+            call cannot be reused once it has ended; the server ends it when its ring
+            settles without an answer (currently: when the caller cancels the ring).
+            Fixed at call creation'
+          enum:
+          - reusable
+          - single_use
+          title: Mode
+          type: string
+          x-stream-index: "001"
+      title: LifecycleSettingsRequest
+      type: object
+    LifecycleSettingsResponse:
+      description: LifecycleSettings is the payload for call lifecycle settings
+      properties:
+        mode:
+          description: 'Call lifecycle mode. One of: reusable, single_use. A single_use
+            call cannot be reused once it has ended; the server ends it when its ring
+            settles without an answer (currently: when the caller cancels the ring).
+            Fixed at call creation'
+          enum:
+          - reusable
+          - single_use
+          title: Mode
+          type: string
+          x-stream-index: "001"
+      required:
+      - mode
+      title: LifecycleSettingsResponse
+      type: object
     LimitsSettingsRequest:
       properties:
         max_duration_seconds:
@@ -8699,10 +8994,6 @@ components:
         push_preferences:
           $ref: '#/components/schemas/PushPreferencesResponse'
           x-stream-index: "002"
-        revoke_tokens_issued_before:
-          format: date-time
-          type: number
-          x-stream-index: "001.015"
         role:
           type: string
           x-stream-index: "001.006"
@@ -8731,8 +9022,14 @@ components:
           type: integer
           x-stream-index: "011"
         unread_count:
+          deprecated: true
+          description: 'Deprecated: Use total_unread_count instead.'
           format: int32
+          title: Unread count
           type: integer
+          x-stream-deprecated: true
+          x-stream-deprecated-message: Use total_unread_count instead.
+          x-stream-deprecated-renamed: total_unread_count
           x-stream-index: "008"
         unread_threads:
           format: int32
@@ -8760,6 +9057,19 @@ components:
       - total_unread_count
       - unread_channels
       - unread_threads
+      - blocked_user_ids
+      type: object
+    PagerDefaults:
+      description: Resolved defaults for a nested pagination object.
+      properties:
+        limit:
+          description: Number of records returned when `limit` is omitted.
+          format: int32
+          title: Limit
+          type: integer
+          x-stream-index: "001"
+      required:
+      - limit
       type: object
     ParticipantCountByMinuteResponse:
       nullable: true
@@ -9228,13 +9538,18 @@ components:
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "003"
+          x-stream-index: "004"
         id:
           type: string
           x-stream-index: "001"
         text:
           type: string
           x-stream-index: "002"
+        text_i18n:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "003"
       required:
       - id
       - text
@@ -9261,83 +9576,93 @@ components:
       properties:
         allow_answers:
           type: boolean
-          x-stream-index: "008"
+          x-stream-index: "010"
         allow_user_suggested_options:
           type: boolean
-          x-stream-index: "007"
+          x-stream-index: "009"
         answers_count:
           format: int32
           type: integer
-          x-stream-index: "012"
+          x-stream-index: "014"
         created_at:
           format: date-time
           type: number
-          x-stream-index: "019"
+          x-stream-index: "021"
         created_by:
           $ref: '#/components/schemas/UserResponse'
-          x-stream-index: "018"
+          x-stream-index: "020"
         created_by_id:
           type: string
-          x-stream-index: "017"
+          x-stream-index: "019"
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "021"
+          x-stream-index: "023"
         description:
           type: string
-          x-stream-index: "003"
+          x-stream-index: "004"
+        description_i18n:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "005"
         enforce_unique_vote:
           type: boolean
-          x-stream-index: "005"
+          x-stream-index: "007"
         id:
           type: string
           x-stream-index: "001"
         is_closed:
           type: boolean
-          x-stream-index: "009"
+          x-stream-index: "011"
         latest_answers:
           items:
             $ref: '#/components/schemas/PollVoteResponseData'
           type: array
-          x-stream-index: "015"
+          x-stream-index: "017"
         latest_votes_by_option:
           additionalProperties:
             items:
               $ref: '#/components/schemas/PollVoteResponseData'
             type: array
           type: object
-          x-stream-index: "014"
+          x-stream-index: "016"
         max_votes_allowed:
           format: int32
           type: integer
-          x-stream-index: "006"
+          x-stream-index: "008"
         name:
           type: string
           x-stream-index: "002"
+        name_i18n:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "003"
         options:
           items:
             $ref: '#/components/schemas/PollOptionResponseData'
           type: array
-          x-stream-index: "011"
+          x-stream-index: "013"
         own_votes:
           items:
             $ref: '#/components/schemas/PollVoteResponseData'
           type: array
-          x-stream-index: "016"
+          x-stream-index: "018"
         updated_at:
           format: date-time
           type: number
-          x-stream-index: "020"
+          x-stream-index: "022"
         vote_count:
           format: int32
           type: integer
-          x-stream-index: "010"
+          x-stream-index: "012"
         vote_counts_by_option:
           additionalProperties:
             format: int32
             type: integer
           type: object
-          x-stream-index: "013"
+          x-stream-index: "015"
         voting_visibility:
           description: Voting visibility of the poll
           enum:
@@ -9345,7 +9670,7 @@ components:
           - public
           title: Voting visibility
           type: string
-          x-stream-index: "004"
+          x-stream-index: "006"
       required:
       - id
       - name
@@ -9372,10 +9697,15 @@ components:
         answer_text:
           type: string
           x-stream-index: "005"
+        answer_text_i18n:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "006"
         created_at:
           format: date-time
           type: number
-          x-stream-index: "008"
+          x-stream-index: "009"
         id:
           type: string
           x-stream-index: "002"
@@ -9391,13 +9721,13 @@ components:
         updated_at:
           format: date-time
           type: number
-          x-stream-index: "009"
+          x-stream-index: "010"
         user:
           $ref: '#/components/schemas/UserResponse'
-          x-stream-index: "007"
+          x-stream-index: "008"
         user_id:
           type: string
-          x-stream-index: "006"
+          x-stream-index: "007"
       required:
       - poll_id
       - id
@@ -9490,15 +9820,22 @@ components:
       - note
       type: object
     PrivacySettingsResponse:
+      description: The privacy settings of the user.
       properties:
         delivery_receipts:
           $ref: '#/components/schemas/DeliveryReceiptsResponse'
+          description: The settings for the delivery receipt events.
+          title: Delivery receipts
           x-stream-index: "003"
         read_receipts:
           $ref: '#/components/schemas/ReadReceiptsResponse'
+          description: The settings for the read receipt events.
+          title: Read receipts
           x-stream-index: "002"
         typing_indicators:
           $ref: '#/components/schemas/TypingIndicatorsResponse'
+          description: The settings for typing indicator events.
+          title: Typing indicators
           x-stream-index: "001"
       type: object
     PublishedTrackFlags:
@@ -9647,6 +9984,17 @@ components:
           - default
           title: Chat Level
           type: string
+          x-stream-deprecated-enum-values:
+            mentions: direct_mentions
+          x-stream-enum-descriptions:
+            all: All push notifications will be delivered.
+            all_mentions: Push notifications will only be delivered when the user
+              is mentioned directly or via @channel, @here, a role or a user group.
+            default: Behaves as all.
+            direct_mentions: Push notifications will only be delivered when the user
+              is directly @mentioned by username.
+            mentions: 'Deprecated: behaves as direct_mentions.'
+            none: No push notifications will be delivered.
           x-stream-index: "003"
         chat_preferences:
           $ref: '#/components/schemas/ChatPreferencesInput'
@@ -9678,6 +10026,34 @@ components:
           title: Remove Disable
           type: boolean
           x-stream-index: "009"
+        remove_schedule:
+          description: Remove the user's quiet-hours schedule, the counterpart of
+            remove_disable. It is applied before schedule, so sending both in one
+            item replaces the stored schedule instead of merging into it. Cannot be
+            combined with channel_cid. To switch from a schedule to a snooze, send
+            remove_schedule together with disabled_until.
+          title: Remove Schedule
+          type: boolean
+          x-stream-index: "011"
+        schedule:
+          $ref: '#/components/schemas/PushScheduleInput'
+          description: 'Set a recurring quiet-hours schedule for the user: while a
+            quiet window is active, push notifications are suppressed. Suppressed
+            notifications are dropped, not delayed or queued. A schedule reaches the
+            same notifications as disabled_until: chat message pushes, video call
+            pushes including ringing calls, and feeds pushes. Reminder pushes are
+            still delivered during quiet hours. The fields are merged into the stored
+            schedule one level deep: a non-empty timezone replaces the stored timezone,
+            and quiet_hours, when present, replaces all stored rules. Sending only
+            a timezone therefore keeps the rules, and sending only quiet_hours keeps
+            the timezone. The merged schedule must be complete, with a timezone and
+            1 to 7 rules, so the first schedule of a user has to set both. An empty
+            object is rejected. Schedules are user-level only. A schedule cannot be
+            combined with channel_cid, nor with disabled_until for the same user in
+            the same request, even in separate items; to switch from a snooze to a
+            schedule, send remove_disable together with schedule.'
+          title: Schedule
+          x-stream-index: "010"
         user_id:
           description: The user id for which to set the push preferences. Required
             when using server side auths, defaults to current user with client side
@@ -9687,19 +10063,25 @@ components:
           x-stream-index: "001"
       type: object
     PushPreferencesResponse:
+      description: The push preference details.
       nullable: true
       properties:
         call_level:
           type: string
           x-stream-index: "003"
         chat_level:
+          description: The scope level of the push notifications.
+          title: Chat level
           type: string
           x-stream-index: "001"
         chat_preferences:
           $ref: '#/components/schemas/ChatPreferencesResponse'
           x-stream-index: "002"
         disabled_until:
+          description: If provided the notifications will be disabled until the set
+            date.
           format: date-time
+          title: Disabled until
           type: number
           x-stream-index: "006"
         feeds_level:
@@ -9708,6 +10090,67 @@ components:
         feeds_preferences:
           $ref: '#/components/schemas/FeedsPreferencesResponse'
           x-stream-index: "005"
+        schedule:
+          $ref: '#/components/schemas/PushScheduleResponse'
+          description: The recurring quiet-hours schedule of the user, if one is set.
+            While a quiet window is active, push notifications for the user are suppressed
+            (dropped, not delayed).
+          title: Schedule
+          x-stream-index: "007"
+      type: object
+    PushScheduleInput:
+      description: 'A recurring quiet-hours schedule: while any quiet window is active,
+        push notifications for the user are suppressed. Suppressed notifications are
+        dropped, not delayed.'
+      properties:
+        quiet_hours:
+          description: 'The quiet windows, 1 to 7 rules. Push is suppressed while
+            any rule is active. When present it replaces all stored rules; omit it
+            to keep them, for example to change only the timezone. An empty array
+            counts as omitted, so it cannot be used to clear the rules: use remove_schedule
+            for that.'
+          items:
+            $ref: '#/components/schemas/QuietHoursRuleInput'
+          maxItems: 7
+          minItems: 1
+          title: Quiet hours
+          type: array
+          x-stream-index: "002"
+        timezone:
+          description: IANA time zone name the quiet windows are evaluated in, for
+            example Europe/Amsterdam or America/New_York. Daylight saving time is
+            followed automatically for region-based names. Offsets such as +02:00
+            and the name "Local" are rejected; fixed-offset zones such as UTC or Etc/GMT-2
+            are accepted but never shift for daylight saving time. When updating an
+            existing schedule, a non-empty timezone replaces the stored one and leaves
+            the stored quiet_hours untouched.
+          title: Timezone
+          type: string
+          x-stream-index: "001"
+      title: Push Schedule
+      type: object
+    PushScheduleResponse:
+      description: 'A recurring quiet-hours schedule: while any quiet window is active,
+        push notifications for the user are suppressed. Suppressed notifications are
+        dropped, not delayed.'
+      properties:
+        quiet_hours:
+          description: The quiet windows. Push is suppressed while any rule is active.
+          items:
+            $ref: '#/components/schemas/QuietHoursRuleResponse'
+          title: Quiet hours
+          type: array
+          x-stream-index: "002"
+        timezone:
+          description: IANA time zone name the quiet windows are evaluated in, for
+            example Europe/Amsterdam.
+          title: Timezone
+          type: string
+          x-stream-index: "001"
+      required:
+      - timezone
+      - quiet_hours
+      title: Push Schedule
       type: object
     Quality:
       properties:
@@ -9919,6 +10362,9 @@ components:
             - user_id
           - - created_at
           - - user_id
+          x-stream-sort-fields:
+          - created_at
+          - user_id
         type:
           maxLength: 64
           type: string
@@ -10628,6 +11074,14 @@ components:
           - - type
           - - id
           - - cid
+          x-stream-sort-fields:
+          - cid
+          - created_at
+          - ended_at
+          - id
+          - starts_at
+          - type
+          - updated_at
         watch:
           title: Watch
           type: boolean
@@ -10658,6 +11112,44 @@ components:
       - calls
       - duration
       title: QueryCallsResponse
+      type: object
+    QueryChannelsDefaults:
+      description: Defaults applied by the query channels endpoint.
+      properties:
+        limit:
+          description: Number of channels returned when `limit` is omitted.
+          format: int32
+          title: Limit
+          type: integer
+          x-stream-index: "001"
+        max_limit:
+          description: Largest number of channels returned for one request. A bigger
+            `limit` is silently clamped to this value rather than rejected. An app
+            with no per-app override gets a higher ceiling for the narrow case of
+            a request asking for at most one message and one member per channel.
+          format: int32
+          title: Max limit
+          type: integer
+          x-stream-index: "002"
+        member_limit:
+          description: Number of members returned per channel when `member_limit`
+            is omitted.
+          format: int32
+          title: Member limit
+          type: integer
+          x-stream-index: "004"
+        message_limit:
+          description: Number of messages returned per channel when `message_limit`
+            is omitted.
+          format: int32
+          title: Message limit
+          type: integer
+          x-stream-index: "003"
+      required:
+      - limit
+      - max_limit
+      - message_limit
+      - member_limit
       type: object
     QueryPollVotesRequest:
       nullable: true
@@ -10994,6 +11486,18 @@ components:
               - $eq
               type: string
           x-stream-index: "001"
+        id_gt:
+          type: string
+          x-stream-index: "005.004"
+        id_gte:
+          type: string
+          x-stream-index: "005.003"
+        id_lt:
+          type: string
+          x-stream-index: "005.006"
+        id_lte:
+          type: string
+          x-stream-index: "005.005"
         include_deactivated_users:
           type: boolean
           x-stream-index: "004"
@@ -11041,6 +11545,81 @@ components:
       required:
       - users
       - duration
+      type: object
+    QuietHoursRuleInput:
+      description: One recurring quiet window, expressed in local wall-clock time
+        in the schedule's timezone.
+      properties:
+        days:
+          description: 'The days of the week the window opens on, any of mon, tue,
+            wed, thu, fri, sat, sun, each at most once. A window belongs to the day
+            it opens: ["fri"] with 22:00 to 07:00 is quiet from Friday 22:00 until
+            Saturday 07:00, and not on Saturday night. Empty or omitted means every
+            day.'
+          items:
+            enum:
+            - mon
+            - tue
+            - wed
+            - thu
+            - fri
+            - sat
+            - sun
+            type: string
+          title: Days
+          type: array
+          x-stream-index: "001"
+        end:
+          description: 'When the window closes, as HH:MM local wall-clock time between
+            00:00 and 24:00. The end is exclusive: a window ending at 07:00 is already
+            over at 07:00. An end earlier than start wraps past midnight into the
+            next day (start 22:00, end 07:00). 24:00 means the end of the day, so
+            start 00:00 with end 24:00 covers the whole day.'
+          title: End
+          type: string
+          x-stream-index: "003"
+        start:
+          description: When the window opens, as HH:MM local wall-clock time between
+            00:00 and 23:59. Must differ from end.
+          title: Start
+          type: string
+          x-stream-index: "002"
+      required:
+      - start
+      - end
+      title: Quiet Hours Rule
+      type: object
+    QuietHoursRuleResponse:
+      description: One recurring quiet window, expressed in local wall-clock time
+        in the schedule's timezone.
+      properties:
+        days:
+          description: 'The days of the week the window opens on, any of mon, tue,
+            wed, thu, fri, sat, sun. A window belongs to the day it opens: ["fri"]
+            with 22:00 to 07:00 is quiet from Friday 22:00 until Saturday 07:00. Omitted
+            means every day.'
+          items:
+            type: string
+          title: Days
+          type: array
+          x-stream-index: "001"
+        end:
+          description: When the window closes, as HH:MM local wall-clock time between
+            00:00 and 24:00. The end is exclusive. An end earlier than start wraps
+            past midnight into the next day.
+          title: End
+          type: string
+          x-stream-index: "003"
+        start:
+          description: When the window opens, as HH:MM local wall-clock time between
+            00:00 and 23:59.
+          title: Start
+          type: string
+          x-stream-index: "002"
+      required:
+      - start
+      - end
+      title: Quiet Hours Rule
       type: object
     RTMPBroadcastRequest:
       description: RTMPBroadcastRequest is the payload for starting an RTMP broadcast.
@@ -11320,6 +11899,7 @@ components:
       - custom
       type: object
     ReadReceiptsResponse:
+      description: The settings for the read receipt events.
       properties:
         enabled:
           type: boolean
@@ -11412,20 +11992,24 @@ components:
       properties:
         channel:
           $ref: '#/components/schemas/ChannelResponse'
-          x-stream-index: "003"
+          x-stream-index: "004"
         channel_cid:
           type: string
-          x-stream-index: "002"
+          x-stream-index: "003"
         created_at:
           format: date-time
           type: number
-          x-stream-index: "008"
+          x-stream-index: "009"
+        expires_at:
+          format: date-time
+          type: number
+          x-stream-index: "002"
         message:
           $ref: '#/components/schemas/MessageResponse'
-          x-stream-index: "005"
+          x-stream-index: "006"
         message_id:
           type: string
-          x-stream-index: "004"
+          x-stream-index: "005"
         remind_at:
           format: date-time
           type: number
@@ -11433,13 +12017,13 @@ components:
         updated_at:
           format: date-time
           type: number
-          x-stream-index: "009"
+          x-stream-index: "010"
         user:
           $ref: '#/components/schemas/UserResponse'
-          x-stream-index: "007"
+          x-stream-index: "008"
         user_id:
           type: string
-          x-stream-index: "006"
+          x-stream-index: "007"
       required:
       - channel_cid
       - message_id
@@ -11742,6 +12326,12 @@ components:
     RingCallRequest:
       nullable: true
       properties:
+        custom:
+          additionalProperties: {}
+          description: Opaque context stored on the ring attempt; refs and IDs only
+          title: Custom
+          type: object
+          x-stream-index: "005"
         members_ids:
           description: Members that should receive the ring. If no ids are provided,
             all call members who are not already in the call will receive ring notifications.
@@ -11771,6 +12361,12 @@ components:
           title: Members IDs
           type: array
           x-stream-index: "002"
+        ring_id:
+          description: The ring this call created, for correlating the accept, reject
+            and missed outcomes that follow
+          title: RingID
+          type: string
+          x-stream-index: "003"
       required:
       - duration
       - members_ids
@@ -12593,38 +13189,59 @@ components:
           $ref: '#/components/schemas/ChannelResponse'
           x-stream-index: "011"
         channel_cid:
+          description: The CID (type:id) of the channel that the location is attached
+            to.
+          title: Channel CID
           type: string
           x-stream-index: "001"
         created_at:
+          description: The date when the location was created.
           format: date-time
+          title: Created at
           type: number
           x-stream-index: "008"
         created_by_device_id:
+          description: The ID of the device that created the location.
+          title: Created by device ID
           type: string
           x-stream-index: "006"
         end_at:
+          description: |-
+            The date when the location sharing ends.
+            If it's empty, it means the location sharing is static instead of live.
           format: date-time
+          title: End at
           type: number
           x-stream-index: "007"
         latitude:
+          description: The latitude of the location.
           format: double
+          title: Latitude
           type: number
           x-stream-index: "004"
         longitude:
+          description: The longitude of the location.
           format: double
+          title: Longitude
           type: number
           x-stream-index: "005"
         message:
           $ref: '#/components/schemas/MessageResponse'
           x-stream-index: "010"
         message_id:
+          description: The ID of the message that the location is attached to.
+          title: Message ID
           type: string
           x-stream-index: "002"
         updated_at:
+          description: The date when the location was updated.
           format: date-time
+          title: Updated at
           type: number
           x-stream-index: "009"
         user_id:
+          description: The ID of the user that created the location.
+          title: User ID
           type: string
           x-stream-index: "003"
       required:
@@ -13510,11 +14127,53 @@ components:
             - ms
             - "no"
             - uk
+            - af
+            - sq
+            - am
+            - hy
+            - az
+            - bn
+            - bs
+            - bg
+            - zh-TW
+            - et
+            - fa
+            - fr-CA
+            - ka
+            - gu
+            - ht
+            - ha
+            - is
+            - ga
+            - kn
+            - kk
+            - lv
+            - lt
+            - mk
+            - ml
+            - mt
+            - mr
+            - mn
+            - ps
+            - pt-PT
+            - pa
+            - sr
+            - si
+            - sk
+            - sl
+            - so
+            - sw
+            - te
+            - ur
+            - uz
+            - vi
+            - cy
             type: string
           type: array
           x-stream-index: "002"
       type: object
     TypingIndicatorsResponse:
+      description: The settings for typing indicator events.
       properties:
         enabled:
           type: boolean
@@ -13838,7 +14497,7 @@ components:
           description: Sets new field values
           title: Set
           type: object
-          x-stream-index: "002.001"
+          x-stream-index: "004.001"
           x-stream-map:
             description: New value to set
             key: field
@@ -13849,7 +14508,7 @@ components:
             type: string
           title: Unset
           type: array
-          x-stream-index: "002.002"
+          x-stream-index: "004.002"
       type: object
     UpdatePollRequest:
       nullable: true
@@ -14057,7 +14716,16 @@ components:
           type: string
           x-stream-index: "003.001"
         membership_deletion_task_id:
+          deprecated: true
+          description: 'Deprecated: Always empty. Removing a user from a team no longer
+            deletes their memberships in that team''s channels, so there is no task
+            to poll.'
+          title: Membership Deletion Task ID
           type: string
+          x-stream-deprecated: true
+          x-stream-deprecated-message: Always empty. Removing a user from a team no
+            longer deletes their memberships in that team's channels, so there is
+            no task to poll.
           x-stream-index: "002"
         users:
           additionalProperties:
@@ -14717,12 +15385,6 @@ components:
           title: Online
           type: boolean
           x-stream-index: "001.013"
-        revoke_tokens_issued_before:
-          description: Revocation date for tokens
-          format: date-time
-          title: Revoke tokens issued before
-          type: number
-          x-stream-index: "001.015"
         role:
           description: Determines the set of user permissions
           title: Role
@@ -14808,10 +15470,6 @@ components:
         online:
           type: boolean
           x-stream-index: "013"
-        revoke_tokens_issued_before:
-          format: date-time
-          type: number
-          x-stream-index: "015"
         role:
           type: string
           x-stream-index: "006"
@@ -14896,10 +15554,6 @@ components:
         privacy_settings:
           $ref: '#/components/schemas/PrivacySettingsResponse'
           x-stream-index: "002"
-        revoke_tokens_issued_before:
-          format: date-time
-          type: number
-          x-stream-index: "001.015"
         role:
           type: string
           x-stream-index: "001.006"
@@ -15199,6 +15853,15 @@ components:
       description: Websocket auth message
       nullable: true
       properties:
+        event_protocol:
+          description: Realtime event protocol version. 3 omits channel.members from
+            channel.updated, member.*, notification.message_new and notification.added_to_channel
+            of channels with more than 100 members and sets members_included:false.
+            Values above the newest supported version negotiate down to it.
+          format: int32
+          title: Event Protocol
+          type: integer
+          x-stream-index: "005"
         member_custom_include:
           description: Channel-member custom keys to project onto message.member for
             messages this connection receives (opt-in; capped, off by default).
@@ -15458,7 +16121,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v237.9.1
+  version: v239.75.1
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -15851,6 +16514,12 @@ paths:
           type: string
           writeOnly: true
           x-stream-index: "002"
+      - in: query
+        name: close
+        schema:
+          type: boolean
+          writeOnly: true
+          x-stream-index: "003"
       responses:
         "400":
           content:
@@ -16257,7 +16926,7 @@ paths:
           maxLength: 255
           title: string
           type: string
-          x-stream-index: "001"
+          x-stream-index: "002"
       - in: path
         name: option_id
         required: true
@@ -16266,7 +16935,7 @@ paths:
           maxLength: 255
           title: string
           type: string
-          x-stream-index: "002"
+          x-stream-index: "003"
       responses:
         "200":
           content:
@@ -18748,6 +19417,65 @@ paths:
       summary: Ring Call Users
       tags:
       - product:video
+  /api/v2/video/call/{type}/{id}/ring_state:
+    get:
+      description: |
+        Returns who accepted, rejected, or missed the ring for a call session. Safe to poll: it performs no writes and emits no events. Use it to reconcile after a dropped call.accepted, call.rejected, or call.missed websocket event. call_session_id identifies the session, so the state stays readable after the call has ended.
+      operationId: GetCallRingState
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          description: The type of call
+          maxLength: 64
+          title: Type
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Call ID
+          maxLength: 64
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
+      - in: query
+        name: call_session_id
+        required: true
+        schema:
+          description: The call session to read, as published in the session_id of
+            the call.ring event
+          maxLength: 64
+          title: CallSessionID
+          type: string
+          writeOnly: true
+          x-stream-index: "003"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCallRingStateResponse'
+          description: GetCallRingStateResponse
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get Call Ring State
+      tags:
+      - product:video
   /api/v2/video/call/{type}/{id}/rtmp_broadcasts:
     post:
       description: |
@@ -19045,44 +19773,46 @@ paths:
           type: string
           writeOnly: true
           x-stream-index: "002.003"
-      - in: query
+      - content:
+          application/json:
+            schema:
+              additionalProperties: {}
+              description: Filter conditions to apply to the query
+              title: Filter
+              type: object
+              writeOnly: true
+              x-stream-filter-fields:
+                is_live:
+                  operators:
+                  - $eq
+                  type: boolean
+                is_tech_user:
+                  operators:
+                  - $eq
+                  type: boolean
+                published_tracks:
+                  operators:
+                  - $eq
+                  - $in
+                  type: string
+                publisher_type:
+                  operators:
+                  - $eq
+                  - $in
+                  type: string
+                session_id:
+                  operators:
+                  - $eq
+                  - $in
+                  type: string
+                user_id:
+                  operators:
+                  - $eq
+                  - $in
+                  type: string
+              x-stream-index: "005"
+        in: query
         name: filter_conditions
-        schema:
-          additionalProperties: {}
-          description: Filter conditions to apply to the query
-          title: Filter
-          type: object
-          writeOnly: true
-          x-stream-filter-fields:
-            is_live:
-              operators:
-              - $eq
-              type: boolean
-            is_tech_user:
-              operators:
-              - $eq
-              type: boolean
-            published_tracks:
-              operators:
-              - $eq
-              - $in
-              type: string
-            publisher_type:
-              operators:
-              - $eq
-              - $in
-              type: string
-            session_id:
-              operators:
-              - $eq
-              - $in
-              type: string
-            user_id:
-              operators:
-              - $eq
-              - $in
-              type: string
-          x-stream-index: "005"
       responses:
         "200":
           content:
@@ -20118,55 +20848,59 @@ paths:
           type: string
           writeOnly: true
           x-stream-index: "004"
-      - in: query
+      - content:
+          application/json:
+            schema:
+              description: Array of sort parameters
+              items:
+                $ref: '#/components/schemas/SortParamRequest'
+              maxItems: 1
+              title: Sort
+              type: array
+              writeOnly: true
+              x-stream-index: "005"
+        in: query
         name: sort
-        schema:
-          description: Array of sort parameters
-          items:
-            $ref: '#/components/schemas/SortParamRequest'
-          maxItems: 1
-          title: Sort
-          type: array
-          writeOnly: true
-          x-stream-index: "005"
-      - in: query
+      - content:
+          application/json:
+            schema:
+              additionalProperties: {}
+              description: Filter conditions to apply to the query
+              title: Filter
+              type: object
+              writeOnly: true
+              x-stream-filter-fields:
+                is_live:
+                  operators:
+                  - $eq
+                  type: boolean
+                is_tech_user:
+                  operators:
+                  - $eq
+                  type: boolean
+                published_tracks:
+                  operators:
+                  - $eq
+                  - $in
+                  type: string
+                publisher_type:
+                  operators:
+                  - $eq
+                  - $in
+                  type: string
+                session_id:
+                  operators:
+                  - $eq
+                  - $in
+                  type: string
+                user_id:
+                  operators:
+                  - $eq
+                  - $in
+                  type: string
+              x-stream-index: "006"
+        in: query
         name: filter_conditions
-        schema:
-          additionalProperties: {}
-          description: Filter conditions to apply to the query
-          title: Filter
-          type: object
-          writeOnly: true
-          x-stream-filter-fields:
-            is_live:
-              operators:
-              - $eq
-              type: boolean
-            is_tech_user:
-              operators:
-              - $eq
-              type: boolean
-            published_tracks:
-              operators:
-              - $eq
-              - $in
-              type: string
-            publisher_type:
-              operators:
-              - $eq
-              - $in
-              type: string
-            session_id:
-              operators:
-              - $eq
-              - $in
-              type: string
-            user_id:
-              operators:
-              - $eq
-              - $in
-              type: string
-          x-stream-index: "006"
       - in: query
         name: limit
         schema:

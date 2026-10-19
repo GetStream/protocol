@@ -15,6 +15,13 @@ components:
           title: Code
           type: integer
           x-stream-index: "001"
+        cooldown_remaining_ms:
+          description: Milliseconds until the user's slow mode cool down period ends.
+            Only set on code 60 (cool down) errors
+          format: int64
+          title: Cooldown remaining ms
+          type: integer
+          x-stream-index: "009"
         details:
           description: Additional error-specific information
           items:
@@ -275,7 +282,7 @@ components:
           type: string
           x-stream-index: "002.001"
         type:
-          default: export.channels.error
+          default: export.users.error
           type: string
           x-stream-index: "003.002"
       required:
@@ -2435,6 +2442,11 @@ components:
           title: Members
           type: array
           x-stream-index: "006"
+        ring_id:
+          description: Identifies this ring of the call session
+          title: RingID
+          type: string
+          x-stream-index: "009"
         session_id:
           description: Call session ID
           title: Session ID
@@ -2464,6 +2476,98 @@ components:
       - user
       - video
       title: CallRingEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: ring
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    CallRingSettledEvent:
+      description: 'This event is sent to the backend once per ring attempt, when
+        the attempt reaches its final outcome: a callee''s accept or reject closed
+        it, the caller cancelled it, the ring timed out, or the call ended. It is
+        delivered exactly once per ring_id and carries the final state of every rung
+        user.'
+      nullable: true
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        initiated_by:
+          description: ID of the user who rang
+          title: InitiatedBy
+          type: string
+          x-stream-index: "005"
+        outcome:
+          description: 'Final outcome of the ring: answered_all, answered_some, rejected_all,
+            missed_all, cancelled or mixed'
+          title: Outcome
+          type: string
+          x-stream-index: "007"
+        rang_at:
+          description: When the ring was sent
+          format: date-time
+          title: RangAt
+          type: string
+          x-stream-index: "006"
+        ring_id:
+          description: Identifies this ring of the call session, as carried on call.ring
+          title: RingID
+          type: string
+          x-stream-index: "004"
+        session_id:
+          description: Call session ID
+          title: Session ID
+          type: string
+          x-stream-index: "003.001"
+        settle_reason:
+          description: 'Why the ring closed: answered, rejected, cancel, timeout,
+            ended or auto_end'
+          title: SettleReason
+          type: string
+          x-stream-index: "010"
+        settled_at:
+          description: When the outcome left ringing
+          format: date-time
+          title: SettledAt
+          type: string
+          x-stream-index: "008"
+        settled_by:
+          description: ID of the user whose action closed the ring, or 'server' for
+            the missed-call deadline and automatic ends
+          title: SettledBy
+          type: string
+          x-stream-index: "009"
+        targets:
+          additionalProperties:
+            $ref: '#/components/schemas/RingSettledTarget'
+          description: Final state of every rung user, keyed by user ID
+          title: Targets
+          type: object
+          x-stream-index: "011"
+        type:
+          default: call.ring_settled
+          description: 'The type of event: "call.ring_settled" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - session_id
+      - ring_id
+      - initiated_by
+      - rang_at
+      - outcome
+      - settled_at
+      - settled_by
+      - settle_reason
+      - targets
+      title: CallRingSettledEvent
       type: object
       x-stream-event-call-type: true
       x-stream-event-doc-group: ring
@@ -2882,6 +2986,9 @@ components:
         ingress:
           $ref: '#/components/schemas/IngressSettingsRequest'
           x-stream-index: "016"
+        lifecycle:
+          $ref: '#/components/schemas/LifecycleSettingsRequest'
+          x-stream-index: "018"
         limits:
           $ref: '#/components/schemas/LimitsSettingsRequest'
           x-stream-index: "014"
@@ -2936,6 +3043,9 @@ components:
         ingress:
           $ref: '#/components/schemas/IngressSettingsResponse'
           x-stream-index: "016"
+        lifecycle:
+          $ref: '#/components/schemas/LifecycleSettingsResponse'
+          x-stream-index: "018"
         limits:
           $ref: '#/components/schemas/LimitsSettingsResponse'
           x-stream-index: "014"
@@ -2980,6 +3090,7 @@ components:
       - limits
       - session
       - encryption
+      - lifecycle
       type: object
     CallStateResponseFields:
       description: CallStateResponseFields is the payload for call state response
@@ -3615,6 +3726,7 @@ components:
               type: string
             type: array
           description: the permissions granted to each role
+          nullable: true
           title: Grants
           type: object
           x-stream-index: "002"
@@ -3861,7 +3973,7 @@ components:
           maxLength: 32
           title: Camera Permission Status
           type: string
-          x-stream-index: "027"
+          x-stream-index: "028"
         coordinator_connect_id:
           description: UUID generated by the client and shared across every event
             of the same coordinator connection. Required on every event except JoinInitiated,
@@ -3891,7 +4003,7 @@ components:
           maxLength: 32
           title: ICE State
           type: string
-          x-stream-index: "024"
+          x-stream-index: "025"
         id:
           description: Call ID associated with the event. Required on every stage
             except CoordinatorWS, where it is optional.
@@ -3915,13 +4027,29 @@ components:
           title: Join Reason
           type: string
           x-stream-index: "019"
+        leave_initiator:
+          description: 'Source of the leave that aborted a join: user, app, callkit,
+            remote_event, sdk_error, or unknown. Not validated against this set, so
+            SDKs may report new values. Optional; sent on failure events. Maximum
+            32 characters.'
+          maxLength: 32
+          title: Leave Initiator
+          type: string
+          x-stream-index: "029"
+        leave_reason:
+          description: Internal reason or triggering event for the leave that aborted
+            a join. Optional; sent on failure events. Maximum 200 characters.
+          maxLength: 200
+          title: Leave Reason
+          type: string
+          x-stream-index: "030"
         microphone_permission_status:
           description: 'Microphone permission status: INITIATED, FAILED, GRANTED,
             or NOT_INITIATED. Required on every MediaDevicePermission event.'
           maxLength: 32
           title: Microphone Permission Status
           type: string
-          x-stream-index: "026"
+          x-stream-index: "027"
         outcome:
           description: 'Resolution of a completed event: success or failure. Required
             on completed join events; forbidden on initiated join events.'
@@ -3958,21 +4086,21 @@ components:
           maxLength: 200
           title: Retry Failure Code
           type: string
-          x-stream-index: "023"
+          x-stream-index: "024"
         retry_failure_reason:
           description: Failure reason string. Required on CoordinatorJoin, CoordinatorWS,
             WSJoin, and PeerConnectionConnect failure.
           maxLength: 2000
           title: Retry Failure Reason
           type: string
-          x-stream-index: "022"
+          x-stream-index: "023"
         screen_share_status:
           description: 'Screen-share permission status: INITIATED, FAILED, GRANTED,
             or NOT_INITIATED. Optional on MediaDevicePermission events.'
           maxLength: 32
           title: Screen Share Status
           type: string
-          x-stream-index: "025"
+          x-stream-index: "026"
         sdk_version:
           description: Version of the client SDK
           maxLength: 50
@@ -3985,6 +4113,13 @@ components:
             and FirstVideoFrame.
           maxLength: 128
           title: SFU ID
+          type: string
+          x-stream-index: "021"
+        source:
+          description: Source of the coordinator join. Optional on CoordinatorJoin
+            events; omitted when not provided.
+          maxLength: 200
+          title: Source
           type: string
           x-stream-index: "020"
         stage:
@@ -4016,7 +4151,7 @@ components:
           maxLength: 128
           title: Track ID
           type: string
-          x-stream-index: "021"
+          x-stream-index: "022"
         type:
           description: Call type associated with the event. Required on every stage
             except CoordinatorWS, where it is optional.
@@ -4286,6 +4421,7 @@ components:
               type: string
             type: array
           description: the permissions granted to each role
+          nullable: true
           title: Grants
           type: object
           x-stream-index: "001.002"
@@ -4800,11 +4936,11 @@ components:
           x-stream-index: "002"
       type: object
     DeviceResponse:
-      description: Response for Device
+      description: An object representing a device which can receive push notifications.
       nullable: true
       properties:
         created_at:
-          description: Date/time of creation
+          description: The date when the device was created.
           format: date-time
           title: Created at
           type: string
@@ -4826,7 +4962,7 @@ components:
           type: string
           x-stream-index: "008"
         id:
-          description: Device ID
+          description: The device identifier.
           title: ID
           type: string
           x-stream-index: "003"
@@ -5414,6 +5550,7 @@ components:
             items:
               type: string
             type: array
+          nullable: true
           type: object
           x-stream-index: "001.002"
         name:
@@ -6308,6 +6445,39 @@ components:
       - name
       - external_app_url
       - external_css_url
+      type: object
+    LifecycleSettingsRequest:
+      properties:
+        mode:
+          description: 'Call lifecycle mode. One of: reusable, single_use. A single_use
+            call cannot be reused once it has ended; the server ends it when its ring
+            settles without an answer (currently: when the caller cancels the ring).
+            Fixed at call creation'
+          enum:
+          - reusable
+          - single_use
+          title: Mode
+          type: string
+          x-stream-index: "001"
+      title: LifecycleSettingsRequest
+      type: object
+    LifecycleSettingsResponse:
+      description: LifecycleSettings is the payload for call lifecycle settings
+      properties:
+        mode:
+          description: 'Call lifecycle mode. One of: reusable, single_use. A single_use
+            call cannot be reused once it has ended; the server ends it when its ring
+            settles without an answer (currently: when the caller cancels the ring).
+            Fixed at call creation'
+          enum:
+          - reusable
+          - single_use
+          title: Mode
+          type: string
+          x-stream-index: "001"
+      required:
+      - mode
+      title: LifecycleSettingsResponse
       type: object
     LimitsSettingsRequest:
       properties:
@@ -7311,6 +7481,7 @@ components:
       - note
       type: object
     PrivacySettingsResponse:
+      description: The privacy settings of the user.
       type: object
     PublishedTrackFlags:
       properties:
@@ -7688,6 +7859,9 @@ components:
             - user_id
           - - created_at
           - - user_id
+          x-stream-sort-fields:
+          - created_at
+          - user_id
         type:
           maxLength: 64
           type: string
@@ -7830,6 +8004,79 @@ components:
       - participants
       - total_participants
       - duration
+      type: object
+    QueryCallRingAttemptsRequest:
+      nullable: true
+      properties:
+        call_session_id:
+          description: Limit the attempts to one call session; omit to read every
+            session of the call
+          maxLength: 64
+          title: CallSessionID
+          type: string
+          x-stream-index: "003"
+        id:
+          description: Call ID
+          maxLength: 64
+          title: ID
+          type: string
+          x-stream-index: "001.002"
+        type:
+          description: The type of call
+          maxLength: 64
+          title: Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - id
+      title: QueryCallRingAttemptsRequest
+      type: object
+    QueryCallRingAttemptsResponse:
+      description: The ring attempts of a call, newest first.
+      nullable: true
+      properties:
+        call_id:
+          description: The ID of the call the attempts belong to
+          title: CallID
+          type: string
+          x-stream-index: "002"
+        call_session_id:
+          description: The call session the attempts were limited to, null when every
+            session was read
+          title: CallSessionID
+          type: string
+          x-stream-index: "003"
+        call_type:
+          description: The type of the call the attempts belong to
+          title: CallType
+          type: string
+          x-stream-index: "004"
+        count:
+          description: The number of attempts returned
+          format: int32
+          title: Count
+          type: integer
+          x-stream-index: "005"
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+        ring_attempts:
+          description: The attempts, newest first
+          items:
+            $ref: '#/components/schemas/RingAttemptResponse'
+          title: RingAttempts
+          type: array
+          x-stream-index: "006"
+      required:
+      - duration
+      - call_id
+      - call_type
+      - count
+      - ring_attempts
+      title: QueryCallRingAttemptsResponse
       type: object
     QueryCallSessionParticipantStatsResponse:
       description: Basic response information
@@ -8394,6 +8641,14 @@ components:
           - - type
           - - id
           - - cid
+          x-stream-sort-fields:
+          - cid
+          - created_at
+          - ended_at
+          - id
+          - starts_at
+          - type
+          - updated_at
       title: QueryCallsRequest
       type: object
     QueryCallsResponse:
@@ -8962,9 +9217,121 @@ components:
       - duration
       title: Response
       type: object
+    RingAttemptResponse:
+      description: 'One ring of a call session: who was rung, what each target did
+        about it, and how the ring settled.'
+      properties:
+        app_pk:
+          description: The application this ring belongs to
+          format: int32
+          title: AppPK
+          type: integer
+          x-stream-index: "001"
+        call_id:
+          description: The ID of the call that was rung
+          title: CallID
+          type: string
+          x-stream-index: "004"
+        call_type:
+          description: The type of the call that was rung
+          title: CallType
+          type: string
+          x-stream-index: "003"
+        created_at:
+          description: When the ring went out
+          format: date-time
+          title: CreatedAt
+          type: string
+          x-stream-index: "007"
+        custom:
+          additionalProperties: {}
+          description: Opaque context stored on the ring by the caller
+          title: Custom
+          type: object
+          x-stream-index: "014"
+        deleted_at:
+          description: When the ring was deleted
+          format: date-time
+          title: DeletedAt
+          type: string
+          x-stream-index: "009"
+        expires_at:
+          description: When the ring expires, i.e. when the missed call deadline fires
+          format: date-time
+          title: ExpiresAt
+          type: string
+          x-stream-index: "008"
+        initiated_by:
+          description: The user that started the ring
+          title: InitiatedBy
+          type: string
+          x-stream-index: "006"
+        outcome:
+          description: 'The derived outcome: ringing, answered_some, answered_all,
+            rejected_all, missed_all, cancelled or mixed'
+          title: Outcome
+          type: string
+          x-stream-index: "010"
+        ring_id:
+          description: The ring, as published in the ring_id of the call.ring event
+          title: RingID
+          type: string
+          x-stream-index: "002"
+        session_id:
+          description: The call session that was rung
+          title: SessionID
+          type: string
+          x-stream-index: "005"
+        settle_reason:
+          description: 'Why the ring settled: answered, rejected, cancel, timeout,
+            ended or auto_end; empty while it is still ringing'
+          title: SettleReason
+          type: string
+          x-stream-index: "013"
+        settled_at:
+          description: When the outcome left ringing
+          format: date-time
+          title: SettledAt
+          type: string
+          x-stream-index: "011"
+        settled_by:
+          description: The user that settled the ring, or 'server'; empty while it
+            is still ringing
+          title: SettledBy
+          type: string
+          x-stream-index: "012"
+        targets:
+          additionalProperties:
+            $ref: '#/components/schemas/RingTargetResponse'
+          description: The rung users, keyed by user ID
+          title: Targets
+          type: object
+          x-stream-index: "015"
+      required:
+      - app_pk
+      - ring_id
+      - call_type
+      - call_id
+      - session_id
+      - initiated_by
+      - created_at
+      - expires_at
+      - outcome
+      - settled_by
+      - settle_reason
+      - custom
+      - targets
+      title: RingAttemptResponse
+      type: object
     RingCallRequest:
       nullable: true
       properties:
+        custom:
+          additionalProperties: {}
+          description: Opaque context stored on the ring attempt; refs and IDs only
+          title: Custom
+          type: object
+          x-stream-index: "005"
         members_ids:
           description: Members that should receive the ring. If no ids are provided,
             all call members who are not already in the call will receive ring notifications.
@@ -8994,10 +9361,67 @@ components:
           title: Members IDs
           type: array
           x-stream-index: "002"
+        ring_id:
+          description: The ring this call created, for correlating the accept, reject
+            and missed outcomes that follow
+          title: RingID
+          type: string
+          x-stream-index: "003"
       required:
       - duration
       - members_ids
       title: RingCallResponse
+      type: object
+    RingDeliveryResponse:
+      description: One dispatch of a ring to one device over one channel.
+      properties:
+        acked_at:
+          description: When the device acknowledged the ring; not populated yet
+          format: date-time
+          title: AckedAt
+          type: string
+          x-stream-index: "006"
+        channel:
+          description: 'The transport the ring was dispatched over: ws, apns_voip,
+            apns or fcm'
+          title: Channel
+          type: string
+          x-stream-index: "002"
+        device_id:
+          description: The device the ring was dispatched to, empty for websocket
+            deliveries which fan out to every connection
+          title: DeviceID
+          type: string
+          x-stream-index: "001"
+        displayed_at:
+          description: When the device displayed the ring; not populated yet
+          format: date-time
+          title: DisplayedAt
+          type: string
+          x-stream-index: "007"
+        fetched_at:
+          description: When the device fetched the call; not populated yet
+          format: date-time
+          title: FetchedAt
+          type: string
+          x-stream-index: "005"
+        provider_accepted_at:
+          description: When the push provider accepted the dispatch; not populated
+            yet
+          format: date-time
+          title: ProviderAcceptedAt
+          type: string
+          x-stream-index: "004"
+        sent_at:
+          description: When the ring was dispatched
+          format: date-time
+          title: SentAt
+          type: string
+          x-stream-index: "003"
+      required:
+      - channel
+      - sent_at
+      title: RingDeliveryResponse
       type: object
     RingSettingsRequest:
       properties:
@@ -9051,6 +9475,57 @@ components:
       - incoming_call_timeout_ms
       - auto_cancel_timeout_ms
       - missed_call_timeout_ms
+      type: object
+    RingSettledTarget:
+      properties:
+        reason:
+          type: string
+          x-stream-index: "003"
+        state:
+          type: string
+          x-stream-index: "001"
+        state_at:
+          format: date-time
+          type: string
+          x-stream-index: "002"
+      required:
+      - state
+      - state_at
+      type: object
+    RingTargetResponse:
+      description: What one rung user did about one ring, and which devices the ring
+        reached.
+      properties:
+        deliveries:
+          description: The dispatches of this ring to the target's devices
+          items:
+            $ref: '#/components/schemas/RingDeliveryResponse'
+          title: Deliveries
+          type: array
+          x-stream-index: "004"
+        reason:
+          description: The reject or cancel reason, empty otherwise
+          title: Reason
+          type: string
+          x-stream-index: "003"
+        state:
+          description: 'The target''s state for this ring: pending, accepted, rejected,
+            missed or cancelled'
+          title: State
+          type: string
+          x-stream-index: "001"
+        state_at:
+          description: When the target last changed state
+          format: date-time
+          title: StateAt
+          type: string
+          x-stream-index: "002"
+      required:
+      - state
+      - state_at
+      - reason
+      - deliveries
+      title: RingTargetResponse
       type: object
     S3Request:
       description: Config for creating Amazon S3 storage.
@@ -10779,6 +11254,47 @@ components:
             - ms
             - "no"
             - uk
+            - af
+            - sq
+            - am
+            - hy
+            - az
+            - bn
+            - bs
+            - bg
+            - zh-TW
+            - et
+            - fa
+            - fr-CA
+            - ka
+            - gu
+            - ht
+            - ha
+            - is
+            - ga
+            - kn
+            - kk
+            - lv
+            - lt
+            - mk
+            - ml
+            - mt
+            - mr
+            - mn
+            - ps
+            - pt-PT
+            - pa
+            - sr
+            - si
+            - sk
+            - sl
+            - so
+            - sw
+            - te
+            - ur
+            - uz
+            - vi
+            - cy
             type: string
           type: array
           x-stream-index: "002"
@@ -11012,6 +11528,7 @@ components:
               type: string
             type: array
           description: the permissions granted to each role
+          nullable: true
           title: Grants
           type: object
           x-stream-index: "001.002"
@@ -12333,6 +12850,7 @@ components:
           call.recording_stopped: '#/components/schemas/CallRecordingStoppedEvent'
           call.rejected: '#/components/schemas/CallRejectedEvent'
           call.ring: '#/components/schemas/CallRingEvent'
+          call.ring_settled: '#/components/schemas/CallRingSettledEvent'
           call.rtmp_broadcast_failed: '#/components/schemas/CallRtmpBroadcastFailedEvent'
           call.rtmp_broadcast_started: '#/components/schemas/CallRtmpBroadcastStartedEvent'
           call.rtmp_broadcast_stopped: '#/components/schemas/CallRtmpBroadcastStoppedEvent'
@@ -12402,6 +12920,7 @@ components:
       - $ref: '#/components/schemas/CallRecordingStoppedEvent'
       - $ref: '#/components/schemas/CallRejectedEvent'
       - $ref: '#/components/schemas/CallRingEvent'
+      - $ref: '#/components/schemas/CallRingSettledEvent'
       - $ref: '#/components/schemas/CallRtmpBroadcastFailedEvent'
       - $ref: '#/components/schemas/CallRtmpBroadcastStartedEvent'
       - $ref: '#/components/schemas/CallRtmpBroadcastStoppedEvent'
@@ -12485,7 +13004,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v237.9.1
+  version: v239.75.1
 openapi: 3.0.3
 paths:
   /video/active_calls_status:
@@ -14090,44 +14609,46 @@ paths:
           type: string
           writeOnly: true
           x-stream-index: "002.003"
-      - in: query
+      - content:
+          application/json:
+            schema:
+              additionalProperties: {}
+              description: Filter conditions to apply to the query
+              title: Filter
+              type: object
+              writeOnly: true
+              x-stream-filter-fields:
+                is_live:
+                  operators:
+                  - $eq
+                  type: boolean
+                is_tech_user:
+                  operators:
+                  - $eq
+                  type: boolean
+                published_tracks:
+                  operators:
+                  - $eq
+                  - $in
+                  type: string
+                publisher_type:
+                  operators:
+                  - $eq
+                  - $in
+                  type: string
+                session_id:
+                  operators:
+                  - $eq
+                  - $in
+                  type: string
+                user_id:
+                  operators:
+                  - $eq
+                  - $in
+                  type: string
+              x-stream-index: "005"
+        in: query
         name: filter_conditions
-        schema:
-          additionalProperties: {}
-          description: Filter conditions to apply to the query
-          title: Filter
-          type: object
-          writeOnly: true
-          x-stream-filter-fields:
-            is_live:
-              operators:
-              - $eq
-              type: boolean
-            is_tech_user:
-              operators:
-              - $eq
-              type: boolean
-            published_tracks:
-              operators:
-              - $eq
-              - $in
-              type: string
-            publisher_type:
-              operators:
-              - $eq
-              - $in
-              type: string
-            session_id:
-              operators:
-              - $eq
-              - $in
-              type: string
-            user_id:
-              operators:
-              - $eq
-              - $in
-              type: string
-          x-stream-index: "005"
       responses:
         "200":
           content:
@@ -14900,6 +15421,40 @@ paths:
       summary: Query call members
       tags:
       - product:video
+  /video/call/ring_attempts:
+    post:
+      description: |
+        Returns a call's ring attempts, newest first. A session can be rung more than once, and the session-level accepted_by / rejected_by / missed_by maps flatten every ring together; an attempt says which ring a user acted on, which devices it reached, and who settled it and why. Pass call_session_id to limit the read to one session.
+      operationId: QueryCallRingAttempts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryCallRingAttemptsRequest'
+        description: QueryCallRingAttemptsRequest
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryCallRingAttemptsResponse'
+          description: QueryCallRingAttemptsResponse
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Query Call Ring Attempts
+      tags:
+      - product:video
   /video/call/stats:
     post:
       description: |2+
@@ -15203,55 +15758,59 @@ paths:
           type: string
           writeOnly: true
           x-stream-index: "004"
-      - in: query
+      - content:
+          application/json:
+            schema:
+              description: Array of sort parameters
+              items:
+                $ref: '#/components/schemas/SortParamRequest'
+              maxItems: 1
+              title: Sort
+              type: array
+              writeOnly: true
+              x-stream-index: "005"
+        in: query
         name: sort
-        schema:
-          description: Array of sort parameters
-          items:
-            $ref: '#/components/schemas/SortParamRequest'
-          maxItems: 1
-          title: Sort
-          type: array
-          writeOnly: true
-          x-stream-index: "005"
-      - in: query
+      - content:
+          application/json:
+            schema:
+              additionalProperties: {}
+              description: Filter conditions to apply to the query
+              title: Filter
+              type: object
+              writeOnly: true
+              x-stream-filter-fields:
+                is_live:
+                  operators:
+                  - $eq
+                  type: boolean
+                is_tech_user:
+                  operators:
+                  - $eq
+                  type: boolean
+                published_tracks:
+                  operators:
+                  - $eq
+                  - $in
+                  type: string
+                publisher_type:
+                  operators:
+                  - $eq
+                  - $in
+                  type: string
+                session_id:
+                  operators:
+                  - $eq
+                  - $in
+                  type: string
+                user_id:
+                  operators:
+                  - $eq
+                  - $in
+                  type: string
+              x-stream-index: "006"
+        in: query
         name: filter_conditions
-        schema:
-          additionalProperties: {}
-          description: Filter conditions to apply to the query
-          title: Filter
-          type: object
-          writeOnly: true
-          x-stream-filter-fields:
-            is_live:
-              operators:
-              - $eq
-              type: boolean
-            is_tech_user:
-              operators:
-              - $eq
-              type: boolean
-            published_tracks:
-              operators:
-              - $eq
-              - $in
-              type: string
-            publisher_type:
-              operators:
-              - $eq
-              - $in
-              type: string
-            session_id:
-              operators:
-              - $eq
-              - $in
-              type: string
-            user_id:
-              operators:
-              - $eq
-              - $in
-              type: string
-          x-stream-index: "006"
       - in: query
         name: limit
         schema:

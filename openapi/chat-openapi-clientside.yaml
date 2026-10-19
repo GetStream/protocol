@@ -39,6 +39,11 @@ components:
           title: Event Type
           type: string
           x-stream-index: 001.001.001.002
+        user:
+          $ref: '#/components/schemas/UserResponseCommonFields'
+          description: The user who sent the event
+          title: User
+          x-stream-index: "002.001"
       required:
       - type
       - created_at
@@ -89,6 +94,11 @@ components:
           title: Event Type
           type: string
           x-stream-index: 001.001.001.002
+        user:
+          $ref: '#/components/schemas/UserResponseCommonFields'
+          description: The user who sent the event
+          title: User
+          x-stream-index: "002.001"
       required:
       - type
       - created_at
@@ -154,6 +164,11 @@ components:
           title: Event Type
           type: string
           x-stream-index: 001.001.001.002
+        user:
+          $ref: '#/components/schemas/UserResponseCommonFields'
+          description: The user who sent the event
+          title: User
+          x-stream-index: "005.001"
       required:
       - type
       - created_at
@@ -168,7 +183,6 @@ components:
       x-stream-throttle-group: ordered
       x-stream-ws-base-event-name: VideoEvent
     APIError:
-      nullable: true
       properties:
         StatusCode:
           description: Response HTTP status code
@@ -182,6 +196,13 @@ components:
           title: Code
           type: integer
           x-stream-index: "001"
+        cooldown_remaining_ms:
+          description: Milliseconds until the user's slow mode cool down period ends.
+            Only set on code 60 (cool down) errors
+          format: int64
+          title: Cooldown remaining ms
+          type: integer
+          x-stream-index: "009"
         details:
           description: Additional error-specific information
           items:
@@ -292,6 +313,24 @@ components:
       - duration
       title: AddUserGroupMembersResponse
       type: object
+    AppDefaults:
+      description: Request limit defaults applied by the server when the corresponding
+        field is omitted.
+      properties:
+        get_or_create_channel:
+          $ref: '#/components/schemas/GetOrCreateChannelDefaults'
+          description: Defaults applied by the get-or-create channel endpoint.
+          title: Get or create channel
+          x-stream-index: "002"
+        query_channels:
+          $ref: '#/components/schemas/QueryChannelsDefaults'
+          description: Defaults applied by the query channels endpoint.
+          title: Query channels
+          x-stream-index: "001"
+      required:
+      - query_channels
+      - get_or_create_channel
+      type: object
     AppEventResponse:
       properties:
         async_url_enrich_enabled:
@@ -324,15 +363,28 @@ components:
       - auto_translation_enabled
       type: object
     AppResponseFields:
+      description: A type representing the app settings.
       properties:
         async_url_enrich_enabled:
+          description: A boolean value determining if async url enrichment is enabled.
+          title: Async URL enrich enabled
           type: boolean
           x-stream-index: "020"
         auto_translation_enabled:
+          description: A boolean value determining if auto translation is enabled.
+          title: Auto translation enabled
           type: boolean
           x-stream-index: "023"
+        defaults:
+          $ref: '#/components/schemas/AppDefaults'
+          description: Request limit defaults the server applies when the corresponding
+            field is omitted.
+          title: Defaults
+          x-stream-index: "038"
         file_upload_config:
           $ref: '#/components/schemas/FileUploadConfig'
+          description: The file uploading configuration.
+          title: File upload config
           x-stream-index: "036"
         id:
           format: int32
@@ -340,8 +392,12 @@ components:
           x-stream-index: "001"
         image_upload_config:
           $ref: '#/components/schemas/FileUploadConfig'
+          description: The image uploading configuration.
+          title: Image upload config
           x-stream-index: "037"
         name:
+          description: The name of the app.
+          title: Name
           type: string
           x-stream-index: "002"
         placement:
@@ -355,6 +411,7 @@ components:
       - auto_translation_enabled
       - file_upload_config
       - image_upload_config
+      - defaults
       type: object
     AppUpdatedEvent:
       description: Emitted when app settings are updated
@@ -654,7 +711,7 @@ components:
           x-stream-index: "007"
         type:
           description: 'Block list type. One of: regex, domain, domain_allowlist,
-            email, email_allowlist, word'
+            email, email_allowlist, word, word_allowlist'
           title: Type
           type: string
           x-stream-index: "005"
@@ -766,6 +823,68 @@ components:
           title: VoteData
           x-stream-index: "004"
       type: object
+    ChannelBanResponse:
+      nullable: true
+      properties:
+        channel_ban:
+          $ref: '#/components/schemas/ChannelBanScopeResponse'
+          x-stream-index: "004"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "002"
+        future_channel_ban:
+          $ref: '#/components/schemas/ChannelBanScopeResponse'
+          x-stream-index: "005"
+        scopes:
+          items:
+            type: string
+          type: array
+          x-stream-index: "003"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          x-stream-index: "001"
+      required:
+      - created_at
+      - scopes
+      type: object
+    ChannelBanScopeResponse:
+      properties:
+        banned_by:
+          $ref: '#/components/schemas/UserResponse'
+          x-stream-index: "001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "005"
+        expires:
+          format: date-time
+          type: string
+          x-stream-index: "002"
+        reason:
+          type: string
+          x-stream-index: "003"
+        shadow:
+          type: boolean
+          x-stream-index: "004"
+      required:
+      - shadow
+      - created_at
+      type: object
+    ChannelBansScopeTotals:
+      properties:
+        channel:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+        future_channel:
+          format: int32
+          type: integer
+          x-stream-index: "002"
+      required:
+      - channel
+      - future_channel
+      type: object
     ChannelConfigOverrides:
       description: Channel configuration overrides
       properties:
@@ -822,6 +941,8 @@ components:
           - none
           title: Push Level
           type: string
+          x-stream-deprecated-enum-values:
+            mentions: direct_mentions
           x-stream-index: "012"
         quotes:
           description: Enables message quotes
@@ -939,7 +1060,6 @@ components:
           x-stream-index: 001.002.016
         max_message_length:
           format: int32
-          maximum: 20000
           type: integer
           x-stream-index: 001.002.022
         message_retention:
@@ -965,13 +1085,17 @@ components:
           type: boolean
           x-stream-index: 001.002.017
         push_level:
+          description: Sets the push notification level for a channel type
           enum:
           - all
           - all_mentions
           - mentions
           - direct_mentions
           - none
+          title: Push notification level
           type: string
+          x-stream-deprecated-enum-values:
+            mentions: direct_mentions
           x-stream-index: 001.002.033
         push_notifications:
           type: boolean
@@ -1297,6 +1421,14 @@ components:
           title: Hide for creator
           type: boolean
           x-stream-index: "007"
+        include_scheduled_messages:
+          description: 'Adds scheduled_messages to the response: the caller''s own
+            scheduled, sending and failed messages in this channel. Client-side only.
+            Absent from the response when there are more than 100 or they could not
+            be loaded; use the scheduled messages query then'
+          title: Include scheduled messages
+          type: boolean
+          x-stream-index: "013"
         member_custom_include:
           description: Top-level keys of the message sender's channel-member custom
             data to include under member.custom (max 8 keys, 64 chars each)
@@ -1748,6 +1880,7 @@ components:
           type: string
           x-stream-index: "001"
       required:
+      - user_id
       - custom
       - created_at
       - updated_at
@@ -1793,7 +1926,7 @@ components:
       - updated_at
       type: object
     ChannelOwnCapability:
-      description: All possibility of string to use
+      description: An action that can be performed in a channel.
       enum:
       - ban-channel-members
       - cast-poll-vote
@@ -1817,6 +1950,7 @@ components:
       - query-poll-votes
       - quote-message
       - read-events
+      - schedule-message
       - search-messages
       - send-custom-events
       - send-links
@@ -1839,22 +1973,141 @@ components:
       - upload-file
       title: ChannelOwnCapability
       type: string
+      x-stream-enum-descriptions:
+        ban-channel-members: Ability to ban channel members.
+        cast-poll-vote: Ability to cast a poll vote.
+        connect-events: Ability to receive connect events.
+        create-attachment: Ability to attach files to messages.
+        create-mention: Ability to mention users in messages.
+        delete-any-message: Ability to delete any message from the channel.
+        delete-channel: Ability to delete the channel.
+        delete-own-message: Ability to delete own messages from the channel.
+        delivery-events: Ability to receive delivery events.
+        flag-message: Ability to flag a message.
+        freeze-channel: Ability to freeze or unfreeze the channel.
+        join-channel: Ability to join channel (add own membership).
+        leave-channel: Ability to leave the channel (remove own membership).
+        mute-channel: Ability to mute the channel.
+        notify-channel: Ability to notify all channel members using @channel mention.
+        notify-group: Ability to notify channel members using user group mentions.
+        notify-here: Ability to notify online channel members using @here mention.
+        notify-role: Ability to notify channel members using role mentions.
+        pin-message: Ability to pin a message.
+        query-poll-votes: Ability to query poll votes.
+        quote-message: Ability to quote a message.
+        read-events: Ability to receive read events.
+        schedule-message: Ability to schedule a message to be sent later.
+        search-messages: Ability to use message search.
+        send-custom-events: Ability to send custom events.
+        send-links: Ability to attach links to messages.
+        send-message: Ability to send a message.
+        send-poll: Ability to send a poll.
+        send-reaction: Ability to send reactions.
+        send-reply: Ability to thread reply to a message.
+        send-restricted-visibility-message: Ability to send a message with restricted
+          visibility.
+        send-typing-events: Ability to send and receive typing events.
+        set-channel-cooldown: Ability to enable or disable slow mode.
+        share-location: Ability to share location.
+        skip-slow-mode: Ability to skip the slow mode when it's active.
+        slow-mode: Indicates that channel slow mode is active.
+        typing-events: Ability to send and receive typing events.
+        update-any-message: Ability to update any message in the channel.
+        update-channel: Ability to update channel data.
+        update-channel-members: Ability to update channel members.
+        update-own-message: Ability to update own messages in the channel.
+        update-thread: Ability to update thread data.
+        upload-file: Ability to upload message attachments.
+    ChannelPartialUpdateResponse:
+      description: Basic channel data and the complete custom data after a partial
+        update.
+      properties:
+        cid:
+          description: Channel CID (<type>:<id>)
+          title: CID
+          type: string
+          x-stream-index: "003"
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: "004"
+        custom:
+          additionalProperties: {}
+          description: Custom data for this object
+          title: Custom data
+          type: object
+          x-stream-index: "009"
+        disabled:
+          description: Whether the channel is disabled
+          title: Disabled
+          type: boolean
+          x-stream-index: "007"
+        frozen:
+          description: Whether the channel is frozen
+          title: Frozen
+          type: boolean
+          x-stream-index: "006"
+        id:
+          description: Channel ID
+          title: ID
+          type: string
+          x-stream-index: "001"
+        team:
+          description: Team the channel belongs to
+          title: Team
+          type: string
+          x-stream-index: "008"
+        type:
+          description: Channel type
+          title: Type
+          type: string
+          x-stream-index: "002"
+        updated_at:
+          description: Date/time of the last update
+          format: date-time
+          title: Updated at
+          type: string
+          x-stream-index: "005"
+      required:
+      - id
+      - type
+      - cid
+      - created_at
+      - updated_at
+      - frozen
+      - disabled
+      - custom
+      type: object
     ChannelPushPreferencesResponse:
+      description: The push preference details.
       properties:
         chat_level:
+          description: The scope level of the push notifications.
+          title: Chat level
           type: string
           x-stream-index: "001"
         chat_preferences:
           $ref: '#/components/schemas/ChatPreferencesResponse'
           x-stream-index: "002"
         disabled_until:
+          description: If provided the notifications will be disabled until the set
+            date.
           format: date-time
+          title: Disabled until
           type: string
           x-stream-index: "003"
       type: object
     ChannelResponse:
       description: Represents channel in chat
       properties:
+        active_member_count:
+          description: Number of members who are not deactivated or deleted
+          format: int32
+          title: Active member count
+          type: integer
+          x-stream-index: "029"
         auto_translation_enabled:
           description: Whether auto translation is enabled or not
           title: Auto translation
@@ -2025,13 +2278,23 @@ components:
       nullable: true
       properties:
         active_live_locations:
+          description: Active live locations in the channel
           items:
             $ref: '#/components/schemas/SharedLocationResponseData'
+          title: Active Live Locations
           type: array
           x-stream-index: "001.015"
         channel:
           $ref: '#/components/schemas/ChannelResponse'
           x-stream-index: "001.001"
+        cooldown_remaining_ms:
+          description: Milliseconds until the current user's slow mode cool down period
+            ends. Only set on client-side get or create channel and get channel requests
+            while the user is under cool down
+          format: int64
+          title: Cooldown remaining ms
+          type: integer
+          x-stream-index: "001.016"
         draft:
           $ref: '#/components/schemas/DraftResponse'
           x-stream-index: "001.014"
@@ -2039,55 +2302,86 @@ components:
           type: string
           x-stream-index: "002.001"
         hidden:
+          description: Whether this channel is hidden or not
+          title: Hidden
           type: boolean
           x-stream-index: "001.011"
         hide_messages_before:
+          description: Messages before this date are hidden from the user
           format: date-time
+          title: Hide messages before
           type: string
           x-stream-index: "001.012"
         members:
+          description: List of channel members
           items:
             $ref: '#/components/schemas/ChannelMemberResponse'
+          title: Members
           type: array
           x-stream-index: "001.007"
         membership:
           $ref: '#/components/schemas/ChannelMemberResponse'
+          description: Current user membership object
+          title: Membership
           x-stream-index: "001.008"
         messages:
+          description: List of channel messages
           items:
             $ref: '#/components/schemas/MessageResponse'
+          title: Message
           type: array
           x-stream-index: "001.002"
         pending_messages:
+          description: Pending messages that this user has sent
           items:
             $ref: '#/components/schemas/PendingMessageResponse'
+          title: Pending messages
           type: array
           x-stream-index: "001.013"
         pinned_messages:
+          description: List of pinned messages in the channel
           items:
             $ref: '#/components/schemas/MessageResponse'
+          title: Pinned messages
           type: array
+          x-stream-docs-page-id: pinned_messages
           x-stream-index: "001.003"
         push_preferences:
           $ref: '#/components/schemas/ChannelPushPreferencesResponse'
           x-stream-index: "001.009"
         read:
+          description: List of read states
           items:
             $ref: '#/components/schemas/ReadStateResponse'
+          title: Read
           type: array
           x-stream-index: "001.006"
+        scheduled_messages:
+          description: The caller's own scheduled, sending and failed messages in
+            this channel. Set only by a client-side GetOrCreateChannel with include_scheduled_messages;
+            absent when not requested or not known, in which case use the scheduled
+            messages query
+          items:
+            $ref: '#/components/schemas/ScheduledMessageResponse'
+          title: Scheduled messages
+          type: array
+          x-stream-index: "003"
         threads:
           items:
             $ref: '#/components/schemas/ThreadStateResponse'
           type: array
           x-stream-index: "001.010"
         watcher_count:
+          description: Number of channel watchers
           format: int32
+          title: Watcher count
           type: integer
           x-stream-index: "001.004"
         watchers:
+          description: List of user who is watching the channel
           items:
             $ref: '#/components/schemas/UserResponse'
+          title: Watchers
           type: array
           x-stream-index: "001.005"
       required:
@@ -2109,6 +2403,14 @@ components:
         channel:
           $ref: '#/components/schemas/ChannelResponse'
           x-stream-index: "001"
+        cooldown_remaining_ms:
+          description: Milliseconds until the current user's slow mode cool down period
+            ends. Only set on client-side get or create channel and get channel requests
+            while the user is under cool down
+          format: int64
+          title: Cooldown remaining ms
+          type: integer
+          x-stream-index: "016"
         draft:
           $ref: '#/components/schemas/DraftResponse'
           x-stream-index: "014"
@@ -2687,13 +2989,17 @@ components:
           type: integer
           x-stream-index: "007"
         push_level:
+          description: Overrides the push notification level for this channel
           enum:
           - all
           - all_mentions
           - mentions
           - direct_mentions
           - none
+          title: Push level
           type: string
+          x-stream-deprecated-enum-values:
+            mentions: direct_mentions
           x-stream-index: "015"
         quotes:
           description: Enable/disable quotes
@@ -2742,6 +3048,10 @@ components:
         device:
           $ref: '#/components/schemas/DeviceFields'
           x-stream-index: "002"
+        event_protocol:
+          format: int32
+          type: integer
+          x-stream-index: "004"
         member_custom_include:
           items:
             type: string
@@ -2849,6 +3159,75 @@ components:
       required:
       - id
       type: object
+    ConnectedEvent:
+      description: This event is sent when the WS connection is established and authenticated,
+        this event contains the full user object as it is stored on the server
+      properties:
+        connection_id:
+          description: The connection_id for this client
+          title: Connection ID
+          type: string
+          x-stream-index: "002"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        me:
+          $ref: '#/components/schemas/OwnUserResponse'
+          description: The full user object as it is stored on the server
+          title: OwnUserResponse
+          x-stream-index: "003"
+        type:
+          default: connection.ok
+          description: 'The type of event: "connection.ok" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - connection_id
+      - me
+      title: ConnectedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-throttle-group: critical
+      x-stream-ws-base-event-name: VideoEvent
+    ConnectionErrorEvent:
+      description: This event is sent when the WS connection fails
+      properties:
+        connection_id:
+          type: string
+          x-stream-index: "002"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        error:
+          $ref: '#/components/schemas/APIError'
+          description: The error that caused the connection to fail
+          title: Error
+          x-stream-index: "003"
+        type:
+          default: connection.error
+          description: 'The type of event: "connection.error" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - connection_id
+      - error
+      title: ConnectionErrorEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-throttle-group: critical
+      x-stream-ws-base-event-name: VideoEvent
     CreateBlockListRequest:
       description: Block list contains restricted words
       nullable: true
@@ -2876,7 +3255,7 @@ components:
           x-stream-index: "008"
         type:
           description: 'Block list type. One of: regex, domain, domain_allowlist,
-            email, email_allowlist, word'
+            email, email_allowlist, word, word_allowlist'
           enum:
           - regex
           - domain
@@ -2884,6 +3263,7 @@ components:
           - email
           - email_allowlist
           - word
+          - word_allowlist
           title: Type
           type: string
           x-stream-index: "007"
@@ -3054,7 +3434,7 @@ components:
           description: Custom data for this object
           title: Custom data
           type: object
-          x-stream-index: "011"
+          x-stream-index: "012"
         description:
           description: A description of the poll
           title: Description
@@ -3092,11 +3472,21 @@ components:
           maxItems: 100
           type: array
           x-stream-index: "004"
+        team:
+          maxLength: 255
+          type: string
+          x-stream-index: "011"
         voting_visibility:
+          description: Represents the visibility of votes in a poll.
           enum:
           - anonymous
           - public
+          title: Voting visibility
           type: string
+          x-stream-enum-descriptions:
+            anonymous: Votes are anonymous and cannot be attributed to individual
+              users.
+            public: Votes are public and can be seen by everyone.
           x-stream-index: "005"
       required:
       - name
@@ -3105,10 +3495,31 @@ components:
     CreateReminderRequest:
       nullable: true
       properties:
+        expires_at:
+          format: date-time
+          type: string
+          x-stream-index: "002"
         remind_at:
           format: date-time
           type: string
           x-stream-index: "001"
+      type: object
+    CreateReminderResponse:
+      description: Basic response information
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        reminder:
+          $ref: '#/components/schemas/ReminderResponseData'
+          x-stream-index: "001"
+      required:
+      - reminder
+      - duration
+      title: Response
       type: object
     CreateUserGroupRequest:
       description: Request body for creating a user group
@@ -3227,7 +3638,8 @@ components:
           type: array
           x-stream-index: "001"
         hard_delete:
-          description: Specify if channels and all ressources should be hard deleted
+          description: Server-side only. When true, the channels and all their resources
+            are permanently deleted instead of soft-deleted.
           title: Hard delete
           type: boolean
           x-stream-index: "002"
@@ -3318,6 +3730,23 @@ components:
       - duration
       title: Response
       type: object
+    DeleteScheduledMessageResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        scheduled_message:
+          $ref: '#/components/schemas/ScheduledMessageResponse'
+          description: The scheduled message
+          title: Scheduled message
+          x-stream-index: "001"
+      required:
+      - scheduled_message
+      - duration
+      type: object
     DeliveredMessagePayload:
       properties:
         cid:
@@ -3334,6 +3763,7 @@ components:
           x-stream-index: "001"
       type: object
     DeliveryReceiptsResponse:
+      description: The settings for the delivery receipt events.
       properties:
         enabled:
           type: boolean
@@ -3366,11 +3796,11 @@ components:
       - id
       type: object
     DeviceResponse:
-      description: Response for Device
+      description: An object representing a device which can receive push notifications.
       nullable: true
       properties:
         created_at:
-          description: Date/time of creation
+          description: The date when the device was created.
           format: date-time
           title: Created at
           type: string
@@ -3392,7 +3822,7 @@ components:
           type: string
           x-stream-index: "008"
         id:
-          description: Device ID
+          description: The device identifier.
           title: ID
           type: string
           x-stream-index: "003"
@@ -3788,29 +4218,41 @@ components:
     FileUploadConfig:
       properties:
         allowed_file_extensions:
+          description: The allowed file extensions.
           items:
             type: string
+          title: Allowed file extensions
           type: array
           x-stream-index: "001"
         allowed_mime_types:
+          description: The allowed mime types.
           items:
             type: string
+          title: Allowed MIME types
           type: array
           x-stream-index: "003"
         blocked_file_extensions:
+          description: The blocked file extensions.
           items:
             type: string
+          title: Blocked file extensions
           type: array
           x-stream-index: "002"
         blocked_mime_types:
+          description: The blocked mime types.
           items:
             type: string
+          title: Blocked MIME types
           type: array
           x-stream-index: "004"
         size_limit:
+          description: |-
+            The file size limit allowed in Bytes. 0 means no app-specific limit.
+            This value is configurable from Stream's Dashboard App Settings.
           format: int32
           maximum: 104857600
           minimum: 0
+          title: Size limit
           type: integer
           x-stream-index: "005"
       required:
@@ -4093,10 +4535,6 @@ components:
         privacy_settings:
           $ref: '#/components/schemas/PrivacySettingsResponse'
           x-stream-index: "003"
-        revoke_tokens_issued_before:
-          format: date-time
-          type: string
-          x-stream-index: "001.015"
         role:
           type: string
           x-stream-index: "001.006"
@@ -4122,8 +4560,14 @@ components:
           type: integer
           x-stream-index: "010"
         unread_count:
+          deprecated: true
+          description: 'Deprecated: Use total_unread_count instead.'
           format: int32
+          title: Unread count
           type: integer
+          x-stream-deprecated: true
+          x-stream-deprecated-message: Use total_unread_count instead.
+          x-stream-deprecated-renamed: total_unread_count
           x-stream-index: "008"
         unread_threads:
           format: int32
@@ -4372,6 +4816,23 @@ components:
       title: Get OG Attachment
       type: object
       x-stream-docs-page-id: og
+    GetOrCreateChannelDefaults:
+      description: Defaults applied by the get-or-create channel endpoint.
+      properties:
+        members:
+          $ref: '#/components/schemas/PagerDefaults'
+          description: Defaults for the `members` pagination object.
+          title: Members
+          x-stream-index: "002"
+        messages:
+          $ref: '#/components/schemas/PagerDefaults'
+          description: Defaults for the `messages` pagination object.
+          title: Messages
+          x-stream-index: "001"
+      required:
+      - messages
+      - members
+      type: object
     GetPinnedMessagesResponse:
       nullable: true
       properties:
@@ -4478,7 +4939,8 @@ components:
           type: string
           x-stream-index: "003.002"
         unread_channels:
-          description: Unread channels currently classified into this bucket
+          description: Total unread channels matching this bucket and its filters,
+            independent of page size
           format: int32
           title: Unread Channels
           type: integer
@@ -4489,18 +4951,50 @@ components:
       type: object
     GroupedChannelsGroupRequest:
       properties:
+        filter_conditions:
+          additionalProperties: {}
+          description: Optional query_timestamp $gte bound for a stored group, requiring
+            query_timestamp sort; do not repeat its group name. For all, combine group
+            equality/$in and date bounds with $or, or use one standalone group $ne
+            exclusion. An empty object matches a stored group; omitted or null preserves
+            legacy grouping.
+          title: Filter
+          type: object
+          x-stream-filter-fields:
+            group:
+              operators:
+              - $eq
+              - $in
+              - $ne
+              type: string
+            query_timestamp:
+              operators:
+              - $gte
+              type: date
+          x-stream-go-pointer: true
+          x-stream-index: "004"
         limit:
+          description: Max channels for this group; omitted or zero uses the request
+            limit
           format: int32
           maximum: 10
           minimum: 0
+          title: Limit
           type: integer
           x-stream-index: "001"
         next:
+          description: Cursor for the next page; only allowed when requesting one
+            group
+          title: Next
           type: string
           x-stream-index: "002"
         prev:
+          description: Cursor for the previous page; only allowed when requesting
+            one group
+          title: Previous
           type: string
           x-stream-index: "003"
+      title: Grouped Channels Group Request
       type: object
     GroupedQueryChannelsRequest:
       nullable: true
@@ -4508,9 +5002,11 @@ components:
         groups:
           additionalProperties:
             $ref: '#/components/schemas/GroupedChannelsGroupRequest'
-          description: Groups to return, keyed by group name. Each group can define
-            limit, next, or prev. 'next' and 'prev' cursors are only allowed when
-            the request contains exactly one group; multi-group pagination is rejected.
+          description: 'Groups to return, keyed by stored group name. Each entry can
+            define limit, next, prev, and optional filter_conditions: date bounds
+            for stored groups; all supports combined group/date branches or one group
+            $ne exclusion. Cursors are only allowed when requesting exactly one group.
+            Omitted or null filters preserve legacy grouping, including all.'
           title: Groups
           type: object
           x-stream-index: "002"
@@ -4526,6 +5022,15 @@ components:
           title: Presence
           type: boolean
           x-stream-index: "004"
+        sort:
+          description: Optional query_timestamp descending with NULLS LAST when enabled.
+            Omitted sort preserves existing last_updated ordering and cursor formats
+          items:
+            $ref: '#/components/schemas/SortParamRequest'
+          maxItems: 1
+          title: Sort
+          type: array
+          x-stream-index: "009"
         watch:
           description: Whether to start watching found channels or not
           title: Watch
@@ -4545,7 +5050,7 @@ components:
         groups:
           additionalProperties:
             $ref: '#/components/schemas/GroupedChannelsBucket'
-          description: Predefined channel groups keyed by group name
+          description: Groups keyed by the requested stored group name
           title: Groups
           type: object
           x-stream-index: "001"
@@ -7243,6 +7748,12 @@ components:
           additionalProperties: {}
           type: object
           x-stream-index: 001.001.001.001.001.007
+        grouped_unread_channels:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+          x-stream-index: "006"
         member:
           $ref: '#/components/schemas/ChannelMemberResponse'
           description: The member that was added
@@ -7257,6 +7768,12 @@ components:
           title: Team
           type: string
           x-stream-index: 001.001.001.003
+        total_unread_count:
+          description: The total number of unread messages
+          format: int32
+          title: Total Unread Count
+          type: integer
+          x-stream-index: "004"
         type:
           default: notification.added_to_channel
           description: 'The type of event: "notification.added_to_channel" in this
@@ -7264,6 +7781,18 @@ components:
           title: Event Type
           type: string
           x-stream-index: 001.001.001.001.001.002
+        unread_channels:
+          description: The number of channels with unread messages
+          format: int32
+          title: Unread Channels
+          type: integer
+          x-stream-index: "005"
+        unread_count:
+          description: The number of unread messages
+          format: int32
+          title: Unread Count
+          type: integer
+          x-stream-index: "003"
       required:
       - type
       - created_at
@@ -7414,6 +7943,81 @@ components:
       - custom
       - me
       title: NotificationChannelMutesUpdatedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-throttle-group: mergeable
+      x-stream-ws-base-event-name: VideoEvent
+    NotificationChannelPartialUpdatedEvent:
+      description: Sent to channel members who are not watching after a partial update.
+        Watching connections receive channel.updated instead.
+      nullable: true
+      properties:
+        channel:
+          $ref: '#/components/schemas/ChannelPartialUpdateResponse'
+          description: Basic channel data and the complete custom data after the update
+          title: Channel
+          x-stream-index: "002"
+        channel_custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.006
+        channel_id:
+          description: The ID of the updated channel
+          title: Channel ID
+          type: string
+          x-stream-index: 001.002.002
+        channel_member_count:
+          format: int32
+          type: integer
+          x-stream-index: 001.001.004
+        channel_message_count:
+          format: int64
+          type: integer
+          x-stream-index: 001.001.005
+        channel_type:
+          description: The type of the updated channel
+          title: Channel type
+          type: string
+          x-stream-index: 001.002.001
+        cid:
+          description: The CID of the updated channel
+          title: Channel CID
+          type: string
+          x-stream-index: 001.001.001.002
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: 001.001.001.001.003
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.001.001.007
+        received_at:
+          format: date-time
+          type: string
+          x-stream-index: 001.001.001.001.004
+        team:
+          description: The team ID
+          title: Team
+          type: string
+          x-stream-index: 001.001.003
+        type:
+          default: notification.channel_partial_updated
+          description: 'The type of event: "notification.channel_partial_updated"
+            in this case'
+          title: Event Type
+          type: string
+          x-stream-index: 001.001.001.001.002
+      required:
+      - type
+      - created_at
+      - custom
+      - channel
+      title: NotificationChannelPartialUpdatedEvent
       type: object
       x-stream-event-client-type: true
       x-stream-event-doc-group: other
@@ -8521,10 +9125,6 @@ components:
         push_preferences:
           $ref: '#/components/schemas/PushPreferencesResponse'
           x-stream-index: "002"
-        revoke_tokens_issued_before:
-          format: date-time
-          type: string
-          x-stream-index: "001.015"
         role:
           type: string
           x-stream-index: "001.006"
@@ -8553,8 +9153,14 @@ components:
           type: integer
           x-stream-index: "011"
         unread_count:
+          deprecated: true
+          description: 'Deprecated: Use total_unread_count instead.'
           format: int32
+          title: Unread count
           type: integer
+          x-stream-deprecated: true
+          x-stream-deprecated-message: Use total_unread_count instead.
+          x-stream-deprecated-renamed: total_unread_count
           x-stream-index: "008"
         unread_threads:
           format: int32
@@ -8582,9 +9188,38 @@ components:
       - total_unread_count
       - unread_channels
       - unread_threads
+      - blocked_user_ids
+      type: object
+    PagerDefaults:
+      description: Resolved defaults for a nested pagination object.
+      properties:
+        limit:
+          description: Number of records returned when `limit` is omitted.
+          format: int32
+          title: Limit
+          type: integer
+          x-stream-index: "001"
+      required:
+      - limit
       type: object
     PaginationParams:
       properties:
+        id_gt:
+          format: int32
+          type: integer
+          x-stream-index: "004"
+        id_gte:
+          format: int32
+          type: integer
+          x-stream-index: "003"
+        id_lt:
+          format: int32
+          type: integer
+          x-stream-index: "006"
+        id_lte:
+          format: int32
+          type: integer
+          x-stream-index: "005"
         limit:
           format: int32
           minimum: 0
@@ -8848,13 +9483,18 @@ components:
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "003"
+          x-stream-index: "004"
         id:
           type: string
           x-stream-index: "001"
         text:
           type: string
           x-stream-index: "002"
+        text_i18n:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "003"
       required:
       - id
       - text
@@ -8881,83 +9521,93 @@ components:
       properties:
         allow_answers:
           type: boolean
-          x-stream-index: "008"
+          x-stream-index: "010"
         allow_user_suggested_options:
           type: boolean
-          x-stream-index: "007"
+          x-stream-index: "009"
         answers_count:
           format: int32
           type: integer
-          x-stream-index: "012"
+          x-stream-index: "014"
         created_at:
           format: date-time
           type: string
-          x-stream-index: "019"
+          x-stream-index: "021"
         created_by:
           $ref: '#/components/schemas/UserResponse'
-          x-stream-index: "018"
+          x-stream-index: "020"
         created_by_id:
           type: string
-          x-stream-index: "017"
+          x-stream-index: "019"
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "021"
+          x-stream-index: "023"
         description:
           type: string
-          x-stream-index: "003"
+          x-stream-index: "004"
+        description_i18n:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "005"
         enforce_unique_vote:
           type: boolean
-          x-stream-index: "005"
+          x-stream-index: "007"
         id:
           type: string
           x-stream-index: "001"
         is_closed:
           type: boolean
-          x-stream-index: "009"
+          x-stream-index: "011"
         latest_answers:
           items:
             $ref: '#/components/schemas/PollVoteResponseData'
           type: array
-          x-stream-index: "015"
+          x-stream-index: "017"
         latest_votes_by_option:
           additionalProperties:
             items:
               $ref: '#/components/schemas/PollVoteResponseData'
             type: array
           type: object
-          x-stream-index: "014"
+          x-stream-index: "016"
         max_votes_allowed:
           format: int32
           type: integer
-          x-stream-index: "006"
+          x-stream-index: "008"
         name:
           type: string
           x-stream-index: "002"
+        name_i18n:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "003"
         options:
           items:
             $ref: '#/components/schemas/PollOptionResponseData'
           type: array
-          x-stream-index: "011"
+          x-stream-index: "013"
         own_votes:
           items:
             $ref: '#/components/schemas/PollVoteResponseData'
           type: array
-          x-stream-index: "016"
+          x-stream-index: "018"
         updated_at:
           format: date-time
           type: string
-          x-stream-index: "020"
+          x-stream-index: "022"
         vote_count:
           format: int32
           type: integer
-          x-stream-index: "010"
+          x-stream-index: "012"
         vote_counts_by_option:
           additionalProperties:
             format: int32
             type: integer
           type: object
-          x-stream-index: "013"
+          x-stream-index: "015"
         voting_visibility:
           description: Voting visibility of the poll
           enum:
@@ -8965,7 +9615,7 @@ components:
           - public
           title: Voting visibility
           type: string
-          x-stream-index: "004"
+          x-stream-index: "006"
       required:
       - id
       - name
@@ -9247,10 +9897,15 @@ components:
         answer_text:
           type: string
           x-stream-index: "005"
+        answer_text_i18n:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "006"
         created_at:
           format: date-time
           type: string
-          x-stream-index: "008"
+          x-stream-index: "009"
         id:
           type: string
           x-stream-index: "002"
@@ -9266,13 +9921,13 @@ components:
         updated_at:
           format: date-time
           type: string
-          x-stream-index: "009"
+          x-stream-index: "010"
         user:
           $ref: '#/components/schemas/UserResponse'
-          x-stream-index: "007"
+          x-stream-index: "008"
         user_id:
           type: string
-          x-stream-index: "006"
+          x-stream-index: "007"
       required:
       - poll_id
       - id
@@ -9318,15 +9973,22 @@ components:
           x-stream-index: "001"
       type: object
     PrivacySettingsResponse:
+      description: The privacy settings of the user.
       properties:
         delivery_receipts:
           $ref: '#/components/schemas/DeliveryReceiptsResponse'
+          description: The settings for the delivery receipt events.
+          title: Delivery receipts
           x-stream-index: "003"
         read_receipts:
           $ref: '#/components/schemas/ReadReceiptsResponse'
+          description: The settings for the read receipt events.
+          title: Read receipts
           x-stream-index: "002"
         typing_indicators:
           $ref: '#/components/schemas/TypingIndicatorsResponse'
+          description: The settings for typing indicator events.
+          title: Typing indicators
           x-stream-index: "001"
       type: object
     PushPreferenceInput:
@@ -9361,6 +10023,17 @@ components:
           - default
           title: Chat Level
           type: string
+          x-stream-deprecated-enum-values:
+            mentions: direct_mentions
+          x-stream-enum-descriptions:
+            all: All push notifications will be delivered.
+            all_mentions: Push notifications will only be delivered when the user
+              is mentioned directly or via @channel, @here, a role or a user group.
+            default: Behaves as all.
+            direct_mentions: Push notifications will only be delivered when the user
+              is directly @mentioned by username.
+            mentions: 'Deprecated: behaves as direct_mentions.'
+            none: No push notifications will be delivered.
           x-stream-index: "003"
         chat_preferences:
           $ref: '#/components/schemas/ChatPreferencesInput'
@@ -9392,6 +10065,34 @@ components:
           title: Remove Disable
           type: boolean
           x-stream-index: "009"
+        remove_schedule:
+          description: Remove the user's quiet-hours schedule, the counterpart of
+            remove_disable. It is applied before schedule, so sending both in one
+            item replaces the stored schedule instead of merging into it. Cannot be
+            combined with channel_cid. To switch from a schedule to a snooze, send
+            remove_schedule together with disabled_until.
+          title: Remove Schedule
+          type: boolean
+          x-stream-index: "011"
+        schedule:
+          $ref: '#/components/schemas/PushScheduleInput'
+          description: 'Set a recurring quiet-hours schedule for the user: while a
+            quiet window is active, push notifications are suppressed. Suppressed
+            notifications are dropped, not delayed or queued. A schedule reaches the
+            same notifications as disabled_until: chat message pushes, video call
+            pushes including ringing calls, and feeds pushes. Reminder pushes are
+            still delivered during quiet hours. The fields are merged into the stored
+            schedule one level deep: a non-empty timezone replaces the stored timezone,
+            and quiet_hours, when present, replaces all stored rules. Sending only
+            a timezone therefore keeps the rules, and sending only quiet_hours keeps
+            the timezone. The merged schedule must be complete, with a timezone and
+            1 to 7 rules, so the first schedule of a user has to set both. An empty
+            object is rejected. Schedules are user-level only. A schedule cannot be
+            combined with channel_cid, nor with disabled_until for the same user in
+            the same request, even in separate items; to switch from a snooze to a
+            schedule, send remove_disable together with schedule.'
+          title: Schedule
+          x-stream-index: "010"
         user_id:
           description: The user id for which to set the push preferences. Required
             when using server side auths, defaults to current user with client side
@@ -9401,18 +10102,24 @@ components:
           x-stream-index: "001"
       type: object
     PushPreferencesResponse:
+      description: The push preference details.
       properties:
         call_level:
           type: string
           x-stream-index: "003"
         chat_level:
+          description: The scope level of the push notifications.
+          title: Chat level
           type: string
           x-stream-index: "001"
         chat_preferences:
           $ref: '#/components/schemas/ChatPreferencesResponse'
           x-stream-index: "002"
         disabled_until:
+          description: If provided the notifications will be disabled until the set
+            date.
           format: date-time
+          title: Disabled until
           type: string
           x-stream-index: "006"
         feeds_level:
@@ -9421,9 +10128,86 @@ components:
         feeds_preferences:
           $ref: '#/components/schemas/FeedsPreferencesResponse'
           x-stream-index: "005"
+        schedule:
+          $ref: '#/components/schemas/PushScheduleResponse'
+          description: The recurring quiet-hours schedule of the user, if one is set.
+            While a quiet window is active, push notifications for the user are suppressed
+            (dropped, not delayed).
+          title: Schedule
+          x-stream-index: "007"
+      type: object
+    PushScheduleInput:
+      description: 'A recurring quiet-hours schedule: while any quiet window is active,
+        push notifications for the user are suppressed. Suppressed notifications are
+        dropped, not delayed.'
+      properties:
+        quiet_hours:
+          description: 'The quiet windows, 1 to 7 rules. Push is suppressed while
+            any rule is active. When present it replaces all stored rules; omit it
+            to keep them, for example to change only the timezone. An empty array
+            counts as omitted, so it cannot be used to clear the rules: use remove_schedule
+            for that.'
+          items:
+            $ref: '#/components/schemas/QuietHoursRuleInput'
+          maxItems: 7
+          minItems: 1
+          title: Quiet hours
+          type: array
+          x-stream-index: "002"
+        timezone:
+          description: IANA time zone name the quiet windows are evaluated in, for
+            example Europe/Amsterdam or America/New_York. Daylight saving time is
+            followed automatically for region-based names. Offsets such as +02:00
+            and the name "Local" are rejected; fixed-offset zones such as UTC or Etc/GMT-2
+            are accepted but never shift for daylight saving time. When updating an
+            existing schedule, a non-empty timezone replaces the stored one and leaves
+            the stored quiet_hours untouched.
+          title: Timezone
+          type: string
+          x-stream-index: "001"
+      title: Push Schedule
+      type: object
+    PushScheduleResponse:
+      description: 'A recurring quiet-hours schedule: while any quiet window is active,
+        push notifications for the user are suppressed. Suppressed notifications are
+        dropped, not delayed.'
+      properties:
+        quiet_hours:
+          description: The quiet windows. Push is suppressed while any rule is active.
+          items:
+            $ref: '#/components/schemas/QuietHoursRuleResponse'
+          title: Quiet hours
+          type: array
+          x-stream-index: "002"
+        timezone:
+          description: IANA time zone name the quiet windows are evaluated in, for
+            example Europe/Amsterdam.
+          title: Timezone
+          type: string
+          x-stream-index: "001"
+      required:
+      - timezone
+      - quiet_hours
+      title: Push Schedule
       type: object
     QueryBannedUsersPayload:
       properties:
+        created_at_after:
+          format: date-time
+          type: string
+          x-stream-index: "003.006"
+        created_at_after_or_equal:
+          format: date-time
+          type: string
+          x-stream-index: "003.005"
+        created_at_before:
+          format: date-time
+          type: string
+          x-stream-index: "003.008"
+        created_at_before_or_equal:
+          format: date-time
+          type: string
+          x-stream-index: "003.007"
         exclude_expired_bans:
           description: Whether to exclude expired bans or not
           title: Exclude expired bans
@@ -9526,6 +10310,125 @@ components:
       required:
       - bans
       - duration
+      type: object
+    QueryChannelBansRequest:
+      nullable: true
+      properties:
+        exclude_expired_bans:
+          description: Whether to exclude expired bans or not
+          title: Exclude expired bans
+          type: boolean
+          x-stream-index: "002"
+        filter_conditions:
+          additionalProperties: {}
+          description: Filter conditions to apply to the query
+          title: Filter
+          type: object
+          x-stream-filter-fields:
+            user_id:
+              operators:
+              - $autocomplete
+              - $eq
+              - $in
+              type: string
+          x-stream-index: "001"
+        include_total:
+          description: 'When true, the response includes total and total_by_scope:
+            the number of banned users overall and per scope, independent of paging'
+          title: Include total
+          type: boolean
+          x-stream-index: "003"
+        limit:
+          format: int32
+          maximum: 100
+          minimum: 0
+          type: integer
+          x-stream-index: "007.001"
+        next:
+          type: string
+          x-stream-index: "007.002"
+        prev:
+          type: string
+          x-stream-index: "007.003"
+      type: object
+    QueryChannelBansResponse:
+      nullable: true
+      properties:
+        bans:
+          description: Users banned from the channel, one entry per user, newest ban
+            first
+          items:
+            $ref: '#/components/schemas/ChannelBanResponse'
+          title: ChannelBanResponse
+          type: array
+          x-stream-index: "001"
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "005.001"
+        next:
+          type: string
+          x-stream-index: "004.001"
+        prev:
+          type: string
+          x-stream-index: "004.002"
+        total:
+          description: Number of banned users, each counted once, ignoring paging.
+            Counted per scope with a cap of 100000 each, so it can reach 200000. Only
+            present when include_total is set on the request; omitted when counting
+            timed out
+          format: int32
+          title: Total
+          type: integer
+          x-stream-index: "002"
+        total_by_scope:
+          $ref: '#/components/schemas/ChannelBansScopeTotals'
+          description: Number of banned users per scope, ignoring paging and capped
+            at 100000 per scope. Present together with total
+          title: Total by scope
+          x-stream-index: "003"
+      required:
+      - bans
+      - duration
+      type: object
+    QueryChannelsDefaults:
+      description: Defaults applied by the query channels endpoint.
+      properties:
+        limit:
+          description: Number of channels returned when `limit` is omitted.
+          format: int32
+          title: Limit
+          type: integer
+          x-stream-index: "001"
+        max_limit:
+          description: Largest number of channels returned for one request. A bigger
+            `limit` is silently clamped to this value rather than rejected. An app
+            with no per-app override gets a higher ceiling for the narrow case of
+            a request asking for at most one message and one member per channel.
+          format: int32
+          title: Max limit
+          type: integer
+          x-stream-index: "002"
+        member_limit:
+          description: Number of members returned per channel when `member_limit`
+            is omitted.
+          format: int32
+          title: Member limit
+          type: integer
+          x-stream-index: "004"
+        message_limit:
+          description: Number of messages returned per channel when `message_limit`
+            is omitted.
+          format: int32
+          title: Message limit
+          type: integer
+          x-stream-index: "003"
+      required:
+      - limit
+      - max_limit
+      - message_limit
+      - member_limit
       type: object
     QueryChannelsRequest:
       nullable: true
@@ -9722,6 +10625,7 @@ components:
               - $eq
               type: boolean
             team:
+              allow_empty: true
               operators:
               - $eq
               - $exists
@@ -9758,6 +10662,11 @@ components:
           title: Filter Values
           type: object
           x-stream-index: "011"
+        include_active_member_count:
+          description: Whether to include active_member_count for each channel
+          title: Include active member count
+          type: boolean
+          x-stream-index: "014"
         limit:
           description: Number of channels to limit
           format: int32
@@ -9937,6 +10846,22 @@ components:
       type: object
     QueryFutureChannelBansPayload:
       properties:
+        created_at_after:
+          format: date-time
+          type: string
+          x-stream-index: "001.006"
+        created_at_after_or_equal:
+          format: date-time
+          type: string
+          x-stream-index: "001.005"
+        created_at_before:
+          format: date-time
+          type: string
+          x-stream-index: "001.008"
+        created_at_before_or_equal:
+          format: date-time
+          type: string
+          x-stream-index: "001.007"
         exclude_expired_bans:
           description: Whether to exclude expired bans or not
           title: Exclude expired bans
@@ -10000,6 +10925,22 @@ components:
       type: object
     QueryMembersPayload:
       properties:
+        created_at_after:
+          format: date-time
+          type: string
+          x-stream-index: "006.008"
+        created_at_after_or_equal:
+          format: date-time
+          type: string
+          x-stream-index: "006.007"
+        created_at_before:
+          format: date-time
+          type: string
+          x-stream-index: "006.010"
+        created_at_before_or_equal:
+          format: date-time
+          type: string
+          x-stream-index: "006.009"
         filter_conditions:
           additionalProperties: {}
           description: Filter conditions to apply to the query
@@ -10144,11 +11085,31 @@ components:
           type: array
           x-stream-index: "005"
           x-stream-sort-fields:
+          - channel_role
+          - cid
           - created_at
+          - custom
+          - id
+          - is_moderator
+          - name
+          - updated_at
+          - user_id
         type:
           maxLength: 64
           type: string
           x-stream-index: "001"
+        user_id_gt:
+          type: string
+          x-stream-index: "006.004"
+        user_id_gte:
+          type: string
+          x-stream-index: "006.003"
+        user_id_lt:
+          type: string
+          x-stream-index: "006.006"
+        user_id_lte:
+          type: string
+          x-stream-index: "006.005"
       required:
       - type
       type: object
@@ -10596,6 +11557,15 @@ components:
               - $lt
               - $lte
               type: date
+            expires_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              type: date
             message_id:
               operators:
               - $eq
@@ -10666,6 +11636,62 @@ components:
           x-stream-index: "001"
       required:
       - reminders
+      - duration
+      type: object
+    QueryScheduledMessagesRequest:
+      nullable: true
+      properties:
+        filter:
+          $ref: '#/components/schemas/ScheduledMessagesFilter'
+          description: Narrows the result by channel and status
+          title: Filter
+          x-stream-index: "001"
+        limit:
+          description: Page size, 1 to 100. Defaults to 20
+          format: int32
+          maximum: 100
+          minimum: 1
+          title: Limit
+          type: integer
+          x-stream-index: "003"
+        next:
+          description: Cursor from the previous page
+          maxLength: 1024
+          title: Next
+          type: string
+          x-stream-index: "004"
+        sort:
+          description: Only scheduled_at ascending is supported. Pending messages
+            come before failed ones
+          items:
+            $ref: '#/components/schemas/SortParamRequest'
+          maxItems: 1
+          title: Sort
+          type: array
+          x-stream-index: "002"
+      type: object
+    QueryScheduledMessagesResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "003.001"
+        next:
+          description: Cursor for the next page; empty on the last page
+          title: Next
+          type: string
+          x-stream-index: "002"
+        scheduled_messages:
+          description: Pending messages first, then failed ones, each by scheduled_at
+          items:
+            $ref: '#/components/schemas/ScheduledMessageResponse'
+          title: Scheduled messages
+          type: array
+          x-stream-index: "001"
+      required:
+      - scheduled_messages
       - duration
       type: object
     QueryThreadsRequest:
@@ -10980,6 +12006,18 @@ components:
               - $eq
               type: string
           x-stream-index: "001"
+        id_gt:
+          type: string
+          x-stream-index: "005.004"
+        id_gte:
+          type: string
+          x-stream-index: "005.003"
+        id_lt:
+          type: string
+          x-stream-index: "005.006"
+        id_lte:
+          type: string
+          x-stream-index: "005.005"
         include_deactivated_users:
           type: boolean
           x-stream-index: "004"
@@ -11027,6 +12065,81 @@ components:
       required:
       - users
       - duration
+      type: object
+    QuietHoursRuleInput:
+      description: One recurring quiet window, expressed in local wall-clock time
+        in the schedule's timezone.
+      properties:
+        days:
+          description: 'The days of the week the window opens on, any of mon, tue,
+            wed, thu, fri, sat, sun, each at most once. A window belongs to the day
+            it opens: ["fri"] with 22:00 to 07:00 is quiet from Friday 22:00 until
+            Saturday 07:00, and not on Saturday night. Empty or omitted means every
+            day.'
+          items:
+            enum:
+            - mon
+            - tue
+            - wed
+            - thu
+            - fri
+            - sat
+            - sun
+            type: string
+          title: Days
+          type: array
+          x-stream-index: "001"
+        end:
+          description: 'When the window closes, as HH:MM local wall-clock time between
+            00:00 and 24:00. The end is exclusive: a window ending at 07:00 is already
+            over at 07:00. An end earlier than start wraps past midnight into the
+            next day (start 22:00, end 07:00). 24:00 means the end of the day, so
+            start 00:00 with end 24:00 covers the whole day.'
+          title: End
+          type: string
+          x-stream-index: "003"
+        start:
+          description: When the window opens, as HH:MM local wall-clock time between
+            00:00 and 23:59. Must differ from end.
+          title: Start
+          type: string
+          x-stream-index: "002"
+      required:
+      - start
+      - end
+      title: Quiet Hours Rule
+      type: object
+    QuietHoursRuleResponse:
+      description: One recurring quiet window, expressed in local wall-clock time
+        in the schedule's timezone.
+      properties:
+        days:
+          description: 'The days of the week the window opens on, any of mon, tue,
+            wed, thu, fri, sat, sun. A window belongs to the day it opens: ["fri"]
+            with 22:00 to 07:00 is quiet from Friday 22:00 until Saturday 07:00. Omitted
+            means every day.'
+          items:
+            type: string
+          title: Days
+          type: array
+          x-stream-index: "001"
+        end:
+          description: When the window closes, as HH:MM local wall-clock time between
+            00:00 and 24:00. The end is exclusive. An end earlier than start wraps
+            past midnight into the next day.
+          title: End
+          type: string
+          x-stream-index: "003"
+        start:
+          description: When the window opens, as HH:MM local wall-clock time between
+            00:00 and 23:59.
+          title: Start
+          type: string
+          x-stream-index: "002"
+      required:
+      - start
+      - end
+      title: Quiet Hours Rule
       type: object
     ReactionDeletedEvent:
       description: Emitted when a reaction is deleted from a message.
@@ -11504,6 +12617,7 @@ components:
           x-stream-index: "001"
       type: object
     ReadReceiptsResponse:
+      description: The settings for the read receipt events.
       properties:
         enabled:
           type: boolean
@@ -11734,20 +12848,24 @@ components:
       properties:
         channel:
           $ref: '#/components/schemas/ChannelResponse'
-          x-stream-index: "003"
+          x-stream-index: "004"
         channel_cid:
           type: string
-          x-stream-index: "002"
+          x-stream-index: "003"
         created_at:
           format: date-time
           type: string
-          x-stream-index: "008"
+          x-stream-index: "009"
+        expires_at:
+          format: date-time
+          type: string
+          x-stream-index: "002"
         message:
           $ref: '#/components/schemas/MessageResponse'
-          x-stream-index: "005"
+          x-stream-index: "006"
         message_id:
           type: string
-          x-stream-index: "004"
+          x-stream-index: "005"
         remind_at:
           format: date-time
           type: string
@@ -11755,13 +12873,13 @@ components:
         updated_at:
           format: date-time
           type: string
-          x-stream-index: "009"
+          x-stream-index: "010"
         user:
           $ref: '#/components/schemas/UserResponse'
-          x-stream-index: "007"
+          x-stream-index: "008"
         user_id:
           type: string
-          x-stream-index: "006"
+          x-stream-index: "007"
       required:
       - channel_cid
       - message_id
@@ -11922,6 +13040,554 @@ components:
       - scopes
       - created_at
       - updated_at
+      type: object
+    ScheduledMessageChannelResponse:
+      description: The channel of a scheduled message
+      properties:
+        cid:
+          description: Channel CID (<type>:<id>)
+          title: CID
+          type: string
+          x-stream-index: "001"
+        id:
+          description: Channel ID
+          title: ID
+          type: string
+          x-stream-index: "003"
+        image:
+          description: Channel image, from its custom data
+          title: Image
+          type: string
+          x-stream-index: "005"
+        name:
+          description: Channel name, from its custom data
+          title: Name
+          type: string
+          x-stream-index: "004"
+        type:
+          description: Channel type
+          title: Type
+          type: string
+          x-stream-index: "002"
+      required:
+      - cid
+      - type
+      - id
+      title: Scheduled Message Channel
+      type: object
+    ScheduledMessageContentResponse:
+      description: The message a scheduled message will send
+      properties:
+        attachments:
+          description: Array of message attachments
+          items:
+            $ref: '#/components/schemas/Attachment'
+          title: Message attachments
+          type: array
+          x-stream-docs-page-id: message_format#attachment-format
+          x-stream-index: "005"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "020"
+        html:
+          description: Contains HTML markup of the message
+          title: HTML content
+          type: string
+          x-stream-index: "003"
+        mentioned_channel:
+          description: Whether the message mentions the whole channel
+          title: Mentioned channel
+          type: boolean
+          x-stream-index: "012"
+        mentioned_group_ids:
+          description: IDs of the user groups mentioned in the message
+          items:
+            type: string
+          title: Mentioned group IDs
+          type: array
+          x-stream-index: "011"
+        mentioned_here:
+          description: Whether the message mentions the online channel members
+          title: Mentioned here
+          type: boolean
+          x-stream-index: "013"
+        mentioned_roles:
+          description: Roles mentioned in the message
+          items:
+            type: string
+          title: Mentioned roles
+          type: array
+          x-stream-index: "010"
+        mentioned_users:
+          description: IDs of the users mentioned in the message
+          items:
+            type: string
+          title: Mentioned user IDs
+          type: array
+          x-stream-index: "009"
+        mml:
+          description: MML content of the message
+          title: Messaging Markup Language
+          type: string
+          x-stream-docs-page-id: mml_overview
+          x-stream-index: "002"
+        parent_id:
+          description: ID of parent message (thread)
+          title: Parent message ID
+          type: string
+          x-stream-docs-page-id: threads
+          x-stream-index: "006"
+        pin_expires:
+          description: Date/time the pin expires
+          format: date-time
+          title: Pin expires
+          type: string
+          x-stream-index: "017"
+        pinned:
+          description: Whether the message will be pinned when sent
+          title: Pinned
+          type: boolean
+          x-stream-index: "016"
+        poll_id:
+          description: Identifier of the poll to include in the message
+          title: Poll ID
+          type: string
+          x-stream-index: "018"
+        quoted_message_id:
+          title: ID of quoted message
+          type: string
+          x-stream-docs-page-id: threads#quote-message
+          x-stream-index: "008"
+        restricted_visibility:
+          description: IDs of the users the message will be visible to
+          items:
+            type: string
+          title: Restricted visibility
+          type: array
+          x-stream-index: "014"
+        shared_location:
+          $ref: '#/components/schemas/ScheduledMessageLocation'
+          description: Location shared in the message
+          title: Shared location
+          x-stream-index: "019"
+        show_in_channel:
+          description: Whether thread reply should be shown in the channel as well
+          title: Show in channel
+          type: boolean
+          x-stream-docs-page-id: threads
+          x-stream-index: "007"
+        silent:
+          description: Whether message is silent or not
+          title: Silent
+          type: boolean
+          x-stream-index: "015"
+        text:
+          description: Text of the message
+          title: Text
+          type: string
+          x-stream-index: "001"
+        type:
+          description: 'Contains type of the message. One of: regular, system'
+          title: Message Type
+          type: string
+          x-stream-docs-page-id: message_format#message-types
+          x-stream-index: "004"
+      required:
+      - text
+      - custom
+      title: Scheduled Message Content
+      type: object
+    ScheduledMessageCreatedEvent:
+      description: Emitted when a message is scheduled to be sent later.
+      nullable: true
+      properties:
+        cid:
+          description: The CID of the channel the message is scheduled in
+          title: Channel CID
+          type: string
+          x-stream-index: 001.001.002
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: 001.001.001.003
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.001.007
+        received_at:
+          format: date-time
+          type: string
+          x-stream-index: 001.001.001.004
+        scheduled_message:
+          $ref: '#/components/schemas/ScheduledMessageResponse'
+          description: The scheduled message
+          title: Scheduled message
+          x-stream-index: "001.003"
+        type:
+          default: scheduled_message.created
+          description: 'The type of event: "scheduled_message.created" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: 001.001.001.002
+        user:
+          $ref: '#/components/schemas/UserResponseCommonFields'
+          description: The user who scheduled the message
+          title: User
+          x-stream-index: 001.002.001
+      required:
+      - type
+      - created_at
+      - custom
+      - user
+      title: ScheduledMessageCreatedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-throttle-group: ordered
+      x-stream-ws-base-event-name: VideoEvent
+    ScheduledMessageDeletedEvent:
+      description: Emitted when a scheduled message is canceled.
+      nullable: true
+      properties:
+        cid:
+          description: The CID of the channel the message is scheduled in
+          title: Channel CID
+          type: string
+          x-stream-index: 001.001.002
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: 001.001.001.003
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.001.007
+        received_at:
+          format: date-time
+          type: string
+          x-stream-index: 001.001.001.004
+        scheduled_message:
+          $ref: '#/components/schemas/ScheduledMessageResponse'
+          description: The scheduled message
+          title: Scheduled message
+          x-stream-index: "001.003"
+        type:
+          default: scheduled_message.deleted
+          description: 'The type of event: "scheduled_message.deleted" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: 001.001.001.002
+        user:
+          $ref: '#/components/schemas/UserResponseCommonFields'
+          description: The user who scheduled the message
+          title: User
+          x-stream-index: 001.002.001
+      required:
+      - type
+      - created_at
+      - custom
+      - user
+      title: ScheduledMessageDeletedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-throttle-group: ordered
+      x-stream-ws-base-event-name: VideoEvent
+    ScheduledMessageFailedEvent:
+      description: Emitted when a scheduled message fails to send. scheduled_message.failure_reason
+        says why.
+      nullable: true
+      properties:
+        cid:
+          description: The CID of the channel the message is scheduled in
+          title: Channel CID
+          type: string
+          x-stream-index: 001.001.002
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: 001.001.001.003
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.001.007
+        received_at:
+          format: date-time
+          type: string
+          x-stream-index: 001.001.001.004
+        scheduled_message:
+          $ref: '#/components/schemas/ScheduledMessageResponse'
+          description: The scheduled message
+          title: Scheduled message
+          x-stream-index: "001.003"
+        type:
+          default: scheduled_message.failed
+          description: 'The type of event: "scheduled_message.failed" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: 001.001.001.002
+        user:
+          $ref: '#/components/schemas/UserResponseCommonFields'
+          description: The user who scheduled the message
+          title: User
+          x-stream-index: 001.002.001
+      required:
+      - type
+      - created_at
+      - custom
+      - user
+      title: ScheduledMessageFailedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-throttle-group: ordered
+      x-stream-ws-base-event-name: VideoEvent
+    ScheduledMessageLocation:
+      description: The location a scheduled message will share
+      properties:
+        created_by_device_id:
+          description: The ID of the device that created the location.
+          title: Created by device ID
+          type: string
+          x-stream-index: "003"
+        end_at:
+          description: |-
+            The date when the location sharing ends.
+            If it's empty, it means the location sharing is static instead of live.
+          format: date-time
+          title: End at
+          type: string
+          x-stream-index: "004"
+        latitude:
+          description: The latitude of the location.
+          format: double
+          title: Latitude
+          type: number
+          x-stream-index: "001"
+        longitude:
+          description: The longitude of the location.
+          format: double
+          title: Longitude
+          type: number
+          x-stream-index: "002"
+      required:
+      - created_by_device_id
+      title: Scheduled Message Location
+      type: object
+    ScheduledMessageResponse:
+      description: A message scheduled to be sent later
+      properties:
+        channel:
+          $ref: '#/components/schemas/ScheduledMessageChannelResponse'
+          description: The channel of the scheduled message. Only set in query results
+          title: Channel
+          x-stream-index: "010"
+        cid:
+          description: The CID of the channel the message will be sent to
+          title: Channel CID
+          type: string
+          x-stream-index: "002"
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: "008"
+        failure_reason:
+          description: 'Why sending the message failed. Only set when status is failed.
+            One of: banned, no_permission, channel_frozen, channel_deleted, user_deleted,
+            moderation_blocked, hook_rejected, expired, internal_error, invalid_message,
+            pending_not_supported'
+          title: Failure reason
+          type: string
+          x-stream-index: "007"
+        id:
+          description: Unique identifier of the scheduled message
+          title: ID
+          type: string
+          x-stream-index: "001"
+        message:
+          $ref: '#/components/schemas/ScheduledMessageContentResponse'
+          description: The message that will be sent
+          title: Message
+          x-stream-index: "004"
+        scheduled_at:
+          description: Date/time the message is scheduled to be sent
+          format: date-time
+          title: Scheduled at
+          type: string
+          x-stream-index: "005"
+        status:
+          description: 'Status of the scheduled message. One of: scheduled, sending,
+            failed, canceled, sent. A message is sending from its first send attempt
+            until it is sent or fails, including while it waits to retry a failed
+            attempt; it cannot be edited, canceled or sent now while sending'
+          title: Status
+          type: string
+          x-stream-index: "006"
+        updated_at:
+          description: Date/time of the last update
+          format: date-time
+          title: Updated at
+          type: string
+          x-stream-index: "009"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          description: The user who scheduled the message
+          title: User
+          x-stream-index: "003"
+      required:
+      - id
+      - cid
+      - user
+      - message
+      - scheduled_at
+      - status
+      - created_at
+      - updated_at
+      title: Scheduled Message
+      type: object
+    ScheduledMessageSentEvent:
+      description: Emitted when a scheduled message is sent.
+      nullable: true
+      properties:
+        cid:
+          description: The CID of the channel the message was sent to
+          title: Channel CID
+          type: string
+          x-stream-index: 001.001.002
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: 001.001.001.003
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.001.007
+        message_id:
+          description: The ID of the message that was sent
+          title: Message ID
+          type: string
+          x-stream-index: "002"
+        received_at:
+          format: date-time
+          type: string
+          x-stream-index: 001.001.001.004
+        scheduled_message:
+          $ref: '#/components/schemas/ScheduledMessageResponse'
+          description: The scheduled message that was sent
+          title: Scheduled message
+          x-stream-index: "001.003"
+        type:
+          default: scheduled_message.sent
+          description: 'The type of event: "scheduled_message.sent" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: 001.001.001.002
+        user:
+          $ref: '#/components/schemas/UserResponseCommonFields'
+          description: The user who scheduled the message
+          title: User
+          x-stream-index: 001.002.001
+      required:
+      - type
+      - created_at
+      - custom
+      - user
+      - message_id
+      title: ScheduledMessageSentEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-throttle-group: ordered
+      x-stream-ws-base-event-name: VideoEvent
+    ScheduledMessageUpdatedEvent:
+      description: Emitted when a scheduled message is updated.
+      nullable: true
+      properties:
+        cid:
+          description: The CID of the channel the message is scheduled in
+          title: Channel CID
+          type: string
+          x-stream-index: 001.001.002
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: 001.001.001.003
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.001.007
+        received_at:
+          format: date-time
+          type: string
+          x-stream-index: 001.001.001.004
+        scheduled_message:
+          $ref: '#/components/schemas/ScheduledMessageResponse'
+          description: The scheduled message
+          title: Scheduled message
+          x-stream-index: "001.003"
+        type:
+          default: scheduled_message.updated
+          description: 'The type of event: "scheduled_message.updated" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: 001.001.001.002
+        user:
+          $ref: '#/components/schemas/UserResponseCommonFields'
+          description: The user who scheduled the message
+          title: User
+          x-stream-index: 001.002.001
+      required:
+      - type
+      - created_at
+      - custom
+      - user
+      title: ScheduledMessageUpdatedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-throttle-group: ordered
+      x-stream-ws-base-event-name: VideoEvent
+    ScheduledMessagesFilter:
+      description: Filter for querying scheduled messages
+      properties:
+        cid:
+          description: Only scheduled messages of this channel
+          maxLength: 255
+          title: Channel CID
+          type: string
+          x-stream-index: "001"
+        status:
+          description: 'Only these statuses, as reported in each scheduled message''s
+            status. One or more of: scheduled, sending, failed'
+          items:
+            enum:
+            - scheduled
+            - sending
+            - failed
+            type: string
+          maxItems: 3
+          title: Status
+          type: array
+          x-stream-index: "002"
+      title: Scheduled Messages Filter
       type: object
     SearchPayload:
       properties:
@@ -12120,6 +13786,7 @@ components:
               - $eq
               type: boolean
             team:
+              allow_empty: true
               operators:
               - $eq
               - $exists
@@ -12316,7 +13983,9 @@ components:
           x-stream-index: "007"
           x-stream-sort-fields:
           - created_at
+          - custom
           - id
+          - relevance
           - updated_at
       required:
       - filter_conditions
@@ -12686,6 +14355,15 @@ components:
         message:
           $ref: '#/components/schemas/MessageRequest'
           x-stream-index: "001"
+        scheduled_at:
+          description: 'When set, the message is not sent now: it is stored and sent
+            at this time (UTC). The response then carries scheduled_message. Must
+            be at least 1 minute and at most the app''s maximum lead time (120 days
+            by default) from now. Slash commands cannot be scheduled'
+          format: date-time
+          title: Scheduled at
+          type: string
+          x-stream-index: "011"
         skip_enrich_url:
           type: boolean
           x-stream-index: "003"
@@ -12729,6 +14407,12 @@ components:
           description: Message response
           title: Message
           x-stream-index: "001"
+        scheduled_message:
+          $ref: '#/components/schemas/ScheduledMessageResponse'
+          description: The scheduled message. Only set when the request had scheduled_at;
+            message then holds the content as it will be sent and is not in the channel
+          title: Scheduled message
+          x-stream-index: "006"
       required:
       - message
       - duration
@@ -12772,6 +14456,26 @@ components:
       - reaction
       - duration
       title: Response
+      type: object
+    SendScheduledMessageNowRequest:
+      nullable: true
+      type: object
+    SendScheduledMessageNowResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        scheduled_message:
+          $ref: '#/components/schemas/ScheduledMessageResponse'
+          description: The scheduled message
+          title: Scheduled message
+          x-stream-index: "001"
+      required:
+      - scheduled_message
+      - duration
       type: object
     SharedLocation:
       properties:
@@ -12877,38 +14581,59 @@ components:
           $ref: '#/components/schemas/ChannelResponse'
           x-stream-index: "011"
         channel_cid:
+          description: The CID (type:id) of the channel that the location is attached
+            to.
+          title: Channel CID
           type: string
           x-stream-index: "001"
         created_at:
+          description: The date when the location was created.
           format: date-time
+          title: Created at
           type: string
           x-stream-index: "008"
         created_by_device_id:
+          description: The ID of the device that created the location.
+          title: Created by device ID
           type: string
           x-stream-index: "006"
         end_at:
+          description: |-
+            The date when the location sharing ends.
+            If it's empty, it means the location sharing is static instead of live.
           format: date-time
+          title: End at
           type: string
           x-stream-index: "007"
         latitude:
+          description: The latitude of the location.
           format: double
+          title: Latitude
           type: number
           x-stream-index: "004"
         longitude:
+          description: The longitude of the location.
           format: double
+          title: Longitude
           type: number
           x-stream-index: "005"
         message:
           $ref: '#/components/schemas/MessageResponse'
           x-stream-index: "010"
         message_id:
+          description: The ID of the message that the location is attached to.
+          title: Message ID
           type: string
           x-stream-index: "002"
         updated_at:
+          description: The date when the location was updated.
           format: date-time
+          title: Updated at
           type: string
           x-stream-index: "009"
         user_id:
+          description: The ID of the user that created the location.
+          title: User ID
           type: string
           x-stream-index: "003"
       required:
@@ -13433,6 +15158,23 @@ components:
       required:
       - language
       type: object
+    TranslateMessageResponse:
+      description: Basic response information
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        message:
+          $ref: '#/components/schemas/MessageResponse'
+          x-stream-index: "001"
+      required:
+      - message
+      - duration
+      title: Response
+      type: object
     TruncateChannelRequest:
       nullable: true
       properties:
@@ -13494,6 +15236,7 @@ components:
           x-stream-index: "001"
       type: object
     TypingIndicatorsResponse:
+      description: The settings for typing indicator events.
       properties:
         enabled:
           type: boolean
@@ -13528,6 +15271,12 @@ components:
           additionalProperties: {}
           type: object
           x-stream-index: 001.001.001.007
+        member:
+          $ref: '#/components/schemas/ChannelMemberPartialResponse'
+          description: Channel membership of the user who started typing, including
+            `custom` when the app has `member_custom_on_typing_events_enabled`
+          title: Member
+          x-stream-index: "004"
         parent_id:
           description: The parent ID if the user started typing in a thread
           title: Parent ID
@@ -13588,6 +15337,12 @@ components:
           additionalProperties: {}
           type: object
           x-stream-index: 001.001.001.007
+        member:
+          $ref: '#/components/schemas/ChannelMemberPartialResponse'
+          description: Channel membership of the user who stopped typing, including
+            `custom` when the app has `member_custom_on_typing_events_enabled`
+          title: Member
+          x-stream-index: "004"
         parent_id:
           description: The parent ID if the user stopped typing in a thread
           title: Parent ID
@@ -13703,16 +15458,23 @@ components:
       - duration
       type: object
     UnreadCountsChannel:
+      description: The unread information of a channel.
       properties:
         channel_id:
+          description: The channel CID (type:id).
+          title: Channel ID
           type: string
           x-stream-index: "001"
         last_read:
+          description: The date which the current user last read the channel.
           format: date-time
+          title: Last read
           type: string
           x-stream-index: "003"
         unread_count:
+          description: The number of unread messages inside the channel.
           format: int32
+          title: Unread count
           type: integer
           x-stream-index: "002"
       required:
@@ -13721,16 +15483,24 @@ components:
       - last_read
       type: object
     UnreadCountsChannelType:
+      description: The unread information from channels with a specific type.
       properties:
         channel_count:
+          description: The number of unread channels of this channel type.
           format: int32
+          title: Channel count
           type: integer
           x-stream-index: "002"
         channel_type:
+          description: The channel type.
+          title: Channel type
           type: string
           x-stream-index: "001"
         unread_count:
+          description: The number of unread messages of all the channels with this
+            type.
           format: int32
+          title: Unread count
           type: integer
           x-stream-index: "003"
       required:
@@ -13739,19 +15509,29 @@ components:
       - unread_count
       type: object
     UnreadCountsThread:
+      description: The unread information of a thread.
       properties:
         last_read:
+          description: The date which the current user last read the thread.
           format: date-time
+          title: Last read
           type: string
           x-stream-index: "002"
         last_read_message_id:
+          description: The id of the last reply which the current user read in the
+            thread.
+          title: Last read message ID
           type: string
           x-stream-index: "003"
         parent_message_id:
+          description: The message id of the root of the thread.
+          title: Parent message ID
           type: string
           x-stream-index: "004"
         unread_count:
+          description: The number of unread replies inside the thread.
           format: int32
+          title: Unread count
           type: integer
           x-stream-index: "001"
       required:
@@ -14135,7 +15915,7 @@ components:
           description: Sets new field values
           title: Set
           type: object
-          x-stream-index: "002.001"
+          x-stream-index: "004.001"
           x-stream-map:
             description: New value to set
             key: field
@@ -14146,7 +15926,7 @@ components:
             type: string
           title: Unset
           type: array
-          x-stream-index: "002.002"
+          x-stream-index: "004.002"
       type: object
     UpdatePollRequest:
       nullable: true
@@ -14223,6 +16003,10 @@ components:
     UpdateReminderRequest:
       nullable: true
       properties:
+        expires_at:
+          format: date-time
+          type: string
+          x-stream-index: "002"
         remind_at:
           format: date-time
           type: string
@@ -14244,6 +16028,40 @@ components:
       - reminder
       - duration
       title: Response
+      type: object
+    UpdateScheduledMessageRequest:
+      nullable: true
+      properties:
+        message:
+          $ref: '#/components/schemas/MessageRequest'
+          description: Replaces the scheduled message as a whole. Fields only a server-side
+            caller may set (html, system type) are rejected on client-side requests
+          title: Message
+          x-stream-index: "002"
+        scheduled_at:
+          description: New send time (UTC). Must be at least 1 minute and at most
+            the app's maximum lead time from now
+          format: date-time
+          title: Scheduled at
+          type: string
+          x-stream-index: "003"
+      type: object
+    UpdateScheduledMessageResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        scheduled_message:
+          $ref: '#/components/schemas/ScheduledMessageResponse'
+          description: The scheduled message
+          title: Scheduled message
+          x-stream-index: "001"
+      required:
+      - scheduled_message
+      - duration
       type: object
     UpdateThreadPartialRequest:
       nullable: true
@@ -14377,7 +16195,16 @@ components:
           type: string
           x-stream-index: "003.001"
         membership_deletion_task_id:
+          deprecated: true
+          description: 'Deprecated: Always empty. Removing a user from a team no longer
+            deletes their memberships in that team''s channels, so there is no task
+            to poll.'
+          title: Membership Deletion Task ID
           type: string
+          x-stream-deprecated: true
+          x-stream-deprecated-message: Always empty. Removing a user from a team no
+            longer deletes their memberships in that team's channels, so there is
+            no task to poll.
           x-stream-index: "002"
         users:
           additionalProperties:
@@ -15452,12 +17279,6 @@ components:
           title: Online
           type: boolean
           x-stream-index: "001.013"
-        revoke_tokens_issued_before:
-          description: Revocation date for tokens
-          format: date-time
-          title: Revoke tokens issued before
-          type: string
-          x-stream-index: "001.015"
         role:
           description: Determines the set of user permissions
           title: Role
@@ -15543,10 +17364,6 @@ components:
         online:
           type: boolean
           x-stream-index: "013"
-        revoke_tokens_issued_before:
-          format: date-time
-          type: string
-          x-stream-index: "015"
         role:
           type: string
           x-stream-index: "006"
@@ -15631,10 +17448,6 @@ components:
         privacy_settings:
           $ref: '#/components/schemas/PrivacySettingsResponse'
           x-stream-index: "002"
-        revoke_tokens_issued_before:
-          format: date-time
-          type: string
-          x-stream-index: "001.015"
         role:
           type: string
           x-stream-index: "001.006"
@@ -15964,6 +17777,7 @@ components:
           notification.added_to_channel: '#/components/schemas/NotificationAddedToChannelEvent'
           notification.channel_deleted: '#/components/schemas/NotificationChannelDeletedEvent'
           notification.channel_mutes_updated: '#/components/schemas/NotificationChannelMutesUpdatedEvent'
+          notification.channel_partial_updated: '#/components/schemas/NotificationChannelPartialUpdatedEvent'
           notification.channel_truncated: '#/components/schemas/NotificationChannelTruncatedEvent'
           notification.invite_accepted: '#/components/schemas/NotificationInviteAcceptedEvent'
           notification.invite_rejected: '#/components/schemas/NotificationInviteRejectedEvent'
@@ -15987,6 +17801,11 @@ components:
           reminder.created: '#/components/schemas/ReminderCreatedEvent'
           reminder.deleted: '#/components/schemas/ReminderDeletedEvent'
           reminder.updated: '#/components/schemas/ReminderUpdatedEvent'
+          scheduled_message.created: '#/components/schemas/ScheduledMessageCreatedEvent'
+          scheduled_message.deleted: '#/components/schemas/ScheduledMessageDeletedEvent'
+          scheduled_message.failed: '#/components/schemas/ScheduledMessageFailedEvent'
+          scheduled_message.sent: '#/components/schemas/ScheduledMessageSentEvent'
+          scheduled_message.updated: '#/components/schemas/ScheduledMessageUpdatedEvent'
           thread.updated: '#/components/schemas/ThreadUpdatedEvent'
           typing.start: '#/components/schemas/TypingStartEvent'
           typing.stop: '#/components/schemas/TypingStopEvent'
@@ -16038,6 +17857,7 @@ components:
       - $ref: '#/components/schemas/NotificationAddedToChannelEvent'
       - $ref: '#/components/schemas/NotificationChannelDeletedEvent'
       - $ref: '#/components/schemas/NotificationChannelMutesUpdatedEvent'
+      - $ref: '#/components/schemas/NotificationChannelPartialUpdatedEvent'
       - $ref: '#/components/schemas/NotificationChannelTruncatedEvent'
       - $ref: '#/components/schemas/NotificationInviteAcceptedEvent'
       - $ref: '#/components/schemas/NotificationInviteRejectedEvent'
@@ -16062,6 +17882,11 @@ components:
       - $ref: '#/components/schemas/ReminderDeletedEvent'
       - $ref: '#/components/schemas/ReminderNotificationEvent'
       - $ref: '#/components/schemas/ReminderUpdatedEvent'
+      - $ref: '#/components/schemas/ScheduledMessageCreatedEvent'
+      - $ref: '#/components/schemas/ScheduledMessageDeletedEvent'
+      - $ref: '#/components/schemas/ScheduledMessageFailedEvent'
+      - $ref: '#/components/schemas/ScheduledMessageSentEvent'
+      - $ref: '#/components/schemas/ScheduledMessageUpdatedEvent'
       - $ref: '#/components/schemas/ThreadUpdatedEvent'
       - $ref: '#/components/schemas/TypingStartEvent'
       - $ref: '#/components/schemas/TypingStopEvent'
@@ -16101,6 +17926,8 @@ components:
           channel.unfrozen: '#/components/schemas/ChannelUnFrozenEvent'
           channel.updated: '#/components/schemas/ChannelUpdatedEvent'
           channel.visible: '#/components/schemas/ChannelVisibleEvent'
+          connection.error: '#/components/schemas/ConnectionErrorEvent'
+          connection.ok: '#/components/schemas/ConnectedEvent'
           draft.deleted: '#/components/schemas/DraftDeletedEvent'
           draft.updated: '#/components/schemas/DraftUpdatedEvent'
           health.check: '#/components/schemas/HealthCheckEvent'
@@ -16117,6 +17944,7 @@ components:
           notification.added_to_channel: '#/components/schemas/NotificationAddedToChannelEvent'
           notification.channel_deleted: '#/components/schemas/NotificationChannelDeletedEvent'
           notification.channel_mutes_updated: '#/components/schemas/NotificationChannelMutesUpdatedEvent'
+          notification.channel_partial_updated: '#/components/schemas/NotificationChannelPartialUpdatedEvent'
           notification.channel_truncated: '#/components/schemas/NotificationChannelTruncatedEvent'
           notification.invite_accepted: '#/components/schemas/NotificationInviteAcceptedEvent'
           notification.invite_rejected: '#/components/schemas/NotificationInviteRejectedEvent'
@@ -16140,6 +17968,11 @@ components:
           reminder.created: '#/components/schemas/ReminderCreatedEvent'
           reminder.deleted: '#/components/schemas/ReminderDeletedEvent'
           reminder.updated: '#/components/schemas/ReminderUpdatedEvent'
+          scheduled_message.created: '#/components/schemas/ScheduledMessageCreatedEvent'
+          scheduled_message.deleted: '#/components/schemas/ScheduledMessageDeletedEvent'
+          scheduled_message.failed: '#/components/schemas/ScheduledMessageFailedEvent'
+          scheduled_message.sent: '#/components/schemas/ScheduledMessageSentEvent'
+          scheduled_message.updated: '#/components/schemas/ScheduledMessageUpdatedEvent'
           thread.updated: '#/components/schemas/ThreadUpdatedEvent'
           typing.start: '#/components/schemas/TypingStartEvent'
           typing.stop: '#/components/schemas/TypingStopEvent'
@@ -16174,6 +18007,8 @@ components:
       - $ref: '#/components/schemas/ChannelUnFrozenEvent'
       - $ref: '#/components/schemas/ChannelUpdatedEvent'
       - $ref: '#/components/schemas/ChannelVisibleEvent'
+      - $ref: '#/components/schemas/ConnectedEvent'
+      - $ref: '#/components/schemas/ConnectionErrorEvent'
       - $ref: '#/components/schemas/CustomEvent'
       - $ref: '#/components/schemas/DraftDeletedEvent'
       - $ref: '#/components/schemas/DraftUpdatedEvent'
@@ -16191,6 +18026,7 @@ components:
       - $ref: '#/components/schemas/NotificationAddedToChannelEvent'
       - $ref: '#/components/schemas/NotificationChannelDeletedEvent'
       - $ref: '#/components/schemas/NotificationChannelMutesUpdatedEvent'
+      - $ref: '#/components/schemas/NotificationChannelPartialUpdatedEvent'
       - $ref: '#/components/schemas/NotificationChannelTruncatedEvent'
       - $ref: '#/components/schemas/NotificationInviteAcceptedEvent'
       - $ref: '#/components/schemas/NotificationInviteRejectedEvent'
@@ -16215,6 +18051,11 @@ components:
       - $ref: '#/components/schemas/ReminderDeletedEvent'
       - $ref: '#/components/schemas/ReminderNotificationEvent'
       - $ref: '#/components/schemas/ReminderUpdatedEvent'
+      - $ref: '#/components/schemas/ScheduledMessageCreatedEvent'
+      - $ref: '#/components/schemas/ScheduledMessageDeletedEvent'
+      - $ref: '#/components/schemas/ScheduledMessageFailedEvent'
+      - $ref: '#/components/schemas/ScheduledMessageSentEvent'
+      - $ref: '#/components/schemas/ScheduledMessageUpdatedEvent'
       - $ref: '#/components/schemas/ThreadUpdatedEvent'
       - $ref: '#/components/schemas/TypingStartEvent'
       - $ref: '#/components/schemas/TypingStopEvent'
@@ -16235,17 +18076,21 @@ components:
       - $ref: '#/components/schemas/UserWatchingStartEvent'
       - $ref: '#/components/schemas/UserWatchingStopEvent'
     WrappedUnreadCountsResponse:
-      description: Basic response information
+      description: The total unread information from the current user.
       nullable: true
       properties:
         channel_type:
+          description: The unread information per channel type.
           items:
             $ref: '#/components/schemas/UnreadCountsChannelType'
+          title: Channel type
           type: array
           x-stream-index: "001.005"
         channels:
+          description: The unread information per channel.
           items:
             $ref: '#/components/schemas/UnreadCountsChannel'
+          title: Channels
           type: array
           x-stream-index: "001.004"
         duration:
@@ -16254,22 +18099,30 @@ components:
           type: string
           x-stream-index: "002.001"
         threads:
+          description: The unread information per thread.
           items:
             $ref: '#/components/schemas/UnreadCountsThread'
+          title: Threads
           type: array
           x-stream-index: "001.006"
         total_unread_count:
+          description: The total number of unread messages.
           format: int32
+          title: Total unread count
           type: integer
           x-stream-index: "001.001"
         total_unread_count_by_team:
           additionalProperties:
             format: int32
             type: integer
+          description: The total number of unread messages grouped by team.
+          title: Total unread count by team
           type: object
           x-stream-index: "001.003"
         total_unread_threads_count:
+          description: The total number of unread threads.
           format: int32
+          title: Total unread threads count
           type: integer
           x-stream-index: "001.002"
       required:
@@ -16279,7 +18132,6 @@ components:
       - channel_type
       - threads
       - duration
-      title: Response
       type: object
     connectRequestQuery:
       nullable: true
@@ -16325,7 +18177,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v237.9.1
+  version: v239.75.1
 openapi: 3.0.3
 paths:
   /app:
@@ -16578,7 +18430,7 @@ paths:
             Body or URL parameter
           title: Connection ID
           type: string
-          x-stream-index: "015.003"
+          x-stream-index: "016.003"
       requestBody:
         content:
           application/json:
@@ -16638,6 +18490,9 @@ paths:
       - in: query
         name: hard_delete
         schema:
+          description: Server-side only. When true, the channel and all its resources
+            are permanently deleted instead of soft-deleted.
+          title: Hard delete
           type: boolean
           x-stream-index: "002"
       responses:
@@ -16866,6 +18721,58 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Update channel
+      tags:
+      - product:chat
+  /channels/{type}/{id}/bans/query:
+    post:
+      description: |
+        Lists the users banned from a channel, by a ban on the channel or by a future channel ban issued by the channel's creator, with one entry per user
+      operationId: QueryChannelBans
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          description: Channel type to interact with
+          title: Channel type
+          type: string
+          writeOnly: true
+          x-stream-index: "004.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Channel ID to interact with
+          title: Channel ID
+          type: string
+          writeOnly: true
+          x-stream-index: "004.002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryChannelBansRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryChannelBansResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Query channel bans
       tags:
       - product:chat
   /channels/{type}/{id}/draft:
@@ -17386,6 +19293,7 @@ paths:
         - channel.visible
         - message.new
         - message.updated
+        - scheduled_message.created
       operationId: SendMessage
       parameters:
       - in: path
@@ -17396,7 +19304,7 @@ paths:
           title: Channel type
           type: string
           writeOnly: true
-          x-stream-index: "011.001"
+          x-stream-index: "012.001"
       - in: path
         name: id
         required: true
@@ -17405,7 +19313,7 @@ paths:
           title: Channel ID
           type: string
           writeOnly: true
-          x-stream-index: "011.002"
+          x-stream-index: "012.002"
       requestBody:
         content:
           application/json:
@@ -17621,16 +19529,19 @@ paths:
           title: Pinned at around
           type: string
           x-stream-index: "001.012"
-      - in: query
+      - content:
+          application/json:
+            schema:
+              description: Sort parameter, at most one field. Defaults to pinned_at
+                descending
+              items:
+                $ref: '#/components/schemas/SortParamRequest'
+              maxItems: 1
+              title: Sort
+              type: array
+              x-stream-index: "002"
+        in: query
         name: sort
-        schema:
-          description: Sort parameter, at most one field. Defaults to pinned_at descending
-          items:
-            $ref: '#/components/schemas/SortParamRequest'
-          maxItems: 1
-          title: Sort
-          type: array
-          x-stream-index: "002"
       - in: query
         name: member_custom_include
         schema:
@@ -17703,7 +19614,7 @@ paths:
             Body or URL parameter
           title: Connection ID
           type: string
-          x-stream-index: "013.003"
+          x-stream-index: "014.003"
       requestBody:
         content:
           application/json:
@@ -18023,7 +19934,7 @@ paths:
             Body or URL parameter
           title: Connection ID
           type: string
-          x-stream-index: "013.003"
+          x-stream-index: "014.003"
       requestBody:
         content:
           application/json:
@@ -18879,7 +20790,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MessageActionResponse'
+                $ref: '#/components/schemas/TranslateMessageResponse'
           description: Response
         "400":
           content:
@@ -19051,7 +20962,7 @@ paths:
       - product:chat
     patch:
       description: |
-        Updates an existing reminder
+        Updates an existing reminder. remind_at and expires_at are both replaced on every call: omitting either one clears it
 
         Sends events:
         - reminder.updated
@@ -19063,7 +20974,7 @@ paths:
         schema:
           type: string
           writeOnly: true
-          x-stream-index: "002"
+          x-stream-index: "003"
       requestBody:
         content:
           application/json:
@@ -19094,7 +21005,7 @@ paths:
       - product:chat
     post:
       description: |
-        Creates a new reminder
+        Creates a new reminder. An optional expires_at hides the reminder from every read once it passes and stops it counting against the per-user reminder cap
 
         Sends events:
         - reminder.created
@@ -19106,7 +21017,7 @@ paths:
         schema:
           type: string
           writeOnly: true
-          x-stream-index: "002"
+          x-stream-index: "003"
       requestBody:
         content:
           application/json:
@@ -19118,8 +21029,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReminderResponseData'
-          description: Successful response
+                $ref: '#/components/schemas/CreateReminderResponse'
+          description: Response
         "400":
           content:
             application/json:
@@ -19148,15 +21059,17 @@ paths:
           type: string
           writeOnly: true
           x-stream-index: "001"
-      - in: query
+      - content:
+          application/json:
+            schema:
+              items:
+                $ref: '#/components/schemas/SortParamRequest'
+              maxItems: 1
+              type: array
+              writeOnly: true
+              x-stream-index: "002"
+        in: query
         name: sort
-        schema:
-          items:
-            $ref: '#/components/schemas/SortParamRequest'
-          maxItems: 1
-          type: array
-          writeOnly: true
-          x-stream-index: "002"
       - in: query
         name: limit
         schema:
@@ -19936,7 +21849,7 @@ paths:
           maxLength: 255
           title: string
           type: string
-          x-stream-index: "001"
+          x-stream-index: "002"
       - in: path
         name: option_id
         required: true
@@ -19945,7 +21858,7 @@ paths:
           maxLength: 255
           title: string
           type: string
-          x-stream-index: "002"
+          x-stream-index: "003"
       responses:
         "200":
           content:
@@ -20264,6 +22177,167 @@ paths:
       summary: Search roles
       tags:
       - product:chat
+  /scheduled_messages/{id}:
+    delete:
+      description: |
+        Cancels a scheduled message so it is never sent, or removes a failed one. Returns 409 while the message is being sent
+
+        Sends events:
+        - scheduled_message.deleted
+      operationId: DeleteScheduledMessage
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: ID of the scheduled message
+          maxLength: 255
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteScheduledMessageResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Delete a scheduled message
+      tags:
+      - product:chat
+    patch:
+      description: |
+        Replaces the message and/or the send time of a scheduled message. The scheduling checks run again, and the message is then sent, under the caller's auth mode. A request that changes only scheduled_at keeps the auth mode the message was scheduled with. Returns 409 while the message is being sent
+
+        Sends events:
+        - scheduled_message.updated
+      operationId: UpdateScheduledMessage
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: ID of the scheduled message
+          maxLength: 255
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateScheduledMessageRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateScheduledMessageResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Update a scheduled message
+      tags:
+      - product:chat
+  /scheduled_messages/{id}/send_now:
+    post:
+      description: |
+        Moves the send time of a scheduled message to now and queues the send. Every send check runs when it is sent. Returns 409 while the message is being sent
+
+        Sends events:
+        - scheduled_message.updated
+      operationId: SendScheduledMessageNow
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: ID of the scheduled message
+          maxLength: 255
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendScheduledMessageNowResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Send a scheduled message now
+      tags:
+      - product:chat
+  /scheduled_messages/query:
+    post:
+      description: |
+        Lists the scheduled messages of one user across channels: pending ones first, then failed ones, each by scheduled_at. Client-side requests return the caller's own; server-side requests require user_id
+      operationId: QueryScheduledMessages
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryScheduledMessagesRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryScheduledMessagesResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Query scheduled messages
+      tags:
+      - product:chat
   /search:
     get:
       description: |
@@ -20532,7 +22606,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/WrappedUnreadCountsResponse'
-          description: Response
+          description: Successful response
         "400":
           content:
             application/json:

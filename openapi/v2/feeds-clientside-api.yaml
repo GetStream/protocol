@@ -2,26 +2,69 @@ components:
   schemas:
     AIAudioConfigRequest:
       properties:
+        ai_text_config:
+          $ref: '#/components/schemas/AITextConfig'
+          description: Rules applied to transcripts when LLM configurability is disabled
+          title: AITextConfig
+          x-stream-index: "003"
+        llm_config:
+          $ref: '#/components/schemas/LLMConfig'
+          description: Rules applied to transcripts when LLM configurability is enabled
+          title: LLMConfig
+          x-stream-index: "004"
         profile:
+          description: Bodyguard credentials profile to classify transcripts with.
+            Applies to the NLP engine only; ignored when LLM configurability is enabled.
+            Empty falls back to the app-pinned profile, then the organization's top-level
+            credentials
+          title: Profile
           type: string
           x-stream-index: "001"
         rules:
+          description: Deprecated pre-split rule list. Still the live config while
+            no engine config exists; once one does it is kept as a fallback for whichever
+            engine has none of its own
           items:
             $ref: '#/components/schemas/BodyguardRule'
+          title: Rules
           type: array
           x-stream-index: "002"
       type: object
     AIAudioConfigResponse:
       properties:
+        ai_text_config:
+          $ref: '#/components/schemas/AITextConfig'
+          description: The rules applied to transcripts when LLM configurability is
+            disabled. Present only when a config for that engine is stored; a policy
+            still on the pre-split flat shape returns rules alone
+          title: AITextConfig
+          x-stream-index: "004"
         enabled:
+          description: Whether the engine selected by the application's LLM configurability
+            flag has a rule that does something. Derived, not stored
+          title: Enabled
           type: boolean
           x-stream-index: "001"
+        llm_config:
+          $ref: '#/components/schemas/LLMConfig'
+          description: The rules applied to transcripts when LLM configurability is
+            enabled. Present only when a config for that engine is stored; a policy
+            still on the pre-split flat shape returns rules alone
+          title: LLMConfig
+          x-stream-index: "005"
         profile:
+          description: Bodyguard credentials profile transcripts are classified with.
+            Applies to the NLP engine only
+          title: Profile
           type: string
           x-stream-index: "002"
         rules:
+          description: The active engine's rules, flattened into the pre-split shape
+            for clients that predate the per-engine configs. This is the whole config
+            for a policy that has no per-engine config stored
           items:
             $ref: '#/components/schemas/BodyguardRule'
+          title: Rules
           type: array
           x-stream-index: "003"
       required:
@@ -99,7 +142,21 @@ components:
       - rules
       - severity_rules
       type: object
-    AIVideoConfig:
+    AIVideoConfigRequest:
+      properties:
+        async:
+          type: boolean
+          x-stream-index: "001"
+        enabled:
+          type: boolean
+          x-stream-index: "002"
+        rules:
+          items:
+            $ref: '#/components/schemas/AWSRekognitionRule'
+          type: array
+          x-stream-index: "003"
+      type: object
+    AIVideoConfigResponse:
       properties:
         async:
           type: boolean
@@ -117,7 +174,6 @@ components:
       - rules
       type: object
     APIError:
-      nullable: true
       properties:
         StatusCode:
           description: Response HTTP status code
@@ -131,6 +187,13 @@ components:
           title: Code
           type: integer
           x-stream-index: "001"
+        cooldown_remaining_ms:
+          description: Milliseconds until the user's slow mode cool down period ends.
+            Only set on code 60 (cool down) errors
+          format: int64
+          title: Cooldown remaining ms
+          type: integer
+          x-stream-index: "009"
         details:
           description: Additional error-specific information
           items:
@@ -230,7 +293,10 @@ components:
       nullable: true
       properties:
         follower_role:
-          description: Optional role for the follower in the follow relationship
+          description: Optional role for the follower in the follow relationship.
+            Server-side only. Either a built-in ('feed_follower' (the default) or
+            'feed_member_viewer') or any role your app has defined; grants are not
+            inspected.
           title: Follower Role
           type: string
           x-stream-index: "003"
@@ -1094,6 +1160,9 @@ components:
             and notification_context.target.custom instead'
           title: Copy Custom To Notification
           type: boolean
+          x-stream-deprecated: true
+          x-stream-deprecated-message: use notification_context.trigger.custom and
+            notification_context.target.custom instead
           x-stream-index: "023"
         create_notification_activity:
           description: Whether to create notification activities for mentioned users
@@ -1236,14 +1305,14 @@ components:
           format: int32
           title: Bookmark Count
           type: integer
-          x-stream-index: "033"
+          x-stream-index: "034"
         collections:
           additionalProperties:
             $ref: '#/components/schemas/EnrichedCollectionResponse'
           description: Enriched collection data referenced by this activity
           title: Collections
           type: object
-          x-stream-index: "042"
+          x-stream-index: "043"
         comment_count:
           description: Number of comments on the activity
           format: int32
@@ -1269,7 +1338,7 @@ components:
             only to one feed, it's always set. If an activity is added to multiple
             feeds, it's only set when calling the GetOrCreateFeed endpoint.
           title: Current Feed
-          x-stream-index: "045"
+          x-stream-index: "046"
         custom:
           additionalProperties: {}
           description: Custom data for the activity
@@ -1313,7 +1382,7 @@ components:
           format: int32
           title: Friend Reaction Count
           type: integer
-          x-stream-index: "044"
+          x-stream-index: "045"
         friend_reactions:
           description: Reactions from users the current user follows or has mutual
             follows with
@@ -1321,12 +1390,12 @@ components:
             $ref: '#/components/schemas/FeedsReactionResponse'
           title: Friend Reactions
           type: array
-          x-stream-index: "043"
+          x-stream-index: "044"
         hidden:
           description: If this activity is hidden by this user (using activity feedback)
           title: Hidden
           type: boolean
-          x-stream-index: "046"
+          x-stream-index: "047"
         i18n:
           additionalProperties:
             type: string
@@ -1349,30 +1418,30 @@ components:
             with notification config (track_seen/track_read enabled).
           title: Is Read
           type: boolean
-          x-stream-index: "050"
+          x-stream-index: "051"
         is_seen:
           description: Whether this activity has been seen. Only set for feed groups
             with notification config (track_seen/track_read enabled).
           title: Is Seen
           type: boolean
-          x-stream-index: "049"
+          x-stream-index: "050"
         is_watched:
           type: boolean
-          x-stream-index: "048"
+          x-stream-index: "049"
         latest_reactions:
           description: Recent reactions to the activity
           items:
             $ref: '#/components/schemas/FeedsReactionResponse'
           title: Latest Reactions
           type: array
-          x-stream-index: "037"
+          x-stream-index: "038"
         latest_shares:
           description: Recent shares of the activity, one entry per share (org-gated)
           items:
             $ref: '#/components/schemas/ShareResponse'
           title: Latest Shares
           type: array
-          x-stream-index: "038"
+          x-stream-index: "039"
         location:
           $ref: '#/components/schemas/Location'
           description: Geographic location related to the activity
@@ -1390,7 +1459,7 @@ components:
             format: int64
             type: integer
           type: object
-          x-stream-index: "036"
+          x-stream-index: "037"
         moderation:
           $ref: '#/components/schemas/ModerationV2Response'
           description: Moderation information
@@ -1411,14 +1480,14 @@ components:
             $ref: '#/components/schemas/BookmarkResponse'
           title: Own Bookmarks
           type: array
-          x-stream-index: "041"
+          x-stream-index: "042"
         own_reactions:
           description: Current user's reactions to this activity
           items:
             $ref: '#/components/schemas/FeedsReactionResponse'
           title: Own Reactions
           type: array
-          x-stream-index: "040"
+          x-stream-index: "041"
         parent:
           $ref: '#/components/schemas/ActivityResponse'
           description: Parent activity (if this is a reply/comment)
@@ -1440,20 +1509,20 @@ components:
             where you want to show a preview
           title: Preview
           type: boolean
-          x-stream-index: "047"
+          x-stream-index: "048"
         reaction_count:
           description: Number of reactions to the activity
           format: int32
           title: Reaction Count
           type: integer
-          x-stream-index: "035"
+          x-stream-index: "036"
         reaction_groups:
           additionalProperties:
             $ref: '#/components/schemas/FeedsReactionGroupResponse'
           description: Grouped reactions by type
           title: Reaction Groups
           type: object
-          x-stream-index: "039"
+          x-stream-index: "040"
         restrict_replies:
           description: 'Controls who can add comments/replies to this activity. One
             of: everyone, people_i_follow, nobody'
@@ -1495,12 +1564,21 @@ components:
           format: int32
           title: Share Count
           type: integer
-          x-stream-index: "034"
+          x-stream-index: "035"
         text:
           description: Text content of the activity
           title: Text
           type: string
           x-stream-index: "019"
+        top_level_comment_count:
+          description: Number of top-level comments (comments directly on the activity,
+            excluding replies). Only returned by GetActivity when include_top_level_comment_count=true;
+            never set on feed reads or events. Same status/deletion rules as comment_count;
+            not adjusted per viewer.
+          format: int32
+          title: Top Level Comment Count
+          type: integer
+          x-stream-index: "033"
         type:
           description: Type of activity
           title: Type
@@ -1637,7 +1715,7 @@ components:
         params:
           additionalProperties: {}
           type: object
-          x-stream-index: "008"
+          x-stream-index: "011"
         sort:
           items:
             $ref: '#/components/schemas/SortParam'
@@ -1794,6 +1872,9 @@ components:
             and notification_context.target.custom instead'
           title: Copy Custom To Notification
           type: boolean
+          x-stream-deprecated: true
+          x-stream-deprecated-message: use notification_context.trigger.custom and
+            notification_context.target.custom instead
           x-stream-index: "001.023"
         create_notification_activity:
           description: Whether to create notification activities for mentioned users
@@ -1930,12 +2011,12 @@ components:
       properties:
         activity:
           $ref: '#/components/schemas/ActivityResponse'
-          description: The created activity
+          description: The created activity, or the stored one when it was skipped
           title: Activity
           x-stream-index: "001"
         duration:
           type: string
-          x-stream-index: "003.001"
+          x-stream-index: "004.001"
         mention_notifications_created:
           description: Number of mention notification activities created for mentioned
             users
@@ -1943,6 +2024,14 @@ components:
           title: Mention Notifications Created
           type: integer
           x-stream-index: "002"
+        skipped_existing:
+          description: Contains the activity ID when skip_existing is true and the
+            activity already existed, so it was left unchanged.
+          items:
+            type: string
+          title: Skipped Existing
+          type: array
+          x-stream-index: "003"
       required:
       - activity
       - duration
@@ -2034,6 +2123,9 @@ components:
             and notification_context.target.custom instead'
           title: Copy Custom To Notification
           type: boolean
+          x-stream-deprecated: true
+          x-stream-deprecated-message: use notification_context.trigger.custom and
+            notification_context.target.custom instead
           x-stream-index: "005"
         create_notification_activity:
           description: Whether to create a notification activity for this reaction
@@ -2081,11 +2173,22 @@ components:
           description: The comment the reaction was added to
           title: Comment
           x-stream-index: "001"
+        counter_delta:
+          description: 'The change this write made to the number of reactions the
+            user holds on this target: 1 when outcome is ''created'', 0 when it is
+            ''replaced'' or ''unchanged''. These endpoints never return -1; a successful
+            delete-reaction call is what decrements the count. With enforce_unique
+            this is the delta of the user''s reaction on the target; without it, the
+            delta of reactions of this type.'
+          format: int32
+          title: Counter Delta
+          type: integer
+          x-stream-index: "009"
         duration:
           description: Duration of the request
           title: Duration
           type: string
-          x-stream-index: "007.001"
+          x-stream-index: "010.001"
         notification_accepted:
           description: Whether notification creation was accepted for asynchronous
             processing
@@ -2098,6 +2201,8 @@ components:
             for async enqueue status Deprecated: use notification_accepted'
           title: Notification Created
           type: boolean
+          x-stream-deprecated: true
+          x-stream-deprecated-message: use notification_accepted
           x-stream-index: "003"
         notification_task_id:
           description: ID of the async notification-creation task; poll GET /tasks/{id}
@@ -2105,6 +2210,26 @@ components:
           title: Notification Task ID
           type: string
           x-stream-index: "005"
+        outcome:
+          description: 'What this write did to the user''s reaction on this target.
+            One of: created, replaced, unchanged. ''created'' means a new reaction
+            was written and nothing was replaced; ''replaced'' means enforce_unique
+            removed one or more of the user''s other reaction types; ''unchanged''
+            means the user already held this reaction type (its custom data may still
+            have been updated). Without enforce_unique a user can hold several reaction
+            types on one target, so ''created'' then means ''this reaction type was
+            newly added'', not ''the user''s first reaction on this target''.'
+          title: Outcome
+          type: string
+          x-stream-index: "007"
+        previous_reaction_type:
+          description: The reaction type this write replaced, or null when nothing
+            was replaced. Non-null exactly when outcome is 'replaced'. If enforce_unique
+            removed several reactions — possible only for data created before enforce_unique
+            was adopted — this is the most recently created one.
+          title: Previous Reaction Type
+          type: string
+          x-stream-index: "008"
         reaction:
           $ref: '#/components/schemas/FeedsReactionResponse'
           description: The created or updated reaction
@@ -2119,6 +2244,8 @@ components:
       required:
       - comment
       - reaction
+      - outcome
+      - counter_delta
       - duration
       type: object
     AddCommentRequest:
@@ -2143,6 +2270,9 @@ components:
             and notification_context.target.custom instead'
           title: Copy Custom To Notification
           type: boolean
+          x-stream-deprecated: true
+          x-stream-deprecated-message: use notification_context.trigger.custom and
+            notification_context.target.custom instead
           x-stream-index: "010"
         create_notification_activity:
           description: Whether to create a notification activity for this comment
@@ -2283,6 +2413,9 @@ components:
             and notification_context.target.custom instead'
           title: Copy Custom To Notification
           type: boolean
+          x-stream-deprecated: true
+          x-stream-deprecated-message: use notification_context.trigger.custom and
+            notification_context.target.custom instead
           x-stream-index: "005"
         create_notification_activity:
           description: Whether to create a notification activity for this reaction
@@ -2329,9 +2462,20 @@ components:
         activity:
           $ref: '#/components/schemas/ActivityResponse'
           x-stream-index: "001"
+        counter_delta:
+          description: 'The change this write made to the number of reactions the
+            user holds on this target: 1 when outcome is ''created'', 0 when it is
+            ''replaced'' or ''unchanged''. These endpoints never return -1; a successful
+            delete-reaction call is what decrements the count. With enforce_unique
+            this is the delta of the user''s reaction on the target; without it, the
+            delta of reactions of this type.'
+          format: int32
+          title: Counter Delta
+          type: integer
+          x-stream-index: "009"
         duration:
           type: string
-          x-stream-index: "007.001"
+          x-stream-index: "010.001"
         notification_accepted:
           description: Whether notification creation was accepted for asynchronous
             processing
@@ -2344,6 +2488,8 @@ components:
             for async enqueue status Deprecated: use notification_accepted'
           title: Notification Created
           type: boolean
+          x-stream-deprecated: true
+          x-stream-deprecated-message: use notification_accepted
           x-stream-index: "003"
         notification_task_id:
           description: ID of the async notification-creation task; poll GET /tasks/{id}
@@ -2351,6 +2497,26 @@ components:
           title: Notification Task ID
           type: string
           x-stream-index: "005"
+        outcome:
+          description: 'What this write did to the user''s reaction on this target.
+            One of: created, replaced, unchanged. ''created'' means a new reaction
+            was written and nothing was replaced; ''replaced'' means enforce_unique
+            removed one or more of the user''s other reaction types; ''unchanged''
+            means the user already held this reaction type (its custom data may still
+            have been updated). Without enforce_unique a user can hold several reaction
+            types on one target, so ''created'' then means ''this reaction type was
+            newly added'', not ''the user''s first reaction on this target''.'
+          title: Outcome
+          type: string
+          x-stream-index: "007"
+        previous_reaction_type:
+          description: The reaction type this write replaced, or null when nothing
+            was replaced. Non-null exactly when outcome is 'replaced'. If enforce_unique
+            removed several reactions — possible only for data created before enforce_unique
+            was adopted — this is the most recently created one.
+          title: Previous Reaction Type
+          type: string
+          x-stream-index: "008"
         reaction:
           $ref: '#/components/schemas/FeedsReactionResponse'
           description: The created reaction
@@ -2365,6 +2531,8 @@ components:
       required:
       - activity
       - reaction
+      - outcome
+      - counter_delta
       - duration
       title: Add Reaction Response
       type: object
@@ -2502,6 +2670,24 @@ components:
           type: string
           x-stream-index: "004"
       type: object
+    AppDefaults:
+      description: Request limit defaults applied by the server when the corresponding
+        field is omitted.
+      properties:
+        get_or_create_channel:
+          $ref: '#/components/schemas/GetOrCreateChannelDefaults'
+          description: Defaults applied by the get-or-create channel endpoint.
+          title: Get or create channel
+          x-stream-index: "002"
+        query_channels:
+          $ref: '#/components/schemas/QueryChannelsDefaults'
+          description: Defaults applied by the query channels endpoint.
+          title: Query channels
+          x-stream-index: "001"
+      required:
+      - query_channels
+      - get_or_create_channel
+      type: object
     AppEventResponse:
       properties:
         async_url_enrich_enabled:
@@ -2534,15 +2720,28 @@ components:
       - auto_translation_enabled
       type: object
     AppResponseFields:
+      description: A type representing the app settings.
       properties:
         async_url_enrich_enabled:
+          description: A boolean value determining if async url enrichment is enabled.
+          title: Async URL enrich enabled
           type: boolean
           x-stream-index: "020"
         auto_translation_enabled:
+          description: A boolean value determining if auto translation is enabled.
+          title: Auto translation enabled
           type: boolean
           x-stream-index: "023"
+        defaults:
+          $ref: '#/components/schemas/AppDefaults'
+          description: Request limit defaults the server applies when the corresponding
+            field is omitted.
+          title: Defaults
+          x-stream-index: "038"
         file_upload_config:
           $ref: '#/components/schemas/FileUploadConfig'
+          description: The file uploading configuration.
+          title: File upload config
           x-stream-index: "036"
         id:
           format: int32
@@ -2550,8 +2749,12 @@ components:
           x-stream-index: "001"
         image_upload_config:
           $ref: '#/components/schemas/FileUploadConfig'
+          description: The image uploading configuration.
+          title: Image upload config
           x-stream-index: "037"
         name:
+          description: The name of the app.
+          title: Name
           type: string
           x-stream-index: "002"
         placement:
@@ -2565,6 +2768,7 @@ components:
       - auto_translation_enabled
       - file_upload_config
       - image_upload_config
+      - defaults
       type: object
     AppUpdatedEvent:
       description: Emitted when app settings are updated
@@ -2627,6 +2831,11 @@ components:
           title: Appeal Reason
           type: string
           x-stream-index: "006"
+        appeal_reason_language:
+          description: Detected language of the appeal_reason text itself
+          title: Appeal Reason Language
+          type: string
+          x-stream-index: "025"
         attachments:
           description: Attachments(e.g. Images) of the Appeal Item
           items:
@@ -2635,7 +2844,9 @@ components:
           type: array
           x-stream-index: "009"
         channel_cid:
-          description: CID of the channel the entity belongs to, if applicable
+          description: CID of the channel the entity belongs to (content appeals),
+            or of the channel ban being appealed (stream:user appeals). Empty for
+            a global ban appeal.
           title: Channel CID
           type: string
           x-stream-index: "016"
@@ -2692,6 +2903,13 @@ components:
         id:
           type: string
           x-stream-index: "001"
+        languages:
+          description: Detected languages in the content
+          items:
+            type: string
+          title: Languages
+          type: array
+          x-stream-index: "024"
         moderation_action:
           $ref: '#/components/schemas/ActionLogResponse'
           description: 'Latest non-automod action on the entity (deprecated: use original_moderation_action)'
@@ -2763,6 +2981,12 @@ components:
           title: Attachments
           type: array
           x-stream-index: "004"
+        channel_cid:
+          description: CID of the channel ban being appealed. Only used when entity_type
+            is stream:user; omit to appeal the global ban.
+          title: Channel CID
+          type: string
+          x-stream-index: "006"
         entity_id:
           description: Unique identifier of the entity being appealed
           title: Entity ID
@@ -3119,6 +3343,12 @@ components:
     BanRequest:
       nullable: true
       properties:
+        ban_from_future_channels:
+          description: Whether to also ban the user from future channels created by
+            the banner
+          title: Ban From Future Channels
+          type: boolean
+          x-stream-index: "011"
         channel_cid:
           description: Channel where the ban applies
           title: Channel CID
@@ -3131,6 +3361,12 @@ components:
           - hard
           type: string
           x-stream-index: "009"
+        delete_reactions:
+          description: Whether to delete reactions by the banned user on other users'
+            messages
+          title: Delete Reactions
+          type: boolean
+          x-stream-index: "010"
         ip_ban:
           description: Whether to ban the user's IP address
           title: IP Ban
@@ -3439,7 +3675,7 @@ components:
           x-stream-index: "007"
         type:
           description: 'Block list type. One of: regex, domain, domain_allowlist,
-            email, email_allowlist, word'
+            email, email_allowlist, word, word_allowlist'
           title: Type
           type: string
           x-stream-index: "005"
@@ -3597,6 +3833,7 @@ components:
           type: string
           x-stream-index: "002"
         label:
+          maxLength: 128
           type: string
           x-stream-index: "001"
         severity_rules:
@@ -4020,9 +4257,12 @@ components:
           $ref: '#/components/schemas/UnblockActionRequestPayload'
           deprecated: true
           description: 'Configuration for unblock action (required when action_type
-            is unblock) Deprecated: use restore instead — it now also reverses a block
-            or shadow block'
+            is unblock) Deprecated: Use restore instead, which now also reverses a
+            block or shadow block.'
           title: Unblock
+          x-stream-deprecated: true
+          x-stream-deprecated-message: Use restore instead, which now also reverses
+            a block or shadow block.
           x-stream-index: "005"
       required:
       - appeal_ids
@@ -4341,7 +4581,6 @@ components:
           x-stream-index: 001.002.016
         max_message_length:
           format: int32
-          maximum: 20000
           type: integer
           x-stream-index: 001.002.022
         message_retention:
@@ -4367,13 +4606,17 @@ components:
           type: boolean
           x-stream-index: 001.002.017
         push_level:
+          description: Sets the push notification level for a channel type
           enum:
           - all
           - all_mentions
           - mentions
           - direct_mentions
           - none
+          title: Push notification level
           type: string
+          x-stream-deprecated-enum-values:
+            mentions: direct_mentions
           x-stream-index: 001.002.033
         push_notifications:
           type: boolean
@@ -4584,6 +4827,7 @@ components:
           type: string
           x-stream-index: "001"
       required:
+      - user_id
       - custom
       - created_at
       - updated_at
@@ -4678,7 +4922,7 @@ components:
       - updated_at
       type: object
     ChannelOwnCapability:
-      description: All possibility of string to use
+      description: An action that can be performed in a channel.
       enum:
       - ban-channel-members
       - cast-poll-vote
@@ -4702,6 +4946,7 @@ components:
       - query-poll-votes
       - quote-message
       - read-events
+      - schedule-message
       - search-messages
       - send-custom-events
       - send-links
@@ -4724,23 +4969,80 @@ components:
       - upload-file
       title: ChannelOwnCapability
       type: string
+      x-stream-enum-descriptions:
+        ban-channel-members: Ability to ban channel members.
+        cast-poll-vote: Ability to cast a poll vote.
+        connect-events: Ability to receive connect events.
+        create-attachment: Ability to attach files to messages.
+        create-mention: Ability to mention users in messages.
+        delete-any-message: Ability to delete any message from the channel.
+        delete-channel: Ability to delete the channel.
+        delete-own-message: Ability to delete own messages from the channel.
+        delivery-events: Ability to receive delivery events.
+        flag-message: Ability to flag a message.
+        freeze-channel: Ability to freeze or unfreeze the channel.
+        join-channel: Ability to join channel (add own membership).
+        leave-channel: Ability to leave the channel (remove own membership).
+        mute-channel: Ability to mute the channel.
+        notify-channel: Ability to notify all channel members using @channel mention.
+        notify-group: Ability to notify channel members using user group mentions.
+        notify-here: Ability to notify online channel members using @here mention.
+        notify-role: Ability to notify channel members using role mentions.
+        pin-message: Ability to pin a message.
+        query-poll-votes: Ability to query poll votes.
+        quote-message: Ability to quote a message.
+        read-events: Ability to receive read events.
+        schedule-message: Ability to schedule a message to be sent later.
+        search-messages: Ability to use message search.
+        send-custom-events: Ability to send custom events.
+        send-links: Ability to attach links to messages.
+        send-message: Ability to send a message.
+        send-poll: Ability to send a poll.
+        send-reaction: Ability to send reactions.
+        send-reply: Ability to thread reply to a message.
+        send-restricted-visibility-message: Ability to send a message with restricted
+          visibility.
+        send-typing-events: Ability to send and receive typing events.
+        set-channel-cooldown: Ability to enable or disable slow mode.
+        share-location: Ability to share location.
+        skip-slow-mode: Ability to skip the slow mode when it's active.
+        slow-mode: Indicates that channel slow mode is active.
+        typing-events: Ability to send and receive typing events.
+        update-any-message: Ability to update any message in the channel.
+        update-channel: Ability to update channel data.
+        update-channel-members: Ability to update channel members.
+        update-own-message: Ability to update own messages in the channel.
+        update-thread: Ability to update thread data.
+        upload-file: Ability to upload message attachments.
     ChannelPushPreferencesResponse:
+      description: The push preference details.
       nullable: true
       properties:
         chat_level:
+          description: The scope level of the push notifications.
+          title: Chat level
           type: string
           x-stream-index: "001"
         chat_preferences:
           $ref: '#/components/schemas/ChatPreferencesResponse'
           x-stream-index: "002"
         disabled_until:
+          description: If provided the notifications will be disabled until the set
+            date.
           format: date-time
+          title: Disabled until
           type: number
           x-stream-index: "003"
       type: object
     ChannelResponse:
       description: Represents channel in chat
       properties:
+        active_member_count:
+          description: Number of members who are not deactivated or deleted
+          format: int32
+          title: Active member count
+          type: integer
+          x-stream-index: "029"
         auto_translation_enabled:
           description: Whether auto translation is enabled or not
           title: Auto translation
@@ -5747,6 +6049,123 @@ components:
       x-stream-is-event: true
       x-stream-throttle-group: ordered
       x-stream-ws-base-event-name: VideoEvent
+    CommentFeedbackEvent:
+      description: Emitted when comment feedback is provided.
+      nullable: true
+      properties:
+        comment_feedback:
+          $ref: '#/components/schemas/CommentFeedbackEventPayload'
+          description: The feedback provided on the comment
+          title: Comment Feedback
+          x-stream-index: "001"
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: number
+          x-stream-index: 002.001.003
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 002.001.007
+        received_at:
+          format: date-time
+          type: number
+          x-stream-index: 002.001.004
+        type:
+          default: feeds.comment.feedback
+          description: 'The type of event: "feeds.comment.feedback" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: 002.001.002
+        user:
+          $ref: '#/components/schemas/UserResponseCommonFields'
+          description: The user who provided the feedback
+          title: User
+          x-stream-index: "003.001"
+      required:
+      - comment_feedback
+      - type
+      - created_at
+      - custom
+      title: CommentFeedbackEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-throttle-group: ordered
+      x-stream-ws-base-event-name: VideoEvent
+    CommentFeedbackEventPayload:
+      properties:
+        comment_id:
+          description: The comment that received feedback
+          title: Comment ID
+          type: string
+          x-stream-index: "002"
+        created_at:
+          description: When the feedback was created
+          format: date-time
+          title: Created At
+          type: number
+          x-stream-index: "004"
+        hide:
+          description: Whether the comment is hidden for the user
+          title: bool
+          type: boolean
+          x-stream-index: "003"
+        updated_at:
+          description: When the feedback was last updated
+          format: date-time
+          title: Updated At
+          type: number
+          x-stream-index: "005"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          description: User who provided the feedback
+          title: User
+          x-stream-index: "001"
+      required:
+      - user
+      - comment_id
+      - hide
+      - created_at
+      - updated_at
+      title: Comment Feedback Event Payload
+      type: object
+    CommentFeedbackRequest:
+      description: Request to provide feedback on a comment
+      nullable: true
+      properties:
+        hide:
+          description: Whether to hide this comment for the user
+          title: bool
+          type: boolean
+          x-stream-index: "002"
+      title: Comment Feedback Request
+      type: object
+    CommentFeedbackResponse:
+      description: Response for comment feedback submission
+      nullable: true
+      properties:
+        comment_id:
+          description: The ID of the comment that received feedback
+          title: Comment ID
+          type: string
+          x-stream-index: "001"
+        duration:
+          type: string
+          x-stream-index: "003.001"
+        hide:
+          description: Whether the comment is hidden for the user
+          title: bool
+          type: boolean
+          x-stream-index: "002"
+      required:
+      - comment_id
+      - hide
+      - duration
+      title: Comment Feedback Response
+      type: object
     CommentReactionAddedEvent:
       description: Emitted when a reaction is added to a comment.
       nullable: true
@@ -5933,25 +6352,25 @@ components:
         bookmark_count:
           format: int32
           type: integer
-          x-stream-index: "023"
+          x-stream-index: "024"
         confidence_score:
           description: Confidence score of the comment
           format: double
           title: Confidence Score
           type: number
-          x-stream-index: "025"
+          x-stream-index: "026"
         controversy_score:
           description: Controversy score of the comment
           format: double
           title: Controversy Score
           type: number
-          x-stream-index: "026"
+          x-stream-index: "027"
         created_at:
           description: When the comment was created
           format: date-time
           title: Created At
           type: number
-          x-stream-index: "015"
+          x-stream-index: "016"
         custom:
           additionalProperties: {}
           description: Custom data for the comment
@@ -5963,19 +6382,24 @@ components:
           format: date-time
           title: Deleted At
           type: number
-          x-stream-index: "018"
+          x-stream-index: "019"
         downvote_count:
           description: Number of downvotes for this comment
           format: int32
           title: Downvote Count
           type: integer
-          x-stream-index: "022"
+          x-stream-index: "023"
         edited_at:
           description: When the comment was last edited
           format: date-time
           title: Edited At
           type: number
-          x-stream-index: "017"
+          x-stream-index: "018"
+        hidden:
+          description: 'Only true in QueryComments results filtered with hidden: true'
+          title: Hidden
+          type: boolean
+          x-stream-index: "014"
         i18n:
           additionalProperties:
             type: string
@@ -6004,7 +6428,7 @@ components:
           $ref: '#/components/schemas/ModerationV2Response'
           description: Moderation details for the comment
           title: Moderation
-          x-stream-index: "019"
+          x-stream-index: "020"
         object_id:
           description: ID of the object this comment is associated with
           title: Object ID
@@ -6021,7 +6445,7 @@ components:
             $ref: '#/components/schemas/FeedsReactionResponse'
           title: Own Reactions
           type: array
-          x-stream-index: "027"
+          x-stream-index: "028"
         parent_id:
           description: ID of parent comment for nested replies
           title: Parent ID
@@ -6045,13 +6469,13 @@ components:
           format: int32
           title: Reply Count
           type: integer
-          x-stream-index: "020"
+          x-stream-index: "021"
         score:
           description: Score of the comment based on reactions
           format: int32
           title: Score
           type: integer
-          x-stream-index: "024"
+          x-stream-index: "025"
         status:
           description: 'Status of the comment. One of: active, deleted, removed, hidden'
           enum:
@@ -6062,7 +6486,7 @@ components:
           - shadow_blocked
           title: Status
           type: string
-          x-stream-index: "014"
+          x-stream-index: "015"
         text:
           description: Text content of the comment
           title: Text
@@ -6073,13 +6497,13 @@ components:
           format: date-time
           title: Updated At
           type: number
-          x-stream-index: "016"
+          x-stream-index: "017"
         upvote_count:
           description: Number of upvotes for this comment
           format: int32
           title: Upvote Count
           type: integer
-          x-stream-index: "021"
+          x-stream-index: "022"
         user:
           $ref: '#/components/schemas/UserResponse'
           description: User who created the comment
@@ -6092,6 +6516,7 @@ components:
       - user
       - reaction_count
       - mentioned_users
+      - hidden
       - status
       - created_at
       - updated_at
@@ -6229,7 +6654,7 @@ components:
             $ref: '#/components/schemas/AIImageLabelDefinition'
           title: AI Image Label Definitions
           type: array
-          x-stream-index: "020"
+          x-stream-index: "021"
         ai_image_subclassifications:
           additionalProperties:
             items:
@@ -6239,14 +6664,14 @@ components:
             based on the active provider
           title: AI Image Subclassifications
           type: object
-          x-stream-index: "019"
+          x-stream-index: "020"
         ai_text_config:
           $ref: '#/components/schemas/AITextConfig'
           description: Configuration for AI text analysis
           title: AI Text Config
           x-stream-index: "008"
         ai_video_config:
-          $ref: '#/components/schemas/AIVideoConfig'
+          $ref: '#/components/schemas/AIVideoConfigResponse'
           description: Configuration for AI video analysis
           title: AI Video Config
           x-stream-index: "011"
@@ -6278,7 +6703,7 @@ components:
             $ref: '#/components/schemas/BodyguardProfileSummary'
           title: Available Bodyguard Profiles
           type: array
-          x-stream-index: "021"
+          x-stream-index: "022"
         block_list_config:
           $ref: '#/components/schemas/BlockListConfig'
           description: Configuration for block list filtering
@@ -6289,13 +6714,19 @@ components:
           format: date-time
           title: Created At
           type: number
-          x-stream-index: "015"
+          x-stream-index: "016"
         flood_config:
           $ref: '#/components/schemas/FloodConfig'
           description: Per-user flood detection for the /labels endpoint (identical
             and similar message detectors)
           title: Flood Config
           x-stream-index: "014"
+        intent_config:
+          $ref: '#/components/schemas/IntentConfigResponse'
+          description: Configuration for conversation-level intent analysis (topics,
+            capture cap, cooldowns, score threshold)
+          title: Intent Config
+          x-stream-index: "015"
         key:
           description: Unique identifier for the moderation configuration
           title: Key
@@ -6310,7 +6741,7 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "018"
+          x-stream-index: "019"
         team:
           description: Team associated with the configuration
           title: Team
@@ -6321,7 +6752,7 @@ components:
           format: date-time
           title: Updated At
           type: number
-          x-stream-index: "016"
+          x-stream-index: "017"
         velocity_filter_config:
           $ref: '#/components/schemas/VelocityFilterConfig'
           description: Configuration for velocity-based filtering
@@ -6329,7 +6760,7 @@ components:
           x-stream-index: "013"
         video_call_rule_config:
           $ref: '#/components/schemas/VideoCallRuleConfig'
-          x-stream-index: "017"
+          x-stream-index: "018"
       required:
       - key
       - team
@@ -6365,6 +6796,75 @@ components:
       required:
       - id
       type: object
+    ConnectedEvent:
+      description: This event is sent when the WS connection is established and authenticated,
+        this event contains the full user object as it is stored on the server
+      properties:
+        connection_id:
+          description: The connection_id for this client
+          title: Connection ID
+          type: string
+          x-stream-index: "002"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "001.002"
+        me:
+          $ref: '#/components/schemas/OwnUserResponse'
+          description: The full user object as it is stored on the server
+          title: OwnUserResponse
+          x-stream-index: "003"
+        type:
+          default: connection.ok
+          description: 'The type of event: "connection.ok" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - connection_id
+      - me
+      title: ConnectedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-throttle-group: critical
+      x-stream-ws-base-event-name: VideoEvent
+    ConnectionErrorEvent:
+      description: This event is sent when the WS connection fails
+      properties:
+        connection_id:
+          type: string
+          x-stream-index: "002"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "001.002"
+        error:
+          $ref: '#/components/schemas/APIError'
+          description: The error that caused the connection to fail
+          title: Error
+          x-stream-index: "003"
+        type:
+          default: connection.error
+          description: 'The type of event: "connection.error" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - type
+      - created_at
+      - connection_id
+      - error
+      title: ConnectionErrorEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-throttle-group: critical
+      x-stream-ws-base-event-name: VideoEvent
     ContentCountRuleParameters:
       properties:
         threshold:
@@ -6374,6 +6874,17 @@ components:
         time_window:
           type: string
           x-stream-index: "002"
+      type: object
+    ContentCountryCodeParameters:
+      properties:
+        country_codes:
+          items:
+            type: string
+          type: array
+          x-stream-index: "002"
+        operator:
+          type: string
+          x-stream-index: "001"
       type: object
     ContentCustomPropertyCountParameters:
       properties:
@@ -6427,7 +6938,7 @@ components:
           x-stream-index: "008"
         type:
           description: 'Block list type. One of: regex, domain, domain_allowlist,
-            email, email_allowlist, word'
+            email, email_allowlist, word, word_allowlist'
           enum:
           - regex
           - domain
@@ -6435,6 +6946,7 @@ components:
           - email
           - email_allowlist
           - word
+          - word_allowlist
           title: Type
           type: string
           x-stream-index: "007"
@@ -6554,7 +7066,7 @@ components:
             performance.
           title: Enrich Own Fields
           type: boolean
-          x-stream-index: "002"
+          x-stream-index: "003"
         feeds:
           description: List of feeds to create
           items:
@@ -6654,7 +7166,7 @@ components:
           description: Custom data for this object
           title: Custom data
           type: object
-          x-stream-index: "011"
+          x-stream-index: "012"
         description:
           description: A description of the poll
           title: Description
@@ -6692,11 +7204,21 @@ components:
           maxItems: 100
           type: array
           x-stream-index: "004"
+        team:
+          maxLength: 255
+          type: string
+          x-stream-index: "011"
         voting_visibility:
+          description: Represents the visibility of votes in a poll.
           enum:
           - anonymous
           - public
+          title: Voting visibility
           type: string
+          x-stream-enum-descriptions:
+            anonymous: Votes are anonymous and cannot be attributed to individual
+              users.
+            public: Votes are public and can be seen by everyone.
           x-stream-index: "005"
       required:
       - name
@@ -7123,6 +7645,48 @@ components:
       required:
       - duration
       type: object
+    DeletePollAnswerRequestPayload:
+      description: Configuration for deleting the free-text poll answer a review item
+        was raised for. Chat polls only. Deletion is permanent; the poll and other
+        votes are kept.
+      properties:
+        reason:
+          description: Reason for deletion
+          title: Reason
+          type: string
+          x-stream-index: "001"
+      title: DeletePollAnswerRequest
+      type: object
+    DeletePollOptionRequestPayload:
+      description: Configuration for deleting the single poll option a review item
+        was raised for. Deletion is permanent; the rest of the poll is kept.
+      properties:
+        option_id:
+          description: Option to delete. Required on an item for a whole poll (create
+            or edit); defaults to the option an add_option / update_option item was
+            raised for
+          maxLength: 255
+          title: Option ID
+          type: string
+          x-stream-index: "002"
+        reason:
+          description: Reason for deletion
+          title: Reason
+          type: string
+          x-stream-index: "001"
+      title: DeletePollOptionRequest
+      type: object
+    DeletePollRequestPayload:
+      description: Configuration for poll deletion action. Poll deletion is always
+        permanent.
+      properties:
+        reason:
+          description: Reason for deletion
+          title: Reason
+          type: string
+          x-stream-index: "001"
+      title: DeletePollRequest
+      type: object
     DeleteQueueRequest:
       nullable: true
       type: object
@@ -7150,6 +7714,27 @@ components:
           type: string
           x-stream-index: "002"
       title: DeleteReactionRequest
+      type: object
+    DeleteUserInterestsResponse:
+      description: The user's remaining interest tags, ordered by descending weight,
+        then manually set tags before computed ones, then descending count, then ascending
+        tag name
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "002.001"
+        interests:
+          description: Interest tags still set on the user
+          items:
+            $ref: '#/components/schemas/InterestTagResponse'
+          title: Interests
+          type: array
+          x-stream-index: "001"
+      required:
+      - interests
+      - duration
+      title: Delete User Interests Response
       type: object
     DeleteUserMessagesRequestPayload:
       description: Configuration for deleting all of a user's chat messages without
@@ -7237,6 +7822,7 @@ components:
       title: DeleteUserRequest
       type: object
     DeliveryReceiptsResponse:
+      description: The settings for the delivery receipt events.
       properties:
         enabled:
           type: boolean
@@ -7245,11 +7831,11 @@ components:
       - enabled
       type: object
     DeviceResponse:
-      description: Response for Device
+      description: An object representing a device which can receive push notifications.
       nullable: true
       properties:
         created_at:
-          description: Date/time of creation
+          description: The date when the device was created.
           format: date-time
           title: Created at
           type: number
@@ -7271,7 +7857,7 @@ components:
           type: string
           x-stream-index: "008"
         id:
-          description: Device ID
+          description: The device identifier.
           title: ID
           type: string
           x-stream-index: "003"
@@ -7594,7 +8180,7 @@ components:
             set to false to exclude.
           title: Include Flat Activities
           type: boolean
-          x-stream-index: "021"
+          x-stream-index: "022"
         include_score_vars:
           description: 'Default: false. When true, includes score_vars in activity
             responses containing variable values used at ranking time.'
@@ -7770,10 +8356,6 @@ components:
         online:
           type: boolean
           x-stream-index: 001.001.013
-        revoke_tokens_issued_before:
-          format: date-time
-          type: number
-          x-stream-index: 001.001.015
         role:
           type: string
           x-stream-index: 001.001.006
@@ -7949,70 +8531,74 @@ components:
       properties:
         activity_filter:
           $ref: '#/components/schemas/ActivityFilterConfig'
-          x-stream-index: "018"
+          x-stream-index: "021"
         activity_processors:
           items:
             $ref: '#/components/schemas/ActivityProcessorConfig'
           type: array
-          x-stream-index: "012"
+          x-stream-index: "015"
         activity_selectors:
           items:
             $ref: '#/components/schemas/ActivitySelectorConfig'
           type: array
-          x-stream-index: "013"
+          x-stream-index: "016"
         aggregation:
           $ref: '#/components/schemas/AggregationConfig'
-          x-stream-index: "015"
+          x-stream-index: "018"
         aggregation_version:
           format: int32
           type: integer
-          x-stream-index: "016"
+          x-stream-index: "019"
         app_pk:
           format: int32
           type: integer
-          x-stream-index: "002"
+          x-stream-index: "003"
         created_at:
           format: date-time
           type: number
-          x-stream-index: "008"
+          x-stream-index: "011"
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "007"
+          x-stream-index: "010"
+        default_follower_role:
+          type: string
+          x-stream-index: "009"
         default_visibility:
           type: string
-          x-stream-index: "006"
+          x-stream-index: "008"
         deleted_at:
           format: date-time
           type: number
-          x-stream-index: "010"
+          x-stream-index: "013"
         group_id:
           type: string
-          x-stream-index: "003"
+          x-stream-index: "004"
         last_feed_get_at:
           format: date-time
           type: number
-          x-stream-index: "017"
+          x-stream-index: "020"
         notification:
           $ref: '#/components/schemas/NotificationConfig'
-          x-stream-index: "004"
+          x-stream-index: "005"
         push_notification:
           $ref: '#/components/schemas/PushNotificationConfig'
-          x-stream-index: "005"
+          x-stream-index: "007"
         ranking:
           $ref: '#/components/schemas/RankingConfig'
-          x-stream-index: "014"
+          x-stream-index: "017"
         stories:
           $ref: '#/components/schemas/StoriesConfig'
-          x-stream-index: "011"
+          x-stream-index: "014"
         updated_at:
           format: date-time
           type: number
-          x-stream-index: "009"
+          x-stream-index: "012"
       required:
       - app_pk
       - group_id
       - default_visibility
+      - default_follower_role
       - custom
       - created_at
       - updated_at
@@ -9144,6 +9730,9 @@ components:
         id:
           type: string
           x-stream-index: "001"
+        parent_id:
+          type: string
+          x-stream-index: "005"
         user_id:
           type: string
           x-stream-index: "002"
@@ -9648,19 +10237,19 @@ components:
         bookmark_count:
           format: int32
           type: integer
-          x-stream-index: "023"
+          x-stream-index: "024"
         confidence_score:
           format: double
           type: number
-          x-stream-index: "025"
+          x-stream-index: "026"
         controversy_score:
           format: double
           type: number
-          x-stream-index: "026"
+          x-stream-index: "027"
         created_at:
           format: date-time
           type: number
-          x-stream-index: "015"
+          x-stream-index: "016"
         custom:
           additionalProperties: {}
           type: object
@@ -9668,15 +10257,18 @@ components:
         deleted_at:
           format: date-time
           type: number
-          x-stream-index: "018"
+          x-stream-index: "019"
         downvote_count:
           format: int32
           type: integer
-          x-stream-index: "022"
+          x-stream-index: "023"
         edited_at:
           format: date-time
           type: number
-          x-stream-index: "017"
+          x-stream-index: "018"
+        hidden:
+          type: boolean
+          x-stream-index: "014"
         i18n:
           additionalProperties:
             type: string
@@ -9697,7 +10289,7 @@ components:
           x-stream-index: "013"
         moderation:
           $ref: '#/components/schemas/ModerationV2Response'
-          x-stream-index: "019"
+          x-stream-index: "020"
         object_id:
           type: string
           x-stream-index: "002"
@@ -9708,7 +10300,7 @@ components:
           items:
             $ref: '#/components/schemas/FeedsReactionResponse'
           type: array
-          x-stream-index: "027"
+          x-stream-index: "028"
         parent_id:
           type: string
           x-stream-index: "008"
@@ -9724,25 +10316,25 @@ components:
         reply_count:
           format: int32
           type: integer
-          x-stream-index: "020"
+          x-stream-index: "021"
         score:
           format: int32
           type: integer
-          x-stream-index: "024"
+          x-stream-index: "025"
         status:
           type: string
-          x-stream-index: "014"
+          x-stream-index: "015"
         text:
           type: string
           x-stream-index: "005"
         updated_at:
           format: date-time
           type: number
-          x-stream-index: "016"
+          x-stream-index: "017"
         upvote_count:
           format: int32
           type: integer
-          x-stream-index: "021"
+          x-stream-index: "022"
         user:
           $ref: '#/components/schemas/UserResponse'
           x-stream-index: "004"
@@ -9753,6 +10345,7 @@ components:
       - user
       - reaction_count
       - mentioned_users
+      - hidden
       - status
       - created_at
       - updated_at
@@ -9784,29 +10377,41 @@ components:
     FileUploadConfig:
       properties:
         allowed_file_extensions:
+          description: The allowed file extensions.
           items:
             type: string
+          title: Allowed file extensions
           type: array
           x-stream-index: "001"
         allowed_mime_types:
+          description: The allowed mime types.
           items:
             type: string
+          title: Allowed MIME types
           type: array
           x-stream-index: "003"
         blocked_file_extensions:
+          description: The blocked file extensions.
           items:
             type: string
+          title: Blocked file extensions
           type: array
           x-stream-index: "002"
         blocked_mime_types:
+          description: The blocked mime types.
           items:
             type: string
+          title: Blocked MIME types
           type: array
           x-stream-index: "004"
         size_limit:
+          description: |-
+            The file size limit allowed in Bytes. 0 means no app-specific limit.
+            This value is configurable from Stream's Dashboard App Settings.
           format: int32
           maximum: 104857600
           minimum: 0
+          title: Size limit
           type: integer
           x-stream-index: "005"
       required:
@@ -9864,6 +10469,17 @@ components:
           title: AI Image Labels
           type: array
           x-stream-index: "003"
+        ai_image_ocr_labels:
+          description: Labels the image OCR pipeline can flag, available as filter
+            values on the `label` field under the ai_image category. The app's LLM
+            labels when LLM configurability is enabled, otherwise the AI text labels.
+            OCR and image-classification labels share the `label` field, so a name
+            present in both matches either.
+          items:
+            type: string
+          title: AI Image OCR Labels
+          type: array
+          x-stream-index: "005"
         ai_image_taxonomy:
           additionalProperties:
             items:
@@ -9890,7 +10506,7 @@ components:
             type: string
           title: Config Keys
           type: array
-          x-stream-index: "005"
+          x-stream-index: "006"
         filterable_custom_keys:
           description: The moderation_payload.custom keys the app has configured as
             review-queue filter chips (via moderation_dashboard_preferences.filterable_custom_keys).
@@ -9900,7 +10516,7 @@ components:
             type: string
           title: Filterable Custom Keys
           type: array
-          x-stream-index: "006"
+          x-stream-index: "008"
         llm_labels:
           description: LLM moderation labels available as filter values
           items:
@@ -9908,6 +10524,18 @@ components:
           title: LLM Labels
           type: array
           x-stream-index: "001"
+        rule_names:
+          description: Names of the app's moderation rules, available as filter values
+            on the `label` field when filtering rule-flagged content. Includes disabled
+            rules, since items flagged before a rule was turned off still carry its
+            name; excludes deleted ones. Scoped to the caller's teams on a multi-tenant
+            app. Capped at 30 names, ordered by name, so an app above that cap is
+            listed partially.
+          items:
+            type: string
+          title: Rule Names
+          type: array
+          x-stream-index: "007"
       required:
       - llm_labels
       type: object
@@ -10020,6 +10648,10 @@ components:
             type: string
           type: array
           x-stream-index: "003"
+        min_text_length:
+          format: int32
+          type: integer
+          x-stream-index: "005"
         threshold:
           format: int32
           type: integer
@@ -10027,6 +10659,9 @@ components:
         time_window:
           type: string
           x-stream-index: "002"
+        track_across_users:
+          type: boolean
+          x-stream-index: "004"
       type: object
     FloodSimilarConfig:
       properties:
@@ -10061,6 +10696,10 @@ components:
             type: string
           type: array
           x-stream-index: "004"
+        min_text_length:
+          format: int32
+          type: integer
+          x-stream-index: "005"
         similarity_distance:
           format: int32
           type: integer
@@ -10108,7 +10747,7 @@ components:
           x-stream-index: "002"
         duration:
           type: string
-          x-stream-index: "003.001"
+          x-stream-index: "004.001"
         follows:
           description: List of current follow relationships
           items:
@@ -10234,6 +10873,9 @@ components:
             and notification_context.target.custom instead'
           title: Copy Custom To Notification
           type: boolean
+          x-stream-deprecated: true
+          x-stream-deprecated-message: use notification_context.trigger.custom and
+            notification_context.target.custom instead
           x-stream-index: "005"
         create_notification_activity:
           description: Whether to create a notification activity for this follow
@@ -10298,7 +10940,9 @@ components:
           type: object
           x-stream-index: "004"
         follower_role:
-          description: Role of the follower (source user) in the follow relationship
+          description: Role of the follower (source user) in the follow relationship,
+            as stored. A reserved name, or a role your app no longer defines, is reported
+            as stored but evaluated as 'feed_follower'.
           title: Follower Role
           type: string
           x-stream-index: "008"
@@ -10513,10 +11157,6 @@ components:
         privacy_settings:
           $ref: '#/components/schemas/PrivacySettingsResponse'
           x-stream-index: "003"
-        revoke_tokens_issued_before:
-          format: date-time
-          type: number
-          x-stream-index: "001.015"
         role:
           type: string
           x-stream-index: "001.006"
@@ -10542,8 +11182,14 @@ components:
           type: integer
           x-stream-index: "010"
         unread_count:
+          deprecated: true
+          description: 'Deprecated: Use total_unread_count instead.'
           format: int32
+          title: Unread count
           type: integer
+          x-stream-deprecated: true
+          x-stream-deprecated-message: Use total_unread_count instead.
+          x-stream-deprecated-renamed: total_unread_count
           x-stream-index: "008"
         unread_threads:
           format: int32
@@ -10709,6 +11355,13 @@ components:
     GetCommentsResponse:
       nullable: true
       properties:
+        comment_count:
+          description: Total number of comments on the object, including replies at
+            every depth
+          format: int32
+          title: Comment Count
+          type: integer
+          x-stream-index: "003"
         comments:
           description: Threaded listing for the activity
           items:
@@ -10718,21 +11371,30 @@ components:
           x-stream-index: "001"
         duration:
           type: string
-          x-stream-index: "004.001"
+          x-stream-index: "006.001"
         next:
           type: string
-          x-stream-index: "003.001"
+          x-stream-index: "005.001"
         prev:
           type: string
-          x-stream-index: "003.002"
+          x-stream-index: "005.002"
         sort:
           description: Sort order used for the comments (first, last, top, best, controversial)
           title: Sort Order
           type: string
           x-stream-index: "002"
+        top_level_comment_count:
+          description: Number of comments directly on the object, excluding replies.
+            Independent of depth, replies_limit and id_around, and not adjusted per
+            viewer. Only present when include_top_level_comment_count is set
+          format: int32
+          title: Top Level Comment Count
+          type: integer
+          x-stream-index: "004"
       required:
       - comments
       - sort
+      - comment_count
       - duration
       title: Get  Comments Response
       type: object
@@ -10908,13 +11570,40 @@ components:
       title: Get OG Attachment
       type: object
       x-stream-docs-page-id: og
+    GetOrCreateChannelDefaults:
+      description: Defaults applied by the get-or-create channel endpoint.
+      properties:
+        members:
+          $ref: '#/components/schemas/PagerDefaults'
+          description: Defaults for the `members` pagination object.
+          title: Members
+          x-stream-index: "002"
+        messages:
+          $ref: '#/components/schemas/PagerDefaults'
+          description: Defaults for the `messages` pagination object.
+          title: Messages
+          x-stream-index: "001"
+      required:
+      - messages
+      - members
+      type: object
     GetOrCreateFeedRequest:
-      description: Client request
       nullable: true
       properties:
         data:
           $ref: '#/components/schemas/FeedInput'
           x-stream-index: "004"
+        discard_actors:
+          description: 'Feature-gated; not available for all apps. Request-scoped
+            list of actor/user IDs whose activities are filtered from this GetOrCreateFeed
+            response only. Merged (union) into the viewing user''s in-memory blocked
+            authors for this request; never persisted to blocked_users. Max: 1000.'
+          items:
+            type: string
+          maxItems: 1000
+          title: Discard Actors
+          type: array
+          x-stream-index: "016"
         enrichment_options:
           $ref: '#/components/schemas/EnrichmentOptions'
           x-stream-index: "014"
@@ -10937,7 +11626,7 @@ components:
           x-stream-index: "015"
         id_around:
           type: string
-          x-stream-index: "017.004"
+          x-stream-index: "018.004"
         interest_weights:
           additionalProperties:
             format: double
@@ -10949,29 +11638,28 @@ components:
           maximum: 100
           minimum: 0
           type: integer
-          x-stream-index: "017.001"
+          x-stream-index: "018.001"
         member_pagination:
           $ref: '#/components/schemas/PagerRequest'
           x-stream-index: "011"
         next:
           type: string
-          x-stream-index: "017.002"
+          x-stream-index: "018.002"
         overwrite_interest_weights:
           type: boolean
           x-stream-index: "009"
         prev:
           type: string
-          x-stream-index: "017.003"
+          x-stream-index: "018.003"
         view:
           type: string
           x-stream-index: "006"
         watch:
           type: boolean
           x-stream-index: "005"
-      title: ClientRequest
+      title: Get Or Create Feed Request
       type: object
     GetOrCreateFeedResponse:
-      description: Basic response information
       nullable: true
       properties:
         activities:
@@ -10986,12 +11674,22 @@ components:
           x-stream-index: "003"
         created:
           type: boolean
+          x-stream-index: "014"
+        degraded_selectors:
+          description: Activity selectors dropped from this read because they exceeded
+            their time budget (see the time_budget_ms selector setting). Their activities
+            are missing from this page, and they stay out for the rest of this pagination
+            session. Omitted when every selector completed
+          items:
+            type: string
+          title: Degraded Selectors
+          type: array
           x-stream-index: "012"
         duration:
           description: Duration of the request in milliseconds
           title: Duration
           type: string
-          x-stream-index: "014.001"
+          x-stream-index: "016.001"
         feed:
           $ref: '#/components/schemas/FeedResponse'
           x-stream-index: "001"
@@ -11021,7 +11719,7 @@ components:
           x-stream-index: "004"
         next:
           type: string
-          x-stream-index: "013.001"
+          x-stream-index: "015.001"
         notification_status:
           $ref: '#/components/schemas/NotificationStatusResponse'
           x-stream-index: "011"
@@ -11032,7 +11730,7 @@ components:
           x-stream-index: "007"
         prev:
           type: string
-          x-stream-index: "013.002"
+          x-stream-index: "015.002"
       required:
       - feed
       - activities
@@ -11043,7 +11741,7 @@ components:
       - pinned_activities
       - created
       - duration
-      title: Response
+      title: Get Or Create Feed Response
       type: object
     GetOrCreateFollowResponse:
       nullable: true
@@ -11152,15 +11850,16 @@ components:
       title: GetUserGroupResponse
       type: object
     GetUserInterestsResponse:
-      description: User's computed interest tags ordered by descending count, then
-        ascending tag name
+      description: User's interest tags ordered by descending weight, then manually
+        set tags before computed ones, then descending count, then ascending tag name
       nullable: true
       properties:
         duration:
           type: string
           x-stream-index: "002.001"
         interests:
-          description: Top-N interest tags sorted by descending count, then alphabetically
+          description: Interest tags sorted by descending weight, then manually set
+            tags before computed ones, then descending count, then alphabetically
             by tag
           items:
             $ref: '#/components/schemas/InterestTagResponse'
@@ -11467,24 +12166,110 @@ components:
       - duration
       title: Response
       type: object
+    IntentConfigRequest:
+      properties:
+        topics:
+          description: Topics to classify conversation text against (max 20, labels
+            must be unique)
+          items:
+            $ref: '#/components/schemas/IntentTopicRequest'
+          title: Topics
+          type: array
+          x-stream-index: "001"
+      type: object
+    IntentConfigResponse:
+      properties:
+        topics:
+          description: Topics conversation text is classified against
+          items:
+            $ref: '#/components/schemas/IntentTopicResponse'
+          title: Topics
+          type: array
+          x-stream-index: "001"
+      required:
+      - topics
+      type: object
+    IntentRuleParameters:
+      description: 'intent_rule params: policy intent topic label and the minimum
+        final score (1-100) that fires the condition'
+      properties:
+        threshold:
+          format: int32
+          type: integer
+          x-stream-index: "002"
+        topic:
+          type: string
+          x-stream-index: "001"
+      required:
+      - topic
+      type: object
+    IntentTopicRequest:
+      properties:
+        description:
+          description: Optional description used in the classification prompt; the
+            label alone is used when empty
+          title: Description
+          type: string
+          x-stream-index: "002"
+        label:
+          description: Unique topic label (e.g. purchase_intent)
+          title: Label
+          type: string
+          x-stream-index: "001"
+      required:
+      - label
+      type: object
+    IntentTopicResponse:
+      properties:
+        description:
+          description: Optional description used in the classification prompt; the
+            label alone is used when empty
+          title: Description
+          type: string
+          x-stream-index: "002"
+        label:
+          description: Unique topic label (e.g. purchase_intent)
+          title: Label
+          type: string
+          x-stream-index: "001"
+      required:
+      - label
+      type: object
     InterestTagResponse:
-      description: An interest tag with the number of distinct activities the user
-        reacted to that carried it
+      description: An interest tag of a user with its ranking weight and, for computed
+        tags, how many distinct reacted-to activities carried it
       properties:
         count:
-          description: Number of distinct reacted-to activities tagged with this value
+          description: Lifetime number of distinct reacted-to activities tagged with
+            this value, without decay; 0 for manually set tags
           format: int32
           title: Count
           type: integer
           x-stream-index: "002"
+        source:
+          description: 'How the tag was set: computed (from the user''s reactions)
+            or manual (through the API)'
+          title: Source
+          type: string
+          x-stream-index: "004"
         tag:
           description: The interest tag value
           title: Tag
           type: string
           x-stream-index: "001"
+        weight:
+          description: 'Ranking weight between -1.0 and 1.0. Computed tags carry a
+            recency-decayed weight in (0, 1.0]: the user''s strongest tag is 1.0 and
+            every other a proportional share'
+          format: double
+          title: Weight
+          type: number
+          x-stream-index: "003"
       required:
       - tag
       - count
+      - weight
+      - source
       title: Interest Tag
       type: object
     KeyframeOCRRuleParameters:
@@ -11563,6 +12348,7 @@ components:
           type: string
           x-stream-index: "002"
         label:
+          maxLength: 128
           type: string
           x-stream-index: "001"
         severity_rules:
@@ -12354,10 +13140,14 @@ components:
     ModerationFlagResponse:
       nullable: true
       properties:
-        created_at:
+        content_published_at:
           format: date-time
           type: number
           x-stream-index: "015"
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "016"
         custom:
           additionalProperties: {}
           type: object
@@ -12400,7 +13190,7 @@ components:
         updated_at:
           format: date-time
           type: number
-          x-stream-index: "016"
+          x-stream-index: "017"
         user:
           $ref: '#/components/schemas/UserResponse'
           x-stream-index: "004"
@@ -12509,6 +13299,9 @@ components:
           maxItems: 10
           type: array
           x-stream-index: "004"
+        country_code:
+          type: string
+          x-stream-index: "011"
         custom:
           additionalProperties: {}
           type: object
@@ -12775,23 +13568,38 @@ components:
     NotificationComment:
       properties:
         attachments:
+          description: Attachments on the comment
           items:
             $ref: '#/components/schemas/Attachment'
+          title: Attachments
           type: array
           x-stream-index: "004"
         comment:
+          description: The text of the comment
+          title: Comment Text
           type: string
           x-stream-index: "003"
         id:
+          description: The ID of the comment
+          title: Comment ID
           type: string
           x-stream-index: "001"
+        parent_id:
+          description: The ID of the parent comment when this comment is a reply;
+            omitted for top-level comments
+          title: Parent ID
+          type: string
+          x-stream-index: "005"
         user_id:
+          description: The ID of the user who wrote the comment
+          title: User ID
           type: string
           x-stream-index: "002"
       required:
       - id
       - user_id
       - comment
+      title: NotificationComment
       type: object
     NotificationConfig:
       properties:
@@ -12835,19 +13643,19 @@ components:
           format: date-time
           title: Created at
           type: number
-          x-stream-index: 003.001.003
+          x-stream-index: 004.001.003
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: 003.001.007
+          x-stream-index: 004.001.007
         feed_visibility:
           type: string
-          x-stream-index: "003.003"
+          x-stream-index: "004.003"
         fid:
           description: The ID of the feed
           title: Feed ID
           type: string
-          x-stream-index: "003.002"
+          x-stream-index: "004.002"
         notification_status:
           $ref: '#/components/schemas/NotificationStatusResponse'
           description: Notification status including unread/unseen counts
@@ -12856,19 +13664,19 @@ components:
         received_at:
           format: date-time
           type: number
-          x-stream-index: 003.001.004
+          x-stream-index: 004.001.004
         type:
           default: feeds.notification_feed.updated
           description: 'The type of event: "feeds.notification_feed.updated" in this
             case'
           title: Event Type
           type: string
-          x-stream-index: 003.001.002
+          x-stream-index: 004.001.002
         user:
           $ref: '#/components/schemas/UserResponseCommonFields'
           description: The user who triggered the notification
           title: User
-          x-stream-index: "004.001"
+          x-stream-index: "005.001"
       required:
       - type
       - created_at
@@ -13205,10 +14013,6 @@ components:
         push_preferences:
           $ref: '#/components/schemas/PushPreferencesResponse'
           x-stream-index: "002"
-        revoke_tokens_issued_before:
-          format: date-time
-          type: number
-          x-stream-index: "001.015"
         role:
           type: string
           x-stream-index: "001.006"
@@ -13237,8 +14041,14 @@ components:
           type: integer
           x-stream-index: "011"
         unread_count:
+          deprecated: true
+          description: 'Deprecated: Use total_unread_count instead.'
           format: int32
+          title: Unread count
           type: integer
+          x-stream-deprecated: true
+          x-stream-deprecated-message: Use total_unread_count instead.
+          x-stream-deprecated-renamed: total_unread_count
           x-stream-index: "008"
         unread_threads:
           format: int32
@@ -13266,6 +14076,19 @@ components:
       - total_unread_count
       - unread_channels
       - unread_threads
+      - blocked_user_ids
+      type: object
+    PagerDefaults:
+      description: Resolved defaults for a nested pagination object.
+      properties:
+        limit:
+          description: Number of records returned when `limit` is omitted.
+          format: int32
+          title: Limit
+          type: integer
+          x-stream-index: "001"
+      required:
+      - limit
       type: object
     PagerRequest:
       properties:
@@ -13471,13 +14294,18 @@ components:
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "003"
+          x-stream-index: "004"
         id:
           type: string
           x-stream-index: "001"
         text:
           type: string
           x-stream-index: "002"
+        text_i18n:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "003"
       required:
       - id
       - text
@@ -13504,83 +14332,93 @@ components:
       properties:
         allow_answers:
           type: boolean
-          x-stream-index: "008"
+          x-stream-index: "010"
         allow_user_suggested_options:
           type: boolean
-          x-stream-index: "007"
+          x-stream-index: "009"
         answers_count:
           format: int32
           type: integer
-          x-stream-index: "012"
+          x-stream-index: "014"
         created_at:
           format: date-time
           type: number
-          x-stream-index: "019"
+          x-stream-index: "021"
         created_by:
           $ref: '#/components/schemas/UserResponse'
-          x-stream-index: "018"
+          x-stream-index: "020"
         created_by_id:
           type: string
-          x-stream-index: "017"
+          x-stream-index: "019"
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "021"
+          x-stream-index: "023"
         description:
           type: string
-          x-stream-index: "003"
+          x-stream-index: "004"
+        description_i18n:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "005"
         enforce_unique_vote:
           type: boolean
-          x-stream-index: "005"
+          x-stream-index: "007"
         id:
           type: string
           x-stream-index: "001"
         is_closed:
           type: boolean
-          x-stream-index: "009"
+          x-stream-index: "011"
         latest_answers:
           items:
             $ref: '#/components/schemas/PollVoteResponseData'
           type: array
-          x-stream-index: "015"
+          x-stream-index: "017"
         latest_votes_by_option:
           additionalProperties:
             items:
               $ref: '#/components/schemas/PollVoteResponseData'
             type: array
           type: object
-          x-stream-index: "014"
+          x-stream-index: "016"
         max_votes_allowed:
           format: int32
           type: integer
-          x-stream-index: "006"
+          x-stream-index: "008"
         name:
           type: string
           x-stream-index: "002"
+        name_i18n:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "003"
         options:
           items:
             $ref: '#/components/schemas/PollOptionResponseData'
           type: array
-          x-stream-index: "011"
+          x-stream-index: "013"
         own_votes:
           items:
             $ref: '#/components/schemas/PollVoteResponseData'
           type: array
-          x-stream-index: "016"
+          x-stream-index: "018"
         updated_at:
           format: date-time
           type: number
-          x-stream-index: "020"
+          x-stream-index: "022"
         vote_count:
           format: int32
           type: integer
-          x-stream-index: "010"
+          x-stream-index: "012"
         vote_counts_by_option:
           additionalProperties:
             format: int32
             type: integer
           type: object
-          x-stream-index: "013"
+          x-stream-index: "015"
         voting_visibility:
           description: Voting visibility of the poll
           enum:
@@ -13588,7 +14426,7 @@ components:
           - public
           title: Voting visibility
           type: string
-          x-stream-index: "004"
+          x-stream-index: "006"
       required:
       - id
       - name
@@ -13812,10 +14650,15 @@ components:
         answer_text:
           type: string
           x-stream-index: "005"
+        answer_text_i18n:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "006"
         created_at:
           format: date-time
           type: number
-          x-stream-index: "008"
+          x-stream-index: "009"
         id:
           type: string
           x-stream-index: "002"
@@ -13831,13 +14674,13 @@ components:
         updated_at:
           format: date-time
           type: number
-          x-stream-index: "009"
+          x-stream-index: "010"
         user:
           $ref: '#/components/schemas/UserResponse'
-          x-stream-index: "007"
+          x-stream-index: "008"
         user_id:
           type: string
-          x-stream-index: "006"
+          x-stream-index: "007"
       required:
       - poll_id
       - id
@@ -13871,15 +14714,22 @@ components:
       - duration
       type: object
     PrivacySettingsResponse:
+      description: The privacy settings of the user.
       properties:
         delivery_receipts:
           $ref: '#/components/schemas/DeliveryReceiptsResponse'
+          description: The settings for the delivery receipt events.
+          title: Delivery receipts
           x-stream-index: "003"
         read_receipts:
           $ref: '#/components/schemas/ReadReceiptsResponse'
+          description: The settings for the read receipt events.
+          title: Read receipts
           x-stream-index: "002"
         typing_indicators:
           $ref: '#/components/schemas/TypingIndicatorsResponse'
+          description: The settings for typing indicator events.
+          title: Typing indicators
           x-stream-index: "001"
       type: object
     PushNotificationConfig:
@@ -13925,6 +14775,17 @@ components:
           - default
           title: Chat Level
           type: string
+          x-stream-deprecated-enum-values:
+            mentions: direct_mentions
+          x-stream-enum-descriptions:
+            all: All push notifications will be delivered.
+            all_mentions: Push notifications will only be delivered when the user
+              is mentioned directly or via @channel, @here, a role or a user group.
+            default: Behaves as all.
+            direct_mentions: Push notifications will only be delivered when the user
+              is directly @mentioned by username.
+            mentions: 'Deprecated: behaves as direct_mentions.'
+            none: No push notifications will be delivered.
           x-stream-index: "003"
         chat_preferences:
           $ref: '#/components/schemas/ChatPreferencesInput'
@@ -13956,6 +14817,34 @@ components:
           title: Remove Disable
           type: boolean
           x-stream-index: "009"
+        remove_schedule:
+          description: Remove the user's quiet-hours schedule, the counterpart of
+            remove_disable. It is applied before schedule, so sending both in one
+            item replaces the stored schedule instead of merging into it. Cannot be
+            combined with channel_cid. To switch from a schedule to a snooze, send
+            remove_schedule together with disabled_until.
+          title: Remove Schedule
+          type: boolean
+          x-stream-index: "011"
+        schedule:
+          $ref: '#/components/schemas/PushScheduleInput'
+          description: 'Set a recurring quiet-hours schedule for the user: while a
+            quiet window is active, push notifications are suppressed. Suppressed
+            notifications are dropped, not delayed or queued. A schedule reaches the
+            same notifications as disabled_until: chat message pushes, video call
+            pushes including ringing calls, and feeds pushes. Reminder pushes are
+            still delivered during quiet hours. The fields are merged into the stored
+            schedule one level deep: a non-empty timezone replaces the stored timezone,
+            and quiet_hours, when present, replaces all stored rules. Sending only
+            a timezone therefore keeps the rules, and sending only quiet_hours keeps
+            the timezone. The merged schedule must be complete, with a timezone and
+            1 to 7 rules, so the first schedule of a user has to set both. An empty
+            object is rejected. Schedules are user-level only. A schedule cannot be
+            combined with channel_cid, nor with disabled_until for the same user in
+            the same request, even in separate items; to switch from a snooze to a
+            schedule, send remove_disable together with schedule.'
+          title: Schedule
+          x-stream-index: "010"
         user_id:
           description: The user id for which to set the push preferences. Required
             when using server side auths, defaults to current user with client side
@@ -13965,18 +14854,24 @@ components:
           x-stream-index: "001"
       type: object
     PushPreferencesResponse:
+      description: The push preference details.
       properties:
         call_level:
           type: string
           x-stream-index: "003"
         chat_level:
+          description: The scope level of the push notifications.
+          title: Chat level
           type: string
           x-stream-index: "001"
         chat_preferences:
           $ref: '#/components/schemas/ChatPreferencesResponse'
           x-stream-index: "002"
         disabled_until:
+          description: If provided the notifications will be disabled until the set
+            date.
           format: date-time
+          title: Disabled until
           type: number
           x-stream-index: "006"
         feeds_level:
@@ -13985,13 +14880,74 @@ components:
         feeds_preferences:
           $ref: '#/components/schemas/FeedsPreferencesResponse'
           x-stream-index: "005"
+        schedule:
+          $ref: '#/components/schemas/PushScheduleResponse'
+          description: The recurring quiet-hours schedule of the user, if one is set.
+            While a quiet window is active, push notifications for the user are suppressed
+            (dropped, not delayed).
+          title: Schedule
+          x-stream-index: "007"
+      type: object
+    PushScheduleInput:
+      description: 'A recurring quiet-hours schedule: while any quiet window is active,
+        push notifications for the user are suppressed. Suppressed notifications are
+        dropped, not delayed.'
+      properties:
+        quiet_hours:
+          description: 'The quiet windows, 1 to 7 rules. Push is suppressed while
+            any rule is active. When present it replaces all stored rules; omit it
+            to keep them, for example to change only the timezone. An empty array
+            counts as omitted, so it cannot be used to clear the rules: use remove_schedule
+            for that.'
+          items:
+            $ref: '#/components/schemas/QuietHoursRuleInput'
+          maxItems: 7
+          minItems: 1
+          title: Quiet hours
+          type: array
+          x-stream-index: "002"
+        timezone:
+          description: IANA time zone name the quiet windows are evaluated in, for
+            example Europe/Amsterdam or America/New_York. Daylight saving time is
+            followed automatically for region-based names. Offsets such as +02:00
+            and the name "Local" are rejected; fixed-offset zones such as UTC or Etc/GMT-2
+            are accepted but never shift for daylight saving time. When updating an
+            existing schedule, a non-empty timezone replaces the stored one and leaves
+            the stored quiet_hours untouched.
+          title: Timezone
+          type: string
+          x-stream-index: "001"
+      title: Push Schedule
+      type: object
+    PushScheduleResponse:
+      description: 'A recurring quiet-hours schedule: while any quiet window is active,
+        push notifications for the user are suppressed. Suppressed notifications are
+        dropped, not delayed.'
+      properties:
+        quiet_hours:
+          description: The quiet windows. Push is suppressed while any rule is active.
+          items:
+            $ref: '#/components/schemas/QuietHoursRuleResponse'
+          title: Quiet hours
+          type: array
+          x-stream-index: "002"
+        timezone:
+          description: IANA time zone name the quiet windows are evaluated in, for
+            example Europe/Amsterdam.
+          title: Timezone
+          type: string
+          x-stream-index: "001"
+      required:
+      - timezone
+      - quiet_hours
+      title: Push Schedule
       type: object
     QueryActivitiesRequest:
       nullable: true
       properties:
         enrich_own_fields:
           type: boolean
-          x-stream-index: "006"
+          x-stream-index: "007"
         filter:
           additionalProperties: {}
           description: Filters to apply to the query. Supports location-based queries
@@ -14098,23 +15054,18 @@ components:
               - $eq
               type: object
           x-stream-index: "001"
-        include_soft_deleted_activities:
-          description: When true, include soft-deleted activities in the result.
-          title: Include Soft Deleted Activities
-          type: boolean
-          x-stream-index: "005"
         limit:
           format: int32
           maximum: 100
           minimum: 0
           type: integer
-          x-stream-index: "008.001"
+          x-stream-index: "009.001"
         next:
           type: string
-          x-stream-index: "008.002"
+          x-stream-index: "009.002"
         prev:
           type: string
-          x-stream-index: "008.003"
+          x-stream-index: "009.003"
         sort:
           description: Sorting parameters for the query
           items:
@@ -14629,6 +15580,44 @@ components:
       - duration
       title: Query Bookmarks Response
       type: object
+    QueryChannelsDefaults:
+      description: Defaults applied by the query channels endpoint.
+      properties:
+        limit:
+          description: Number of channels returned when `limit` is omitted.
+          format: int32
+          title: Limit
+          type: integer
+          x-stream-index: "001"
+        max_limit:
+          description: Largest number of channels returned for one request. A bigger
+            `limit` is silently clamped to this value rather than rejected. An app
+            with no per-app override gets a higher ceiling for the narrow case of
+            a request asking for at most one message and one member per channel.
+          format: int32
+          title: Max limit
+          type: integer
+          x-stream-index: "002"
+        member_limit:
+          description: Number of members returned per channel when `member_limit`
+            is omitted.
+          format: int32
+          title: Member limit
+          type: integer
+          x-stream-index: "004"
+        message_limit:
+          description: Number of messages returned per channel when `message_limit`
+            is omitted.
+          format: int32
+          title: Message limit
+          type: integer
+          x-stream-index: "003"
+      required:
+      - limit
+      - max_limit
+      - message_limit
+      - member_limit
+      type: object
     QueryCollectionsRequest:
       nullable: true
       properties:
@@ -14869,6 +15858,10 @@ components:
               - $lt
               - $lte
               type: number
+            hidden:
+              operators:
+              - $eq
+              type: boolean
             id:
               operators:
               - $eq
@@ -14934,13 +15927,13 @@ components:
           minimum: 0
           title: Limit
           type: integer
-          x-stream-index: "005.001"
+          x-stream-index: "006.001"
         next:
           type: string
-          x-stream-index: "005.002"
+          x-stream-index: "006.002"
         prev:
           type: string
-          x-stream-index: "005.003"
+          x-stream-index: "006.003"
         sort:
           description: Array of sort parameters
           enum:
@@ -15347,18 +16340,27 @@ components:
               - $in
               type: string
           x-stream-index: "001"
+        include_group_counts:
+          description: 'When true (server-side only), the response includes group_counts:
+            accepted following counts keyed by the followed feed''s group. Requires
+            exactly one source_feed / source_fid string equality. HTTP 400 if target_feed
+            appears, if two source FIDs are given, or if $in / $or / $nor mentions
+            those keys. Independent of paging and of other filters, including status.'
+          title: Include Group Counts
+          type: boolean
+          x-stream-index: "003"
         limit:
           format: int32
           maximum: 100
           minimum: 0
           type: integer
-          x-stream-index: "003.001"
+          x-stream-index: "004.001"
         next:
           type: string
-          x-stream-index: "003.002"
+          x-stream-index: "004.002"
         prev:
           type: string
-          x-stream-index: "003.003"
+          x-stream-index: "004.003"
         sort:
           description: Sorting parameters for the query
           items:
@@ -15374,7 +16376,7 @@ components:
       properties:
         duration:
           type: string
-          x-stream-index: "003.001"
+          x-stream-index: "004.001"
         follows:
           description: List of follow relationships matching the query
           items:
@@ -15382,16 +16384,29 @@ components:
           title: Follows
           type: array
           x-stream-index: "001"
+        group_counts:
+          additionalProperties:
+            format: int32
+            type: integer
+          description: Accepted following counts keyed by followed feed group. Present
+            only when include_group_counts is set with a source_feed equality.
+          title: Group Counts
+          type: object
+          x-stream-index: "002"
+          x-stream-map:
+            description: Number of accepted follows for this feed group
+            key: group_id
+            title: Count
         next:
           description: Cursor for next page
           title: Next
           type: string
-          x-stream-index: "002.001"
+          x-stream-index: "003.001"
         prev:
           description: Cursor for previous page
           title: Previous
           type: string
-          x-stream-index: "002.002"
+          x-stream-index: "003.002"
       required:
       - follows
       - duration
@@ -15540,13 +16555,13 @@ components:
           maximum: 100
           minimum: 0
           type: integer
-          x-stream-index: "007.001"
+          x-stream-index: "010.001"
         next:
           type: string
-          x-stream-index: "007.002"
+          x-stream-index: "010.002"
         prev:
           type: string
-          x-stream-index: "007.003"
+          x-stream-index: "010.003"
         sort:
           description: Sorting parameters for the query
           items:
@@ -15814,7 +16829,11 @@ components:
             moderation_payload.custom keys: any key that is not a built-in field is
             matched against the item''s custom moderation data (e.g. {"location_id":
             "loc-42"}). Use filter_config.filterable_custom_keys to discover which
-            custom keys the app exposes as chips.'
+            custom keys the app exposes as chips. content_text searches the moderated
+            text: "$q" is a keyword search (terms ANDed, no adjacency) over the indexed
+            tsvector, while "$eq" (or "$in" for several wordings) matches the text
+            exactly. The exact form is unindexed, so scope it with date_range rather
+            than running it across the whole queue.'
           title: Filter
           type: object
           x-stream-filter-fields:
@@ -15877,7 +16896,33 @@ components:
               - $lt
               - $lte
               type: date
+            confidence_score:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: number
             config_key:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
+            content_text:
+              operators:
+              - $eq
+              - $in
+              - $q
+              type: string
+            country_code:
               operators:
               - $eq
               - $exists
@@ -15926,6 +16971,7 @@ components:
               type: string
             entity_creator_name:
               operators:
+              - $contains
               - $eq
               - $exists
               - $gt
@@ -16342,6 +17388,18 @@ components:
               - $eq
               type: string
           x-stream-index: "001"
+        id_gt:
+          type: string
+          x-stream-index: "005.004"
+        id_gte:
+          type: string
+          x-stream-index: "005.003"
+        id_lt:
+          type: string
+          x-stream-index: "005.006"
+        id_lte:
+          type: string
+          x-stream-index: "005.005"
         include_deactivated_users:
           type: boolean
           x-stream-index: "004"
@@ -16406,12 +17464,91 @@ components:
       - duration
       title: Response
       type: object
+    QuietHoursRuleInput:
+      description: One recurring quiet window, expressed in local wall-clock time
+        in the schedule's timezone.
+      properties:
+        days:
+          description: 'The days of the week the window opens on, any of mon, tue,
+            wed, thu, fri, sat, sun, each at most once. A window belongs to the day
+            it opens: ["fri"] with 22:00 to 07:00 is quiet from Friday 22:00 until
+            Saturday 07:00, and not on Saturday night. Empty or omitted means every
+            day.'
+          items:
+            enum:
+            - mon
+            - tue
+            - wed
+            - thu
+            - fri
+            - sat
+            - sun
+            type: string
+          title: Days
+          type: array
+          x-stream-index: "001"
+        end:
+          description: 'When the window closes, as HH:MM local wall-clock time between
+            00:00 and 24:00. The end is exclusive: a window ending at 07:00 is already
+            over at 07:00. An end earlier than start wraps past midnight into the
+            next day (start 22:00, end 07:00). 24:00 means the end of the day, so
+            start 00:00 with end 24:00 covers the whole day.'
+          title: End
+          type: string
+          x-stream-index: "003"
+        start:
+          description: When the window opens, as HH:MM local wall-clock time between
+            00:00 and 23:59. Must differ from end.
+          title: Start
+          type: string
+          x-stream-index: "002"
+      required:
+      - start
+      - end
+      title: Quiet Hours Rule
+      type: object
+    QuietHoursRuleResponse:
+      description: One recurring quiet window, expressed in local wall-clock time
+        in the schedule's timezone.
+      properties:
+        days:
+          description: 'The days of the week the window opens on, any of mon, tue,
+            wed, thu, fri, sat, sun. A window belongs to the day it opens: ["fri"]
+            with 22:00 to 07:00 is quiet from Friday 22:00 until Saturday 07:00. Omitted
+            means every day.'
+          items:
+            type: string
+          title: Days
+          type: array
+          x-stream-index: "001"
+        end:
+          description: When the window closes, as HH:MM local wall-clock time between
+            00:00 and 24:00. The end is exclusive. An end earlier than start wraps
+            past midnight into the next day.
+          title: End
+          type: string
+          x-stream-index: "003"
+        start:
+          description: When the window opens, as HH:MM local wall-clock time between
+            00:00 and 23:59.
+          title: Start
+          type: string
+          x-stream-index: "002"
+      required:
+      - start
+      - end
+      title: Quiet Hours Rule
+      type: object
     RankingConfig:
       properties:
         defaults:
           additionalProperties: {}
           type: object
           x-stream-index: "003"
+        exclude_below:
+          format: double
+          type: number
+          x-stream-index: "005"
         functions:
           additionalProperties:
             $ref: '#/components/schemas/DecayFunctionConfig'
@@ -16653,6 +17790,7 @@ components:
       title: Read Collections Response
       type: object
     ReadReceiptsResponse:
+      description: The settings for the read receipt events.
       properties:
         enabled:
           type: boolean
@@ -16732,20 +17870,24 @@ components:
       properties:
         channel:
           $ref: '#/components/schemas/ChannelResponse'
-          x-stream-index: "003"
+          x-stream-index: "004"
         channel_cid:
           type: string
-          x-stream-index: "002"
+          x-stream-index: "003"
         created_at:
           format: date-time
           type: number
-          x-stream-index: "008"
+          x-stream-index: "009"
+        expires_at:
+          format: date-time
+          type: number
+          x-stream-index: "002"
         message:
           $ref: '#/components/schemas/MessageResponse'
-          x-stream-index: "005"
+          x-stream-index: "006"
         message_id:
           type: string
-          x-stream-index: "004"
+          x-stream-index: "005"
         remind_at:
           format: date-time
           type: number
@@ -16753,13 +17895,13 @@ components:
         updated_at:
           format: date-time
           type: number
-          x-stream-index: "009"
+          x-stream-index: "010"
         user:
           $ref: '#/components/schemas/UserResponse'
-          x-stream-index: "007"
+          x-stream-index: "008"
         user_id:
           type: string
-          x-stream-index: "006"
+          x-stream-index: "007"
       required:
       - channel_cid
       - message_id
@@ -16915,44 +18057,54 @@ components:
             $ref: '#/components/schemas/ActionLogResponse'
           title: Actions
           type: array
-          x-stream-index: "025"
+          x-stream-index: "027"
         activity:
           $ref: '#/components/schemas/EnrichedActivity'
-          x-stream-index: "017"
+          x-stream-index: "019"
         ai_text_severity:
           description: AI-determined text severity
           title: AI Text Severity
           type: string
-          x-stream-index: "014"
+          x-stream-index: "015"
         appeal:
           $ref: '#/components/schemas/AppealItemResponse'
           description: Appeal submitted for this item if it exists
           title: Appeal
-          x-stream-index: "026"
+          x-stream-index: "028"
         assigned_to:
           $ref: '#/components/schemas/UserResponse'
           description: Moderator assigned to review this item
           title: Assigned To
-          x-stream-index: "022"
+          x-stream-index: "024"
         bans:
           description: Associated ban records
           items:
             $ref: '#/components/schemas/BanInfoResponse'
           title: Bans
           type: array
-          x-stream-index: "023"
+          x-stream-index: "025"
         call:
           $ref: '#/components/schemas/ModerationCallResponse'
-          x-stream-index: "019"
+          x-stream-index: "021"
         completed_at:
           description: When the review was completed
           format: date-time
           title: Completed At
           type: number
           x-stream-index: "009"
+        confidence_score:
+          description: Highest per-label confidence (0-1) any provider reported across
+            the item's flags; absent when no flag carried one
+          format: double
+          title: Confidence Score
+          type: number
+          x-stream-index: "017"
         config_key:
           type: string
-          x-stream-index: "032"
+          x-stream-index: "035"
+        country_code:
+          type: string
+          x-stream-index: "013"
         created_at:
           description: When the item was created
           format: date-time
@@ -16963,12 +18115,12 @@ components:
           $ref: '#/components/schemas/EntityCreatorResponse'
           description: Details about who created the entity
           title: Entity Creator
-          x-stream-index: "020"
+          x-stream-index: "022"
         entity_creator_id:
           description: ID of who created the entity
           title: Entity Creator ID
           type: string
-          x-stream-index: "021"
+          x-stream-index: "023"
         entity_id:
           description: ID of the entity being reviewed
           title: Entity ID
@@ -16983,50 +18135,50 @@ components:
           description: Whether the item has been escalated
           title: Escalated
           type: boolean
-          x-stream-index: "034"
+          x-stream-index: "037"
         escalated_at:
           description: When the item was escalated
           format: date-time
           title: Escalated At
           type: number
-          x-stream-index: "037"
+          x-stream-index: "040"
         escalated_by:
           description: ID of the moderator who escalated the item
           title: Escalated By
           type: string
-          x-stream-index: "036"
+          x-stream-index: "039"
         escalation_metadata:
           $ref: '#/components/schemas/EscalationMetadata'
           description: Escalation details including reason, notes, and priority
           title: Escalation Metadata
-          x-stream-index: "035"
+          x-stream-index: "038"
         feeds_v2_activity:
           $ref: '#/components/schemas/EnrichedActivity'
           description: Associated feed activity
           title: Feeds V2 Activity
-          x-stream-index: "027"
+          x-stream-index: "029"
         feeds_v2_reaction:
           $ref: '#/components/schemas/Reaction'
           description: Associated feed reaction
           title: Feeds V2 Reaction
-          x-stream-index: "028"
+          x-stream-index: "030"
         feeds_v3_activity:
           $ref: '#/components/schemas/FeedsV3ActivityResponse'
-          x-stream-index: "029"
+          x-stream-index: "031"
         feeds_v3_comment:
           $ref: '#/components/schemas/FeedsV3CommentResponse'
-          x-stream-index: "030"
+          x-stream-index: "032"
         flags:
           description: Associated flag records
           items:
             $ref: '#/components/schemas/ModerationFlagResponse'
           title: Flags
           type: array
-          x-stream-index: "024"
+          x-stream-index: "026"
         flags_count:
           format: int32
           type: integer
-          x-stream-index: "033"
+          x-stream-index: "036"
         id:
           description: Unique identifier of the review queue item
           title: ID
@@ -17041,20 +18193,26 @@ components:
           x-stream-index: "012"
         latest_moderator_action:
           type: string
-          x-stream-index: "015"
+          x-stream-index: "016"
         message:
           $ref: '#/components/schemas/ChatMessageResponse'
           description: Associated message details
           title: Message
-          x-stream-index: "016"
+          x-stream-index: "018"
         moderation_payload:
           $ref: '#/components/schemas/ModerationPayloadResponse'
           description: Content being moderated
           title: Moderation Payload
           x-stream-index: "006"
+        poll:
+          $ref: '#/components/schemas/PollResponseData'
+          description: Associated poll. Absent when the poll was never stored (rejected
+            create) or when a later poll reused the same client-supplied id.
+          title: Poll
+          x-stream-index: "033"
         reaction:
           $ref: '#/components/schemas/Reaction'
-          x-stream-index: "018"
+          x-stream-index: "020"
         recommended_action:
           description: Suggested moderation action
           title: Recommended Action
@@ -17076,7 +18234,7 @@ components:
           format: int32
           title: Severity
           type: integer
-          x-stream-index: "013"
+          x-stream-index: "014"
         status:
           description: Current status of the review
           title: Status
@@ -17088,7 +18246,7 @@ components:
             type: string
           title: Teams
           type: array
-          x-stream-index: "031"
+          x-stream-index: "034"
         updated_at:
           description: When the item was last updated
           format: date-time
@@ -17196,19 +18354,19 @@ components:
       properties:
         call_custom_property_params:
           $ref: '#/components/schemas/CallCustomPropertyParameters'
-          x-stream-index: "029"
+          x-stream-index: "030"
         call_type_rule_params:
           $ref: '#/components/schemas/CallTypeRuleParameters'
-          x-stream-index: "028"
+          x-stream-index: "029"
         call_violation_count_params:
           $ref: '#/components/schemas/CallViolationCountParameters'
-          x-stream-index: "030"
+          x-stream-index: "031"
         channel_message_count_rule_params:
           $ref: '#/components/schemas/ChannelMessageCountRuleParameters'
           x-stream-index: "008"
         closed_caption_rule_params:
           $ref: '#/components/schemas/ClosedCaptionRuleParameters'
-          x-stream-index: "027"
+          x-stream-index: "028"
         confidence:
           format: double
           type: number
@@ -17216,6 +18374,9 @@ components:
         content_count_rule_params:
           $ref: '#/components/schemas/ContentCountRuleParameters'
           x-stream-index: "007"
+        content_country_code_params:
+          $ref: '#/components/schemas/ContentCountryCodeParameters'
+          x-stream-index: "016"
         content_custom_property_count_params:
           $ref: '#/components/schemas/ContentCustomPropertyCountParameters'
           x-stream-index: "014"
@@ -17233,55 +18394,70 @@ components:
           x-stream-index: "013"
         image_content_params:
           $ref: '#/components/schemas/ImageContentParameters'
-          x-stream-index: "019"
+          x-stream-index: "020"
         image_rule_params:
           $ref: '#/components/schemas/ImageRuleParameters'
           x-stream-index: "004"
+        intent_rule_params:
+          $ref: '#/components/schemas/IntentRuleParameters'
+          x-stream-index: "036"
         ip_content_count_rule_params:
           $ref: '#/components/schemas/IPContentCountRuleParameters'
-          x-stream-index: "016"
+          x-stream-index: "017"
         ip_flag_count_rule_params:
           $ref: '#/components/schemas/IPFlagCountRuleParameters'
-          x-stream-index: "017"
+          x-stream-index: "018"
         keyframe_ocr_rule_params:
           $ref: '#/components/schemas/KeyframeOCRRuleParameters'
-          x-stream-index: "026"
+          x-stream-index: "027"
         keyframe_rule_params:
           $ref: '#/components/schemas/KeyframeRuleParameters'
-          x-stream-index: "025"
+          x-stream-index: "026"
         ocr_content_params:
           $ref: '#/components/schemas/OCRContentParameters'
-          x-stream-index: "021"
+          x-stream-index: "022"
         text_content_params:
           $ref: '#/components/schemas/TextContentParameters'
-          x-stream-index: "018"
+          x-stream-index: "019"
         text_rule_params:
           $ref: '#/components/schemas/TextRuleParameters'
           x-stream-index: "003"
         type:
           type: string
           x-stream-index: "001"
+        user_channel_ban_count_params:
+          $ref: '#/components/schemas/UserChannelBanCountRuleParameters'
+          x-stream-index: "035"
+        user_channel_count_params:
+          $ref: '#/components/schemas/UserChannelCountRuleParameters'
+          x-stream-index: "034"
         user_created_within_params:
           $ref: '#/components/schemas/UserCreatedWithinParameters'
-          x-stream-index: "022"
+          x-stream-index: "023"
         user_custom_property_params:
           $ref: '#/components/schemas/UserCustomPropertyParameters'
-          x-stream-index: "023"
+          x-stream-index: "024"
         user_flag_count_rule_params:
           $ref: '#/components/schemas/FlagCountRuleParameters'
           x-stream-index: "009"
         user_identical_content_count_params:
           $ref: '#/components/schemas/UserIdenticalContentCountParameters'
           x-stream-index: "011"
+        user_identical_image_count_params:
+          $ref: '#/components/schemas/UserIdenticalImageCountParameters'
+          x-stream-index: "033"
+        user_reaction_count_params:
+          $ref: '#/components/schemas/UserReactionCountRuleParameters'
+          x-stream-index: "032"
         user_role_params:
           $ref: '#/components/schemas/UserRoleParameters'
-          x-stream-index: "024"
+          x-stream-index: "025"
         user_rule_params:
           $ref: '#/components/schemas/UserRuleParameters'
           x-stream-index: "006"
         video_content_params:
           $ref: '#/components/schemas/VideoContentParameters'
-          x-stream-index: "020"
+          x-stream-index: "021"
         video_rule_params:
           $ref: '#/components/schemas/VideoRuleParameters'
           x-stream-index: "005"
@@ -17493,38 +18669,59 @@ components:
           $ref: '#/components/schemas/ChannelResponse'
           x-stream-index: "011"
         channel_cid:
+          description: The CID (type:id) of the channel that the location is attached
+            to.
+          title: Channel CID
           type: string
           x-stream-index: "001"
         created_at:
+          description: The date when the location was created.
           format: date-time
+          title: Created at
           type: number
           x-stream-index: "008"
         created_by_device_id:
+          description: The ID of the device that created the location.
+          title: Created by device ID
           type: string
           x-stream-index: "006"
         end_at:
+          description: |-
+            The date when the location sharing ends.
+            If it's empty, it means the location sharing is static instead of live.
           format: date-time
+          title: End at
           type: number
           x-stream-index: "007"
         latitude:
+          description: The latitude of the location.
           format: double
+          title: Latitude
           type: number
           x-stream-index: "004"
         longitude:
+          description: The longitude of the location.
           format: double
+          title: Longitude
           type: number
           x-stream-index: "005"
         message:
           $ref: '#/components/schemas/MessageResponse'
           x-stream-index: "010"
         message_id:
+          description: The ID of the message that the location is attached to.
+          title: Message ID
           type: string
           x-stream-index: "002"
         updated_at:
+          description: The date when the location was updated.
           format: date-time
+          title: Updated at
           type: number
           x-stream-index: "009"
         user_id:
+          description: The ID of the user that created the location.
+          title: User ID
           type: string
           x-stream-index: "003"
       required:
@@ -17690,9 +18887,10 @@ components:
       properties:
         action_type:
           description: 'Type of moderation action to perform. One of: mark_reviewed,
-            delete_message, delete_activity, delete_comment, delete_reaction, ban,
-            custom, unban, restore, delete_user, delete_user_messages, unblock, block,
-            shadow_block, unmask, kick_user, end_call, escalate, de_escalate'
+            delete_message, delete_activity, delete_comment, delete_reaction, delete_poll,
+            delete_poll_option, delete_poll_answer, ban, custom, unban, restore, delete_user,
+            delete_user_messages, unblock, block, shadow_block, unmask, kick_user,
+            end_call, escalate, de_escalate'
           enum:
           - flag
           - mark_reviewed
@@ -17700,6 +18898,9 @@ components:
           - delete_activity
           - delete_comment
           - delete_reaction
+          - delete_poll
+          - delete_poll_option
+          - delete_poll_answer
           - ban
           - custom
           - unban
@@ -17729,22 +18930,22 @@ components:
           $ref: '#/components/schemas/BanActionRequestPayload'
           description: Configuration for ban action
           title: Ban
-          x-stream-index: "011"
+          x-stream-index: "014"
         block:
           $ref: '#/components/schemas/BlockActionRequestPayload'
           description: Configuration for block action
           title: Block
-          x-stream-index: "016"
+          x-stream-index: "019"
         bypass:
           $ref: '#/components/schemas/BypassActionRequest'
           description: Configuration for bypass moderation action
           title: Bypass
-          x-stream-index: "020"
+          x-stream-index: "023"
         custom:
           $ref: '#/components/schemas/CustomActionRequestPayload'
           description: Configuration for custom action
           title: Custom
-          x-stream-index: "012"
+          x-stream-index: "015"
         delete_activity:
           $ref: '#/components/schemas/DeleteActivityRequestPayload'
           description: Configuration for activity deletion action
@@ -17760,32 +18961,49 @@ components:
           description: Configuration for message deletion action
           title: Delete Message
           x-stream-index: "004"
+        delete_poll:
+          $ref: '#/components/schemas/DeletePollRequestPayload'
+          description: Configuration for poll deletion action
+          title: Delete Poll
+          x-stream-index: "007"
+        delete_poll_answer:
+          $ref: '#/components/schemas/DeletePollAnswerRequestPayload'
+          description: Configuration for deleting the poll answer a review item was
+            raised for
+          title: Delete Poll Answer
+          x-stream-index: "009"
+        delete_poll_option:
+          $ref: '#/components/schemas/DeletePollOptionRequestPayload'
+          description: Configuration for deleting the poll option a review item was
+            raised for
+          title: Delete Poll Option
+          x-stream-index: "008"
         delete_reaction:
           $ref: '#/components/schemas/DeleteReactionRequestPayload'
           description: Configuration for reaction deletion action
           title: Delete Reaction
-          x-stream-index: "007"
+          x-stream-index: "010"
         delete_user:
           $ref: '#/components/schemas/DeleteUserRequestPayload'
           description: Configuration for user deletion action
           title: Delete User
-          x-stream-index: "008"
+          x-stream-index: "011"
         delete_user_messages:
           $ref: '#/components/schemas/DeleteUserMessagesRequestPayload'
           description: Configuration for deleting all of a user's chat messages without
             banning them or deleting their account
           title: Delete User Messages
-          x-stream-index: "009"
+          x-stream-index: "012"
         escalate:
           $ref: '#/components/schemas/EscalatePayload'
           description: Configuration for escalation action
           title: Escalate
-          x-stream-index: "023"
+          x-stream-index: "026"
         flag:
           $ref: '#/components/schemas/FlagRequest'
           description: Configuration for flag action
           title: Flag
-          x-stream-index: "022"
+          x-stream-index: "025"
         item_id:
           description: UUID of the review queue item to act on
           title: Item ID
@@ -17795,34 +19013,37 @@ components:
           $ref: '#/components/schemas/MarkReviewedRequestPayload'
           description: Configuration for marking item as reviewed
           title: Mark Reviewed
-          x-stream-index: "010"
+          x-stream-index: "013"
         reject_appeal:
           $ref: '#/components/schemas/RejectAppealRequestPayload'
           description: Configuration for rejecting an appeal
           title: Reject Appeal
-          x-stream-index: "021"
+          x-stream-index: "024"
         restore:
           $ref: '#/components/schemas/RestoreActionRequestPayload'
           description: Configuration for restore action
           title: Restore
-          x-stream-index: "014"
+          x-stream-index: "017"
         shadow_block:
           $ref: '#/components/schemas/ShadowBlockActionRequestPayload'
           description: Configuration for shadow block action
           title: Shadow Block
-          x-stream-index: "017"
+          x-stream-index: "020"
         unban:
           $ref: '#/components/schemas/UnbanActionRequestPayload'
           description: Configuration for unban action
           title: Unban
-          x-stream-index: "013"
+          x-stream-index: "016"
         unblock:
           $ref: '#/components/schemas/UnblockActionRequestPayload'
           deprecated: true
-          description: 'Configuration for unblock action Deprecated: use restore instead
-            — it now also reverses a block or shadow block'
+          description: 'Configuration for unblock action Deprecated: Use restore instead,
+            which now also reverses a block or shadow block.'
           title: Unblock
-          x-stream-index: "015"
+          x-stream-deprecated: true
+          x-stream-deprecated-message: Use restore instead, which now also reverses
+            a block or shadow block.
+          x-stream-index: "018"
       required:
       - action_type
       type: object
@@ -17936,19 +19157,19 @@ components:
         bookmark_count:
           format: int32
           type: integer
-          x-stream-index: "001.023"
+          x-stream-index: "001.024"
         confidence_score:
           format: double
           type: number
-          x-stream-index: "001.025"
+          x-stream-index: "001.026"
         controversy_score:
           format: double
           type: number
-          x-stream-index: "001.026"
+          x-stream-index: "001.027"
         created_at:
           format: date-time
           type: number
-          x-stream-index: "001.015"
+          x-stream-index: "001.016"
         custom:
           additionalProperties: {}
           type: object
@@ -17956,15 +19177,18 @@ components:
         deleted_at:
           format: date-time
           type: number
-          x-stream-index: "001.018"
+          x-stream-index: "001.019"
         downvote_count:
           format: int32
           type: integer
-          x-stream-index: "001.022"
+          x-stream-index: "001.023"
         edited_at:
           format: date-time
           type: number
-          x-stream-index: "001.017"
+          x-stream-index: "001.018"
+        hidden:
+          type: boolean
+          x-stream-index: "001.014"
         i18n:
           additionalProperties:
             type: string
@@ -17990,7 +19214,7 @@ components:
           x-stream-index: "002"
         moderation:
           $ref: '#/components/schemas/ModerationV2Response'
-          x-stream-index: "001.019"
+          x-stream-index: "001.020"
         object_id:
           type: string
           x-stream-index: "001.002"
@@ -18001,7 +19225,7 @@ components:
           items:
             $ref: '#/components/schemas/FeedsReactionResponse'
           type: array
-          x-stream-index: "001.027"
+          x-stream-index: "001.028"
         parent_id:
           type: string
           x-stream-index: "001.008"
@@ -18024,11 +19248,11 @@ components:
         reply_count:
           format: int32
           type: integer
-          x-stream-index: "001.020"
+          x-stream-index: "001.021"
         score:
           format: int32
           type: integer
-          x-stream-index: "001.024"
+          x-stream-index: "001.025"
         status:
           description: 'Status of the comment. One of: active, deleted, removed, hidden'
           enum:
@@ -18039,18 +19263,18 @@ components:
           - shadow_blocked
           title: Status
           type: string
-          x-stream-index: "001.014"
+          x-stream-index: "001.015"
         text:
           type: string
           x-stream-index: "001.005"
         updated_at:
           format: date-time
           type: number
-          x-stream-index: "001.016"
+          x-stream-index: "001.017"
         upvote_count:
           format: int32
           type: integer
-          x-stream-index: "001.021"
+          x-stream-index: "001.022"
         user:
           $ref: '#/components/schemas/UserResponse'
           x-stream-index: "001.004"
@@ -18061,6 +19285,7 @@ components:
       - user
       - reaction_count
       - mentioned_users
+      - hidden
       - status
       - created_at
       - updated_at
@@ -18246,6 +19471,7 @@ components:
       title: Response
       type: object
     TypingIndicatorsResponse:
+      description: The settings for typing indicator events.
       properties:
         enabled:
           type: boolean
@@ -18291,7 +19517,7 @@ components:
       - duration
       type: object
     UnblockActionRequestPayload:
-      description: 'Deprecated: use restore instead — it now also reverses a block
+      description: 'Deprecated: Use restore instead, which now also reverses a block
         or shadow block. Configuration for unblock action.'
       properties:
         decision_reason:
@@ -18356,7 +19582,7 @@ components:
       properties:
         duration:
           type: string
-          x-stream-index: "002.001"
+          x-stream-index: "003.001"
         follows:
           description: List of follow relationships that were removed
           items:
@@ -18482,6 +19708,9 @@ components:
             instead'
           title: Copy Custom To Notification
           type: boolean
+          x-stream-deprecated: true
+          x-stream-deprecated-message: use notification_context.trigger.custom and
+            notification_context.target.custom instead
           x-stream-index: "005"
         enrich_own_fields:
           description: If true, enriches the activity's current_feed with own_* fields
@@ -18565,6 +19794,9 @@ components:
             instead'
           title: Copy Custom To Notification
           type: boolean
+          x-stream-deprecated: true
+          x-stream-deprecated-message: use notification_context.trigger.custom and
+            notification_context.target.custom instead
           x-stream-index: "019"
         custom:
           additionalProperties: {}
@@ -18934,6 +20166,9 @@ components:
             instead'
           title: Copy Custom To Notification
           type: boolean
+          x-stream-deprecated: true
+          x-stream-deprecated-message: use notification_context.trigger.custom and
+            notification_context.target.custom instead
           x-stream-index: "007"
         handle_mention_notifications:
           description: Whether to handle mention notification changes
@@ -19007,6 +20242,9 @@ components:
             instead'
           title: Copy Custom To Notification
           type: boolean
+          x-stream-deprecated: true
+          x-stream-deprecated-message: use notification_context.trigger.custom and
+            notification_context.target.custom instead
           x-stream-index: "009"
         custom:
           additionalProperties: {}
@@ -19204,6 +20442,9 @@ components:
             and notification_context.target.custom instead'
           title: Copy Custom To Notification
           type: boolean
+          x-stream-deprecated: true
+          x-stream-deprecated-message: use notification_context.trigger.custom and
+            notification_context.target.custom instead
           x-stream-index: "001.005"
         create_notification_activity:
           description: Whether to create a notification activity for this follow
@@ -19224,6 +20465,11 @@ components:
           type: boolean
           x-stream-index: "001.009"
         follower_role:
+          description: Optional role for the follower in the follow relationship.
+            Server-side only. Either a built-in ('feed_follower' (the default) or
+            'feed_member_viewer') or any role your app has defined; grants are not
+            inspected.
+          title: Follower Role
           type: string
           x-stream-index: "002"
         push_preference:
@@ -19337,7 +20583,7 @@ components:
           description: Sets new field values
           title: Set
           type: object
-          x-stream-index: "002.001"
+          x-stream-index: "004.001"
           x-stream-map:
             description: New value to set
             key: field
@@ -19348,7 +20594,7 @@ components:
             type: string
           title: Unset
           type: array
-          x-stream-index: "002.002"
+          x-stream-index: "004.002"
       type: object
     UpdatePollRequest:
       nullable: true
@@ -19538,7 +20784,16 @@ components:
           type: string
           x-stream-index: "003.001"
         membership_deletion_task_id:
+          deprecated: true
+          description: 'Deprecated: Always empty. Removing a user from a team no longer
+            deletes their memberships in that team''s channels, so there is no task
+            to poll.'
+          title: Membership Deletion Task ID
           type: string
+          x-stream-deprecated: true
+          x-stream-deprecated-message: Always empty. Removing a user from a team no
+            longer deletes their memberships in that team's channels, so there is
+            no task to poll.
           x-stream-index: "002"
         users:
           additionalProperties:
@@ -19702,7 +20957,7 @@ components:
           x-stream-index: "001"
         duration:
           type: string
-          x-stream-index: "003.001"
+          x-stream-index: "004.001"
         mention_notifications_created:
           description: Total number of mention notification activities created for
             mentioned users across all activities
@@ -19710,6 +20965,14 @@ components:
           title: Mention Notifications Created
           type: integer
           x-stream-index: "002"
+        skipped_existing:
+          description: IDs of activities left unchanged because they already existed.
+            Only set when skip_existing is true.
+          items:
+            type: string
+          title: Skipped Existing
+          type: array
+          x-stream-index: "003"
       required:
       - activities
       - duration
@@ -19734,7 +20997,7 @@ components:
           title: AI Text Config
           x-stream-index: "008"
         ai_video_config:
-          $ref: '#/components/schemas/AIVideoConfig'
+          $ref: '#/components/schemas/AIVideoConfigRequest'
           description: Configuration for AI video analysis
           title: AI Video Config
           x-stream-index: "012"
@@ -19760,7 +21023,7 @@ components:
           x-stream-index: "004"
         aws_rekognition_config:
           $ref: '#/components/schemas/AIImageConfig'
-          x-stream-index: "018"
+          x-stream-index: "019"
         block_list_config:
           $ref: '#/components/schemas/BlockListConfig'
           description: Configuration for block list filtering
@@ -19768,7 +21031,7 @@ components:
           x-stream-index: "007"
         bodyguard_config:
           $ref: '#/components/schemas/AITextConfig'
-          x-stream-index: "017"
+          x-stream-index: "018"
         flood_config:
           $ref: '#/components/schemas/FloodConfig'
           description: Per-user flood detection for the /labels endpoint (identical
@@ -19780,6 +21043,12 @@ components:
           description: Configuration for Google Vision integration
           title: Google Vision Config
           x-stream-index: "010"
+        intent_config:
+          $ref: '#/components/schemas/IntentConfigRequest'
+          description: Configuration for conversation-level intent analysis (topics,
+            capture cap, cooldowns, score threshold)
+          title: Intent Config
+          x-stream-index: "017"
         key:
           description: Unique identifier for the moderation configuration
           title: Key
@@ -19810,7 +21079,7 @@ components:
           x-stream-index: "014"
         video_call_rule_config:
           $ref: '#/components/schemas/VideoCallRuleConfig'
-          x-stream-index: "019"
+          x-stream-index: "020"
       required:
       - key
       type: object
@@ -19870,6 +21139,47 @@ components:
       - user_preferences
       - user_channel_preferences
       - duration
+      type: object
+    UpsertUserInterestsRequest:
+      description: Adds or updates manually set interest tags on a user. Tags already
+        present are updated with the supplied weight; other tags on the user are left
+        untouched. Manually set tags are never overwritten by the reaction-based computation.
+        A user holds at most 50 interest tags in total.
+      nullable: true
+      properties:
+        interests:
+          description: Interest tags to add or update (1-50)
+          items:
+            $ref: '#/components/schemas/UserInterestRequest'
+          maxItems: 50
+          minItems: 1
+          title: Interests
+          type: array
+          x-stream-index: "002"
+      required:
+      - interests
+      title: Upsert User Interests Request
+      type: object
+    UpsertUserInterestsResponse:
+      description: The user's interest tags after the write, ordered by descending
+        weight, then manually set tags before computed ones, then descending count,
+        then ascending tag name
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "002.001"
+        interests:
+          description: All interest tags of the user after the write
+          items:
+            $ref: '#/components/schemas/InterestTagResponse'
+          title: Interests
+          type: array
+          x-stream-index: "001"
+      required:
+      - interests
+      - duration
+      title: Upsert User Interests Response
       type: object
     User:
       properties:
@@ -19988,6 +21298,29 @@ components:
       x-stream-is-event: true
       x-stream-throttle-group: critical
       x-stream-ws-base-event-name: VideoEvent
+    UserChannelBanCountRuleParameters:
+      properties:
+        banned_by:
+          type: string
+          x-stream-index: "003"
+        threshold:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+        time_window:
+          type: string
+          x-stream-index: "002"
+      type: object
+    UserChannelCountRuleParameters:
+      properties:
+        threshold:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+        time_window:
+          type: string
+          x-stream-index: "002"
+      type: object
     UserCreatedWithinParameters:
       properties:
         max_age:
@@ -20044,6 +21377,88 @@ components:
       - custom
       - user
       title: UserDeactivatedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-throttle-group: critical
+      x-stream-ws-base-event-name: VideoEvent
+    UserDeletedEvent:
+      description: This event is sent when a user gets deleted. The event contains
+        information about the user that was deleted and the deletion options that
+        were used.
+      nullable: true
+      properties:
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: number
+          x-stream-index: "001.003"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "001.007"
+        delete_conversation:
+          description: 'The type of deletion that was used for the user''s conversations.
+            One of: hard, soft, pruning, (empty string)'
+          title: Delete conversation
+          type: string
+          x-stream-index: "004"
+        delete_conversation_channels:
+          description: Whether the user's conversation channels were deleted
+          title: Delete conversation channels
+          type: boolean
+          x-stream-index: "008"
+        delete_messages:
+          description: 'The type of deletion that was used for the user''s messages.
+            One of: hard, soft, pruning, (empty string)'
+          title: Delete messages
+          type: string
+          x-stream-index: "003"
+        delete_user:
+          description: 'The type of deletion that was used for the user. One of: hard,
+            soft, pruning, (empty string)'
+          title: Delete user
+          type: string
+          x-stream-index: "005"
+        hard_delete:
+          description: Whether the user was hard deleted
+          title: Hard delete
+          type: boolean
+          x-stream-index: "006"
+        mark_messages_deleted:
+          description: Whether the user's messages were marked as deleted
+          title: Mark messages deleted
+          type: boolean
+          x-stream-index: "007"
+        received_at:
+          format: date-time
+          type: number
+          x-stream-index: "001.004"
+        type:
+          default: user.deleted
+          description: 'The type of event: "user.deleted" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.002"
+        user:
+          $ref: '#/components/schemas/UserResponseCommonFields'
+          description: The user that was deleted
+          title: User
+          x-stream-index: "002.001"
+      required:
+      - type
+      - created_at
+      - custom
+      - user
+      - delete_messages
+      - delete_conversation
+      - delete_user
+      - hard_delete
+      - mark_messages_deleted
+      - delete_conversation_channels
+      title: UserDeletedEvent
       type: object
       x-stream-event-client-type: true
       x-stream-event-doc-group: other
@@ -20123,6 +21538,45 @@ components:
           type: string
           x-stream-index: "002"
       type: object
+    UserIdenticalImageCountParameters:
+      properties:
+        match:
+          type: string
+          x-stream-index: "003"
+        similarity_distance:
+          format: int32
+          type: integer
+          x-stream-index: "004"
+        threshold:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+        time_window:
+          type: string
+          x-stream-index: "002"
+      type: object
+    UserInterestRequest:
+      description: An interest tag to set on a user with its ranking weight
+      properties:
+        tag:
+          description: The interest tag; trimmed and lower-cased like activity interest_tags
+          maxLength: 255
+          title: Tag
+          type: string
+          x-stream-index: "001"
+        weight:
+          description: Ranking weight between -1.0 (dislike) and 1.0 (like). Defaults
+            to 1.0
+          format: double
+          maximum: 1
+          minimum: 1.8446744073709552e+19
+          title: Weight
+          type: number
+          x-stream-index: "002"
+      required:
+      - tag
+      title: User Interest
+      type: object
     UserMuteResponse:
       nullable: true
       properties:
@@ -20147,6 +21601,19 @@ components:
       required:
       - created_at
       - updated_at
+      type: object
+    UserReactionCountRuleParameters:
+      properties:
+        count:
+          type: string
+          x-stream-index: "003"
+        threshold:
+          format: int32
+          type: integer
+          x-stream-index: "001"
+        time_window:
+          type: string
+          x-stream-index: "002"
       type: object
     UserReactivatedEvent:
       description: This event is sent when a user gets reactivated. The event contains
@@ -20303,12 +21770,6 @@ components:
           title: Online
           type: boolean
           x-stream-index: "001.013"
-        revoke_tokens_issued_before:
-          description: Revocation date for tokens
-          format: date-time
-          title: Revoke tokens issued before
-          type: number
-          x-stream-index: "001.015"
         role:
           description: Determines the set of user permissions
           title: Role
@@ -20394,10 +21855,6 @@ components:
         online:
           type: boolean
           x-stream-index: "013"
-        revoke_tokens_issued_before:
-          format: date-time
-          type: number
-          x-stream-index: "015"
         role:
           type: string
           x-stream-index: "006"
@@ -20482,10 +21939,6 @@ components:
         privacy_settings:
           $ref: '#/components/schemas/PrivacySettingsResponse'
           x-stream-index: "002"
-        revoke_tokens_issued_before:
-          format: date-time
-          type: number
-          x-stream-index: "001.015"
         role:
           type: string
           x-stream-index: "001.006"
@@ -20835,6 +22288,15 @@ components:
       description: Websocket auth message
       nullable: true
       properties:
+        event_protocol:
+          description: Realtime event protocol version. 3 omits channel.members from
+            channel.updated, member.*, notification.message_new and notification.added_to_channel
+            of channels with more than 100 members and sets members_included:false.
+            Values above the newest supported version negotiate down to it.
+          format: int32
+          title: Event Protocol
+          type: integer
+          x-stream-index: "005"
         member_custom_include:
           description: Channel-member custom keys to project onto message.member for
             messages this connection receives (opt-in; capped, off by default).
@@ -20895,6 +22357,7 @@ components:
           feeds.bookmark_folder.updated: '#/components/schemas/BookmarkFolderUpdatedEvent'
           feeds.comment.added: '#/components/schemas/CommentAddedEvent'
           feeds.comment.deleted: '#/components/schemas/CommentDeletedEvent'
+          feeds.comment.feedback: '#/components/schemas/CommentFeedbackEvent'
           feeds.comment.reaction.added: '#/components/schemas/CommentReactionAddedEvent'
           feeds.comment.reaction.deleted: '#/components/schemas/CommentReactionDeletedEvent'
           feeds.comment.reaction.updated: '#/components/schemas/CommentReactionUpdatedEvent'
@@ -20926,6 +22389,7 @@ components:
           moderation.mark_reviewed: '#/components/schemas/ModerationMarkReviewedEvent'
           user.banned: '#/components/schemas/UserBannedEvent'
           user.deactivated: '#/components/schemas/UserDeactivatedEvent'
+          user.deleted: '#/components/schemas/UserDeletedEvent'
           user.reactivated: '#/components/schemas/UserReactivatedEvent'
           user.unbanned: '#/components/schemas/UserUnbannedEvent'
           user.updated: '#/components/schemas/UserUpdatedEvent'
@@ -20951,6 +22415,7 @@ components:
       - $ref: '#/components/schemas/BookmarkUpdatedEvent'
       - $ref: '#/components/schemas/CommentAddedEvent'
       - $ref: '#/components/schemas/CommentDeletedEvent'
+      - $ref: '#/components/schemas/CommentFeedbackEvent'
       - $ref: '#/components/schemas/CommentReactionAddedEvent'
       - $ref: '#/components/schemas/CommentReactionDeletedEvent'
       - $ref: '#/components/schemas/CommentReactionUpdatedEvent'
@@ -20982,6 +22447,7 @@ components:
       - $ref: '#/components/schemas/StoriesFeedUpdatedEvent'
       - $ref: '#/components/schemas/UserBannedEvent'
       - $ref: '#/components/schemas/UserDeactivatedEvent'
+      - $ref: '#/components/schemas/UserDeletedEvent'
       - $ref: '#/components/schemas/UserReactivatedEvent'
       - $ref: '#/components/schemas/UserUnbannedEvent'
       - $ref: '#/components/schemas/UserUpdatedEvent'
@@ -20991,6 +22457,8 @@ components:
       discriminator:
         mapping:
           app.updated: '#/components/schemas/AppUpdatedEvent'
+          connection.error: '#/components/schemas/ConnectionErrorEvent'
+          connection.ok: '#/components/schemas/ConnectedEvent'
           feeds.activity.added: '#/components/schemas/ActivityAddedEvent'
           feeds.activity.deleted: '#/components/schemas/ActivityDeletedEvent'
           feeds.activity.feedback: '#/components/schemas/ActivityFeedbackEvent'
@@ -21010,6 +22478,7 @@ components:
           feeds.bookmark_folder.updated: '#/components/schemas/BookmarkFolderUpdatedEvent'
           feeds.comment.added: '#/components/schemas/CommentAddedEvent'
           feeds.comment.deleted: '#/components/schemas/CommentDeletedEvent'
+          feeds.comment.feedback: '#/components/schemas/CommentFeedbackEvent'
           feeds.comment.reaction.added: '#/components/schemas/CommentReactionAddedEvent'
           feeds.comment.reaction.deleted: '#/components/schemas/CommentReactionDeletedEvent'
           feeds.comment.reaction.updated: '#/components/schemas/CommentReactionUpdatedEvent'
@@ -21041,6 +22510,7 @@ components:
           moderation.mark_reviewed: '#/components/schemas/ModerationMarkReviewedEvent'
           user.banned: '#/components/schemas/UserBannedEvent'
           user.deactivated: '#/components/schemas/UserDeactivatedEvent'
+          user.deleted: '#/components/schemas/UserDeletedEvent'
           user.reactivated: '#/components/schemas/UserReactivatedEvent'
           user.unbanned: '#/components/schemas/UserUnbannedEvent'
           user.updated: '#/components/schemas/UserUpdatedEvent'
@@ -21066,11 +22536,14 @@ components:
       - $ref: '#/components/schemas/BookmarkUpdatedEvent'
       - $ref: '#/components/schemas/CommentAddedEvent'
       - $ref: '#/components/schemas/CommentDeletedEvent'
+      - $ref: '#/components/schemas/CommentFeedbackEvent'
       - $ref: '#/components/schemas/CommentReactionAddedEvent'
       - $ref: '#/components/schemas/CommentReactionDeletedEvent'
       - $ref: '#/components/schemas/CommentReactionUpdatedEvent'
       - $ref: '#/components/schemas/CommentRestoredEvent'
       - $ref: '#/components/schemas/CommentUpdatedEvent'
+      - $ref: '#/components/schemas/ConnectedEvent'
+      - $ref: '#/components/schemas/ConnectionErrorEvent'
       - $ref: '#/components/schemas/FeedCreatedEvent'
       - $ref: '#/components/schemas/FeedDeletedEvent'
       - $ref: '#/components/schemas/FeedGroupChangedEvent'
@@ -21097,6 +22570,7 @@ components:
       - $ref: '#/components/schemas/StoriesFeedUpdatedEvent'
       - $ref: '#/components/schemas/UserBannedEvent'
       - $ref: '#/components/schemas/UserDeactivatedEvent'
+      - $ref: '#/components/schemas/UserDeletedEvent'
       - $ref: '#/components/schemas/UserReactivatedEvent'
       - $ref: '#/components/schemas/UserUnbannedEvent'
       - $ref: '#/components/schemas/UserUpdatedEvent'
@@ -21141,7 +22615,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v237.9.1
+  version: v239.75.1
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -22079,17 +23553,34 @@ paths:
           writeOnly: true
           x-stream-index: "003"
       - in: query
+        name: skip_own_followings
+        schema:
+          description: If true, skips enriching own_followings on the activity's current_feed
+          title: Skip Own Followings
+          type: boolean
+          writeOnly: true
+          x-stream-index: "004"
+      - in: query
         name: language
         schema:
           type: string
           writeOnly: true
-          x-stream-index: "005.001"
+          x-stream-index: "006.001"
       - in: query
         name: translate_text
         schema:
           type: boolean
           writeOnly: true
-          x-stream-index: "005.002"
+          x-stream-index: "006.002"
+      - in: query
+        name: include_top_level_comment_count
+        schema:
+          description: 'If true, returns activity.top_level_comment_count: the number
+            of comments directly on the activity, excluding replies'
+          title: Include Top Level Comment Count
+          type: boolean
+          writeOnly: true
+          x-stream-index: "007"
       responses:
         "200":
           content:
@@ -22114,7 +23605,7 @@ paths:
       - product:feeds
     patch:
       description: |
-        Updates certain fields of the activity. Use 'set' to update specific fields and 'unset' to remove fields. This allows you to update only the fields you need without replacing the entire activity. Useful for updating reply restrictions ('restrict_replies'), mentioned users, or custom data.
+        Updates certain fields of the activity. Use 'set' to update specific fields and 'unset' to remove fields. This allows you to update only the fields you need without replacing the entire activity. Useful for updating reply restrictions ('restrict_replies'), mentioned users, or custom data. Changing `feeds` is a placement change (add/delete on those feeds), not an activity content update.
 
         Sends events:
         - feeds.activity.updated
@@ -22158,7 +23649,7 @@ paths:
       - product:feeds
     put:
       description: |
-        Replaces an activity with the provided data. Use this to update text, attachments, reply restrictions ('restrict_replies'), mentioned users, and other activity fields. Note: This is a full update - any fields not provided will be cleared.
+        Replaces an activity with the provided data. Use this to update text, attachments, reply restrictions ('restrict_replies'), mentioned users, and other activity fields. Note: This is a full update - any fields not provided will be cleared. Changing `feeds` is a placement change (add/delete on those feeds), not an activity content update.
 
         Sends events:
         - feeds.activity.updated
@@ -22408,13 +23899,13 @@ paths:
         schema:
           type: string
           writeOnly: true
-          x-stream-index: "007.001"
+          x-stream-index: "008.001"
       - in: query
         name: translate_text
         schema:
           type: boolean
           writeOnly: true
-          x-stream-index: "007.002"
+          x-stream-index: "008.002"
       requestBody:
         content:
           application/json:
@@ -22920,6 +24411,17 @@ paths:
           type: string
           writeOnly: true
           x-stream-index: "009.003"
+      - in: query
+        name: include_top_level_comment_count
+        schema:
+          description: 'If true, returns top_level_comment_count: the number of comments
+            directly on the object, excluding replies. Set this on the first page
+            only (for an id_around deep link, that is the id_around request); the
+            value does not change between pages'
+          title: Include Top Level Comment Count
+          type: boolean
+          writeOnly: true
+          x-stream-index: "010"
       responses:
         "200":
           content:
@@ -23241,6 +24743,49 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Update a comment
+      tags:
+      - product:feeds
+  /api/v2/feeds/comments/{id}/feedback:
+    post:
+      description: |
+        Hide or unhide a comment for the current user
+      operationId: CommentFeedback
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          maxLength: 255
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentFeedbackRequest'
+        description: Comment Feedback Request
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentFeedbackResponse'
+          description: Comment Feedback Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Provide feedback on a comment
       tags:
       - product:feeds
   /api/v2/feeds/comments/{id}/partial:
@@ -23675,13 +25220,13 @@ paths:
         schema:
           type: string
           writeOnly: true
-          x-stream-index: "004.001"
+          x-stream-index: "005.001"
       - in: query
         name: translate_text
         schema:
           type: boolean
           writeOnly: true
-          x-stream-index: "004.002"
+          x-stream-index: "005.002"
       requestBody:
         content:
           application/json:
@@ -23847,17 +25392,14 @@ paths:
       - in: query
         name: connection_id
         schema:
-          description: Websocket connection ID to interact with. You can pass it as
-            Body or URL parameter
-          title: Connection ID
           type: string
-          x-stream-index: "019.003"
+          x-stream-index: "020.003"
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/GetOrCreateFeedRequest'
-        description: ClientRequest
+        description: Get Or Create Feed Request
         required: true
       responses:
         "201":
@@ -23865,7 +25407,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetOrCreateFeedResponse'
-          description: Response
+          description: Get Or Create Feed Response
         "400":
           content:
             application/json:
@@ -24425,13 +25967,13 @@ paths:
         schema:
           type: string
           writeOnly: true
-          x-stream-index: "006.001"
+          x-stream-index: "009.001"
       - in: query
         name: translate_text
         schema:
           type: boolean
           writeOnly: true
-          x-stream-index: "006.002"
+          x-stream-index: "009.002"
       requestBody:
         content:
           application/json:
@@ -24819,7 +26361,7 @@ paths:
   /api/v2/feeds/follows/accept:
     post:
       description: |
-        Accepts a pending follow request
+        Accepts a pending follow request. Follower role can only be set via server-side requests.
       operationId: AcceptFollow
       requestBody:
         content:
@@ -24921,7 +26463,7 @@ paths:
   /api/v2/feeds/follows/query:
     post:
       description: |
-        Query follows based on filters with pagination and sorting options
+        Query follows based on filters with pagination and sorting options. Server-side callers may set include_group_counts to also receive accepted following counts keyed by followed feed group. Requires exactly one source_feed / source_fid string equality. HTTP 400 if target_feed appears, if two source FIDs are given, or if $in / $or / $nor mentions those keys.
       operationId: QueryFollows
       requestBody:
         content:
@@ -25089,9 +26631,58 @@ paths:
       tags:
       - product:feeds
   /api/v2/feeds/users/{user_id}/interests:
+    delete:
+      description: |
+        Removes the given interest tags from a user, whether they were set manually or computed from reactions. A removed computed tag returns on the next recomputation if the user's reactions still support it; to keep a tag out of ranking for good, set it with a weight of 0 or below instead. Client-side callers may only manage their own interests; server-side callers may manage any user. Returns the user's remaining interests.
+      operationId: DeleteUserInterests
+      parameters:
+      - in: path
+        name: user_id
+        required: true
+        schema:
+          description: The ID of the user whose interests to remove
+          title: User ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      - in: query
+        name: tags
+        required: true
+        schema:
+          description: Interest tags to remove (1-50)
+          items:
+            type: string
+          maxItems: 50
+          minItems: 1
+          title: Tags
+          type: array
+          writeOnly: true
+          x-stream-index: "002"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteUserInterestsResponse'
+          description: Delete User Interests Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Remove interests from a user
+      tags:
+      - product:feeds
     get:
       description: |
-        Returns the user's most common interest tags ranked by the number of distinct activities they reacted to that carried each tag. Client-side callers may only read their own interests; server-side callers may fetch any user. Results are sorted by descending count, then alphabetically by tag.
+        Returns the user's interest tags with their ranking weights: tags computed from the activities the user reacted to and tags set manually through the API. Client-side callers may only read their own interests; server-side callers may fetch any user. Results are sorted by descending weight, then manually set tags before computed ones, then descending count, then alphabetically by tag.
       operationId: GetUserInterests
       parameters:
       - in: path
@@ -25134,7 +26725,50 @@ paths:
               schema:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
-      summary: Get a user's computed interests
+      summary: Get a user's interests
+      tags:
+      - product:feeds
+    put:
+      description: |
+        Adds or updates interest tags on a user with explicit ranking weights. Tags set this way rank above the tags computed from the user's reactions at equal weight and are never overwritten by them. Client-side callers may only manage their own interests; server-side callers may manage any user. Returns the user's full interest list after the write.
+      operationId: UpsertUserInterests
+      parameters:
+      - in: path
+        name: user_id
+        required: true
+        schema:
+          description: The ID of the user whose interests to set
+          title: User ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertUserInterestsRequest'
+        description: Upsert User Interests Request
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpsertUserInterestsResponse'
+          description: Upsert User Interests Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Set a user's interests
       tags:
       - product:feeds
   /api/v2/guest:
@@ -25194,6 +26828,12 @@ paths:
           type: string
           writeOnly: true
           x-stream-index: "002"
+      - in: query
+        name: close
+        schema:
+          type: boolean
+          writeOnly: true
+          x-stream-index: "003"
       responses:
         "400":
           content:
@@ -26508,7 +28148,7 @@ paths:
           maxLength: 255
           title: string
           type: string
-          x-stream-index: "001"
+          x-stream-index: "002"
       - in: path
         name: option_id
         required: true
@@ -26517,7 +28157,7 @@ paths:
           maxLength: 255
           title: string
           type: string
-          x-stream-index: "002"
+          x-stream-index: "003"
       responses:
         "200":
           content:
