@@ -19038,6 +19038,11 @@ components:
         entity_type:
           type: string
           x-stream-index: "005"
+        id:
+          description: Unique identifier of the flag
+          title: ID
+          type: string
+          x-stream-index: "001"
         labels:
           items:
             type: string
@@ -26424,6 +26429,13 @@ components:
           description: Escalation details including reason, notes, and priority
           title: Escalation Metadata
           x-stream-index: "038"
+        false_positive_flags:
+          description: IDs of the item's flags a moderator marked as false positives
+          items:
+            type: string
+          title: False Positive Flags
+          type: array
+          x-stream-index: "041"
         feeds_v2_activity:
           $ref: '#/components/schemas/EnrichedActivity'
           description: Associated feed activity
@@ -27603,6 +27615,56 @@ components:
       required:
       - duration
       type: object
+    SubmitModerationFeedbackItem:
+      nullable: true
+      properties:
+        current_labels:
+          description: Classifications originally produced for this item
+          items:
+            type: string
+          maxItems: 16
+          title: Current Classifications
+          type: array
+          x-stream-index: "006"
+        current_recommended_action:
+          description: Action originally produced for this item
+          maxLength: 64
+          title: Current Action
+          type: string
+          x-stream-index: "007"
+        flag_id:
+          description: ID of the moderation flag the feedback is about
+          title: Flag ID
+          type: string
+          x-stream-index: "001"
+        image_url:
+          description: Image URL, required for kind=image
+          maxLength: 2048
+          title: Image URL
+          type: string
+          x-stream-index: "005"
+        kind:
+          description: 'Content kind: text or image'
+          enum:
+          - text
+          - image
+          title: Kind
+          type: string
+          x-stream-index: "003"
+        reference:
+          description: Identifies this piece of content within the entity (keyframe
+            ID, caption ID, message ID, title, description, thumbnail, ...)
+          maxLength: 512
+          title: Reference
+          type: string
+          x-stream-index: "002"
+        text:
+          description: Text content, for kind=text
+          maxLength: 10000
+          title: Text
+          type: string
+          x-stream-index: "004"
+      type: object
     SubmitModerationFeedbackRequest:
       nullable: true
       properties:
@@ -27612,6 +27674,17 @@ components:
           title: Channel ID
           type: string
           x-stream-index: "001"
+        confidence:
+          description: Moderator's confidence in this feedback (LOW, MEDIUM, HIGH,
+            VERY_HIGH); forwarded to the moderation provider. Optional
+          enum:
+          - LOW
+          - MEDIUM
+          - HIGH
+          - VERY_HIGH
+          title: Confidence
+          type: string
+          x-stream-index: "010"
         current_labels:
           description: Classifications originally produced by the moderation system
           items:
@@ -27633,6 +27706,24 @@ components:
           title: Description
           type: string
           x-stream-index: "007"
+        entity_creator_id:
+          description: ID of the user who created the entity
+          maxLength: 255
+          title: Entity Creator ID
+          type: string
+          x-stream-index: "013"
+        entity_id:
+          description: ID of the entity the items belong to
+          maxLength: 255
+          title: Entity ID
+          type: string
+          x-stream-index: "012"
+        entity_type:
+          description: Type of the entity the items belong to
+          maxLength: 255
+          title: Entity Type
+          type: string
+          x-stream-index: "011"
         expected_labels:
           description: Optional moderator-supplied classifications (up to 16 entries)
           items:
@@ -27647,34 +27738,95 @@ components:
           title: Expected Action
           type: string
           x-stream-index: "009"
+        false_positive:
+          description: Whether the referenced flags are marked (true, default) or
+            unmarked (false) as false positives
+          title: False Positive
+          type: boolean
+          x-stream-index: "016"
+        feedback_type:
+          description: 'false_positive (default) disputes existing detections; false_negative
+            reports missed content: items carry the content, expected_labels is required
+            and flag_id is not allowed'
+          enum:
+          - false_positive
+          - false_negative
+          title: Feedback Type
+          type: string
+          x-stream-index: "017"
+        items:
+          description: Pieces of content of one entity the feedback is about (1 to
+            50)
+          items:
+            $ref: '#/components/schemas/SubmitModerationFeedbackItem'
+          maxItems: 50
+          title: Items
+          type: array
+          x-stream-index: "015"
         message:
-          description: The moderated content the moderator is providing feedback on
+          description: The moderated content the moderator is providing feedback on.
+            Required unless items is provided
           maxLength: 10000
           title: Message
           type: string
           x-stream-index: "004"
         published_at:
-          description: Original publication time of the moderated content (RFC3339)
+          description: Original publication time of the moderated content (RFC3339).
+            Required unless items is provided
           title: Published At
           type: string
           x-stream-index: "002"
         reference:
-          description: Provider-side reference identifying the moderated content
+          description: Provider-side reference identifying the moderated content.
+            Required unless items is provided
           maxLength: 512
           title: Reference
           type: string
           x-stream-index: "003"
-      required:
-      - published_at
-      - reference
-      - message
+        review_queue_item_id:
+          description: Review queue item the feedback targets, as an alternative to
+            entity_type and entity_id
+          title: Review Queue Item ID
+          type: string
+          x-stream-index: "014"
+        user:
+          $ref: '#/components/schemas/UserRequest'
+          x-stream-index: "018.002"
+        user_id:
+          type: string
+          x-stream-index: "018.001"
       type: object
     SubmitModerationFeedbackResponse:
       nullable: true
       properties:
         duration:
           type: string
-          x-stream-index: "001.001"
+          x-stream-index: "005.001"
+        false_positive_flags:
+          description: IDs of the item's flags marked as false positives after this
+            request
+          items:
+            type: string
+          title: False Positive Flags
+          type: array
+          x-stream-index: "002"
+        feedback_id:
+          description: ID of the first stored feedback item, when any was stored
+          title: Feedback ID
+          type: string
+          x-stream-index: "003"
+        feedback_item_ids:
+          description: IDs of the stored feedback items, one per submitted item
+          items:
+            type: string
+          title: Feedback Item IDs
+          type: array
+          x-stream-index: "004"
+        review_queue_item_id:
+          description: Review queue item the feedback was applied to
+          title: Review Queue Item ID
+          type: string
+          x-stream-index: "001"
       required:
       - duration
       type: object
@@ -29130,7 +29282,10 @@ components:
           type: integer
           x-stream-index: "001.041"
         revoke_tokens_issued_before:
+          description: Revokes tokens issued before this date
           format: date-time
+          nullable: true
+          title: Revoke tokens issued before
           type: string
           x-stream-index: "001.034"
         sns_key:
@@ -32719,7 +32874,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v239.84.1
+  version: v239.85.0
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -40838,7 +40993,7 @@ paths:
   /api/v2/moderation/submit_moderation_feedback:
     post:
       description: |
-        Forward a moderator-supplied correction to the moderation feedback pipeline. Server-side only.
+        Forward a moderator-supplied correction to the moderation feedback pipeline, optionally marking the referenced flags as false positives. Server-side only.
       operationId: submit_moderation_feedback
       requestBody:
         content:
