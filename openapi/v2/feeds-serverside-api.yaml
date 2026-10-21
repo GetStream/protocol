@@ -18177,6 +18177,35 @@ components:
       - id
       - published_at
       type: object
+    MediaDisplayResponse:
+      description: Display policy for a review queue item's images and video
+      properties:
+        audit_reveal:
+          description: Reveals must be recorded via the reveal media endpoint (blurred
+            CSAM or gore)
+          title: Audit Reveal
+          type: boolean
+          x-stream-index: "003"
+        mode:
+          description: Default rendering before a reveal
+          enum:
+          - normal
+          - blur
+          - blur_grayscale
+          title: Mode
+          type: string
+          x-stream-index: "001"
+        reveal_restricted:
+          description: Only users with the RevealProtectedMedia permission may reveal
+            the media (CSAM)
+          title: Reveal Restricted
+          type: boolean
+          x-stream-index: "002"
+      required:
+      - mode
+      - reveal_restricted
+      - audit_reveal
+      type: object
     MembershipLevelResponse:
       properties:
         created_at:
@@ -19007,12 +19036,20 @@ components:
             type: object
           type: object
           x-stream-index: "009"
+        media_label_display:
+          additionalProperties:
+            type: string
+          type: object
+          x-stream-index: "017"
         media_queue_blur_enabled:
           type: boolean
           x-stream-index: "001"
         overview_dashboard:
           $ref: '#/components/schemas/OverviewDashboardConfig'
           x-stream-index: "005"
+        text_redaction_enabled:
+          type: boolean
+          x-stream-index: "018"
       type: object
     ModerationFlagResponse:
       nullable: true
@@ -26279,6 +26316,42 @@ components:
       required:
       - user_ids
       type: object
+    RevealMediaRequest:
+      description: Request to reveal a review queue item's blurred media
+      nullable: true
+      properties:
+        item_id:
+          description: ID of the review queue item whose media is revealed
+          title: Item ID
+          type: string
+          x-stream-index: "001"
+        user:
+          $ref: '#/components/schemas/UserRequest'
+          x-stream-index: "002.002"
+        user_id:
+          type: string
+          x-stream-index: "002.001"
+      required:
+      - item_id
+      title: Reveal Media Request
+      type: object
+    RevealMediaResponse:
+      description: Response after a reveal of a review queue item's media is allowed
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "002.001"
+        media_display:
+          $ref: '#/components/schemas/MediaDisplayResponse'
+          description: The item's media display policy
+          title: Media Display
+          x-stream-index: "001"
+      required:
+      - media_display
+      - duration
+      title: Reveal Media Response
+      type: object
     ReviewQueueItemNewEvent:
       description: This event is sent when a new moderation review queue item is created
       nullable: true
@@ -26478,6 +26551,13 @@ components:
         latest_moderator_action:
           type: string
           x-stream-index: "016"
+        media_display:
+          $ref: '#/components/schemas/MediaDisplayResponse'
+          description: How the dashboard renders this item's images and video before
+            a reviewer reveals them, resolved from the app's per-label media display
+            settings
+          title: Media Display
+          x-stream-index: "042"
         message:
           $ref: '#/components/schemas/ChatMessageResponse'
           description: Associated message details
@@ -26555,6 +26635,7 @@ components:
       - actions
       - flags_count
       - escalated
+      - media_display
       type: object
     ReviewQueueItemUpdatedEvent:
       description: This event is sent when a moderation review queue item is updated
@@ -32874,7 +32955,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v239.86.0
+  version: v239.86.1
 openapi: 3.0.3
 paths:
   /api/v2/app:
@@ -40826,6 +40907,40 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Delete queue
+      tags:
+      - product:moderation
+  /api/v2/moderation/reveal_media:
+    post:
+      description: |
+        Authorize revealing a review queue item's blurred media. CSAM can only be revealed by users with the RevealProtectedMedia permission. Reveals of blurred CSAM or gore are recorded in the moderation action logs.
+      operationId: reveal_media
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevealMediaRequest'
+        description: Reveal Media Request
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevealMediaResponse'
+          description: Reveal Media Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Reveal review queue media
       tags:
       - product:moderation
   /api/v2/moderation/review_queue:
