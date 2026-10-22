@@ -2196,6 +2196,15 @@ components:
         replies:
           type: boolean
           x-stream-index: 001.002.008
+        scheduled_messages_max_lead_time_seconds:
+          description: How far ahead, in seconds, a message can be scheduled. Present
+            only when scheduled messages are enabled for the app. A later scheduled_at
+            returns error code 116 (scheduled_at_too_far), whose max_lead_time_seconds
+            carries the same value
+          format: int32
+          title: Scheduled messages max lead time seconds
+          type: integer
+          x-stream-index: "004"
         scheduled_messages_max_per_channel:
           description: Maximum number of scheduled messages (scheduled or sending)
             a user can have in this channel. Present only when scheduled messages
@@ -2204,6 +2213,23 @@ components:
           title: Scheduled messages max per channel
           type: integer
           x-stream-index: "003"
+        scheduled_messages_max_per_user:
+          description: Maximum number of scheduled messages (scheduled or sending)
+            a user can have across all channels. Present only when scheduled messages
+            are enabled for the app. Scheduling more returns error code 118 (scheduled_limit_user)
+          format: int32
+          title: Scheduled messages max per user
+          type: integer
+          x-stream-index: "006"
+        scheduled_messages_min_lead_time_seconds:
+          description: Minimum time ahead, in seconds, a message is scheduled for.
+            Present only when scheduled messages are enabled for the app. A future
+            scheduled_at closer than this is moved later, to the first whole minute
+            at least this far ahead; it is never rejected
+          format: int32
+          title: Scheduled messages min lead time seconds
+          type: integer
+          x-stream-index: "005"
         search:
           type: boolean
           x-stream-index: 001.002.006
@@ -19665,10 +19691,14 @@ components:
           $ref: '#/components/schemas/MessageRequest'
           x-stream-index: "001"
         scheduled_at:
-          description: 'When set, the message is not sent now: it is stored and sent
-            at this time (UTC). The response then carries scheduled_message. Must
-            be at least 1 minute and at most the app''s maximum lead time (120 days
-            by default) from now. Slash commands cannot be scheduled'
+          description: 'When set to a future time, the message is not sent now: it
+            is stored and sent at that time (UTC), rounded up to the first whole minute
+            that is at least 1 minute from now, never earlier than requested. The
+            response then carries scheduled_message with the rounded time. Must be
+            at most the app''s maximum lead time (120 days by default) from now. A
+            time that is now or in the past sends the message now as if scheduled_at
+            was not set, unless the request''s message ID belongs to a scheduled message
+            that was canceled or already sent. Slash commands cannot be scheduled'
           format: date-time
           title: Scheduled at
           type: string
@@ -19718,8 +19748,10 @@ components:
           x-stream-index: "001"
         scheduled_message:
           $ref: '#/components/schemas/ScheduledMessageResponse'
-          description: The scheduled message. Only set when the request had scheduled_at;
-            message then holds the content as it will be sent and is not in the channel
+          description: The scheduled message. Only set when the request scheduled
+            the message; message then holds the content as it will be sent and is
+            not in the channel. Not set when scheduled_at was now or in the past and
+            the message was sent now
           title: Scheduled message
           x-stream-index: "006"
       required:
@@ -21677,8 +21709,10 @@ components:
           title: Message
           x-stream-index: "002"
         scheduled_at:
-          description: New send time (UTC). Must be at least 1 minute and at most
-            the app's maximum lead time from now
+          description: New send time (UTC). Must be in the future and at most the
+            app's maximum lead time from now. Rounded up to the first whole minute
+            that is at least 1 minute from now, never earlier than requested. Resending
+            the stored time leaves it unchanged
           format: date-time
           title: Scheduled at
           type: string
@@ -24377,7 +24411,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v239.87.4
+  version: v239.87.5
   x-stream-breaking-changes:
     go:
     - CHA-3441 (2026-10-08)
