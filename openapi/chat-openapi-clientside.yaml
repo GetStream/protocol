@@ -10382,7 +10382,9 @@ components:
       description: Defaults applied by the query channels endpoint.
       properties:
         limit:
-          description: Number of channels returned when `limit` is omitted.
+          description: Number of channels returned when `limit` is omitted. A request
+            asking for at most one message and one member per channel can return more,
+            up to the higher ceiling described on `max_limit`.
           format: int32
           title: Limit
           type: integer
@@ -10390,8 +10392,8 @@ components:
         max_limit:
           description: Largest number of channels returned for one request. A bigger
             `limit` is silently clamped to this value rather than rejected. An app
-            with no per-app override gets a higher ceiling for the narrow case of
-            a request asking for at most one message and one member per channel.
+            with no per-app `max_limit` gets a higher ceiling for the narrow case
+            of a request asking for at most one message and one member per channel.
           format: int32
           title: Max limit
           type: integer
@@ -15457,12 +15459,18 @@ components:
           title: Channel ID
           type: string
           x-stream-index: "001"
+        has_unread:
+          description: Whether the channel has messages newer than the user's last
+            read. Large channels have no unread_count and only report this.
+          title: Has unread
+          type: boolean
+          x-stream-index: "003"
         last_read:
           description: The date which the current user last read the channel.
           format: date-time
           title: Last read
           type: string
-          x-stream-index: "003"
+          x-stream-index: "004"
         unread_count:
           description: The number of unread messages inside the channel.
           format: int32
@@ -15472,6 +15480,7 @@ components:
       required:
       - channel_id
       - unread_count
+      - has_unread
       - last_read
       type: object
     UnreadCountsChannelType:
@@ -18166,7 +18175,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v239.87.1
+  version: v239.87.2
 openapi: 3.0.3
 paths:
   /app:
@@ -22544,6 +22553,17 @@ paths:
       description: |
         Fetch unread counts for a single user
       operationId: UnreadCounts
+      parameters:
+      - in: query
+        name: include_large_channels
+        schema:
+          description: Also return channels too large to keep an unread count for.
+            They come back with unread_count 0 and has_unread true when they have
+            messages newer than the user's last read.
+          title: Include large channels
+          type: boolean
+          writeOnly: true
+          x-stream-index: "003"
       responses:
         "200":
           content:

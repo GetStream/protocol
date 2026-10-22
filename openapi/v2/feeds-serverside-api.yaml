@@ -14920,6 +14920,22 @@ components:
       x-stream-event-doc-group: other
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    ForYouConfig:
+      properties:
+        enabled:
+          description: 'Turns For You ranking on. Groups: only the non-aggregated
+            ''foryou'' group. Views: applies only when read on that group'
+          title: Enabled
+          type: boolean
+          x-stream-index: "001"
+        preset:
+          description: 'Name of a registered ranking preset that stands in for ''score''
+            when score is empty. One of: for_you_v2, hot'
+          title: Preset
+          type: string
+          x-stream-index: "002"
+      title: For You Configuration
+      type: object
     FrameRecordSettings:
       properties:
         capture_interval_in_seconds:
@@ -23407,6 +23423,17 @@ components:
           description: API requests statistics with daily breakdown and total
           title: API Requests
           x-stream-index: "004"
+        collections:
+          $ref: '#/components/schemas/DailyMetricStatsResponse'
+          description: Created collections statistics with daily breakdown and total
+          title: Collections
+          x-stream-index: "008"
+        comments:
+          $ref: '#/components/schemas/DailyMetricStatsResponse'
+          description: Created comments statistics with daily breakdown and total.
+            Counts only comments that were live (not moderated) when created
+          title: Comments
+          x-stream-index: "006"
         duration:
           type: string
           x-stream-index: "001.001"
@@ -23417,7 +23444,7 @@ components:
             when EMAU is enabled but there are no matching rows in core_feed_daily_usage
             for the requested date range (JSON omitempty).
           title: EMAU
-          x-stream-index: "006"
+          x-stream-index: "009"
         follows:
           $ref: '#/components/schemas/DailyMetricStatsResponse'
           description: Follows statistics with daily breakdown and total
@@ -23428,12 +23455,21 @@ components:
           description: OpenAI requests statistics with daily breakdown and total
           title: OpenAI Requests
           x-stream-index: "005"
+        reactions:
+          $ref: '#/components/schemas/DailyMetricStatsResponse'
+          description: Created activity and comment reactions statistics with daily
+            breakdown and total
+          title: Reactions
+          x-stream-index: "007"
       required:
       - duration
       - activities
       - follows
       - api_requests
       - openai_requests
+      - comments
+      - reactions
+      - collections
       type: object
     QueryFollowsRequest:
       nullable: true
@@ -25657,6 +25693,12 @@ components:
           title: ExcludeBelow
           type: number
           x-stream-index: "005"
+        for_you:
+          $ref: '#/components/schemas/ForYouConfig'
+          description: 'For You ranking options. Groups: only the non-aggregated ''foryou''
+            group. Views: ignored when read on other groups'
+          title: ForYou
+          x-stream-index: "006"
         functions:
           additionalProperties:
             $ref: '#/components/schemas/DecayFunctionConfig'
@@ -25665,7 +25707,8 @@ components:
           type: object
           x-stream-index: "004"
         score:
-          description: Scoring formula. Required when type is 'expression' or 'interest'
+          description: Scoring formula. Required when type is 'expression' (unless
+            for_you.preset is set) or 'interest'
           title: Score
           type: string
           x-stream-index: "002"
@@ -32972,7 +33015,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v239.87.1
+  version: v239.87.2
 openapi: 3.0.3
 paths:
   /api/v2/app:
