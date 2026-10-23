@@ -46,6 +46,8 @@ enum ParticipantSource {
   PARTICIPANT_SOURCE_SIP = 3;
   PARTICIPANT_SOURCE_RTSP = 4;
   PARTICIPANT_SOURCE_SRT = 5;
+  // Ladder republished into the call by a WebRTC transcoder egress.
+  PARTICIPANT_SOURCE_WEBRTC_TRANSCODED = 6;
 }
 
 // CallState is the current state of the call
@@ -102,6 +104,28 @@ message Participant {
   google.protobuf.Struct custom = 12;
   repeated string roles = 13;
   ParticipantSource source = 14;
+  // webrtc_transcode_mode marks a broadcaster that publishes a single raw layer
+  // for a transcoder egress to build the quality ladder from. Its media is
+  // withheld from ordinary subscribers, which receive the transcoder's output
+  // instead, so a client should render the transcoder in its place rather than
+  // showing a participant it can never play.
+  bool webrtc_transcode_mode = 15;
+  // transcode_of_user_session_id is set on a WebRTC transcoder egress and names
+  // the publisher session it stands in for, so a client can pair the two and
+  // render one participant rather than a raw broadcaster it can never play
+  // beside the transcoder that carries its media.
+  string transcode_of_user_session_id = 16;
+  // announced_tracks is what this participant declared for each track it has
+  // published, layers included: the size, bitrate and frame rate it means to
+  // send. published_tracks says which types are live, this says what they were
+  // announced as.
+  //
+  // A subscriber that republishes what it receives needs it. A WebRTC
+  // transcoder egress relays the broadcaster's top layer untouched and encodes
+  // the rest, and can only describe the relayed one honestly by repeating what
+  // the broadcaster announced for it - the media carries the size, but neither
+  // the rate it was encoded against nor its frame rate.
+  repeated TrackInfo announced_tracks = 17;
 }
 
 message StreamQuality {
