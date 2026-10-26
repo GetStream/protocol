@@ -4472,11 +4472,7 @@ components:
           $ref: '#/components/schemas/AutomodMode'
           x-stream-index: 001.002.023
         automod_behavior:
-          enum:
-          - flag
-          - block
-          - shadow_block
-          type: string
+          $ref: '#/components/schemas/ChannelModerationBehavior'
           x-stream-index: 001.002.024
         automod_thresholds:
           $ref: '#/components/schemas/Thresholds'
@@ -4485,11 +4481,7 @@ components:
           type: string
           x-stream-index: 001.002.025
         blocklist_behavior:
-          enum:
-          - flag
-          - block
-          - shadow_block
-          type: string
+          $ref: '#/components/schemas/ChannelModerationBehavior'
           x-stream-index: 001.002.026
         blocklists:
           items:
@@ -4863,6 +4855,14 @@ components:
       - id
       - custom
       type: object
+    ChannelModerationBehavior:
+      description: What automod or a blocklist does when it matches.
+      enum:
+      - flag
+      - block
+      - shadow_block
+      title: ChannelModerationBehavior
+      type: string
     ChannelMute:
       nullable: true
       properties:
@@ -10840,6 +10840,13 @@ components:
       x-stream-is-event: true
       x-stream-throttle-group: ordered
       x-stream-ws-base-event-name: VideoEvent
+    FollowPushPreference:
+      description: Whether a follow sends push notifications.
+      enum:
+      - all
+      - none
+      title: FollowPushPreference
+      type: string
     FollowRequest:
       nullable: true
       properties:
@@ -10883,12 +10890,10 @@ components:
           type: boolean
           x-stream-index: "009"
         push_preference:
+          $ref: '#/components/schemas/FollowPushPreference'
           description: Push preference for the follow relationship
-          enum:
-          - all
-          - none
           title: Push Preference
-          type: string
+          x-stream-description: Push preference for the follow relationship
           x-stream-index: "003"
         skip_push:
           description: Whether to skip push for this follow
@@ -10934,12 +10939,10 @@ components:
           type: string
           x-stream-index: "008"
         push_preference:
+          $ref: '#/components/schemas/FollowPushPreference'
           description: 'Push preference for notifications. One of: all, none'
-          enum:
-          - all
-          - none
           title: Push Preference
-          type: string
+          x-stream-description: 'Push preference for notifications. One of: all, none'
           x-stream-index: "003"
         request_accepted_at:
           description: When the follow request was accepted
@@ -14746,16 +14749,6 @@ components:
     PushPreferenceInput:
       nullable: true
       properties:
-        call_level:
-          description: 'Set the level of call push notifications for the user. One
-            of: all, none, default'
-          enum:
-          - all
-          - none
-          - default
-          title: Call Level
-          type: string
-          x-stream-index: "005"
         channel_cid:
           description: Set the push preferences for a specific channel. If empty it
             sets the default for the user
@@ -14856,9 +14849,6 @@ components:
     PushPreferencesResponse:
       description: The push preference details.
       properties:
-        call_level:
-          type: string
-          x-stream-index: "003"
         chat_level:
           description: The scope level of the push notifications.
           title: Chat level
@@ -16306,8 +16296,8 @@ components:
           description: 'When true (server-side only), the response includes group_counts:
             accepted following counts keyed by the followed feed''s group. Requires
             exactly one source_feed / source_fid string equality. HTTP 400 if target_feed
-            appears, if two source FIDs are given, or if $in / $or / $nor mentions
-            those keys. Independent of paging and of other filters, including status.'
+            appears, if two source FIDs are given, or if $in / $or mentions those
+            keys. Independent of paging and of other filters, including status.'
           title: Include Group Counts
           type: boolean
           x-stream-index: "003"
@@ -20481,12 +20471,10 @@ components:
           type: string
           x-stream-index: "002"
         push_preference:
+          $ref: '#/components/schemas/FollowPushPreference'
           description: Push preference for the follow relationship
-          enum:
-          - all
-          - none
           title: Push Preference
-          type: string
+          x-stream-description: Push preference for the follow relationship
           x-stream-index: "001.003"
         skip_push:
           description: Whether to skip push for this follow
@@ -22623,7 +22611,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v239.87.5
+  version: v239.89.0
   x-stream-breaking-changes:
     go:
     - CHA-3441 (2026-10-08)
@@ -22632,12 +22620,14 @@ info:
     - CHA-5082 (2026-10-16)
     - CHA-6186 (2026-10-19)
     - FEEDS-1972 (2026-10-06)
+    - FLU-1102 (2026-10-23)
     - FLU-755 (2026-10-14)
     - FLU-755 (2026-10-21)
     - MOD2-1119 (2026-10-13)
     - MOD2-1482 (2026-10-02)
     - MOD2-789 (2026-10-05)
     wire:
+    - AI-1617 (2026-10-22)
     - CHA-0 (2026-04-14)
     - CHA-2563 (2026-03-24)
     - CHA-3037 (2026-08-06)
@@ -26103,7 +26093,7 @@ paths:
   /api/v2/feeds/feeds/batch:
     post:
       description: |
-        Create multiple feeds at once for a given feed group
+        Create multiple feeds at once for a given feed group. Client-side, feeds that already exist are returned unchanged. Server-side, an existing feed keeps its owner and any fields the request omits. Feeds that have been deleted are rejected.
       operationId: CreateFeedsBatch
       requestBody:
         content:
@@ -26393,8 +26383,9 @@ paths:
       - product:feeds
   /api/v2/feeds/follows/batch:
     post:
+      deprecated: true
       description: |
-        Creates multiple follows at once and broadcasts FollowAddedEvent for each follow
+        Creates multiple follows at once and broadcasts FollowAddedEvent for each follow. Deprecated: use GetOrCreateFollows (POST /api/v2/feeds/follows/batch/upsert), which returns existing follows instead of erroring.
       operationId: FollowBatch
       requestBody:
         content:
@@ -26462,7 +26453,7 @@ paths:
   /api/v2/feeds/follows/query:
     post:
       description: |
-        Query follows based on filters with pagination and sorting options. Server-side callers may set include_group_counts to also receive accepted following counts keyed by followed feed group. Requires exactly one source_feed / source_fid string equality. HTTP 400 if target_feed appears, if two source FIDs are given, or if $in / $or / $nor mentions those keys.
+        Query follows based on filters with pagination and sorting options. Server-side callers may set include_group_counts to also receive accepted following counts keyed by followed feed group. Requires exactly one source_feed / source_fid string equality. HTTP 400 if target_feed appears, if two source FIDs are given, or if $in / $or mentions those keys.
       operationId: QueryFollows
       requestBody:
         content:

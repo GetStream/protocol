@@ -3888,6 +3888,34 @@ components:
       - appeal_id
       - duration
       type: object
+    ArrangeConfig:
+      properties:
+        blend:
+          $ref: '#/components/schemas/BlendArrangeConfig'
+          description: Blend mode settings. Required when mode is 'blend'
+          title: Blend
+          x-stream-index: "004"
+        key:
+          description: 'Activity field that defines a source. One of: type, user_id'
+          title: Key
+          type: string
+          x-stream-index: "002"
+        mode:
+          description: Arrangement mode. Currently only 'blend' is supported; 'diversify'
+            and 'slot' are reserved
+          title: Mode
+          type: string
+          x-stream-index: "001"
+        tail_below:
+          description: Activities scoring strictly below this value are moved to the
+            end of the feed, in score order, before the mode runs. 0 is a valid value.
+            Must be greater than exclude_below when both are set
+          format: double
+          title: TailBelow
+          type: number
+          x-stream-index: "003"
+      title: Arrange Configuration
+      type: object
     AsyncBulkImageModerationEvent:
       nullable: true
       properties:
@@ -4904,6 +4932,37 @@ components:
       - reactions
       - duration
       title: Response
+      type: object
+    BlendArrangeConfig:
+      properties:
+        default_min_gap:
+          description: Minimum gap, 0 to 50, for every source without a min_gap entry
+          format: int32
+          title: DefaultMinGap
+          type: integer
+          x-stream-index: "003"
+        min_gap:
+          additionalProperties:
+            format: int32
+            type: integer
+          description: Minimum number of slots between two items of a source, per
+            key value, 0 to 50. The key '*' requires weights['*']. Combinations of
+            weights and gaps that cannot be satisfied are rejected
+          title: MinGap
+          type: object
+          x-stream-index: "002"
+        weights:
+          additionalProperties:
+            format: double
+            type: number
+          description: Relative weight per key value, greater than 0, at most 8 entries.
+            Weights are normalized, so 80/20 equals 4/1. The key '*' is the catch-all
+            source for key values without their own weight; unweighted values are
+            otherwise placed after the blended section
+          title: Weights
+          type: object
+          x-stream-index: "001"
+      title: Blend Arrange Configuration
       type: object
     BlockActionRequestPayload:
       description: Configuration for block action
@@ -6044,11 +6103,7 @@ components:
           $ref: '#/components/schemas/AutomodMode'
           x-stream-index: "001.023"
         automod_behavior:
-          enum:
-          - flag
-          - block
-          - shadow_block
-          type: string
+          $ref: '#/components/schemas/ChannelModerationBehavior'
           x-stream-index: "001.024"
         automod_thresholds:
           $ref: '#/components/schemas/Thresholds'
@@ -6057,11 +6112,7 @@ components:
           type: string
           x-stream-index: "001.025"
         blocklist_behavior:
-          enum:
-          - flag
-          - block
-          - shadow_block
-          type: string
+          $ref: '#/components/schemas/ChannelModerationBehavior'
           x-stream-index: "001.026"
         blocklists:
           items:
@@ -6212,11 +6263,7 @@ components:
           $ref: '#/components/schemas/AutomodMode'
           x-stream-index: 001.002.023
         automod_behavior:
-          enum:
-          - flag
-          - block
-          - shadow_block
-          type: string
+          $ref: '#/components/schemas/ChannelModerationBehavior'
           x-stream-index: 001.002.024
         automod_thresholds:
           $ref: '#/components/schemas/Thresholds'
@@ -6225,11 +6272,7 @@ components:
           type: string
           x-stream-index: 001.002.025
         blocklist_behavior:
-          enum:
-          - flag
-          - block
-          - shadow_block
-          type: string
+          $ref: '#/components/schemas/ChannelModerationBehavior'
           x-stream-index: 001.002.026
         blocklists:
           items:
@@ -6603,6 +6646,14 @@ components:
       - id
       - custom
       type: object
+    ChannelModerationBehavior:
+      description: What automod or a blocklist does when it matches.
+      enum:
+      - flag
+      - block
+      - shadow_block
+      title: ChannelModerationBehavior
+      type: string
     ChannelMute:
       nullable: true
       properties:
@@ -7966,6 +8017,42 @@ components:
       required:
       - status
       - duration
+      type: object
+    ClaimGuestUserRequest:
+      nullable: true
+      properties:
+        guest_user_id:
+          description: ID of the guest user to claim
+          title: Guest user ID
+          type: string
+          x-stream-index: "001"
+        user_id:
+          description: ID of the regular user that claims the guest and receives its
+            channels, messages and reactions
+          title: User ID
+          type: string
+          x-stream-index: "002"
+      required:
+      - guest_user_id
+      - user_id
+      type: object
+    ClaimGuestUserResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+        task_id:
+          description: ID of the task that moves the guest's channels, messages and
+            reactions to the claiming user
+          title: Task ID
+          type: string
+          x-stream-index: "002"
+      required:
+      - duration
+      - task_id
       type: object
     Classification:
       properties:
@@ -11987,6 +12074,14 @@ components:
           type: object
           x-stream-index: "001"
       type: object
+    FeatureActivationMode:
+      description: Whether a call feature is available, disabled, or turned on automatically.
+      enum:
+      - available
+      - disabled
+      - auto-on
+      title: FeatureActivationMode
+      type: string
     FeedCreatedEvent:
       description: Emitted when a feed is created.
       nullable: true
@@ -14723,6 +14818,13 @@ components:
       x-stream-event-doc-group: other
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    FollowPushPreference:
+      description: Whether a follow sends push notifications.
+      enum:
+      - all
+      - none
+      title: FollowPushPreference
+      type: string
     FollowRequest:
       nullable: true
       properties:
@@ -14775,12 +14877,10 @@ components:
           type: boolean
           x-stream-index: "009"
         push_preference:
+          $ref: '#/components/schemas/FollowPushPreference'
           description: Push preference for the follow relationship
-          enum:
-          - all
-          - none
           title: Push Preference
-          type: string
+          x-stream-description: Push preference for the follow relationship
           x-stream-index: "003"
         skip_push:
           description: Whether to skip push for this follow
@@ -14834,12 +14934,10 @@ components:
           type: string
           x-stream-index: "008"
         push_preference:
+          $ref: '#/components/schemas/FollowPushPreference'
           description: 'Push preference for notifications. One of: all, none'
-          enum:
-          - all
-          - none
           title: Push Preference
-          type: string
+          x-stream-description: 'Push preference for notifications. One of: all, none'
           x-stream-index: "003"
         request_accepted_at:
           description: When the follow request was accepted
@@ -14965,11 +15063,7 @@ components:
           type: integer
           x-stream-index: "003"
         mode:
-          enum:
-          - available
-          - disabled
-          - auto-on
-          type: string
+          $ref: '#/components/schemas/FeatureActivationMode'
           x-stream-index: "001"
         quality:
           type: string
@@ -17033,11 +17127,7 @@ components:
     IndividualRecordSettings:
       properties:
         mode:
-          enum:
-          - available
-          - disabled
-          - auto-on
-          type: string
+          $ref: '#/components/schemas/FeatureActivationMode'
           x-stream-index: "001"
         output_types:
           items:
@@ -20111,11 +20201,7 @@ components:
     NoiseCancellationSettings:
       properties:
         mode:
-          enum:
-          - available
-          - disabled
-          - auto-on
-          type: string
+          $ref: '#/components/schemas/FeatureActivationMode'
           x-stream-index: "001"
       required:
       - mode
@@ -21669,16 +21755,6 @@ components:
     PushPreferenceInput:
       nullable: true
       properties:
-        call_level:
-          description: 'Set the level of call push notifications for the user. One
-            of: all, none, default'
-          enum:
-          - all
-          - none
-          - default
-          title: Call Level
-          type: string
-          x-stream-index: "005"
         channel_cid:
           description: Set the push preferences for a specific channel. If empty it
             sets the default for the user
@@ -21779,9 +21855,6 @@ components:
     PushPreferencesResponse:
       description: The push preference details.
       properties:
-        call_level:
-          type: string
-          x-stream-index: "003"
         chat_level:
           description: The scope level of the push notifications.
           title: Chat level
@@ -23769,8 +23842,8 @@ components:
           description: 'When true (server-side only), the response includes group_counts:
             accepted following counts keyed by the followed feed''s group. Requires
             exactly one source_feed / source_fid string equality. HTTP 400 if target_feed
-            appears, if two source FIDs are given, or if $in / $or / $nor mentions
-            those keys. Independent of paging and of other filters, including status.'
+            appears, if two source FIDs are given, or if $in / $or mentions those
+            keys. Independent of paging and of other filters, including status.'
           title: Include Group Counts
           type: boolean
           x-stream-index: "003"
@@ -26062,6 +26135,13 @@ components:
       type: object
     RankingConfig:
       properties:
+        arrange:
+          $ref: '#/components/schemas/ArrangeConfig'
+          description: Reorders the ranked feed after scoring and exclude_below without
+            changing scores. Exactly one mode per config. Not supported on aggregated
+            feeds
+          title: Arrange
+          x-stream-index: "006"
         defaults:
           additionalProperties: {}
           description: Default values for ranking
@@ -26080,7 +26160,7 @@ components:
           description: 'For You ranking options. Groups: only the non-aggregated ''foryou''
             group. Views: ignored when read on other groups'
           title: ForYou
-          x-stream-index: "006"
+          x-stream-index: "007"
         functions:
           additionalProperties:
             $ref: '#/components/schemas/DecayFunctionConfig'
@@ -26112,11 +26192,7 @@ components:
           type: boolean
           x-stream-index: "002"
         mode:
-          enum:
-          - available
-          - disabled
-          - auto-on
-          type: string
+          $ref: '#/components/schemas/FeatureActivationMode'
           x-stream-index: "001"
       required:
       - mode
@@ -28780,13 +28856,10 @@ components:
     TranscriptionSettings:
       properties:
         closed_caption_mode:
+          $ref: '#/components/schemas/FeatureActivationMode'
           description: 'One of: available, disabled, auto-on'
-          enum:
-          - available
-          - disabled
-          - auto-on
           title: Mode
-          type: string
+          x-stream-description: 'One of: available, disabled, auto-on'
           x-stream-index: "002"
         language:
           $ref: '#/components/schemas/TranscriptionLanguage'
@@ -28795,12 +28868,8 @@ components:
           x-stream-description: The language used in this call as a two letter code
           x-stream-index: "004"
         mode:
-          enum:
-          - available
-          - disabled
-          - auto-on
+          $ref: '#/components/schemas/FeatureActivationMode'
           title: Mode
-          type: string
           x-stream-index: "001"
         speech_segment_config:
           $ref: '#/components/schemas/SpeechSegmentConfig'
@@ -30725,12 +30794,10 @@ components:
           type: string
           x-stream-index: "002"
         push_preference:
+          $ref: '#/components/schemas/FollowPushPreference'
           description: Push preference for the follow relationship
-          enum:
-          - all
-          - none
           title: Push Preference
-          type: string
+          x-stream-description: Push preference for the follow relationship
           x-stream-index: "001.003"
         skip_push:
           description: Whether to skip push for this follow
@@ -33406,7 +33473,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v239.87.5
+  version: v239.89.0
   x-stream-breaking-changes:
     go:
     - CHA-3441 (2026-10-08)
@@ -33415,12 +33482,14 @@ info:
     - CHA-5082 (2026-10-16)
     - CHA-6186 (2026-10-19)
     - FEEDS-1972 (2026-10-06)
+    - FLU-1102 (2026-10-23)
     - FLU-755 (2026-10-14)
     - FLU-755 (2026-10-21)
     - MOD2-1119 (2026-10-13)
     - MOD2-1482 (2026-10-02)
     - MOD2-789 (2026-10-05)
     wire:
+    - AI-1617 (2026-10-22)
     - CHA-0 (2026-04-14)
     - CHA-2563 (2026-03-24)
     - CHA-3037 (2026-08-06)
@@ -38095,7 +38164,7 @@ paths:
   /api/v2/feeds/feeds/batch:
     post:
       description: |
-        Create multiple feeds at once for a given feed group
+        Create multiple feeds at once for a given feed group. Client-side, feeds that already exist are returned unchanged. Server-side, an existing feed keeps its owner and any fields the request omits. Feeds that have been deleted are rejected.
       operationId: CreateFeedsBatch
       requestBody:
         content:
@@ -38501,8 +38570,9 @@ paths:
       - product:feeds
   /api/v2/feeds/follows/batch:
     post:
+      deprecated: true
       description: |
-        Creates multiple follows at once and broadcasts FollowAddedEvent for each follow
+        Creates multiple follows at once and broadcasts FollowAddedEvent for each follow. Deprecated: use GetOrCreateFollows (POST /api/v2/feeds/follows/batch/upsert), which returns existing follows instead of erroring.
       operationId: FollowBatch
       requestBody:
         content:
@@ -38570,7 +38640,7 @@ paths:
   /api/v2/feeds/follows/query:
     post:
       description: |
-        Query follows based on filters with pagination and sorting options. Server-side callers may set include_group_counts to also receive accepted following counts keyed by followed feed group. Requires exactly one source_feed / source_fid string equality. HTTP 400 if target_feed appears, if two source FIDs are given, or if $in / $or / $nor mentions those keys.
+        Query follows based on filters with pagination and sorting options. Server-side callers may set include_group_counts to also receive accepted following counts keyed by followed feed group. Requires exactly one source_feed / source_fid string equality. HTTP 400 if target_feed appears, if two source FIDs are given, or if $in / $or mentions those keys.
       operationId: QueryFollows
       requestBody:
         content:
@@ -39011,8 +39081,9 @@ paths:
       - product:feeds
   /api/v2/feeds/unfollow/batch:
     post:
+      deprecated: true
       description: |
-        Removes multiple follows at once and broadcasts FollowRemovedEvent for each one
+        Removes multiple follows at once and broadcasts FollowRemovedEvent for each one. Deprecated: use GetOrCreateUnfollows (POST /api/v2/feeds/unfollow/batch/upsert).
       operationId: UnfollowBatch
       requestBody:
         content:
@@ -43783,6 +43854,43 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Block user
+      tags:
+      - product:common
+  /api/v2/users/claim_guest:
+    post:
+      description: |
+        Claims a guest user for a regular user. The guest is deactivated and its channel memberships, owned channels, messages and reactions are moved to the claiming user by an asynchronous task. Server-side only.
+
+        Sends events:
+        - user.claimed
+        - user.deactivated
+      operationId: ClaimGuestUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClaimGuestUserRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimGuestUserResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Claim guest user
       tags:
       - product:common
   /api/v2/users/deactivate:
