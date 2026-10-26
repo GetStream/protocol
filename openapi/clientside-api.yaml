@@ -5723,6 +5723,13 @@ components:
       - user_id
       - event_type
       type: object
+    CallLifecycleMode:
+      description: Whether a call can be joined again after it ends.
+      enum:
+      - reusable
+      - single_use
+      title: CallLifecycleMode
+      type: string
     CallLiveStartedEvent:
       description: This event is sent when a call is started. Clients receiving this
         event should start the call.
@@ -8283,11 +8290,7 @@ components:
           $ref: '#/components/schemas/AutomodMode'
           x-stream-index: 001.002.023
         automod_behavior:
-          enum:
-          - flag
-          - block
-          - shadow_block
-          type: string
+          $ref: '#/components/schemas/ChannelModerationBehavior'
           x-stream-index: 001.002.024
         automod_thresholds:
           $ref: '#/components/schemas/Thresholds'
@@ -8296,11 +8299,7 @@ components:
           type: string
           x-stream-index: 001.002.025
         blocklist_behavior:
-          enum:
-          - flag
-          - block
-          - shadow_block
-          type: string
+          $ref: '#/components/schemas/ChannelModerationBehavior'
           x-stream-index: 001.002.026
         blocklists:
           items:
@@ -9250,6 +9249,14 @@ components:
       - id
       - custom
       type: object
+    ChannelModerationBehavior:
+      description: What automod or a blocklist does when it matches.
+      enum:
+      - flag
+      - block
+      - shadow_block
+      title: ChannelModerationBehavior
+      type: string
     ChannelMute:
       nullable: true
       properties:
@@ -9640,6 +9647,131 @@ components:
       - custom
       title: Channel
       type: object
+    ChannelRewindResponse:
+      description: A rewind of an agent channel
+      properties:
+        created_at:
+          description: Date/time of the rewind
+          format: date-time
+          title: Created at
+          type: number
+          x-stream-index: "005"
+        hidden_count_at_rewind:
+          description: Number of messages the rewind hid that were not hidden already
+          format: int32
+          title: Hidden count at rewind
+          type: integer
+          x-stream-index: "004"
+        id:
+          description: ID of the rewind
+          title: ID
+          type: string
+          x-stream-index: "001"
+        inclusive:
+          description: Whether `message_id` was hidden too
+          title: Inclusive
+          type: boolean
+          x-stream-index: "003"
+        message_id:
+          description: ID of the message the channel was rewound to
+          title: Message ID
+          type: string
+          x-stream-index: "002"
+      required:
+      - id
+      - message_id
+      - inclusive
+      - hidden_count_at_rewind
+      - created_at
+      type: object
+    ChannelRewoundEvent:
+      description: Emitted when an agent channel is rewound to an earlier message.
+        Clients should reload the channel's messages.
+      nullable: true
+      properties:
+        channel:
+          $ref: '#/components/schemas/ChannelResponse'
+          description: The channel after the rewind
+          title: Channel
+          x-stream-index: 001.002.001
+        channel_custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.001.006
+        channel_id:
+          description: The ID of the channel which was rewound
+          title: Channel ID
+          type: string
+          x-stream-index: 001.001.002.002
+        channel_member_count:
+          description: The number of members in the channel
+          format: int32
+          title: Channel member count
+          type: integer
+          x-stream-index: 001.001.001.004
+        channel_message_count:
+          format: int64
+          type: integer
+          x-stream-index: 001.001.001.005
+        channel_type:
+          description: The type of the channel which was rewound
+          title: Channel Type
+          type: string
+          x-stream-index: 001.001.002.001
+        cid:
+          description: The CID of the channel which was rewound
+          title: Channel CID
+          type: string
+          x-stream-index: 001.001.001.001.002
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: number
+          x-stream-index: 001.001.001.001.001.003
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.001.001.001.007
+        received_at:
+          format: date-time
+          type: number
+          x-stream-index: 001.001.001.001.001.004
+        rewind:
+          $ref: '#/components/schemas/ChannelRewindResponse'
+          description: The rewind
+          title: Rewind
+          x-stream-index: "003"
+        team:
+          description: The team ID
+          title: Team
+          type: string
+          x-stream-index: 001.001.001.003
+        type:
+          default: channel.rewound
+          description: 'The type of event: "channel.rewound" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: 001.001.001.001.001.002
+        user:
+          $ref: '#/components/schemas/UserResponseCommonFields'
+          description: The user who rewound the channel
+          title: User
+          x-stream-index: "002.001"
+      required:
+      - type
+      - created_at
+      - custom
+      - channel
+      - rewind
+      title: ChannelRewoundEvent
+      type: object
+      x-stream-docs-beta: true
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-throttle-group: ordered
+      x-stream-ws-base-event-name: VideoEvent
     ChannelStateResponse:
       nullable: true
       properties:
@@ -14215,13 +14347,10 @@ components:
     EncryptionSettingsRequest:
       properties:
         mode:
+          $ref: '#/components/schemas/FeatureActivationMode'
           description: 'Encryption mode. One of: available, disabled, auto-on'
-          enum:
-          - available
-          - disabled
-          - auto-on
           title: Mode
-          type: string
+          x-stream-description: 'Encryption mode. One of: available, disabled, auto-on'
           x-stream-index: "001"
       title: EncryptionSettingsRequest
       type: object
@@ -14229,13 +14358,10 @@ components:
       description: EncryptionSettings is the payload for end-to-end encryption settings
       properties:
         mode:
+          $ref: '#/components/schemas/FeatureActivationMode'
           description: the resolved encryption mode for the call
-          enum:
-          - available
-          - disabled
-          - auto-on
           title: Mode
-          type: string
+          x-stream-description: the resolved encryption mode for the call
           x-stream-index: "001"
       required:
       - mode
@@ -14709,6 +14835,14 @@ components:
       - duration
       title: Response
       type: object
+    FeatureActivationMode:
+      description: Whether a call feature is available, disabled, or turned on automatically.
+      enum:
+      - available
+      - disabled
+      - auto-on
+      title: FeatureActivationMode
+      type: string
     FeedCreatedEvent:
       description: Emitted when a feed is created.
       nullable: true
@@ -17187,6 +17321,13 @@ components:
       x-stream-is-event: true
       x-stream-throttle-group: ordered
       x-stream-ws-base-event-name: VideoEvent
+    FollowPushPreference:
+      description: Whether a follow sends push notifications.
+      enum:
+      - all
+      - none
+      title: FollowPushPreference
+      type: string
     FollowRequest:
       nullable: true
       properties:
@@ -17230,12 +17371,10 @@ components:
           type: boolean
           x-stream-index: "009"
         push_preference:
+          $ref: '#/components/schemas/FollowPushPreference'
           description: Push preference for the follow relationship
-          enum:
-          - all
-          - none
           title: Push Preference
-          type: string
+          x-stream-description: Push preference for the follow relationship
           x-stream-index: "003"
         skip_push:
           description: Whether to skip push for this follow
@@ -17281,12 +17420,10 @@ components:
           type: string
           x-stream-index: "008"
         push_preference:
+          $ref: '#/components/schemas/FollowPushPreference'
           description: 'Push preference for notifications. One of: all, none'
-          enum:
-          - all
-          - none
           title: Push Preference
-          type: string
+          x-stream-description: 'Push preference for notifications. One of: all, none'
           x-stream-index: "003"
         request_accepted_at:
           description: When the follow request was accepted
@@ -17405,11 +17542,7 @@ components:
           type: integer
           x-stream-index: "003"
         mode:
-          enum:
-          - available
-          - disabled
-          - auto-on
-          type: string
+          $ref: '#/components/schemas/FeatureActivationMode'
           x-stream-index: "001"
         quality:
           enum:
@@ -17433,11 +17566,7 @@ components:
           type: integer
           x-stream-index: "003"
         mode:
-          enum:
-          - available
-          - disabled
-          - auto-on
-          type: string
+          $ref: '#/components/schemas/FeatureActivationMode'
           x-stream-index: "001"
         quality:
           type: string
@@ -19361,13 +19490,10 @@ components:
     IndividualRecordingSettingsRequest:
       properties:
         mode:
+          $ref: '#/components/schemas/FeatureActivationMode'
           description: 'Recording mode. One of: available, disabled, auto-on'
-          enum:
-          - available
-          - disabled
-          - auto-on
           title: Mode
-          type: string
+          x-stream-description: 'Recording mode. One of: available, disabled, auto-on'
           x-stream-index: "001"
         output_types:
           description: 'Output types to include: audio_only, video_only, audio_video,
@@ -19392,11 +19518,7 @@ components:
     IndividualRecordingSettingsResponse:
       properties:
         mode:
-          enum:
-          - available
-          - disabled
-          - auto-on
-          type: string
+          $ref: '#/components/schemas/FeatureActivationMode'
           x-stream-index: "001"
         output_types:
           items:
@@ -20234,15 +20356,16 @@ components:
     LifecycleSettingsRequest:
       properties:
         mode:
+          $ref: '#/components/schemas/CallLifecycleMode'
           description: 'Call lifecycle mode. One of: reusable, single_use. A single_use
             call cannot be reused once it has ended; the server ends it when its ring
             settles without an answer (currently: when the caller cancels the ring).
             Fixed at call creation'
-          enum:
-          - reusable
-          - single_use
           title: Mode
-          type: string
+          x-stream-description: 'Call lifecycle mode. One of: reusable, single_use.
+            A single_use call cannot be reused once it has ended; the server ends
+            it when its ring settles without an answer (currently: when the caller
+            cancels the ring). Fixed at call creation'
           x-stream-index: "001"
       title: LifecycleSettingsRequest
       type: object
@@ -20250,15 +20373,16 @@ components:
       description: LifecycleSettings is the payload for call lifecycle settings
       properties:
         mode:
+          $ref: '#/components/schemas/CallLifecycleMode'
           description: 'Call lifecycle mode. One of: reusable, single_use. A single_use
             call cannot be reused once it has ended; the server ends it when its ring
             settles without an answer (currently: when the caller cancels the ring).
             Fixed at call creation'
-          enum:
-          - reusable
-          - single_use
           title: Mode
-          type: string
+          x-stream-description: 'Call lifecycle mode. One of: reusable, single_use.
+            A single_use call cannot be reused once it has ended; the server ends
+            it when its ring settles without an answer (currently: when the caller
+            cancels the ring). Fixed at call creation'
           x-stream-index: "001"
       required:
       - mode
@@ -23703,11 +23827,7 @@ components:
     NoiseCancellationSettings:
       properties:
         mode:
-          enum:
-          - available
-          - disabled
-          - auto-on
-          type: string
+          $ref: '#/components/schemas/FeatureActivationMode'
           x-stream-index: "001"
       required:
       - mode
@@ -30517,8 +30637,8 @@ components:
           description: 'When true (server-side only), the response includes group_counts:
             accepted following counts keyed by the followed feed''s group. Requires
             exactly one source_feed / source_fid string equality. HTTP 400 if target_feed
-            appears, if two source FIDs are given, or if $in / $or / $nor mentions
-            those keys. Independent of paging and of other filters, including status.'
+            appears, if two source FIDs are given, or if $in / $or mentions those
+            keys. Independent of paging and of other filters, including status.'
           title: Include Group Counts
           type: boolean
           x-stream-index: "003"
@@ -32683,13 +32803,10 @@ components:
           type: boolean
           x-stream-index: "002"
         mode:
+          $ref: '#/components/schemas/FeatureActivationMode'
           description: 'Recording mode. One of: available, disabled, auto-on'
-          enum:
-          - available
-          - disabled
-          - auto-on
           title: Mode
-          type: string
+          x-stream-description: 'Recording mode. One of: available, disabled, auto-on'
           x-stream-index: "001"
       required:
       - mode
@@ -32701,11 +32818,7 @@ components:
           type: boolean
           x-stream-index: "002"
         mode:
-          enum:
-          - available
-          - disabled
-          - auto-on
-          type: string
+          $ref: '#/components/schemas/FeatureActivationMode'
           x-stream-index: "001"
       required:
       - mode
@@ -33320,13 +33433,10 @@ components:
           type: boolean
           x-stream-index: "001"
         mode:
+          $ref: '#/components/schemas/FeatureActivationMode'
           description: 'Recording mode. One of: available, disabled, auto-on'
-          enum:
-          - available
-          - disabled
-          - auto-on
           title: Mode
-          type: string
+          x-stream-description: 'Recording mode. One of: available, disabled, auto-on'
           x-stream-index: "002"
         quality:
           description: 'Recording quality. One of: 360p, 480p, 720p, 1080p, 1440p,
@@ -33358,8 +33468,8 @@ components:
           type: boolean
           x-stream-index: "001"
         mode:
+          $ref: '#/components/schemas/FeatureActivationMode'
           title: Mode
-          type: string
           x-stream-index: "002"
         quality:
           title: Quality
@@ -34427,6 +34537,53 @@ components:
       - flags_count
       - escalated
       - media_display
+      type: object
+    RewindChannelRequest:
+      nullable: true
+      properties:
+        expected_last_message_id:
+          description: ID of the newest visible message the caller saw. The rewind
+            fails with a conflict when it is no longer the newest
+          title: Expected last message ID
+          type: string
+          x-stream-index: "005"
+        inclusive:
+          description: When true, `message_id` is hidden too and the message before
+            it becomes the newest visible message
+          title: Inclusive
+          type: boolean
+          x-stream-index: "004"
+        message_id:
+          description: ID of the top-level message to rewind the channel to. Every
+            message created after it is hidden
+          title: Message ID
+          type: string
+          x-stream-index: "003"
+      required:
+      - message_id
+      - expected_last_message_id
+      type: object
+    RewindChannelResponse:
+      nullable: true
+      properties:
+        channel:
+          $ref: '#/components/schemas/ChannelResponse'
+          description: The channel after the rewind
+          title: Channel
+          x-stream-index: "003"
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+        rewind:
+          $ref: '#/components/schemas/ChannelRewindResponse'
+          description: The rewind
+          title: Rewind
+          x-stream-index: "002"
+      required:
+      - duration
+      - rewind
       type: object
     RingCallRequest:
       nullable: true
@@ -38695,21 +38852,13 @@ components:
     TranscriptionSettingsRequest:
       properties:
         closed_caption_mode:
-          enum:
-          - available
-          - disabled
-          - auto-on
-          type: string
+          $ref: '#/components/schemas/FeatureActivationMode'
           x-stream-index: "002"
         language:
           $ref: '#/components/schemas/TranscriptionLanguage'
           x-stream-index: "004"
         mode:
-          enum:
-          - available
-          - disabled
-          - auto-on
-          type: string
+          $ref: '#/components/schemas/FeatureActivationMode'
           x-stream-index: "001"
         speech_segment_config:
           $ref: '#/components/schemas/SpeechSegmentConfig'
@@ -38721,21 +38870,13 @@ components:
     TranscriptionSettingsResponse:
       properties:
         closed_caption_mode:
-          enum:
-          - available
-          - disabled
-          - auto-on
-          type: string
+          $ref: '#/components/schemas/FeatureActivationMode'
           x-stream-index: "002"
         language:
           $ref: '#/components/schemas/TranscriptionLanguage'
           x-stream-index: "004"
         mode:
-          enum:
-          - available
-          - disabled
-          - auto-on
-          type: string
+          $ref: '#/components/schemas/FeatureActivationMode'
           x-stream-index: "001"
         speech_segment_config:
           $ref: '#/components/schemas/SpeechSegmentConfig'
@@ -40609,12 +40750,10 @@ components:
           type: string
           x-stream-index: "002"
         push_preference:
+          $ref: '#/components/schemas/FollowPushPreference'
           description: Push preference for the follow relationship
-          enum:
-          - all
-          - none
           title: Push Preference
-          type: string
+          x-stream-description: Push preference for the follow relationship
           x-stream-index: "001.003"
         skip_push:
           description: Whether to skip push for this follow
@@ -43641,6 +43780,7 @@ components:
           channel.hidden: '#/components/schemas/ChannelHiddenEvent'
           channel.kicked: '#/components/schemas/ChannelKickedEvent'
           channel.max_streak_changed: '#/components/schemas/MaxStreakChangedEvent'
+          channel.rewound: '#/components/schemas/ChannelRewoundEvent'
           channel.truncated: '#/components/schemas/ChannelTruncatedEvent'
           channel.unfrozen: '#/components/schemas/ChannelUnFrozenEvent'
           channel.updated: '#/components/schemas/ChannelUpdatedEvent'
@@ -43785,6 +43925,7 @@ components:
       - $ref: '#/components/schemas/ChannelFrozenEvent'
       - $ref: '#/components/schemas/ChannelHiddenEvent'
       - $ref: '#/components/schemas/ChannelKickedEvent'
+      - $ref: '#/components/schemas/ChannelRewoundEvent'
       - $ref: '#/components/schemas/ChannelTruncatedEvent'
       - $ref: '#/components/schemas/ChannelUnFrozenEvent'
       - $ref: '#/components/schemas/ChannelUpdatedEvent'
@@ -43955,6 +44096,7 @@ components:
           channel.hidden: '#/components/schemas/ChannelHiddenEvent'
           channel.kicked: '#/components/schemas/ChannelKickedEvent'
           channel.max_streak_changed: '#/components/schemas/MaxStreakChangedEvent'
+          channel.rewound: '#/components/schemas/ChannelRewoundEvent'
           channel.truncated: '#/components/schemas/ChannelTruncatedEvent'
           channel.unfrozen: '#/components/schemas/ChannelUnFrozenEvent'
           channel.updated: '#/components/schemas/ChannelUpdatedEvent'
@@ -44153,6 +44295,7 @@ components:
       - $ref: '#/components/schemas/ChannelFrozenEvent'
       - $ref: '#/components/schemas/ChannelHiddenEvent'
       - $ref: '#/components/schemas/ChannelKickedEvent'
+      - $ref: '#/components/schemas/ChannelRewoundEvent'
       - $ref: '#/components/schemas/ChannelTruncatedEvent'
       - $ref: '#/components/schemas/ChannelUnFrozenEvent'
       - $ref: '#/components/schemas/ChannelUpdatedEvent'
@@ -44364,7 +44507,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v239.87.5
+  version: v239.89.0
   x-stream-breaking-changes:
     go:
     - CHA-3441 (2026-10-08)
@@ -44373,12 +44516,14 @@ info:
     - CHA-5082 (2026-10-16)
     - CHA-6186 (2026-10-19)
     - FEEDS-1972 (2026-10-06)
+    - FLU-1102 (2026-10-23)
     - FLU-755 (2026-10-14)
     - FLU-755 (2026-10-21)
     - MOD2-1119 (2026-10-13)
     - MOD2-1482 (2026-10-02)
     - MOD2-789 (2026-10-05)
     wire:
+    - AI-1617 (2026-10-22)
     - CHA-0 (2026-04-14)
     - CHA-2563 (2026-03-24)
     - CHA-3037 (2026-08-06)
@@ -45870,6 +46015,57 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Mark read
+      tags:
+      - product:chat
+  /api/v2/chat/channels/{type}/{id}/rewind:
+    post:
+      description: |
+        Rewinds an agent channel to one of its messages: every message created after it, and the message itself when `inclusive` is set, is hidden from every read. The messages are kept and can still be exported. Only available for the `agent` channel type.
+
+        Sends events:
+        - channel.rewound
+      operationId: RewindChannel
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RewindChannelRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RewindChannelResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Rewind channel
       tags:
       - product:chat
   /api/v2/chat/channels/{type}/{id}/show:
@@ -51072,7 +51268,7 @@ paths:
   /api/v2/feeds/feeds/batch:
     post:
       description: |
-        Create multiple feeds at once for a given feed group
+        Create multiple feeds at once for a given feed group. Client-side, feeds that already exist are returned unchanged. Server-side, an existing feed keeps its owner and any fields the request omits. Feeds that have been deleted are rejected.
       operationId: CreateFeedsBatch
       requestBody:
         content:
@@ -51362,8 +51558,9 @@ paths:
       - product:feeds
   /api/v2/feeds/follows/batch:
     post:
+      deprecated: true
       description: |
-        Creates multiple follows at once and broadcasts FollowAddedEvent for each follow
+        Creates multiple follows at once and broadcasts FollowAddedEvent for each follow. Deprecated: use GetOrCreateFollows (POST /api/v2/feeds/follows/batch/upsert), which returns existing follows instead of erroring.
       operationId: FollowBatch
       requestBody:
         content:
@@ -51431,7 +51628,7 @@ paths:
   /api/v2/feeds/follows/query:
     post:
       description: |
-        Query follows based on filters with pagination and sorting options. Server-side callers may set include_group_counts to also receive accepted following counts keyed by followed feed group. Requires exactly one source_feed / source_fid string equality. HTTP 400 if target_feed appears, if two source FIDs are given, or if $in / $or / $nor mentions those keys.
+        Query follows based on filters with pagination and sorting options. Server-side callers may set include_group_counts to also receive accepted following counts keyed by followed feed group. Requires exactly one source_feed / source_fid string equality. HTTP 400 if target_feed appears, if two source FIDs are given, or if $in / $or mentions those keys.
       operationId: QueryFollows
       requestBody:
         content:

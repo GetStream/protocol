@@ -2173,9 +2173,10 @@ components:
           type: string
           x-stream-index: "001"
         synchronous:
-          description: For updateData only. Requires a root cids $eq or $in filter
-            with at most 100 CIDs and no root $or/$and. Split larger selections into
-            requests of at most 100 CIDs. A success_channels_count response means
+          description: For updateData and hide only. Requires a root cids $eq or $in
+            filter with at most 100 CIDs and no root $or/$and. A synchronous hide
+            also requires 1 to 10 distinct member user IDs. Split larger selections
+            into requests of at most 100 CIDs. A success_channels_count response means
             the database update completed; a task_id response means it was queued
             and must be polled, including on older API nodes.
           title: Synchronous update
@@ -2192,9 +2193,10 @@ components:
           type: string
           x-stream-index: "002.001"
         success_channels_count:
-          description: Positive count of channels selected for a completed synchronous
-            database update, not an affected-row count. Concurrent deletion may reduce
-            the rows written. task_id is absent.
+          description: Count of channels selected for a completed synchronous database
+            update, not an affected-row count. Concurrent deletion may reduce the
+            rows written. Omitted when the count is 0, which happens for a synchronous
+            hide where none of the member users exist. task_id is absent.
           format: int32
           title: Updated channels
           type: integer
@@ -3792,6 +3794,130 @@ components:
       - custom
       title: Channel
       type: object
+    ChannelRewindResponse:
+      description: A rewind of an agent channel
+      properties:
+        created_at:
+          description: Date/time of the rewind
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: "005"
+        hidden_count_at_rewind:
+          description: Number of messages the rewind hid that were not hidden already
+          format: int32
+          title: Hidden count at rewind
+          type: integer
+          x-stream-index: "004"
+        id:
+          description: ID of the rewind
+          title: ID
+          type: string
+          x-stream-index: "001"
+        inclusive:
+          description: Whether `message_id` was hidden too
+          title: Inclusive
+          type: boolean
+          x-stream-index: "003"
+        message_id:
+          description: ID of the message the channel was rewound to
+          title: Message ID
+          type: string
+          x-stream-index: "002"
+      required:
+      - id
+      - message_id
+      - inclusive
+      - hidden_count_at_rewind
+      - created_at
+      type: object
+    ChannelRewoundEvent:
+      description: Emitted when an agent channel is rewound to an earlier message.
+        Clients should reload the channel's messages.
+      nullable: true
+      properties:
+        channel:
+          $ref: '#/components/schemas/ChannelResponse'
+          description: The channel after the rewind
+          title: Channel
+          x-stream-index: 001.002.001
+        channel_custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.001.006
+        channel_id:
+          description: The ID of the channel which was rewound
+          title: Channel ID
+          type: string
+          x-stream-index: 001.001.002.002
+        channel_member_count:
+          description: The number of members in the channel
+          format: int32
+          title: Channel member count
+          type: integer
+          x-stream-index: 001.001.001.004
+        channel_message_count:
+          format: int64
+          type: integer
+          x-stream-index: 001.001.001.005
+        channel_type:
+          description: The type of the channel which was rewound
+          title: Channel Type
+          type: string
+          x-stream-index: 001.001.002.001
+        cid:
+          description: The CID of the channel which was rewound
+          title: Channel CID
+          type: string
+          x-stream-index: 001.001.001.001.002
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: 001.001.001.001.001.003
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.001.001.001.007
+        received_at:
+          format: date-time
+          type: string
+          x-stream-index: 001.001.001.001.001.004
+        rewind:
+          $ref: '#/components/schemas/ChannelRewindResponse'
+          description: The rewind
+          title: Rewind
+          x-stream-index: "003"
+        team:
+          description: The team ID
+          title: Team
+          type: string
+          x-stream-index: 001.001.001.003
+        type:
+          default: channel.rewound
+          description: 'The type of event: "channel.rewound" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: 001.001.001.001.001.002
+        user:
+          $ref: '#/components/schemas/UserResponseCommonFields'
+          description: The user who rewound the channel
+          title: User
+          x-stream-index: "002.001"
+      required:
+      - type
+      - created_at
+      - custom
+      - channel
+      - rewind
+      title: ChannelRewoundEvent
+      type: object
+      x-stream-docs-beta: true
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     ChannelStateResponse:
       nullable: true
       properties:
@@ -4932,6 +5058,42 @@ components:
       required:
       - status
       - duration
+      type: object
+    ClaimGuestUserRequest:
+      nullable: true
+      properties:
+        guest_user_id:
+          description: ID of the guest user to claim
+          title: Guest user ID
+          type: string
+          x-stream-index: "001"
+        user_id:
+          description: ID of the regular user that claims the guest and receives its
+            channels, messages and reactions
+          title: User ID
+          type: string
+          x-stream-index: "002"
+      required:
+      - guest_user_id
+      - user_id
+      type: object
+    ClaimGuestUserResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+        task_id:
+          description: ID of the task that moves the guest's channels, messages and
+            reactions to the claiming user
+          title: Task ID
+          type: string
+          x-stream-index: "002"
+      required:
+      - duration
+      - task_id
       type: object
     Command:
       description: Represents custom chat command
@@ -14421,16 +14583,6 @@ components:
     PushPreferenceInput:
       nullable: true
       properties:
-        call_level:
-          description: 'Set the level of call push notifications for the user. One
-            of: all, none, default'
-          enum:
-          - all
-          - none
-          - default
-          title: Call Level
-          type: string
-          x-stream-index: "005"
         channel_cid:
           description: Set the push preferences for a specific channel. If empty it
             sets the default for the user
@@ -14471,16 +14623,6 @@ components:
           title: Disabled Until
           type: string
           x-stream-index: "008"
-        feeds_level:
-          description: 'Set the level of feeds push notifications for the user. One
-            of: all, none, default'
-          enum:
-          - all
-          - none
-          - default
-          title: Feeds Level
-          type: string
-          x-stream-index: "006"
         remove_disable:
           description: Remove the disabled until time. (IE stop snoozing notifications)
           title: Remove Disable
@@ -14525,9 +14667,6 @@ components:
     PushPreferencesResponse:
       description: The push preference details.
       properties:
-        call_level:
-          type: string
-          x-stream-index: "003"
         chat_level:
           description: The scope level of the push notifications.
           title: Chat level
@@ -14543,9 +14682,6 @@ components:
           title: Disabled until
           type: string
           x-stream-index: "006"
-        feeds_level:
-          type: string
-          x-stream-index: "004"
         schedule:
           $ref: '#/components/schemas/PushScheduleResponse'
           description: The recurring quiet-hours schedule of the user, if one is set.
@@ -18517,6 +18653,59 @@ components:
       - policy
       - date
       - stats
+      type: object
+    RewindChannelRequest:
+      nullable: true
+      properties:
+        expected_last_message_id:
+          description: ID of the newest visible message the caller saw. The rewind
+            fails with a conflict when it is no longer the newest
+          title: Expected last message ID
+          type: string
+          x-stream-index: "005"
+        inclusive:
+          description: When true, `message_id` is hidden too and the message before
+            it becomes the newest visible message
+          title: Inclusive
+          type: boolean
+          x-stream-index: "004"
+        message_id:
+          description: ID of the top-level message to rewind the channel to. Every
+            message created after it is hidden
+          title: Message ID
+          type: string
+          x-stream-index: "003"
+        user:
+          $ref: '#/components/schemas/UserRequest'
+          x-stream-index: "006.002"
+        user_id:
+          type: string
+          x-stream-index: "006.001"
+      required:
+      - message_id
+      - expected_last_message_id
+      type: object
+    RewindChannelResponse:
+      nullable: true
+      properties:
+        channel:
+          $ref: '#/components/schemas/ChannelResponse'
+          description: The channel after the rewind
+          title: Channel
+          x-stream-index: "003"
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+        rewind:
+          $ref: '#/components/schemas/ChannelRewindResponse'
+          description: The rewind
+          title: Rewind
+          x-stream-index: "002"
+      required:
+      - duration
+      - rewind
       type: object
     RingSettings:
       properties:
@@ -23804,6 +23993,53 @@ components:
       x-stream-event-doc-group: other
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    UserClaimedEvent:
+      description: This event is sent when a regular user claims a guest user. The
+        guest's channels, messages and reactions are then moved to the claiming user.
+      nullable: true
+      properties:
+        claimed_by:
+          $ref: '#/components/schemas/UserResponseCommonFields'
+          description: The user that claimed the guest user
+          title: Claimed by
+          x-stream-index: "003"
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: "001.003"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "001.007"
+        received_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.004"
+        type:
+          default: user.claimed
+          description: 'The type of event: "user.claimed" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.002"
+        user:
+          $ref: '#/components/schemas/UserResponseCommonFields'
+          description: The guest user that was claimed
+          title: User
+          x-stream-index: "002.001"
+      required:
+      - type
+      - created_at
+      - custom
+      - user
+      - claimed_by
+      title: UserClaimedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
     UserCustomEventRequest:
       properties:
         custom:
@@ -25216,6 +25452,7 @@ components:
           channel.hidden: '#/components/schemas/ChannelHiddenEvent'
           channel.max_streak_changed: '#/components/schemas/MaxStreakChangedEvent'
           channel.muted: '#/components/schemas/ChannelMutedEvent'
+          channel.rewound: '#/components/schemas/ChannelRewoundEvent'
           channel.truncated: '#/components/schemas/ChannelTruncatedEvent'
           channel.unfrozen: '#/components/schemas/ChannelUnFrozenEvent'
           channel.unmuted: '#/components/schemas/ChannelUnmutedEvent'
@@ -25268,6 +25505,7 @@ components:
           scheduled_message.sent: '#/components/schemas/ScheduledMessageSentEvent'
           thread.updated: '#/components/schemas/ThreadUpdatedEvent'
           user.banned: '#/components/schemas/UserBannedEvent'
+          user.claimed: '#/components/schemas/UserClaimedEvent'
           user.deactivated: '#/components/schemas/UserDeactivatedEvent'
           user.deleted: '#/components/schemas/UserDeletedEvent'
           user.flagged: '#/components/schemas/UserFlaggedEvent'
@@ -25308,6 +25546,7 @@ components:
       - $ref: '#/components/schemas/ChannelFrozenEvent'
       - $ref: '#/components/schemas/ChannelHiddenEvent'
       - $ref: '#/components/schemas/ChannelMutedEvent'
+      - $ref: '#/components/schemas/ChannelRewoundEvent'
       - $ref: '#/components/schemas/ChannelTruncatedEvent'
       - $ref: '#/components/schemas/ChannelUnFrozenEvent'
       - $ref: '#/components/schemas/ChannelUnmutedEvent'
@@ -25346,6 +25585,7 @@ components:
       - $ref: '#/components/schemas/ScheduledMessageSentEvent'
       - $ref: '#/components/schemas/ThreadUpdatedEvent'
       - $ref: '#/components/schemas/UserBannedEvent'
+      - $ref: '#/components/schemas/UserClaimedEvent'
       - $ref: '#/components/schemas/UserDeactivatedEvent'
       - $ref: '#/components/schemas/UserDeletedEvent'
       - $ref: '#/components/schemas/UserFlaggedEvent'
@@ -25615,7 +25855,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v239.87.5
+  version: v239.89.0
   x-stream-breaking-changes:
     go:
     - CHA-3441 (2026-10-08)
@@ -25624,12 +25864,14 @@ info:
     - CHA-5082 (2026-10-16)
     - CHA-6186 (2026-10-19)
     - FEEDS-1972 (2026-10-06)
+    - FLU-1102 (2026-10-23)
     - FLU-755 (2026-10-14)
     - FLU-755 (2026-10-21)
     - MOD2-1119 (2026-10-13)
     - MOD2-1482 (2026-10-02)
     - MOD2-789 (2026-10-05)
     wire:
+    - AI-1617 (2026-10-22)
     - CHA-0 (2026-04-14)
     - CHA-2563 (2026-03-24)
     - CHA-3037 (2026-08-06)
@@ -27505,6 +27747,57 @@ paths:
       summary: Mark read
       tags:
       - product:chat
+  /channels/{type}/{id}/rewind:
+    post:
+      description: |
+        Rewinds an agent channel to one of its messages: every message created after it, and the message itself when `inclusive` is set, is hidden from every read. The messages are kept and can still be exported. Only available for the `agent` channel type.
+
+        Sends events:
+        - channel.rewound
+      operationId: RewindChannel
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RewindChannelRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RewindChannelResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Rewind channel
+      tags:
+      - product:chat
   /channels/{type}/{id}/show:
     post:
       description: |
@@ -27713,7 +28006,7 @@ paths:
   /channels/batch:
     put:
       description: |
-        Update channels in batch. By default returns task_id for an asynchronous task. With synchronous: true, updateData accepts at most 100 explicit CIDs and returns a positive success_channels_count of channels selected for update after the database write completes, without task_id. Always poll a returned task_id, including when an older node ignores synchronous.
+        Update channels in batch. By default returns task_id for an asynchronous task. With synchronous: true, updateData and hide accept at most 100 explicit CIDs (hide also at most 10 distinct members) and return success_channels_count of channels selected after the database write completes, without task_id. A synchronous hide where none of the member users exist hides nothing and omits success_channels_count. Always poll a returned task_id, including when an older node ignores synchronous.
 
         Sends events:
         - channel.frozen
@@ -33865,6 +34158,43 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Block user
+      tags:
+      - product:chat
+  /users/claim_guest:
+    post:
+      description: |
+        Claims a guest user for a regular user. The guest is deactivated and its channel memberships, owned channels, messages and reactions are moved to the claiming user by an asynchronous task. Server-side only.
+
+        Sends events:
+        - user.claimed
+        - user.deactivated
+      operationId: ClaimGuestUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClaimGuestUserRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimGuestUserResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Claim guest user
       tags:
       - product:chat
   /users/deactivate:
