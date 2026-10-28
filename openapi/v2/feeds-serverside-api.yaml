@@ -16739,12 +16739,20 @@ components:
           x-stream-index: "003"
         result:
           additionalProperties: {}
-          description: Result produced by task after completion
+          description: Result produced by task after completion. A task that does
+            its work in stages may carry a status of its own here, describing that
+            work rather than the task; the top-level status already accounts for it,
+            so use that to tell whether the operation has finished.
           title: Result
           type: object
           x-stream-index: "002"
         status:
-          description: Current status of task
+          description: Current status of the whole operation. A task whose result
+            reports an in-progress status of its own is returned as running until
+            that status is terminal, so completed means the operation itself finished
+            rather than that its first step was accepted. A result that never reaches
+            a terminal status stops being reported as running after a fixed period
+            and falls back to the task's own status.
           title: Status
           type: string
           x-stream-index: "001.002"
@@ -20078,6 +20086,12 @@ components:
           title: Category
           type: string
           x-stream-index: "012"
+        channel_cid:
+          description: CID of the channel the moderated content belongs to. Omitted
+            when the content has no channel.
+          title: Channel CID
+          type: string
+          x-stream-index: "018"
         created_at:
           format: date-time
           type: number
@@ -20112,6 +20126,15 @@ components:
           title: MatchedContents
           type: array
           x-stream-index: "009"
+        matched_labels:
+          description: Harm labels on the moderated content that the rule's text label
+            conditions (`text_content`, `text_rule`) matched. Omitted when the rule
+            has no such condition.
+          items:
+            type: string
+          title: Matched Labels
+          type: array
+          x-stream-index: "019"
         matched_user_ids:
           description: 'Cross-user webhook_only flood rules only: the distinct users
             who sent the content since the previous webhook for this rule. Omitted
@@ -20142,6 +20165,13 @@ components:
           title: Scope
           type: array
           x-stream-index: "013"
+        severity:
+          description: Highest severity (`LOW` / `MEDIUM` / `HIGH` / `CRITICAL`) among
+            the moderation results that carried a matched label. Omitted when no label
+            matched or the provider reports no severity.
+          title: Severity
+          type: string
+          x-stream-index: "020"
         threshold:
           description: Configured count that fires the condition. This is the number
             stored on the rule, not the live counter.
@@ -33661,7 +33691,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v239.93.3
+  version: v239.94.0
   x-stream-breaking-changes:
     go:
     - CHA-3441 (2026-10-08)
