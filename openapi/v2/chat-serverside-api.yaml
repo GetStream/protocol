@@ -9995,6 +9995,42 @@ components:
       - duration
       title: Response
       type: object
+    DeleteHistoryWindowTeamsRequest:
+      nullable: true
+      properties:
+        teams:
+          description: Teams to put back on the app's default history window, 1 to
+            10, each listed once. A team without full history is ignored
+          items:
+            type: string
+          maxItems: 10
+          minItems: 1
+          title: Teams
+          type: array
+          x-stream-index: "001"
+      required:
+      - teams
+      type: object
+    DeleteHistoryWindowTeamsResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        teams:
+          description: The teams of the request that had full history and are now
+            back on the default window
+          items:
+            type: string
+          title: Teams
+          type: array
+          x-stream-index: "001"
+      required:
+      - teams
+      - duration
+      type: object
     DeleteImportV2TaskResponse:
       description: Basic response information
       nullable: true
@@ -13474,6 +13510,33 @@ components:
       - count
       - duration
       type: object
+    GetHistoryWindowTeamsResponse:
+      nullable: true
+      properties:
+        default_window_hours:
+          description: History window, in hours, of every team without full history;
+            0 is full history
+          format: int32
+          title: Default window hours
+          type: integer
+          x-stream-index: "001"
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "003.001"
+        teams:
+          description: Teams with full history
+          items:
+            $ref: '#/components/schemas/HistoryWindowTeam'
+          title: Teams
+          type: array
+          x-stream-index: "002"
+      required:
+      - default_window_hours
+      - teams
+      - duration
+      type: object
     GetImportResponse:
       description: Basic response information
       nullable: true
@@ -14338,6 +14401,31 @@ components:
       required:
       - duration
       title: Response
+      type: object
+    HistoryWindowTeam:
+      description: A team with full history
+      properties:
+        created_at:
+          description: Date/time the team was first given full history
+          format: date-time
+          title: Created at
+          type: number
+          x-stream-index: "002"
+        team:
+          description: The team, as set on channels and users
+          title: Team
+          type: string
+          x-stream-index: "001"
+        updated_at:
+          description: Date/time the team was last marked
+          format: date-time
+          title: Updated at
+          type: number
+          x-stream-index: "003"
+      required:
+      - team
+      - created_at
+      - updated_at
       type: object
     HuaweiConfig:
       properties:
@@ -29851,6 +29939,41 @@ components:
       required:
       - inactivity_timeout_seconds
       type: object
+    SetHistoryWindowTeamsRequest:
+      nullable: true
+      properties:
+        teams:
+          description: Teams to give full history, 1 to 10, each listed once. Marking
+            a team that already has full history keeps its created_at
+          items:
+            type: string
+          maxItems: 10
+          minItems: 1
+          title: Teams
+          type: array
+          x-stream-index: "001"
+      required:
+      - teams
+      type: object
+    SetHistoryWindowTeamsResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        teams:
+          description: The teams of the request, each with full history
+          items:
+            $ref: '#/components/schemas/HistoryWindowTeam'
+          title: Teams
+          type: array
+          x-stream-index: "001"
+      required:
+      - teams
+      - duration
+      type: object
     SetRetentionPolicyRequest:
       nullable: true
       properties:
@@ -36775,7 +36898,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v239.96.1
+  version: v239.96.2
   x-stream-breaking-changes:
     go:
     - CHA-3441 (2026-10-08)
@@ -39631,6 +39754,98 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Export channels
+      tags:
+      - product:chat
+  /api/v2/chat/history_window/teams:
+    get:
+      description: |
+        Returns the app's default history window and the teams with full history. Only for apps with the history window enabled; other apps get 403. Server-side only.
+      operationId: GetHistoryWindowTeams
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetHistoryWindowTeamsResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get history window teams
+      tags:
+      - product:chat
+    post:
+      description: |
+        Gives up to ten teams full history. Only for apps with the history window enabled; other apps get 403. Server-side only.
+      operationId: SetHistoryWindowTeams
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetHistoryWindowTeamsRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetHistoryWindowTeamsResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Set history window teams
+      tags:
+      - product:chat
+  /api/v2/chat/history_window/teams/delete:
+    post:
+      description: |
+        Puts up to ten teams back on the app's default history window. Only for apps with the history window enabled; other apps get 403. Server-side only.
+      operationId: DeleteHistoryWindowTeams
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteHistoryWindowTeamsRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteHistoryWindowTeamsResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Delete history window teams
       tags:
       - product:chat
   /api/v2/chat/members:
