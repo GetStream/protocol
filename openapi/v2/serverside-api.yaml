@@ -4309,7 +4309,7 @@ components:
           type: string
           x-stream-index: "002.001"
         type:
-          default: export.users.error
+          default: feeds.export.error
           type: string
           x-stream-index: "003.002"
       required:
@@ -4321,6 +4321,53 @@ components:
       - created_at
       - custom
       title: AsyncExportErrorEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-ws-base-event-name: VideoEvent
+    AsyncExportFeedsSuccessEvent:
+      nullable: true
+      properties:
+        created_at:
+          format: date-time
+          type: number
+          x-stream-index: "003.003"
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "003.007"
+        finished_at:
+          format: date-time
+          type: number
+          x-stream-index: "002.003"
+        manifest_path:
+          type: string
+          x-stream-index: "001"
+        received_at:
+          format: date-time
+          type: number
+          x-stream-index: "003.004"
+        started_at:
+          format: date-time
+          type: number
+          x-stream-index: "002.002"
+        task_id:
+          type: string
+          x-stream-index: "002.001"
+        type:
+          default: feeds.export.success
+          type: string
+          x-stream-index: "003.002"
+      required:
+      - manifest_path
+      - task_id
+      - started_at
+      - finished_at
+      - type
+      - created_at
+      - custom
+      title: AsyncExportFeedsSuccessEvent
       type: object
       x-stream-event-client-type: true
       x-stream-event-doc-group: other
@@ -10252,6 +10299,16 @@ components:
       - progress
       - stats_users_sent
       - stats_users_read
+      type: object
+    CancelExportFeedsResponse:
+      description: Response for cancelling a feeds export
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
       type: object
     CancelImportV2TaskResponse:
       description: Basic response information
@@ -59717,6 +59774,8 @@ components:
           feeds.comment.reaction.updated: '#/components/schemas/CommentReactionUpdatedEvent'
           feeds.comment.restored: '#/components/schemas/CommentRestoredEvent'
           feeds.comment.updated: '#/components/schemas/CommentUpdatedEvent'
+          feeds.export.error: '#/components/schemas/AsyncExportErrorEvent'
+          feeds.export.success: '#/components/schemas/AsyncExportFeedsSuccessEvent'
           feeds.feed.created: '#/components/schemas/FeedCreatedEvent'
           feeds.feed.deleted: '#/components/schemas/FeedDeletedEvent'
           feeds.feed.updated: '#/components/schemas/FeedUpdatedEvent'
@@ -59818,6 +59877,8 @@ components:
       - $ref: '#/components/schemas/AsyncExportErrorEvent'
       - $ref: '#/components/schemas/AsyncExportErrorEvent'
       - $ref: '#/components/schemas/AsyncExportErrorEvent'
+      - $ref: '#/components/schemas/AsyncExportErrorEvent'
+      - $ref: '#/components/schemas/AsyncExportFeedsSuccessEvent'
       - $ref: '#/components/schemas/AsyncExportLabelResultsEvent'
       - $ref: '#/components/schemas/AsyncExportModerationLogsEvent'
       - $ref: '#/components/schemas/AsyncExportReviewQueueEvent'
@@ -60249,7 +60310,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v239.96.0
+  version: v239.96.1
   x-stream-breaking-changes:
     go:
     - CHA-3441 (2026-10-08)
@@ -68475,6 +68536,41 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Batch query comment reactions
+      tags:
+      - product:feeds
+  /api/v2/feeds/export/{task_id}/cancel:
+    post:
+      description: |
+        Cancels a queued or processing feeds export. A queued export is cancelled immediately; a processing one is stopped by the worker, which removes the files it wrote
+      operationId: CancelExportFeeds
+      parameters:
+      - in: path
+        name: task_id
+        required: true
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CancelExportFeedsResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Cancel a feeds export
       tags:
       - product:feeds
   /api/v2/feeds/export/{type}:
