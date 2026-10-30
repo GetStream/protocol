@@ -2471,6 +2471,9 @@ components:
         enabled:
           type: boolean
           x-stream-index: "003"
+        explicit_urls_only:
+          type: boolean
+          x-stream-index: "005"
         match_substring:
           type: boolean
           x-stream-index: "002"
@@ -4514,7 +4517,9 @@ components:
           type: string
           x-stream-index: "001.001"
         copied_message_count:
-          description: Number of messages copied into the fork, once completed
+          description: Number of messages copied into the fork, once completed. On
+            a failed fork, the number of messages of its history, newest first, copied
+            before the copy failed; the fork can hold a few more
           format: int32
           title: Copied message count
           type: integer
@@ -4524,17 +4529,32 @@ components:
           format: date-time
           title: Created at
           type: number
-          x-stream-index: "001.007"
+          x-stream-index: "001.010"
+        failed_reason:
+          description: 'Why the copy of a failed fork failed: `fork_message_id_taken`
+            (the ID a message is copied under is held by another message; fork into
+            another channel ID) or `message_too_large` (a source message is over a
+            size limit of agent channels: its text, custom data or attachments)'
+          title: Failed reason
+          type: string
+          x-stream-index: "001.008"
         message_id_map:
           additionalProperties:
             type: string
           description: Maps the ID of each message the request copied, the newest
-            page, to its ID in the fork. A fork message ID is a UUIDv5 of the fork
-            CID and the source message ID; the fork message IDs endpoint maps any
-            others
+            page, to its ID in the fork; short when the request copied less than a
+            page (see `status`). A fork message ID is a UUIDv5 of the fork CID and
+            the source message ID; the fork message IDs endpoint maps any others
           title: Message ID map
           type: object
           x-stream-index: "002"
+        oldest_source_message_id:
+          description: ID, in the source channel, of the oldest message a truncated
+            fork copied. The fork holds no older source message; replies of the oldest
+            copied messages may also have been left out
+          title: Oldest source message ID
+          type: string
+          x-stream-index: "001.007"
         source_channel_cid:
           description: CID of the channel the fork was copied from
           title: Source channel CID
@@ -4549,7 +4569,12 @@ components:
           description: '`completed` once every message is copied. `backfilling` while
             a background task copies the history older than the newest page; the fork
             is usable meanwhile, and the newest messages, which an agent reads, are
-            already there'
+            normally already there. The request reads at most 1,000 source messages:
+            when those are mostly deleted, shadowed or replies shown in the channel,
+            it copies fewer, at least the message the fork is made at, and the task
+            copies the rest. `failed` when the copy failed for good (see `failed_reason`):
+            nothing more is copied, the fork keeps what it holds and is usable, and
+            it no longer counts toward the source''s fork limit'
           title: Status
           type: string
           x-stream-index: "001.004"
@@ -4557,6 +4582,12 @@ components:
           description: ID of the task copying the older history of a backfilling fork
           title: Task ID
           type: string
+          x-stream-index: "001.009"
+        truncated:
+          description: 'True, once completed, when the source held more than 10,000
+            messages up to the fork point: the fork holds the newest 10,000 of them'
+          title: Truncated
+          type: boolean
           x-stream-index: "001.006"
       required:
       - channel_cid
@@ -4576,7 +4607,9 @@ components:
           type: string
           x-stream-index: "001"
         copied_message_count:
-          description: Number of messages copied into the fork, once completed
+          description: Number of messages copied into the fork, once completed. On
+            a failed fork, the number of messages of its history, newest first, copied
+            before the copy failed; the fork can hold a few more
           format: int32
           title: Copied message count
           type: integer
@@ -4586,6 +4619,21 @@ components:
           format: date-time
           title: Created at
           type: number
+          x-stream-index: "010"
+        failed_reason:
+          description: 'Why the copy of a failed fork failed: `fork_message_id_taken`
+            (the ID a message is copied under is held by another message; fork into
+            another channel ID) or `message_too_large` (a source message is over a
+            size limit of agent channels: its text, custom data or attachments)'
+          title: Failed reason
+          type: string
+          x-stream-index: "008"
+        oldest_source_message_id:
+          description: ID, in the source channel, of the oldest message a truncated
+            fork copied. The fork holds no older source message; replies of the oldest
+            copied messages may also have been left out
+          title: Oldest source message ID
+          type: string
           x-stream-index: "007"
         source_channel_cid:
           description: CID of the channel the fork was copied from
@@ -4601,7 +4649,12 @@ components:
           description: '`completed` once every message is copied. `backfilling` while
             a background task copies the history older than the newest page; the fork
             is usable meanwhile, and the newest messages, which an agent reads, are
-            already there'
+            normally already there. The request reads at most 1,000 source messages:
+            when those are mostly deleted, shadowed or replies shown in the channel,
+            it copies fewer, at least the message the fork is made at, and the task
+            copies the rest. `failed` when the copy failed for good (see `failed_reason`):
+            nothing more is copied, the fork keeps what it holds and is usable, and
+            it no longer counts toward the source''s fork limit'
           title: Status
           type: string
           x-stream-index: "004"
@@ -4609,6 +4662,12 @@ components:
           description: ID of the task copying the older history of a backfilling fork
           title: Task ID
           type: string
+          x-stream-index: "009"
+        truncated:
+          description: 'True, once completed, when the source held more than 10,000
+            messages up to the fork point: the fork holds the newest 10,000 of them'
+          title: Truncated
+          type: boolean
           x-stream-index: "006"
       required:
       - channel_cid
@@ -4620,9 +4679,10 @@ components:
       type: object
     ChannelForkedEvent:
       description: 'Emitted once a fork of an agent channel into a new agent channel
-        is complete: on the source channel, and on the fork, whose members are told
-        over WebSocket so a client showing the fork while it was backfilling reads
-        it again. `cid` is the channel the event was sent on; `fork` names both.'
+        is finished, complete or failed (`fork.status` is `completed` or `failed`):
+        on the source channel, and on the fork, whose members are told over WebSocket
+        so a client showing the fork while it was backfilling reads it again. `cid`
+        is the channel the event was sent on; `fork` names both.'
       nullable: true
       properties:
         channel:
@@ -15964,6 +16024,13 @@ components:
           title: Disable Marking Content
           type: boolean
           x-stream-index: "001"
+        reason:
+          description: Internal moderator note, stored on the action log and returned
+            by QueryModerationLogs. Not shown to the appealing user; use decision_reason
+            for that
+          title: Reason
+          type: string
+          x-stream-index: "004"
       title: MarkReviewedRequest
       type: object
     MarkUnreadRequest:
@@ -23309,6 +23376,110 @@ components:
       - duration
       title: Channels list
       type: object
+    QueryDeletedChannelsRequest:
+      nullable: true
+      properties:
+        filter_conditions:
+          additionalProperties: {}
+          description: 'Optional filter. Omit it, or pass {}, to list every soft-deleted
+            channel of the app; for example {"team": "tenant-a"} narrows to one tenant'
+          title: Filter
+          type: object
+          x-stream-filter-fields:
+            cid:
+              operators:
+              - $eq
+              - $in
+              type: string
+            created_at:
+              operators:
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              type: date
+            created_by_id:
+              operators:
+              - $eq
+              - $in
+              type: string
+            deleted_at:
+              operators:
+              - $gt
+              - $gte
+              - $lt
+              - $lte
+              type: date
+            team:
+              operators:
+              - $eq
+              - $in
+              type: string
+            type:
+              operators:
+              - $eq
+              - $in
+              type: string
+          x-stream-index: "001"
+        limit:
+          description: Number of channels per page, 1-100 (default 25)
+          format: int32
+          maximum: 100
+          minimum: 0
+          title: Limit
+          type: integer
+          x-stream-index: "004.001"
+        next:
+          description: Cursor for the next page, from the previous response
+          title: Next
+          type: string
+          x-stream-index: "004.002"
+        prev:
+          description: Cursor for the previous page, from the previous response
+          title: Prev
+          type: string
+          x-stream-index: "004.003"
+        sort:
+          description: Sort order. Only created_at is supported; defaults to created_at
+            ascending
+          items:
+            $ref: '#/components/schemas/SortParamRequest'
+          maxItems: 1
+          title: Sort
+          type: array
+          x-stream-index: "002"
+          x-stream-sort-combinations:
+          - - created_at
+          x-stream-sort-fields:
+          - created_at
+      title: Query Deleted Channels Request
+      type: object
+    QueryDeletedChannelsResponse:
+      nullable: true
+      properties:
+        channels:
+          description: Soft-deleted channels matching the filter, each with deleted_at
+            set
+          items:
+            $ref: '#/components/schemas/ChannelResponse'
+          title: Channels
+          type: array
+          x-stream-index: "001"
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "003.001"
+        next:
+          type: string
+          x-stream-index: "002.001"
+        prev:
+          type: string
+          x-stream-index: "002.002"
+      required:
+      - channels
+      - duration
+      type: object
     QueryDraftsRequest:
       nullable: true
       properties:
@@ -27626,6 +27797,13 @@ components:
           title: Decision Reason
           type: string
           x-stream-index: "001"
+        reason:
+          description: Internal moderator note, stored on the action log and returned
+            by QueryModerationLogs. Not shown to the appealing user; use decision_reason
+            for that
+          title: Reason
+          type: string
+          x-stream-index: "002"
       title: RestoreActionRequest
       type: object
     RestoreUsersRequest:
@@ -36911,7 +37089,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v239.97.5
+  version: v240.0.4
   x-stream-breaking-changes:
     go:
     - CHA-3441 (2026-10-08)
@@ -38201,7 +38379,7 @@ paths:
   /api/v2/chat/channels/{type}/{id}/fork:
     post:
       description: |
-        Forks an agent channel at one of its messages: creates a new agent channel holding a copy of the messages a client sees up to it, itself included, with their replies up to it. The source channel is not changed. Reactions, pins, polls, read state, mutes, reminders, moderation flags and edit history are not copied. Fork only at a message the agent has finished writing. The request copies the newest 100 messages and their replies, so the fork is usable when it returns; older history is copied by a background task (`fork.status` is `backfilling`, `fork.task_id` names the task) and `channel.forked` is sent once every message is copied. A retry with the same channel ID and message returns the fork. Only available for the `agent` channel type.
+        Forks an agent channel at one of its messages: creates a new agent channel holding a copy of the messages a client sees up to it, itself included, with their replies up to it. The source channel is not changed. Reactions, pins, polls, read state, mutes, reminders, moderation flags and edit history are not copied. Fork only at a message the agent has finished writing. The request copies the newest 100 messages and their replies, so the fork is usable when it returns (fewer when the newest 1,000 messages are mostly deleted or hidden); older history is copied by a background task (`fork.status` is `backfilling`, `fork.task_id` names the task) and `channel.forked` is sent once every message is copied. A retry with the same channel ID and message returns the fork. Only available for the `agent` channel type.
 
         Sends events:
         - channel.created
@@ -39245,6 +39423,40 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Deletes channels asynchronously
+      tags:
+      - product:chat
+  /api/v2/chat/channels/deleted:
+    post:
+      description: |
+        Lists soft-deleted channels, ordered by created_at. Server-side only. Without a filter it lists every soft-deleted channel of the app; filter by team to scope it to one tenant. To permanently remove the returned channels, pass their cids to Delete channels (POST /channels/delete) with hard_delete set to true; the single-channel Delete channel endpoint does not accept soft-deleted channels.
+      operationId: QueryDeletedChannels
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryDeletedChannelsRequest'
+        description: Query Deleted Channels Request
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryDeletedChannelsResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Query deleted channels
       tags:
       - product:chat
   /api/v2/chat/channels/delivered:

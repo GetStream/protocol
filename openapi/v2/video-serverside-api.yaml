@@ -5204,7 +5204,9 @@ components:
           type: string
           x-stream-index: "001"
         copied_message_count:
-          description: Number of messages copied into the fork, once completed
+          description: Number of messages copied into the fork, once completed. On
+            a failed fork, the number of messages of its history, newest first, copied
+            before the copy failed; the fork can hold a few more
           format: int32
           title: Copied message count
           type: integer
@@ -5214,6 +5216,21 @@ components:
           format: date-time
           title: Created at
           type: number
+          x-stream-index: "010"
+        failed_reason:
+          description: 'Why the copy of a failed fork failed: `fork_message_id_taken`
+            (the ID a message is copied under is held by another message; fork into
+            another channel ID) or `message_too_large` (a source message is over a
+            size limit of agent channels: its text, custom data or attachments)'
+          title: Failed reason
+          type: string
+          x-stream-index: "008"
+        oldest_source_message_id:
+          description: ID, in the source channel, of the oldest message a truncated
+            fork copied. The fork holds no older source message; replies of the oldest
+            copied messages may also have been left out
+          title: Oldest source message ID
+          type: string
           x-stream-index: "007"
         source_channel_cid:
           description: CID of the channel the fork was copied from
@@ -5229,7 +5246,12 @@ components:
           description: '`completed` once every message is copied. `backfilling` while
             a background task copies the history older than the newest page; the fork
             is usable meanwhile, and the newest messages, which an agent reads, are
-            already there'
+            normally already there. The request reads at most 1,000 source messages:
+            when those are mostly deleted, shadowed or replies shown in the channel,
+            it copies fewer, at least the message the fork is made at, and the task
+            copies the rest. `failed` when the copy failed for good (see `failed_reason`):
+            nothing more is copied, the fork keeps what it holds and is usable, and
+            it no longer counts toward the source''s fork limit'
           title: Status
           type: string
           x-stream-index: "004"
@@ -5237,6 +5259,12 @@ components:
           description: ID of the task copying the older history of a backfilling fork
           title: Task ID
           type: string
+          x-stream-index: "009"
+        truncated:
+          description: 'True, once completed, when the source held more than 10,000
+            messages up to the fork point: the fork holds the newest 10,000 of them'
+          title: Truncated
+          type: boolean
           x-stream-index: "006"
       required:
       - channel_cid
@@ -21394,7 +21422,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v239.97.5
+  version: v240.0.4
   x-stream-breaking-changes:
     go:
     - CHA-3441 (2026-10-08)
