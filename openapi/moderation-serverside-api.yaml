@@ -4,17 +4,17 @@ components:
       properties:
         ai_text_config:
           $ref: '#/components/schemas/AITextConfig'
-          description: Rules applied to transcripts when LLM configurability is disabled
+          description: Rules applied to transcripts when the policy's engine is NLP
           title: AITextConfig
           x-stream-index: "003"
         llm_config:
           $ref: '#/components/schemas/LLMConfig'
-          description: Rules applied to transcripts when LLM configurability is enabled
+          description: Rules applied to transcripts when the policy's engine is LLM
           title: LLMConfig
           x-stream-index: "004"
         profile:
           description: Bodyguard credentials profile to classify transcripts with.
-            Applies to the NLP engine only; ignored when LLM configurability is enabled.
+            Applies to the NLP engine only; ignored when the policy's engine is LLM.
             Empty falls back to the app-pinned profile, then the organization's top-level
             credentials
           title: Profile
@@ -34,22 +34,23 @@ components:
       properties:
         ai_text_config:
           $ref: '#/components/schemas/AITextConfig'
-          description: The rules applied to transcripts when LLM configurability is
-            disabled. Present only when a config for that engine is stored; a policy
-            still on the pre-split flat shape returns rules alone
+          description: The rules applied to transcripts when the policy's engine is
+            NLP. Present only when a config for that engine is stored; a policy still
+            on the pre-split flat shape returns rules alone
           title: AITextConfig
           x-stream-index: "004"
         enabled:
-          description: Whether the engine selected by the application's LLM configurability
-            flag has a rule that does something. Derived, not stored
+          description: Whether the policy's engine (engine.provider, else the application's
+            LLM configurability flag) has a rule that does something. Derived, not
+            stored
           title: Enabled
           type: boolean
           x-stream-index: "001"
         llm_config:
           $ref: '#/components/schemas/LLMConfig'
-          description: The rules applied to transcripts when LLM configurability is
-            enabled. Present only when a config for that engine is stored; a policy
-            still on the pre-split flat shape returns rules alone
+          description: The rules applied to transcripts when the policy's engine is
+            LLM. Present only when a config for that engine is stored; a policy still
+            on the pre-split flat shape returns rules alone
           title: LLMConfig
           x-stream-index: "005"
         profile:
@@ -85,6 +86,11 @@ components:
             $ref: '#/components/schemas/OCRRule'
           type: array
           x-stream-index: "004"
+        ocr_severity_rules:
+          items:
+            $ref: '#/components/schemas/BodyguardRule'
+          type: array
+          x-stream-index: "005"
         rules:
           items:
             $ref: '#/components/schemas/AWSRekognitionRule'
@@ -3792,6 +3798,13 @@ components:
           title: Created At
           type: number
           x-stream-index: "016"
+        engine:
+          $ref: '#/components/schemas/ModerationEngineConfigResponse'
+          description: 'Engine for everything the policy moderates (text, audio transcripts,
+            OCR text, usernames): provider llm or nlp, and an optional LLM model.
+            A missing provider follows the app''s LLM moderation setting'
+          title: Engine
+          x-stream-index: "023"
         flood_config:
           $ref: '#/components/schemas/FloodConfig'
           description: Per-user flood detection for the /labels endpoint (identical
@@ -7547,6 +7560,43 @@ components:
       x-stream-event-doc-group: other
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    ModerationEngineConfigRequest:
+      properties:
+        model:
+          description: LLM model used when the provider resolves to llm. Not allowed
+            with provider nlp. Empty uses the app's moderation settings
+          enum:
+          - gpt-4o-mini
+          - gpt-4o
+          title: Model
+          type: string
+          x-stream-index: "002"
+        provider:
+          description: llm or nlp. Empty follows the app's LLM moderation setting
+          enum:
+          - llm
+          - nlp
+          title: Provider
+          type: string
+          x-stream-index: "001"
+      type: object
+    ModerationEngineConfigResponse:
+      properties:
+        model:
+          description: LLM model used when the provider resolves to llm. Not allowed
+            with provider nlp. Empty uses the app's moderation settings
+          title: Model
+          type: string
+          x-stream-index: "002"
+        provider:
+          description: llm or nlp. Empty follows the app's LLM moderation setting
+          enum:
+          - llm
+          - nlp
+          title: Provider
+          type: string
+          x-stream-index: "001"
+      type: object
     ModerationFeedbackItemResponse:
       properties:
         bodyguard_feedback_id:
@@ -12966,6 +13016,14 @@ components:
         bodyguard_config:
           $ref: '#/components/schemas/AITextConfig'
           x-stream-index: "018"
+        engine:
+          $ref: '#/components/schemas/ModerationEngineConfigRequest'
+          description: 'Engine for everything the policy moderates (text, audio transcripts,
+            OCR text, usernames): provider llm or nlp, and an optional LLM model.
+            A missing provider follows the app''s LLM moderation setting. Omit to
+            keep the stored engine; send an empty object to clear it'
+          title: Engine
+          x-stream-index: "021"
         flood_config:
           $ref: '#/components/schemas/FloodConfig'
           description: Per-user flood detection for the /labels endpoint (identical
@@ -13008,12 +13066,12 @@ components:
           x-stream-index: "002"
         user:
           $ref: '#/components/schemas/UserRequest'
-          x-stream-index: "021.002"
+          x-stream-index: "022.002"
         user_id:
           description: Optional user ID to associate with the audit log entry
           title: User ID
           type: string
-          x-stream-index: "021.001"
+          x-stream-index: "022.001"
         velocity_filter_config:
           $ref: '#/components/schemas/VelocityFilterConfig'
           description: Configuration for velocity-based filtering
@@ -14416,7 +14474,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v240.2.0
+  version: v240.2.1
   x-stream-breaking-changes:
     go:
     - CHA-3441 (2026-10-08)
@@ -14456,6 +14514,7 @@ info:
     - FEEDS-1590 (2026-10-05)
     - FEEDS-1875 (2026-09-09)
     - FEEDS-1972 (2026-10-06)
+    - FEEDS-1996 (2026-11-03)
     - FEEDS-2162 (2026-10-27)
     - FLU-1103 (2026-10-26)
     - FLU-1105 (2026-10-27)
