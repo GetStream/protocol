@@ -18882,6 +18882,42 @@ components:
       - duration
       title: Response
       type: object
+    GetNotificationStatusResponse:
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "005.001"
+        last_read_at:
+          description: When the feed was last marked read
+          format: date-time
+          title: Last Read At
+          type: number
+          x-stream-index: "004"
+        last_seen_at:
+          description: When the feed was last marked seen
+          format: date-time
+          title: Last Seen At
+          type: number
+          x-stream-index: "003"
+        unread:
+          description: Number of unread activities or groups
+          format: int32
+          title: Unread
+          type: integer
+          x-stream-index: "001"
+        unseen:
+          description: Number of unseen activities or groups
+          format: int32
+          title: Unseen
+          type: integer
+          x-stream-index: "002"
+      required:
+      - unread
+      - unseen
+      - duration
+      title: Get Notification Status Response
+      type: object
     GetOGResponse:
       nullable: true
       properties:
@@ -45353,7 +45389,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v240.2.1
+  version: v240.2.2
   x-stream-breaking-changes:
     go:
     - CHA-3441 (2026-10-08)
@@ -52058,6 +52094,59 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Reject an invite to become a feed member
+      tags:
+      - product:feeds
+  /api/v2/feeds/feed_groups/{feed_group_id}/feeds/{feed_id}/notification_status:
+    get:
+      description: |
+        Returns the unread and unseen counts of a notification feed, along with the last seen and last read timestamps, without building a page.
+      operationId: GetNotificationStatus
+      parameters:
+      - in: path
+        name: feed_group_id
+        required: true
+        schema:
+          maxLength: 255
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      - in: path
+        name: feed_id
+        required: true
+        schema:
+          maxLength: 255
+          type: string
+          writeOnly: true
+          x-stream-index: "002"
+      - in: query
+        name: view
+        schema:
+          description: ID of the feed view to resolve the notification config from
+          maxLength: 255
+          title: View
+          type: string
+          writeOnly: true
+          x-stream-index: "003"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetNotificationStatusResponse'
+          description: Get Notification Status Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get notification status
       tags:
       - product:feeds
   /api/v2/feeds/feed_groups/{feed_group_id}/feeds/{feed_id}/pinned_activities/query:
