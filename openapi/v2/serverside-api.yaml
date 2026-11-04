@@ -13206,6 +13206,24 @@ components:
       - skip_last_msg_update_for_system_msgs
       - commands
       type: object
+    ChannelTypeRuleResponse:
+      properties:
+        channel_type:
+          type: string
+          x-stream-index: "001"
+        enabled_at:
+          format: date-time
+          type: number
+          x-stream-index: "003"
+        max_age_hours:
+          format: int32
+          type: integer
+          x-stream-index: "002"
+      required:
+      - channel_type
+      - max_age_hours
+      - enabled_at
+      type: object
     ChannelUnFrozenEvent:
       description: Emitted when a channel is successfully unfrozen.
       nullable: true
@@ -19439,6 +19457,9 @@ components:
     DeleteRetentionPolicyRequest:
       nullable: true
       properties:
+        channel_type:
+          type: string
+          x-stream-index: "002"
         policy:
           $ref: '#/components/schemas/RetentionPolicyType'
           x-stream-index: "001"
@@ -26975,11 +26996,16 @@ components:
       description: Basic response information
       nullable: true
       properties:
+        channel_type_rules:
+          items:
+            $ref: '#/components/schemas/ChannelTypeRuleResponse'
+          type: array
+          x-stream-index: "002"
         duration:
           description: Duration of the request in milliseconds
           title: Duration
           type: string
-          x-stream-index: "002.001"
+          x-stream-index: "003.001"
         policies:
           items:
             $ref: '#/components/schemas/RetentionPolicy'
@@ -46917,6 +46943,7 @@ components:
       enum:
       - old-messages
       - inactive-channels
+      - inactive-channels-by-type
       title: RetentionPolicyType
       type: string
     RetentionRunResponse:
@@ -46925,15 +46952,18 @@ components:
           format: int64
           type: integer
           x-stream-index: "001"
-        date:
+        channel_type:
           type: string
           x-stream-index: "003"
+        date:
+          type: string
+          x-stream-index: "004"
         policy:
           type: string
           x-stream-index: "002"
         stats:
           $ref: '#/components/schemas/RunStats'
-          x-stream-index: "004"
+          x-stream-index: "005"
       required:
       - app_pk
       - policy
@@ -50430,6 +50460,9 @@ components:
     SetRetentionPolicyRequest:
       nullable: true
       properties:
+        channel_type:
+          type: string
+          x-stream-index: "003"
         max_age_hours:
           format: int32
           minimum: 24
@@ -50446,11 +50479,14 @@ components:
       description: Basic response information
       nullable: true
       properties:
+        channel_type_rule:
+          $ref: '#/components/schemas/ChannelTypeRuleResponse'
+          x-stream-index: "002"
         duration:
           description: Duration of the request in milliseconds
           title: Duration
           type: string
-          x-stream-index: "002.001"
+          x-stream-index: "003.001"
         policy:
           $ref: '#/components/schemas/RetentionPolicy'
           x-stream-index: "001"
@@ -53207,6 +53243,12 @@ components:
           title: Remove Future Channels Ban
           type: boolean
           x-stream-index: "004"
+        restore_shadowed_messages:
+          description: When lifting a shadow ban, also restore the messages the user
+            sent during it. Runs asynchronously; ignored for a regular ban
+          title: Restore Shadowed Messages
+          type: boolean
+          x-stream-index: "005"
         target_user_id:
           description: 'Optional: unban user directly without review item'
           title: Target User ID
@@ -60782,7 +60824,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v240.4.0
+  version: v240.5.0
   x-stream-breaking-changes:
     go:
     - CHA-3441 (2026-10-08)
@@ -65202,7 +65244,7 @@ paths:
   /api/v2/chat/retention_policy:
     get:
       description: |
-        Returns all retention policies configured for the app. Server-side only.
+        Returns all retention policies configured for the app. The per-channel-type rules of the 'inactive-channels-by-type' policy are returned in 'channel_type_rules' rather than in 'policies'. Server-side only.
       operationId: GetRetentionPolicy
       responses:
         "200":
@@ -65228,7 +65270,7 @@ paths:
       - product:chat
     post:
       description: |
-        Creates or updates a retention policy for the app. Server-side only.
+        Creates or updates a retention policy for the app. The 'inactive-channels-by-type' policy sets the 'max_age_hours' rule of the channel type given by 'channel_type', which overrides 'inactive-channels' for that type; its response carries the saved rule in 'channel_type_rule'. Server-side only.
       operationId: SetRetentionPolicy
       requestBody:
         content:
@@ -65261,7 +65303,7 @@ paths:
   /api/v2/chat/retention_policy/delete:
     post:
       description: |
-        Removes a retention policy for the app. Server-side only.
+        Removes a retention policy for the app. For the 'inactive-channels-by-type' policy, 'channel_type' selects the rule to remove. Server-side only.
       operationId: DeleteRetentionPolicy
       requestBody:
         content:
@@ -65294,7 +65336,7 @@ paths:
   /api/v2/chat/retention_policy/runs:
     post:
       description: |
-        Returns filtered and sorted retention cleanup run history for the app. Supports filter_conditions on 'policy' (possible values: 'old-messages', 'inactive-channels') and 'date' fields. Server-side only.
+        Returns filtered and sorted retention cleanup run history for the app. Supports filter_conditions on 'policy' (possible values: 'old-messages', 'inactive-channels', 'inactive-channels@type:<channel type>', 'inactive-channels@blanket:<channel type>') and 'date' fields. Once the app has a per-channel-type rule, inactive-channels runs are recorded per channel type, under 'inactive-channels@type:<channel type>' for a type with its own rule and 'inactive-channels@blanket:<channel type>' for a type covered by the app-wide rule, and 'policy': 'inactive-channels' no longer matches new runs; filter with '$in' over the pass names of your channel types. Server-side only.
       operationId: GetRetentionPolicyRuns
       requestBody:
         content:
