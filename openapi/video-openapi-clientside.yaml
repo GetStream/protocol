@@ -1957,7 +1957,7 @@ components:
         reason:
           description: 'Provides information about why the call was rejected. You
             can provide any value, but the Stream API and SDKs use these default values:
-            rejected, cancel, timeout and busy'
+            decline, cancel, timeout and busy'
           title: Reason
           type: string
           x-stream-index: "005"
@@ -5743,6 +5743,25 @@ components:
         notify:
           type: boolean
           x-stream-index: "005"
+        playback_capabilities:
+          description: 'Playback modes other than WebRTC that the client can play.
+            One of: hls. When empty, the response always contains SFU credentials'
+          items:
+            enum:
+            - hls
+            type: string
+          title: PlaybackCapabilities
+          type: array
+          x-stream-index: "014"
+        prefer:
+          description: 'Playback mode the client prefers for this join, e.g. after
+            a failed WebRTC join. One of: hls. Only honoured when listed in playback_capabilities
+            and the call has a live HLS broadcast'
+          enum:
+          - hls
+          title: Prefer
+          type: string
+          x-stream-index: "015"
         ring:
           description: if true and the call is created, the notification will include
             ring=true
@@ -5768,6 +5787,7 @@ components:
           x-stream-index: "002"
         credentials:
           $ref: '#/components/schemas/Credentials'
+          description: SFU connection details. Empty when playback is set
           title: Credentials
           x-stream-index: "003"
         duration:
@@ -5786,6 +5806,12 @@ components:
             $ref: '#/components/schemas/OwnCapability'
           type: array
           x-stream-index: "001.004"
+        playback:
+          $ref: '#/components/schemas/PlaybackResponse'
+          description: Set when the client should play the call over HLS instead of
+            joining the SFU
+          title: Playback
+          x-stream-index: "006"
         stats_options:
           $ref: '#/components/schemas/StatsOptions'
           x-stream-index: "004"
@@ -5932,8 +5958,9 @@ components:
         mode:
           description: 'Call lifecycle mode. One of: reusable, single_use. A single_use
             call cannot be reused once it has ended; the server ends it when its ring
-            settles without an answer (currently: when the caller cancels the ring).
-            Fixed at call creation'
+            settles without an answer: when the caller cancels the ring, or when the
+            ring times out on the server (missed_call_timeout_ms) without anyone accepting
+            or joining. Fixed at call creation'
           enum:
           - reusable
           - single_use
@@ -5948,8 +5975,9 @@ components:
         mode:
           description: 'Call lifecycle mode. One of: reusable, single_use. A single_use
             call cannot be reused once it has ended; the server ends it when its ring
-            settles without an answer (currently: when the caller cancels the ring).
-            Fixed at call creation'
+            settles without an answer: when the caller cancels the ring, or when the
+            ring times out on the server (missed_call_timeout_ms) without anyone accepting
+            or joining. Fixed at call creation'
           enum:
           - reusable
           - single_use
@@ -6840,6 +6868,35 @@ components:
       required:
       - duration
       title: Response
+      type: object
+    PlaybackResponse:
+      description: How the client should play the call when it is not given SFU credentials
+      properties:
+        playlist_url:
+          description: URL of the HLS playlist to play
+          title: PlaylistURL
+          type: string
+          x-stream-index: "002"
+        reason:
+          description: 'Why this mode was chosen. One of: percentage, hint'
+          enum:
+          - percentage
+          - hint
+          title: Reason
+          type: string
+          x-stream-index: "003"
+        type:
+          description: 'Playback mode. One of: hls'
+          enum:
+          - hls
+          title: Type
+          type: string
+          x-stream-index: "001"
+      required:
+      - type
+      - playlist_url
+      - reason
+      title: PlaybackResponse
       type: object
     PoorByCause:
       properties:
@@ -11551,7 +11608,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v240.6.3
+  version: v240.6.4
   x-stream-breaking-changes:
     go:
     - CHA-3441 (2026-10-08)

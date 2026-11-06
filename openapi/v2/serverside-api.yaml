@@ -2043,6 +2043,32 @@ components:
           title: Filter
           type: object
           x-stream-index: "002"
+        friend_type:
+          description: 'Who counts as a friend for the friends_engaged selector: ''mutual''
+            (default, users the viewer and they follow each other) or ''following''
+            (users the viewer follows). Only supported on the friends_engaged selector'
+          enum:
+          - mutual
+          - following
+          title: Friend Type
+          type: string
+          x-stream-index: "013"
+        max_friends:
+          description: Maximum number of close friends the friends_engaged selector
+            reads reactions from (1-50, default 10). Only supported on the friends_engaged
+            selector
+          format: int32
+          title: Max Friends
+          type: integer
+          x-stream-index: "014"
+        min_friends:
+          description: Minimum number of distinct close friends that must have reacted
+            to an activity for friends_engaged to select it (1-10, default 1, not
+            above max_friends). Only supported on the friends_engaged selector
+          format: int32
+          title: Min Friends
+          type: integer
+          x-stream-index: "015"
         min_popularity:
           description: Minimum popularity threshold. For the 'popular' selector, omit
             to use the default (5); values below 1 are rejected
@@ -2054,7 +2080,7 @@ components:
         params:
           additionalProperties: {}
           type: object
-          x-stream-index: "013"
+          x-stream-index: "017"
         ranking_candidate_limit:
           description: Maximum number of candidate activities this selector contributes
             to a ranked feed (1-1000). Omit to use the default ranking buffer. Only
@@ -2066,6 +2092,15 @@ components:
           title: Ranking Candidate Limit
           type: integer
           x-stream-index: "010"
+        reaction_types:
+          description: Reaction types that count for the friends_engaged selector
+            (at most 10, default all types). Only supported on the friends_engaged
+            selector
+          items:
+            type: string
+          title: Reaction Types
+          type: array
+          x-stream-index: "016"
         sort:
           description: Sort parameters for activity selection
           items:
@@ -2089,10 +2124,10 @@ components:
         type:
           $ref: '#/components/schemas/ActivitySelectorType'
           description: 'Type of selector. One of: popular, proximity, following, current_feed,
-            query, interest, follow_suggestion'
+            query, interest, follow_suggestion, friends_engaged'
           title: Type
           x-stream-description: 'Type of selector. One of: popular, proximity, following,
-            current_feed, query, interest, follow_suggestion'
+            current_feed, query, interest, follow_suggestion, friends_engaged'
           x-stream-index: "001"
         viewer_location_radius_km:
           description: Radius in kilometers the proximity selector searches around
@@ -2134,6 +2169,28 @@ components:
           title: Filter
           type: object
           x-stream-index: "002"
+        friend_type:
+          description: Who counts as a friend for the friends_engaged selector
+          enum:
+          - mutual
+          - following
+          title: Friend Type
+          type: string
+          x-stream-index: "011"
+        max_friends:
+          description: Maximum number of close friends the friends_engaged selector
+            reads reactions from
+          format: int32
+          title: Max Friends
+          type: integer
+          x-stream-index: "012"
+        min_friends:
+          description: Minimum number of distinct close friends that must have reacted
+            for friends_engaged to select an activity
+          format: int32
+          title: Min Friends
+          type: integer
+          x-stream-index: "013"
         min_popularity:
           description: Minimum popularity threshold. For the 'popular' selector, values
             below 1 are normalized to the default (5) at read time.
@@ -2146,7 +2203,7 @@ components:
           description: Generic params for selector-specific configuration
           title: Params
           type: object
-          x-stream-index: "011"
+          x-stream-index: "015"
         ranking_candidate_limit:
           description: Maximum number of candidate activities this selector contributes
             to a ranked feed
@@ -2154,6 +2211,13 @@ components:
           title: Ranking Candidate Limit
           type: integer
           x-stream-index: "008"
+        reaction_types:
+          description: Reaction types that count for the friends_engaged selector
+          items:
+            type: string
+          title: Reaction Types
+          type: array
+          x-stream-index: "014"
         sort:
           description: Sort parameters for activity selection
           items:
@@ -2195,6 +2259,7 @@ components:
       - query
       - interest
       - follow_suggestion
+      - friends_engaged
       title: ActivitySelectorType
       type: string
     ActivityUnpinnedEvent:
@@ -8197,7 +8262,7 @@ components:
         reason:
           description: 'Provides information about why the call was rejected. You
             can provide any value, but the Stream API and SDKs use these default values:
-            rejected, cancel, timeout and busy'
+            decline, cancel, timeout and busy'
           title: Reason
           type: string
           x-stream-index: "005"
@@ -16037,6 +16102,12 @@ components:
           description: Configuration for customer-configured LLM moderation
           title: LLM Config
           x-stream-index: "009"
+        published_version:
+          description: The version of this configuration moderation currently runs
+          format: int32
+          title: Published Version
+          type: integer
+          x-stream-index: "024"
         supported_video_call_harm_types:
           items:
             type: string
@@ -16068,6 +16139,37 @@ components:
       - created_at
       - updated_at
       - supported_video_call_harm_types
+      type: object
+    ConfigVersionResponse:
+      properties:
+        created_at:
+          description: When this version was saved
+          format: date-time
+          title: Created At
+          type: number
+          x-stream-index: "002"
+        created_by:
+          description: ID of the user who saved this version, empty when saved without
+            a user
+          title: Created By
+          type: string
+          x-stream-index: "003"
+        published:
+          description: Whether this is the version moderation currently runs
+          title: Published
+          type: boolean
+          x-stream-index: "004"
+        version:
+          description: Sequential version number, per key and team
+          format: int32
+          title: Version
+          type: integer
+          x-stream-index: "001"
+      required:
+      - version
+      - created_at
+      - created_by
+      - published
       type: object
     ContentCountRuleParameters:
       properties:
@@ -25619,6 +25721,27 @@ components:
       required:
       - duration
       type: object
+    GetConfigVersionResponse:
+      nullable: true
+      properties:
+        config:
+          $ref: '#/components/schemas/ConfigResponse'
+          description: The full configuration stored in this version, published or
+            not
+          title: Config
+          x-stream-index: "002"
+        duration:
+          type: string
+          x-stream-index: "003.001"
+        version:
+          $ref: '#/components/schemas/ConfigVersionResponse'
+          description: Metadata of the retrieved version
+          title: Version
+          x-stream-index: "001"
+      required:
+      - version
+      - duration
+      type: object
     GetCustomPermissionResponse:
       description: Basic response information
       nullable: true
@@ -29420,13 +29543,15 @@ components:
           $ref: '#/components/schemas/CallLifecycleMode'
           description: 'Call lifecycle mode. One of: reusable, single_use. A single_use
             call cannot be reused once it has ended; the server ends it when its ring
-            settles without an answer (currently: when the caller cancels the ring).
-            Fixed at call creation'
+            settles without an answer: when the caller cancels the ring, or when the
+            ring times out on the server (missed_call_timeout_ms) without anyone accepting
+            or joining. Fixed at call creation'
           title: Mode
           x-stream-description: 'Call lifecycle mode. One of: reusable, single_use.
             A single_use call cannot be reused once it has ended; the server ends
-            it when its ring settles without an answer (currently: when the caller
-            cancels the ring). Fixed at call creation'
+            it when its ring settles without an answer: when the caller cancels the
+            ring, or when the ring times out on the server (missed_call_timeout_ms)
+            without anyone accepting or joining. Fixed at call creation'
           x-stream-index: "001"
       title: LifecycleSettingsRequest
       type: object
@@ -29437,13 +29562,15 @@ components:
           $ref: '#/components/schemas/CallLifecycleMode'
           description: 'Call lifecycle mode. One of: reusable, single_use. A single_use
             call cannot be reused once it has ended; the server ends it when its ring
-            settles without an answer (currently: when the caller cancels the ring).
-            Fixed at call creation'
+            settles without an answer: when the caller cancels the ring, or when the
+            ring times out on the server (missed_call_timeout_ms) without anyone accepting
+            or joining. Fixed at call creation'
           title: Mode
           x-stream-description: 'Call lifecycle mode. One of: reusable, single_use.
             A single_use call cannot be reused once it has ended; the server ends
-            it when its ring settles without an answer (currently: when the caller
-            cancels the ring). Fixed at call creation'
+            it when its ring settles without an answer: when the caller cancels the
+            ring, or when the ring times out on the server (missed_call_timeout_ms)
+            without anyone accepting or joining. Fixed at call creation'
           x-stream-index: "001"
       required:
       - mode
@@ -29616,6 +29743,30 @@ components:
       - commands
       - duration
       title: ListCommandsResponse
+      type: object
+    ListConfigVersionsResponse:
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "003.001"
+        published_version:
+          description: The version moderation currently runs
+          format: int32
+          title: Published Version
+          type: integer
+          x-stream-index: "001"
+        versions:
+          description: Retained versions of this configuration, newest first, including
+            the published one
+          items:
+            $ref: '#/components/schemas/ConfigVersionResponse'
+          title: Versions
+          type: array
+          x-stream-index: "002"
+      required:
+      - versions
+      - duration
       type: object
     ListDevicesResponse:
       description: List devices response
@@ -32985,6 +33136,10 @@ components:
         llm_config:
           $ref: '#/components/schemas/LLMConfig'
           x-stream-index: "019"
+        published_version:
+          format: int32
+          type: integer
+          x-stream-index: "026"
         supported_video_call_harm_types:
           items:
             type: string
@@ -37322,6 +37477,39 @@ components:
           description: The settings for typing indicator events.
           title: Typing indicators
           x-stream-index: "001"
+      type: object
+    PublishConfigVersionRequest:
+      nullable: true
+      properties:
+        team:
+          description: Team associated with the configuration
+          maxLength: 128
+          minLength: 1
+          title: Team
+          type: string
+          x-stream-index: "003"
+        user:
+          $ref: '#/components/schemas/UserRequest'
+          x-stream-index: "004.002"
+        user_id:
+          description: Optional user ID to associate with the audit log entry
+          title: User ID
+          type: string
+          x-stream-index: "004.001"
+      type: object
+    PublishConfigVersionResponse:
+      nullable: true
+      properties:
+        config:
+          $ref: '#/components/schemas/ConfigResponse'
+          description: The configuration now in effect
+          title: Config
+          x-stream-index: "001"
+        duration:
+          type: string
+          x-stream-index: "002.001"
+      required:
+      - duration
       type: object
     PublishedTrackFlags:
       properties:
@@ -48719,6 +48907,157 @@ components:
           x-stream-index: "001"
       required:
       - address
+      type: object
+    SaveConfigVersionRequest:
+      nullable: true
+      properties:
+        ai_audio_config:
+          $ref: '#/components/schemas/AIAudioConfigRequest'
+          description: Configuration for AI audio analysis
+          title: AI Audio Config
+          x-stream-index: "001.013"
+        ai_image_config:
+          $ref: '#/components/schemas/AIImageConfig'
+          description: Configuration for AI image analysis
+          title: AI Image Config
+          x-stream-index: "001.011"
+        ai_text_config:
+          $ref: '#/components/schemas/AITextConfig'
+          description: Configuration for AI text analysis
+          title: AI Text Config
+          x-stream-index: "001.008"
+        ai_video_config:
+          $ref: '#/components/schemas/AIVideoConfigRequest'
+          description: Configuration for AI video analysis
+          title: AI Video Config
+          x-stream-index: "001.012"
+        async:
+          description: Whether moderation should be performed asynchronously
+          title: Async
+          type: boolean
+          x-stream-index: "001.003"
+        automod_platform_circumvention_config:
+          $ref: '#/components/schemas/AutomodPlatformCircumventionConfig'
+          description: Configuration for platform circumvention detection
+          title: Automod Platform Circumvention Config
+          x-stream-index: "001.005"
+        automod_semantic_filters_config:
+          $ref: '#/components/schemas/AutomodSemanticFiltersConfig'
+          description: Configuration for semantic filtering
+          title: Automod Semantic Filters Config
+          x-stream-index: "001.006"
+        automod_toxicity_config:
+          $ref: '#/components/schemas/AutomodToxicityConfig'
+          description: Configuration for toxicity detection
+          title: Automod Toxicity Config
+          x-stream-index: "001.004"
+        aws_rekognition_config:
+          $ref: '#/components/schemas/AIImageConfig'
+          x-stream-index: "001.019"
+        base_version:
+          description: Latest version the edit was based on, 0 for a policy without
+            versions. The save is rejected when a newer version exists
+          format: int32
+          minimum: 0
+          title: Base Version
+          type: integer
+          x-stream-index: "002"
+        block_list_config:
+          $ref: '#/components/schemas/BlockListConfig'
+          description: Configuration for block list filtering
+          title: Block List Config
+          x-stream-index: "001.007"
+        bodyguard_config:
+          $ref: '#/components/schemas/AITextConfig'
+          x-stream-index: "001.018"
+        engine:
+          $ref: '#/components/schemas/ModerationEngineConfigRequest'
+          description: 'Engine for everything the policy moderates (text, audio transcripts,
+            OCR text, usernames): provider llm or nlp, and an optional LLM model.
+            A missing provider follows the app''s LLM moderation setting. Omit to
+            keep the stored engine; send an empty object to clear it'
+          title: Engine
+          x-stream-index: "001.021"
+        flood_config:
+          $ref: '#/components/schemas/FloodConfig'
+          description: Per-user flood detection for the /labels endpoint (identical
+            and similar message detectors)
+          title: Flood Config
+          x-stream-index: "001.015"
+        google_vision_config:
+          $ref: '#/components/schemas/GoogleVisionConfig'
+          description: Configuration for Google Vision integration
+          title: Google Vision Config
+          x-stream-index: "001.010"
+        intent_config:
+          $ref: '#/components/schemas/IntentConfigRequest'
+          description: Configuration for conversation-level intent analysis (topics,
+            capture cap, cooldowns, score threshold)
+          title: Intent Config
+          x-stream-index: "001.017"
+        key:
+          description: Unique identifier for the moderation configuration
+          title: Key
+          type: string
+          x-stream-index: "001.001"
+        llm_config:
+          $ref: '#/components/schemas/LLMConfig'
+          description: Configuration for customer-configured LLM moderation
+          title: LLM Config
+          x-stream-index: "001.009"
+        rule_builder_config:
+          $ref: '#/components/schemas/RuleBuilderConfig'
+          description: Configuration for custom rule builder (max 3 rules, max 5 conditions
+            per rule)
+          title: Rule Builder Config
+          x-stream-index: "001.016"
+        team:
+          description: Team associated with the configuration
+          maxLength: 128
+          minLength: 1
+          title: Team
+          type: string
+          x-stream-index: "001.002"
+        user:
+          $ref: '#/components/schemas/UserRequest'
+          x-stream-index: 001.022.002
+        user_id:
+          description: Optional user ID to associate with the audit log entry
+          title: User ID
+          type: string
+          x-stream-index: 001.022.001
+        velocity_filter_config:
+          $ref: '#/components/schemas/VelocityFilterConfig'
+          description: Configuration for velocity-based filtering
+          title: Velocity Filter Config
+          x-stream-index: "001.014"
+        video_call_rule_config:
+          $ref: '#/components/schemas/VideoCallRuleConfig'
+          x-stream-index: "001.020"
+      required:
+      - key
+      - base_version
+      type: object
+    SaveConfigVersionResponse:
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "003.001"
+        published_version:
+          description: The version moderation currently runs
+          format: int32
+          title: Published Version
+          type: integer
+          x-stream-index: "002"
+        version:
+          $ref: '#/components/schemas/ConfigVersionResponse'
+          description: The version that was saved
+          title: Version
+          x-stream-index: "001"
+      required:
+      - version
+      - duration
       type: object
     ScheduledMessageChannelResponse:
       description: The channel of a scheduled message
@@ -60923,7 +61262,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v240.6.3
+  version: v240.6.4
   x-stream-breaking-changes:
     go:
     - CHA-3441 (2026-10-08)
@@ -73195,6 +73534,188 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Get moderation configuration
+      tags:
+      - product:moderation
+  /api/v2/moderation/config/{key}/versions:
+    get:
+      description: |
+        List the retained versions of a moderation configuration, newest first, and which one is published.
+      operationId: list_config_versions
+      parameters:
+      - in: path
+        name: key
+        required: true
+        schema:
+          description: Key of the moderation configuration
+          title: Key
+          type: string
+          x-stream-index: "001"
+      - in: query
+        name: team
+        schema:
+          description: Team associated with the configuration
+          title: Team
+          type: string
+          x-stream-index: "002"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListConfigVersionsResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: List moderation configuration versions
+      tags:
+      - product:moderation
+  /api/v2/moderation/config/{key}/versions/{version}:
+    get:
+      description: |
+        Retrieve the full moderation configuration stored in a specific version, whether or not it is published.
+      operationId: get_config_version
+      parameters:
+      - in: path
+        name: key
+        required: true
+        schema:
+          description: Key of the moderation configuration
+          title: Key
+          type: string
+          x-stream-index: "001"
+      - in: path
+        name: version
+        required: true
+        schema:
+          description: Version to retrieve
+          format: int32
+          minimum: 1
+          title: Version
+          type: integer
+          x-stream-index: "002"
+      - in: query
+        name: team
+        schema:
+          description: Team associated with the configuration
+          title: Team
+          type: string
+          x-stream-index: "003"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetConfigVersionResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get moderation configuration version
+      tags:
+      - product:moderation
+  /api/v2/moderation/config/{key}/versions/{version}/publish:
+    post:
+      description: |
+        Make a stored version the moderation configuration in effect. Publishing an older version reverts to it without creating a new version.
+      operationId: publish_config_version
+      parameters:
+      - in: path
+        name: key
+        required: true
+        schema:
+          description: Key of the moderation configuration
+          title: Key
+          type: string
+          x-stream-index: "001"
+      - in: path
+        name: version
+        required: true
+        schema:
+          description: Version to publish. Publishing an older version reverts to
+            it
+          format: int32
+          minimum: 1
+          title: Version
+          type: integer
+          x-stream-index: "002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublishConfigVersionRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublishConfigVersionResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Publish moderation configuration version
+      tags:
+      - product:moderation
+  /api/v2/moderation/config/versions:
+    post:
+      description: |
+        Save a moderation configuration as a new version without making it live. The version takes effect once it is published.
+      operationId: save_config_version
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaveConfigVersionRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaveConfigVersionResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Save moderation configuration version
       tags:
       - product:moderation
   /api/v2/moderation/configs:
