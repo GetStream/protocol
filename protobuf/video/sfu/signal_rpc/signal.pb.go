@@ -133,6 +133,8 @@ func (x *StartNoiseCancellationResponse) GetError() *models.Error {
 	return nil
 }
 
+// StopNoiseCancellationRequest repeats the engine and model sent in the
+// matching StartNoiseCancellationRequest.
 type StopNoiseCancellationRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
