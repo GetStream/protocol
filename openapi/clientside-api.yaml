@@ -37074,6 +37074,213 @@ components:
       - enabled
       - access_request_enabled
       type: object
+    SearchAllChannelsSection:
+      properties:
+        channels:
+          description: Channels the caller is a member of whose name starts with the
+            query, in the same shape as the query channels endpoint's results but
+            without messages or members
+          items:
+            $ref: '#/components/schemas/ChannelStateResponseFields'
+          title: Channels
+          type: array
+          x-stream-index: "001"
+        error:
+          $ref: '#/components/schemas/SearchAllSectionError'
+          description: Present instead of channels when the channels search failed;
+            the other sections are unaffected
+          title: Error
+          x-stream-index: "004"
+        next:
+          description: Opaque cursor for the next page of this section, present only
+            when more results exist. Pass it back under next.channels with the same
+            query
+          title: Next
+          type: string
+          x-stream-index: "002"
+        warning:
+          $ref: '#/components/schemas/SearchAllWarning'
+          description: Present when the section recovered from a problem, such as
+            a rejected cursor
+          title: Warning
+          x-stream-index: "003"
+      title: Search All Channels Section
+      type: object
+    SearchAllMessagesSection:
+      properties:
+        error:
+          $ref: '#/components/schemas/SearchAllSectionError'
+          description: Present instead of results when the messages search failed;
+            the other sections are unaffected
+          title: Error
+          x-stream-index: "005"
+        next:
+          description: Opaque cursor for the next page of this section, present only
+            when more results exist. Pass it back under next.messages with the same
+            query
+          title: Next
+          type: string
+          x-stream-index: "003"
+        results:
+          description: Matching messages, newest first, in the same shape as the search
+            endpoint's results
+          items:
+            $ref: '#/components/schemas/SearchResult'
+          title: Results
+          type: array
+          x-stream-index: "001"
+        results_warning:
+          $ref: '#/components/schemas/SearchWarning'
+          description: Present when the search covered only part of the caller's channels,
+            exactly as on the search endpoint
+          title: Results Warning
+          x-stream-index: "002"
+        warning:
+          $ref: '#/components/schemas/SearchAllWarning'
+          description: Present when the section recovered from a problem, such as
+            a rejected cursor
+          title: Warning
+          x-stream-index: "004"
+      title: Search All Messages Section
+      type: object
+    SearchAllRequest:
+      nullable: true
+      properties:
+        entities:
+          description: 'Which sections to search: any subset of messages, users and
+            channels. Defaults to all three when omitted; must not be empty when provided.
+            Response sections always appear in the order messages, users, channels'
+          items:
+            type: string
+          title: Entities
+          type: array
+          x-stream-index: "002"
+        limit:
+          description: Number of results per section, 1-30. Defaults to 10. Applies
+            to every requested section; there is no per-section limit
+          format: int32
+          title: Limit
+          type: integer
+          x-stream-index: "003"
+        next:
+          additionalProperties:
+            type: string
+          description: Opaque pagination cursors from a previous response, keyed by
+            entity. A cursor that fails to decode restarts that section from page
+            1 with a cursor_rejected warning; the request fails with 400 only when
+            every cursor supplied for a requested entity is invalid. Cursors for entities
+            not in entities are ignored
+          title: Next
+          type: object
+          x-stream-index: "004"
+          x-stream-map:
+            description: The opaque next cursor returned by that entity's section
+            key: entity
+            title: Cursor
+        query:
+          description: Free-text search phrase, 1-80 characters after trimming whitespace.
+            Required. Matched as a prefix of a user's name or username and of a channel's
+            name, and as full-text against message text
+          title: Query
+          type: string
+          x-stream-index: "001"
+      title: Search All Request
+      type: object
+    SearchAllResponse:
+      nullable: true
+      properties:
+        channels:
+          $ref: '#/components/schemas/SearchAllChannelsSection'
+          description: Channels section, present only when channels was requested
+          title: Channels
+          x-stream-index: "003"
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "004.001"
+        messages:
+          $ref: '#/components/schemas/SearchAllMessagesSection'
+          description: Messages section, present only when messages was requested
+          title: Messages
+          x-stream-index: "001"
+        users:
+          $ref: '#/components/schemas/SearchAllUsersSection'
+          description: Users section, present only when users was requested
+          title: Users
+          x-stream-index: "002"
+      required:
+      - duration
+      title: Search All Response
+      type: object
+    SearchAllSectionError:
+      properties:
+        code:
+          description: Error code. backend_timeout and backend_unavailable are retryable;
+            unsupported (the app's configuration cannot serve this section) and internal_error
+            are not
+          enum:
+          - backend_unavailable
+          - backend_timeout
+          - unsupported
+          - internal_error
+          title: Code
+          type: string
+          x-stream-index: "001"
+        message:
+          description: Human-readable description of the failure
+          title: Message
+          type: string
+          x-stream-index: "002"
+      required:
+      - code
+      - message
+      title: Search All Section Error
+      type: object
+    SearchAllUsersSection:
+      properties:
+        error:
+          $ref: '#/components/schemas/SearchAllSectionError'
+          description: Present instead of users when the users search failed; the
+            other sections are unaffected
+          title: Error
+          x-stream-index: "004"
+        next:
+          description: Opaque cursor for the next page of this section, present only
+            when more results exist. Pass it back under next.users with the same query
+          title: Next
+          type: string
+          x-stream-index: "002"
+        users:
+          description: Users whose name or username starts with the query, in the
+            same shape as the query users endpoint's results
+          items:
+            $ref: '#/components/schemas/FullUserResponse'
+          title: Users
+          type: array
+          x-stream-index: "001"
+        warning:
+          $ref: '#/components/schemas/SearchAllWarning'
+          description: Present when the section recovered from a problem, such as
+            a rejected cursor
+          title: Warning
+          x-stream-index: "003"
+      title: Search All Users Section
+      type: object
+    SearchAllWarning:
+      properties:
+        code:
+          description: 'Warning code. cursor_rejected: the cursor supplied for this
+            section failed to decode, so the section restarted from page 1'
+          enum:
+          - cursor_rejected
+          title: Code
+          type: string
+          x-stream-index: "001"
+      required:
+      - code
+      title: Search All Warning
+      type: object
     SearchPayload:
       properties:
         filter_conditions:
@@ -45758,7 +45965,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v240.7.0
+  version: v240.7.1
   x-stream-breaking-changes:
     go:
     - CHA-3441 (2026-10-08)
@@ -49120,6 +49327,49 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Search messages
+      tags:
+      - product:chat
+  /api/v2/chat/search/all:
+    post:
+      description: |
+        Runs one free-text query across messages, users and channels and returns one envelope with a section per requested entity. The server picks the match operator, sort and scope for every section: messages are matched as full text in the channels the caller can read, users by name or username prefix, and channels by name prefix among the channels the caller is a member of. Each section carries its own opaque `next` cursor when more results exist; a section that fails is reported in its `error` field while the other sections return normally.
+      operationId: SearchAll
+      parameters:
+      - in: query
+        name: connection_id
+        schema:
+          description: Websocket connection ID to interact with. You can pass it as
+            Body or URL parameter
+          title: Connection ID
+          type: string
+          x-stream-index: "005.003"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchAllRequest'
+        description: Search All Request
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchAllResponse'
+          description: Search All Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Search messages, users, and channels
       tags:
       - product:chat
   /api/v2/chat/sync:
