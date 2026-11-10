@@ -18880,6 +18880,32 @@ components:
           x-stream-index: "004"
       title: MarkReviewedRequest
       type: object
+    MatchedBlocklist:
+      properties:
+        matches:
+          description: Distinct text the blocklist matched in the content, at most
+            10 values of up to 256 bytes each. Word, email and domain blocklists report
+            a single match, in the normalized form they compare, even when several
+            words hit; regex lists and domain/email allowlists report every match,
+            except that an allowlist with LLM domain validation enabled reports the
+            one URL the check kept. Regex lists match on the text with invisible characters
+            removed, except the built-in URL list, which reports the URL as it appears
+            in the content. Can be empty when the blocklist hit but no value was recorded
+            (for example a flag stored before this field existed).
+          items:
+            type: string
+          title: Matches
+          type: array
+          x-stream-index: "002"
+        name:
+          description: Blocklist name, as set on the rule condition.
+          title: Name
+          type: string
+          x-stream-index: "001"
+      required:
+      - name
+      - matches
+      type: object
     MatchedContent:
       properties:
         classifications:
@@ -20693,6 +20719,15 @@ components:
             passed, and the analyzed conversation ID and message count.'
           title: Intent
           x-stream-index: "010"
+        matched_blocklists:
+          description: Blocklists that the rule's blocklist conditions (`text_content`,
+            `text_rule`) matched, each with the text it matched in the content. Omitted
+            when the rule has no such condition or none matched.
+          items:
+            $ref: '#/components/schemas/MatchedBlocklist'
+          title: Matched Blocklists
+          type: array
+          x-stream-index: "021"
         matched_contents:
           description: Ordered list of contents whose verdicts contributed to an aggregation
             rule's threshold. Populated only for aggregation rules when callers supplied
@@ -34511,7 +34546,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v240.9.4
+  version: v240.9.5
   x-stream-breaking-changes:
     go:
     - CHA-3441 (2026-10-08)
