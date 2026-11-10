@@ -73,19 +73,19 @@ To generate code for your language, do this:
 For TS
 
 ```bash
-docker run -v $(pwd):/local ghcr.io/getstream/protobuf-generate ts /local/packages/client/src/gen
+docker run --user "$(id -u):$(id -g)" -v $(pwd):/local ghcr.io/getstream/protobuf-generate ts /local/packages/client/src/gen
 
 # or
-docker run --platform=linux/amd64 -v $(pwd):/local ghcr.io/getstream/protobuf-generate ts /local/packages/client/src/gen
+docker run --platform=linux/amd64 --user "$(id -u):$(id -g)" -v $(pwd):/local ghcr.io/getstream/protobuf-generate ts /local/packages/client/src/gen
 ```
 
 For Dart
 
 ```bash
-docker run -v $(pwd):/local ghcr.io/getstream/protobuf-generate dart /local/dart-sdk
+docker run --user "$(id -u):$(id -g)" -v $(pwd):/local ghcr.io/getstream/protobuf-generate dart /local/dart-sdk
 
 # or
-docker run --platform=linux/amd64 -v $(pwd):/local ghcr.io/getstream/protobuf-generate dart /local/dart-sdk
+docker run --platform=linux/amd64 --user "$(id -u):$(id -g)" -v $(pwd):/local ghcr.io/getstream/protobuf-generate dart /local/dart-sdk
 ```
 
 Where `/local` is folder mounted to container from `PWD`.
@@ -94,10 +94,10 @@ In this way you will find the `dart-sdk` folder in your current directory.
 ### Generate for a specific branch
 
 ```bash
-docker run -v $(pwd):/local ghcr.io/getstream/protobuf-generate dart /local/dart-sdk --branch=my-branch
+docker run --user "$(id -u):$(id -g)" -v $(pwd):/local ghcr.io/getstream/protobuf-generate dart /local/dart-sdk --branch=my-branch
 
 # or
-docker run --platform=linux/amd64 -v $(pwd):/local ghcr.io/getstream/protobuf-generate dart /local/dart-sdk --branch=my-branch
+docker run --platform=linux/amd64 --user "$(id -u):$(id -g)" -v $(pwd):/local ghcr.io/getstream/protobuf-generate dart /local/dart-sdk --branch=my-branch
 ```
 
 ## Video API and server-side SDK documentation
