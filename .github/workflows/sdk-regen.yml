@@ -1,0 +1,30 @@
+name: SDK regen
+
+# Tells the server-side SDKs that a new spec is out, so each regenerates now instead of on its daily run.
+on:
+  release:
+    types: [published]
+
+permissions: {}
+
+jobs:
+  dispatch:
+    name: Dispatch SDK regen
+    if: startsWith(github.event.release.tag_name, 'openapi-v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # The getstream-sdk-bot key lives only in this environment, which deploys from openapi-v* tags.
+    environment: sdk-bot
+    steps:
+      - id: app
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: Iv23lioh9qYGjBIp9nsK
+          private-key: ${{ secrets.SDK_BOT_PRIVATE_KEY }}
+          owner: GetStream
+          repositories: getstream-go
+          permission-contents: write
+      - env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: gh api repos/GetStream/getstream-go/dispatches -f event_type=openapi-release -f "client_payload[tag]=$TAG"

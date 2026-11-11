@@ -3859,6 +3859,32 @@ components:
       - text
       title: MatchResponse
       type: object
+    MatchedBlocklist:
+      properties:
+        matches:
+          description: Distinct text the blocklist matched in the content, at most
+            10 values of up to 256 bytes each. Word, email and domain blocklists report
+            a single match, in the normalized form they compare, even when several
+            words hit; regex lists and domain/email allowlists report every match,
+            except that an allowlist with LLM domain validation enabled reports the
+            one URL the check kept. Regex lists match on the text with invisible characters
+            removed, except the built-in URL list, which reports the URL as it appears
+            in the content. Can be empty when the blocklist hit but no value was recorded
+            (for example a flag stored before this field existed).
+          items:
+            type: string
+          title: Matches
+          type: array
+          x-stream-index: "002"
+        name:
+          description: Blocklist name, as set on the rule condition.
+          title: Name
+          type: string
+          x-stream-index: "001"
+      required:
+      - name
+      - matches
+      type: object
     MatchedContent:
       properties:
         classifications:
@@ -4460,6 +4486,13 @@ components:
           title: EntityType
           type: string
           x-stream-index: "003"
+        moderation_payload:
+          $ref: '#/components/schemas/ModerationPayloadResponse'
+          description: 'Set only for audio moderation. Contains only audios and custom.transcripts:
+            one transcript per audio URL, in the same order, with an empty string
+            for a skipped URL'
+          title: ModerationPayload
+          x-stream-index: "006"
         received_at:
           format: date-time
           type: string
@@ -5009,6 +5042,15 @@ components:
             passed, and the analyzed conversation ID and message count.'
           title: Intent
           x-stream-index: "010"
+        matched_blocklists:
+          description: Blocklists that the rule's blocklist conditions (`text_content`,
+            `text_rule`) matched, each with the text it matched in the content. Omitted
+            when the rule has no such condition or none matched.
+          items:
+            $ref: '#/components/schemas/MatchedBlocklist'
+          title: Matched Blocklists
+          type: array
+          x-stream-index: "021"
         matched_contents:
           description: Ordered list of contents whose verdicts contributed to an aggregation
             rule's threshold. Populated only for aggregation rules when callers supplied
@@ -6481,6 +6523,13 @@ components:
         information about the user that was banned.
       nullable: true
       properties:
+        ban_from_future_channels:
+          description: Whether the ban also applies to channels created later by the
+            same creator. Without a channel, check user.banned to tell a global ban
+            from a future-channels-only ban
+          title: Ban from future channels
+          type: boolean
+          x-stream-index: "007"
         channel_custom:
           additionalProperties: {}
           type: object
@@ -6543,7 +6592,7 @@ components:
             the ban, if the ban was applied from the moderation review queue
           title: Review Queue Item ID
           type: string
-          x-stream-index: "007"
+          x-stream-index: "008"
         shadow:
           description: Whether the user was shadow banned
           title: Shadow
@@ -6557,7 +6606,7 @@ components:
         total_bans:
           format: int32
           type: integer
-          x-stream-index: "008"
+          x-stream-index: "009"
         type:
           default: user.banned
           description: 'The type of event: "user.banned" in this case'
@@ -7330,7 +7379,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v240.0.4
+  version: v241.2.1
   x-stream-breaking-changes:
     go:
     - CHA-3441 (2026-10-08)
@@ -7349,9 +7398,6 @@ info:
     - MOD2-1482 (2026-10-02)
     - MOD2-789 (2026-10-05)
     wire:
-    - AI-1616 (2026-10-27)
-    - AI-1617 (2026-10-22)
-    - AI-2210 (2026-10-28)
     - CHA-0 (2026-04-14)
     - CHA-2563 (2026-03-24)
     - CHA-3037 (2026-08-06)
@@ -7363,13 +7409,10 @@ info:
     - CHA-4993 (2026-08-28)
     - CHA-5081 (2026-09-02)
     - CHA-5082 (2026-09-02)
-    - CHA-5635 (2026-10-09)
-    - CHA-6139 (2026-10-15)
     - CHA-6186 (2026-10-19)
-    - FEEDS-1339 (2026-03-20)
-    - FEEDS-1590 (2026-10-05)
     - FEEDS-1875 (2026-09-09)
     - FEEDS-1972 (2026-10-06)
+    - FEEDS-1996 (2026-11-03)
     - FEEDS-2162 (2026-10-27)
     - FLU-1103 (2026-10-26)
     - FLU-1105 (2026-10-27)

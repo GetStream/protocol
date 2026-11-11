@@ -4,17 +4,17 @@ components:
       properties:
         ai_text_config:
           $ref: '#/components/schemas/AITextConfig'
-          description: Rules applied to transcripts when LLM configurability is disabled
+          description: Rules applied to transcripts when the policy's engine is NLP
           title: AITextConfig
           x-stream-index: "003"
         llm_config:
           $ref: '#/components/schemas/LLMConfig'
-          description: Rules applied to transcripts when LLM configurability is enabled
+          description: Rules applied to transcripts when the policy's engine is LLM
           title: LLMConfig
           x-stream-index: "004"
         profile:
           description: Bodyguard credentials profile to classify transcripts with.
-            Applies to the NLP engine only; ignored when LLM configurability is enabled.
+            Applies to the NLP engine only; ignored when the policy's engine is LLM.
             Empty falls back to the app-pinned profile, then the organization's top-level
             credentials
           title: Profile
@@ -34,22 +34,23 @@ components:
       properties:
         ai_text_config:
           $ref: '#/components/schemas/AITextConfig'
-          description: The rules applied to transcripts when LLM configurability is
-            disabled. Present only when a config for that engine is stored; a policy
-            still on the pre-split flat shape returns rules alone
+          description: The rules applied to transcripts when the policy's engine is
+            NLP. Present only when a config for that engine is stored; a policy still
+            on the pre-split flat shape returns rules alone
           title: AITextConfig
           x-stream-index: "004"
         enabled:
-          description: Whether the engine selected by the application's LLM configurability
-            flag has a rule that does something. Derived, not stored
+          description: Whether the policy's engine (engine.provider, else the application's
+            LLM configurability flag) has a rule that does something. Derived, not
+            stored
           title: Enabled
           type: boolean
           x-stream-index: "001"
         llm_config:
           $ref: '#/components/schemas/LLMConfig'
-          description: The rules applied to transcripts when LLM configurability is
-            enabled. Present only when a config for that engine is stored; a policy
-            still on the pre-split flat shape returns rules alone
+          description: The rules applied to transcripts when the policy's engine is
+            LLM. Present only when a config for that engine is stored; a policy still
+            on the pre-split flat shape returns rules alone
           title: LLMConfig
           x-stream-index: "005"
         profile:
@@ -85,6 +86,11 @@ components:
             $ref: '#/components/schemas/OCRRule'
           type: array
           x-stream-index: "004"
+        ocr_severity_rules:
+          items:
+            $ref: '#/components/schemas/BodyguardRule'
+          type: array
+          x-stream-index: "005"
         rules:
           items:
             $ref: '#/components/schemas/AWSRekognitionRule'
@@ -2737,6 +2743,11 @@ components:
             type: string
           type: object
           x-stream-index: "002"
+        severities:
+          items:
+            type: string
+          type: array
+          x-stream-index: "006"
         severity:
           type: string
           x-stream-index: "005"
@@ -2890,6 +2901,13 @@ components:
           title: Created At
           type: number
           x-stream-index: "016"
+        engine:
+          $ref: '#/components/schemas/ModerationEngineConfigResponse'
+          description: 'Engine for everything the policy moderates (text, audio transcripts,
+            OCR text, usernames): provider llm or nlp, and an optional LLM model.
+            A missing provider follows the app''s LLM moderation setting'
+          title: Engine
+          x-stream-index: "023"
         flood_config:
           $ref: '#/components/schemas/FloodConfig'
           description: Per-user flood detection for the /labels endpoint (identical
@@ -2912,6 +2930,12 @@ components:
           description: Configuration for customer-configured LLM moderation
           title: LLM Config
           x-stream-index: "009"
+        published_version:
+          description: The version of this configuration moderation currently runs
+          format: int32
+          title: Published Version
+          type: integer
+          x-stream-index: "024"
         supported_video_call_harm_types:
           items:
             type: string
@@ -2943,6 +2967,37 @@ components:
       - created_at
       - updated_at
       - supported_video_call_harm_types
+      type: object
+    ConfigVersionResponse:
+      properties:
+        created_at:
+          description: When this version was saved
+          format: date-time
+          title: Created At
+          type: number
+          x-stream-index: "002"
+        created_by:
+          description: ID of the user who saved this version, empty when saved without
+            a user
+          title: Created By
+          type: string
+          x-stream-index: "003"
+        published:
+          description: Whether this is the version moderation currently runs
+          title: Published
+          type: boolean
+          x-stream-index: "004"
+        version:
+          description: Sequential version number, per key and team
+          format: int32
+          title: Version
+          type: integer
+          x-stream-index: "001"
+      required:
+      - version
+      - created_at
+      - created_by
+      - published
       type: object
     ContentCountRuleParameters:
       properties:
@@ -4762,6 +4817,27 @@ components:
       required:
       - duration
       type: object
+    GetConfigVersionResponse:
+      nullable: true
+      properties:
+        config:
+          $ref: '#/components/schemas/ConfigResponse'
+          description: The full configuration stored in this version, published or
+            not
+          title: Config
+          x-stream-index: "002"
+        duration:
+          type: string
+          x-stream-index: "003.001"
+        version:
+          $ref: '#/components/schemas/ConfigVersionResponse'
+          description: Metadata of the retrieved version
+          title: Version
+          x-stream-index: "001"
+      required:
+      - version
+      - duration
+      type: object
     GoogleVisionConfig:
       properties:
         enabled:
@@ -5102,6 +5178,30 @@ components:
           title: Flag
           type: number
           x-stream-index: "001"
+      type: object
+    ListConfigVersionsResponse:
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "003.001"
+        published_version:
+          description: The version moderation currently runs
+          format: int32
+          title: Published Version
+          type: integer
+          x-stream-index: "001"
+        versions:
+          description: Retained versions of this configuration, newest first, including
+            the published one
+          items:
+            $ref: '#/components/schemas/ConfigVersionResponse'
+          title: Versions
+          type: array
+          x-stream-index: "002"
+      required:
+      - versions
+      - duration
       type: object
     ListQueuesResponse:
       description: Basic response information
@@ -5730,6 +5830,56 @@ components:
       x-stream-is-event: true
       x-stream-throttle-group: critical
       x-stream-ws-base-event-name: VideoEvent
+    ModerationEngineConfigRequest:
+      properties:
+        model:
+          description: LLM model used when the provider resolves to llm. Not allowed
+            with provider nlp. Empty uses the app's moderation settings
+          enum:
+          - gpt-4o-mini
+          - gpt-4o
+          - gpt-6-luna
+          title: Model
+          type: string
+          x-stream-index: "002"
+        provider:
+          description: llm or nlp. Empty follows the app's LLM moderation setting
+          enum:
+          - llm
+          - nlp
+          title: Provider
+          type: string
+          x-stream-index: "001"
+        reasoning_effort:
+          description: OpenAI reasoning effort for model. Requires model, and must
+            be one the model accepts. Empty uses the model's default
+          title: Reasoning effort
+          type: string
+          x-stream-index: "003"
+      type: object
+    ModerationEngineConfigResponse:
+      properties:
+        model:
+          description: LLM model used when the provider resolves to llm. Not allowed
+            with provider nlp. Empty uses the app's moderation settings
+          title: Model
+          type: string
+          x-stream-index: "002"
+        provider:
+          description: llm or nlp. Empty follows the app's LLM moderation setting
+          enum:
+          - llm
+          - nlp
+          title: Provider
+          type: string
+          x-stream-index: "001"
+        reasoning_effort:
+          description: OpenAI reasoning effort for model. Requires model, and must
+            be one the model accepts. Empty uses the model's default
+          title: Reasoning effort
+          type: string
+          x-stream-index: "003"
+      type: object
     ModerationFlagResponse:
       nullable: true
       properties:
@@ -6540,6 +6690,31 @@ components:
           description: The settings for typing indicator events.
           title: Typing indicators
           x-stream-index: "001"
+      type: object
+    PublishConfigVersionRequest:
+      nullable: true
+      properties:
+        team:
+          description: Team associated with the configuration
+          maxLength: 128
+          minLength: 1
+          title: Team
+          type: string
+          x-stream-index: "003"
+      type: object
+    PublishConfigVersionResponse:
+      nullable: true
+      properties:
+        config:
+          $ref: '#/components/schemas/ConfigResponse'
+          description: The configuration now in effect
+          title: Config
+          x-stream-index: "001"
+        duration:
+          type: string
+          x-stream-index: "002.001"
+      required:
+      - duration
       type: object
     PushLevel:
       description: How much a channel notifies its members.
@@ -8161,6 +8336,149 @@ components:
       required:
       - rule_type
       type: object
+    SaveConfigVersionRequest:
+      nullable: true
+      properties:
+        ai_audio_config:
+          $ref: '#/components/schemas/AIAudioConfigRequest'
+          description: Configuration for AI audio analysis
+          title: AI Audio Config
+          x-stream-index: "001.013"
+        ai_image_config:
+          $ref: '#/components/schemas/AIImageConfig'
+          description: Configuration for AI image analysis
+          title: AI Image Config
+          x-stream-index: "001.011"
+        ai_text_config:
+          $ref: '#/components/schemas/AITextConfig'
+          description: Configuration for AI text analysis
+          title: AI Text Config
+          x-stream-index: "001.008"
+        ai_video_config:
+          $ref: '#/components/schemas/AIVideoConfigRequest'
+          description: Configuration for AI video analysis
+          title: AI Video Config
+          x-stream-index: "001.012"
+        async:
+          description: Whether moderation should be performed asynchronously
+          title: Async
+          type: boolean
+          x-stream-index: "001.003"
+        automod_platform_circumvention_config:
+          $ref: '#/components/schemas/AutomodPlatformCircumventionConfig'
+          description: Configuration for platform circumvention detection
+          title: Automod Platform Circumvention Config
+          x-stream-index: "001.005"
+        automod_semantic_filters_config:
+          $ref: '#/components/schemas/AutomodSemanticFiltersConfig'
+          description: Configuration for semantic filtering
+          title: Automod Semantic Filters Config
+          x-stream-index: "001.006"
+        automod_toxicity_config:
+          $ref: '#/components/schemas/AutomodToxicityConfig'
+          description: Configuration for toxicity detection
+          title: Automod Toxicity Config
+          x-stream-index: "001.004"
+        aws_rekognition_config:
+          $ref: '#/components/schemas/AIImageConfig'
+          x-stream-index: "001.019"
+        base_version:
+          description: Latest version the edit was based on, 0 for a policy without
+            versions. The save is rejected when a newer version exists
+          format: int32
+          minimum: 0
+          title: Base Version
+          type: integer
+          x-stream-index: "002"
+        block_list_config:
+          $ref: '#/components/schemas/BlockListConfig'
+          description: Configuration for block list filtering
+          title: Block List Config
+          x-stream-index: "001.007"
+        bodyguard_config:
+          $ref: '#/components/schemas/AITextConfig'
+          x-stream-index: "001.018"
+        engine:
+          $ref: '#/components/schemas/ModerationEngineConfigRequest'
+          description: 'Engine for everything the policy moderates (text, audio transcripts,
+            OCR text, usernames): provider llm or nlp, and an optional LLM model.
+            A missing provider follows the app''s LLM moderation setting. Omit to
+            keep the stored engine; send an empty object to clear it'
+          title: Engine
+          x-stream-index: "001.021"
+        flood_config:
+          $ref: '#/components/schemas/FloodConfig'
+          description: Per-user flood detection for the /labels endpoint (identical
+            and similar message detectors)
+          title: Flood Config
+          x-stream-index: "001.015"
+        google_vision_config:
+          $ref: '#/components/schemas/GoogleVisionConfig'
+          description: Configuration for Google Vision integration
+          title: Google Vision Config
+          x-stream-index: "001.010"
+        intent_config:
+          $ref: '#/components/schemas/IntentConfigRequest'
+          description: Configuration for conversation-level intent analysis (topics,
+            capture cap, cooldowns, score threshold)
+          title: Intent Config
+          x-stream-index: "001.017"
+        key:
+          description: Unique identifier for the moderation configuration
+          title: Key
+          type: string
+          x-stream-index: "001.001"
+        llm_config:
+          $ref: '#/components/schemas/LLMConfig'
+          description: Configuration for customer-configured LLM moderation
+          title: LLM Config
+          x-stream-index: "001.009"
+        rule_builder_config:
+          $ref: '#/components/schemas/RuleBuilderConfig'
+          description: Configuration for custom rule builder (max 3 rules, max 5 conditions
+            per rule)
+          title: Rule Builder Config
+          x-stream-index: "001.016"
+        team:
+          description: Team associated with the configuration
+          maxLength: 128
+          minLength: 1
+          title: Team
+          type: string
+          x-stream-index: "001.002"
+        velocity_filter_config:
+          $ref: '#/components/schemas/VelocityFilterConfig'
+          description: Configuration for velocity-based filtering
+          title: Velocity Filter Config
+          x-stream-index: "001.014"
+        video_call_rule_config:
+          $ref: '#/components/schemas/VideoCallRuleConfig'
+          x-stream-index: "001.020"
+      required:
+      - key
+      - base_version
+      type: object
+    SaveConfigVersionResponse:
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "003.001"
+        published_version:
+          description: The version moderation currently runs
+          format: int32
+          title: Published Version
+          type: integer
+          x-stream-index: "002"
+        version:
+          $ref: '#/components/schemas/ConfigVersionResponse'
+          description: The version that was saved
+          title: Version
+          x-stream-index: "001"
+      required:
+      - version
+      - duration
+      type: object
     ShadowBlockActionRequestPayload:
       description: Configuration for shadow block action
       properties:
@@ -8585,6 +8903,12 @@ components:
           title: Remove Future Channels Ban
           type: boolean
           x-stream-index: "004"
+        restore_shadowed_messages:
+          description: When lifting a shadow ban, also restore the messages the user
+            sent during it. Runs asynchronously; ignored for a regular ban
+          title: Restore Shadowed Messages
+          type: boolean
+          x-stream-index: "005"
         target_user_id:
           description: 'Optional: unban user directly without review item'
           title: Target User ID
@@ -8837,6 +9161,14 @@ components:
         bodyguard_config:
           $ref: '#/components/schemas/AITextConfig'
           x-stream-index: "018"
+        engine:
+          $ref: '#/components/schemas/ModerationEngineConfigRequest'
+          description: 'Engine for everything the policy moderates (text, audio transcripts,
+            OCR text, usernames): provider llm or nlp, and an optional LLM model.
+            A missing provider follows the app''s LLM moderation setting. Omit to
+            keep the stored engine; send an empty object to clear it'
+          title: Engine
+          x-stream-index: "021"
         flood_config:
           $ref: '#/components/schemas/FloodConfig'
           description: Per-user flood detection for the /labels endpoint (identical
@@ -8919,6 +9251,13 @@ components:
         information about the user that was banned.
       nullable: true
       properties:
+        ban_from_future_channels:
+          description: Whether the ban also applies to channels created later by the
+            same creator. Without a channel, check user.banned to tell a global ban
+            from a future-channels-only ban
+          title: Ban from future channels
+          type: boolean
+          x-stream-index: "007"
         channel_custom:
           additionalProperties: {}
           type: object
@@ -8981,7 +9320,7 @@ components:
             the ban, if the ban was applied from the moderation review queue
           title: Review Queue Item ID
           type: string
-          x-stream-index: "007"
+          x-stream-index: "008"
         shadow:
           description: Whether the user was shadow banned
           title: Shadow
@@ -8995,7 +9334,7 @@ components:
         total_bans:
           format: int32
           type: integer
-          x-stream-index: "008"
+          x-stream-index: "009"
         type:
           default: user.banned
           description: 'The type of event: "user.banned" in this case'
@@ -9998,7 +10337,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v240.0.4
+  version: v241.2.1
   x-stream-breaking-changes:
     go:
     - CHA-3441 (2026-10-08)
@@ -10038,6 +10377,7 @@ info:
     - FEEDS-1590 (2026-10-05)
     - FEEDS-1875 (2026-09-09)
     - FEEDS-1972 (2026-10-06)
+    - FEEDS-1996 (2026-11-03)
     - FEEDS-2162 (2026-10-27)
     - FLU-1103 (2026-10-26)
     - FLU-1105 (2026-10-27)
@@ -10530,6 +10870,188 @@ paths:
       summary: Get moderation configuration
       tags:
       - product:moderation
+  /api/v2/moderation/config/{key}/versions:
+    get:
+      description: |
+        List the retained versions of a moderation configuration, newest first, and which one is published.
+      operationId: list_config_versions
+      parameters:
+      - in: path
+        name: key
+        required: true
+        schema:
+          description: Key of the moderation configuration
+          title: Key
+          type: string
+          x-stream-index: "001"
+      - in: query
+        name: team
+        schema:
+          description: Team associated with the configuration
+          title: Team
+          type: string
+          x-stream-index: "002"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListConfigVersionsResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: List moderation configuration versions
+      tags:
+      - product:moderation
+  /api/v2/moderation/config/{key}/versions/{version}:
+    get:
+      description: |
+        Retrieve the full moderation configuration stored in a specific version, whether or not it is published.
+      operationId: get_config_version
+      parameters:
+      - in: path
+        name: key
+        required: true
+        schema:
+          description: Key of the moderation configuration
+          title: Key
+          type: string
+          x-stream-index: "001"
+      - in: path
+        name: version
+        required: true
+        schema:
+          description: Version to retrieve
+          format: int32
+          minimum: 1
+          title: Version
+          type: integer
+          x-stream-index: "002"
+      - in: query
+        name: team
+        schema:
+          description: Team associated with the configuration
+          title: Team
+          type: string
+          x-stream-index: "003"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetConfigVersionResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get moderation configuration version
+      tags:
+      - product:moderation
+  /api/v2/moderation/config/{key}/versions/{version}/publish:
+    post:
+      description: |
+        Make a stored version the moderation configuration in effect. Publishing an older version reverts to it without creating a new version.
+      operationId: publish_config_version
+      parameters:
+      - in: path
+        name: key
+        required: true
+        schema:
+          description: Key of the moderation configuration
+          title: Key
+          type: string
+          x-stream-index: "001"
+      - in: path
+        name: version
+        required: true
+        schema:
+          description: Version to publish. Publishing an older version reverts to
+            it
+          format: int32
+          minimum: 1
+          title: Version
+          type: integer
+          x-stream-index: "002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublishConfigVersionRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublishConfigVersionResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Publish moderation configuration version
+      tags:
+      - product:moderation
+  /api/v2/moderation/config/versions:
+    post:
+      description: |
+        Save a moderation configuration as a new version without making it live. The version takes effect once it is published.
+      operationId: save_config_version
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaveConfigVersionRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaveConfigVersionResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Save moderation configuration version
+      tags:
+      - product:moderation
   /api/v2/moderation/configs:
     post:
       description: |
@@ -10928,6 +11450,16 @@ paths:
           type: string
           writeOnly: true
           x-stream-index: "002"
+      - in: query
+        name: remove_future_channels_ban
+        schema:
+          description: 'Also remove the future channels ban: the channel creator''s
+            when channel_cid is set, otherwise the caller''s. Without channel_cid,
+            only the future channels ban is removed'
+          title: Remove Future Channels Ban
+          type: boolean
+          writeOnly: true
+          x-stream-index: "004"
       requestBody:
         content:
           application/json:

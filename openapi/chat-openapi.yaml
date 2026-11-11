@@ -4695,6 +4695,24 @@ components:
       - skip_last_msg_update_for_system_msgs
       - commands
       type: object
+    ChannelTypeRuleResponse:
+      properties:
+        channel_type:
+          type: string
+          x-stream-index: "001"
+        enabled_at:
+          format: date-time
+          type: string
+          x-stream-index: "003"
+        max_age_hours:
+          format: int32
+          type: integer
+          x-stream-index: "002"
+      required:
+      - channel_type
+      - max_age_hours
+      - enabled_at
+      type: object
     ChannelUnFrozenEvent:
       description: Emitted when a channel is successfully unfrozen.
       nullable: true
@@ -7431,10 +7449,14 @@ components:
     DeleteRetentionPolicyRequest:
       nullable: true
       properties:
+        channel_type:
+          type: string
+          x-stream-index: "002"
         policy:
           enum:
           - old-messages
           - inactive-channels
+          - inactive-channels-by-type
           type: string
           x-stream-index: "001"
       required:
@@ -7867,7 +7889,13 @@ components:
           type: string
           x-stream-index: "013"
         sns_role_arn:
+          deprecated: true
+          description: 'Deprecated: Role auth was never supported; use resource auth.'
+          title: SNS Role ARN
           type: string
+          x-stream-deprecated: true
+          x-stream-deprecated-message: Role auth was never supported; use resource
+            auth.
           x-stream-index: "017"
         sns_secret:
           type: string
@@ -7891,7 +7919,13 @@ components:
           type: string
           x-stream-index: "007"
         sqs_role_arn:
+          deprecated: true
+          description: 'Deprecated: Role auth was never supported; use resource auth.'
+          title: SQS Role ARN
           type: string
+          x-stream-deprecated: true
+          x-stream-deprecated-message: Role auth was never supported; use resource
+            auth.
           x-stream-index: "011"
         sqs_secret:
           type: string
@@ -9762,11 +9796,16 @@ components:
       description: Basic response information
       nullable: true
       properties:
+        channel_type_rules:
+          items:
+            $ref: '#/components/schemas/ChannelTypeRuleResponse'
+          type: array
+          x-stream-index: "002"
         duration:
           description: Duration of the request in milliseconds
           title: Duration
           type: string
-          x-stream-index: "002.001"
+          x-stream-index: "003.001"
         policies:
           items:
             $ref: '#/components/schemas/RetentionPolicy'
@@ -10355,6 +10394,15 @@ components:
       - duration
       title: Response
       type: object
+    ImportCustomFormat:
+      description: 'How custom fields are read from imported items: root (default)
+        takes unknown root keys as custom data, nested reads them from a custom object
+        and is only supported for feeds imports.'
+      enum:
+      - root
+      - nested
+      title: ImportCustomFormat
+      type: string
     ImportTask:
       properties:
         created_at:
@@ -10454,6 +10502,9 @@ components:
       type: object
     ImportV2TaskSettings:
       properties:
+        custom_format:
+          $ref: '#/components/schemas/ImportCustomFormat'
+          x-stream-index: "011"
         merge_custom:
           type: boolean
           x-stream-index: "007"
@@ -19306,17 +19357,17 @@ components:
         app_pk:
           format: int64
           type: integer
-          x-stream-index: "002"
+          x-stream-index: "003"
         config:
           $ref: '#/components/schemas/PolicyConfig'
-          x-stream-index: "004"
+          x-stream-index: "005"
         enabled_at:
           format: date-time
           type: string
-          x-stream-index: "005"
+          x-stream-index: "006"
         policy:
           type: string
-          x-stream-index: "003"
+          x-stream-index: "004"
       required:
       - app_pk
       - policy
@@ -19329,15 +19380,18 @@ components:
           format: int64
           type: integer
           x-stream-index: "001"
-        date:
+        channel_type:
           type: string
           x-stream-index: "003"
+        date:
+          type: string
+          x-stream-index: "004"
         policy:
           type: string
           x-stream-index: "002"
         stats:
           $ref: '#/components/schemas/RunStats'
-          x-stream-index: "004"
+          x-stream-index: "005"
       required:
       - app_pk
       - policy
@@ -19909,6 +19963,213 @@ components:
       required:
       - enabled
       - access_request_enabled
+      type: object
+    SearchAllChannelsSection:
+      properties:
+        channels:
+          description: Channels the caller is a member of whose name starts with the
+            query, in the same shape as the query channels endpoint's results but
+            without messages or members
+          items:
+            $ref: '#/components/schemas/ChannelStateResponseFields'
+          title: Channels
+          type: array
+          x-stream-index: "001"
+        error:
+          $ref: '#/components/schemas/SearchAllSectionError'
+          description: Present instead of channels when the channels search failed;
+            the other sections are unaffected
+          title: Error
+          x-stream-index: "004"
+        next:
+          description: Opaque cursor for the next page of this section, present only
+            when more results exist. Pass it back under next.channels with the same
+            query
+          title: Next
+          type: string
+          x-stream-index: "002"
+        warning:
+          $ref: '#/components/schemas/SearchAllWarning'
+          description: Present when the section recovered from a problem, such as
+            a rejected cursor
+          title: Warning
+          x-stream-index: "003"
+      title: Search All Channels Section
+      type: object
+    SearchAllMessagesSection:
+      properties:
+        error:
+          $ref: '#/components/schemas/SearchAllSectionError'
+          description: Present instead of results when the messages search failed;
+            the other sections are unaffected
+          title: Error
+          x-stream-index: "005"
+        next:
+          description: Opaque cursor for the next page of this section, present only
+            when more results exist. Pass it back under next.messages with the same
+            query
+          title: Next
+          type: string
+          x-stream-index: "003"
+        results:
+          description: Matching messages, newest first, in the same shape as the search
+            endpoint's results
+          items:
+            $ref: '#/components/schemas/SearchResult'
+          title: Results
+          type: array
+          x-stream-index: "001"
+        results_warning:
+          $ref: '#/components/schemas/SearchWarning'
+          description: Present when the search covered only part of the caller's channels,
+            exactly as on the search endpoint
+          title: Results Warning
+          x-stream-index: "002"
+        warning:
+          $ref: '#/components/schemas/SearchAllWarning'
+          description: Present when the section recovered from a problem, such as
+            a rejected cursor
+          title: Warning
+          x-stream-index: "004"
+      title: Search All Messages Section
+      type: object
+    SearchAllRequest:
+      nullable: true
+      properties:
+        entities:
+          description: 'Which sections to search: any subset of messages, users and
+            channels. Defaults to all three when omitted; must not be empty when provided.
+            Response sections always appear in the order messages, users, channels'
+          items:
+            type: string
+          title: Entities
+          type: array
+          x-stream-index: "002"
+        limit:
+          description: Number of results per section, 1-30. Defaults to 10. Applies
+            to every requested section; there is no per-section limit
+          format: int32
+          title: Limit
+          type: integer
+          x-stream-index: "003"
+        next:
+          additionalProperties:
+            type: string
+          description: Opaque pagination cursors from a previous response, keyed by
+            entity. A cursor that fails to decode restarts that section from page
+            1 with a cursor_rejected warning; the request fails with 400 only when
+            every cursor supplied for a requested entity is invalid. Cursors for entities
+            not in entities are ignored
+          title: Next
+          type: object
+          x-stream-index: "004"
+          x-stream-map:
+            description: The opaque next cursor returned by that entity's section
+            key: entity
+            title: Cursor
+        query:
+          description: Free-text search phrase, 1-80 characters after trimming whitespace.
+            Required. Matched as a prefix of a user's name or username and of a channel's
+            name, and as full-text against message text
+          title: Query
+          type: string
+          x-stream-index: "001"
+      title: Search All Request
+      type: object
+    SearchAllResponse:
+      nullable: true
+      properties:
+        channels:
+          $ref: '#/components/schemas/SearchAllChannelsSection'
+          description: Channels section, present only when channels was requested
+          title: Channels
+          x-stream-index: "003"
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "004.001"
+        messages:
+          $ref: '#/components/schemas/SearchAllMessagesSection'
+          description: Messages section, present only when messages was requested
+          title: Messages
+          x-stream-index: "001"
+        users:
+          $ref: '#/components/schemas/SearchAllUsersSection'
+          description: Users section, present only when users was requested
+          title: Users
+          x-stream-index: "002"
+      required:
+      - duration
+      title: Search All Response
+      type: object
+    SearchAllSectionError:
+      properties:
+        code:
+          description: Error code. backend_timeout and backend_unavailable are retryable;
+            unsupported (the app's configuration cannot serve this section) and internal_error
+            are not
+          enum:
+          - backend_unavailable
+          - backend_timeout
+          - unsupported
+          - internal_error
+          title: Code
+          type: string
+          x-stream-index: "001"
+        message:
+          description: Human-readable description of the failure
+          title: Message
+          type: string
+          x-stream-index: "002"
+      required:
+      - code
+      - message
+      title: Search All Section Error
+      type: object
+    SearchAllUsersSection:
+      properties:
+        error:
+          $ref: '#/components/schemas/SearchAllSectionError'
+          description: Present instead of users when the users search failed; the
+            other sections are unaffected
+          title: Error
+          x-stream-index: "004"
+        next:
+          description: Opaque cursor for the next page of this section, present only
+            when more results exist. Pass it back under next.users with the same query
+          title: Next
+          type: string
+          x-stream-index: "002"
+        users:
+          description: Users whose name or username starts with the query, in the
+            same shape as the query users endpoint's results
+          items:
+            $ref: '#/components/schemas/FullUserResponse'
+          title: Users
+          type: array
+          x-stream-index: "001"
+        warning:
+          $ref: '#/components/schemas/SearchAllWarning'
+          description: Present when the section recovered from a problem, such as
+            a rejected cursor
+          title: Warning
+          x-stream-index: "003"
+      title: Search All Users Section
+      type: object
+    SearchAllWarning:
+      properties:
+        code:
+          description: 'Warning code. cursor_rejected: the cursor supplied for this
+            section failed to decode, so the section restarted from page 1'
+          enum:
+          - cursor_rejected
+          title: Code
+          type: string
+          x-stream-index: "001"
+      required:
+      - code
+      title: Search All Warning
       type: object
     SearchPayload:
       properties:
@@ -21007,6 +21268,9 @@ components:
     SetRetentionPolicyRequest:
       nullable: true
       properties:
+        channel_type:
+          type: string
+          x-stream-index: "003"
         max_age_hours:
           format: int32
           minimum: 24
@@ -21016,6 +21280,7 @@ components:
           enum:
           - old-messages
           - inactive-channels
+          - inactive-channels-by-type
           type: string
           x-stream-index: "001"
       required:
@@ -21026,11 +21291,14 @@ components:
       description: Basic response information
       nullable: true
       properties:
+        channel_type_rule:
+          $ref: '#/components/schemas/ChannelTypeRuleResponse'
+          x-stream-index: "002"
         duration:
           description: Duration of the request in milliseconds
           title: Duration
           type: string
-          x-stream-index: "002.001"
+          x-stream-index: "003.001"
         policy:
           $ref: '#/components/schemas/RetentionPolicy'
           x-stream-index: "001"
@@ -24622,6 +24890,13 @@ components:
         information about the user that was banned.
       nullable: true
       properties:
+        ban_from_future_channels:
+          description: Whether the ban also applies to channels created later by the
+            same creator. Without a channel, check user.banned to tell a global ban
+            from a future-channels-only ban
+          title: Ban from future channels
+          type: boolean
+          x-stream-index: "007"
         channel_custom:
           additionalProperties: {}
           type: object
@@ -24684,7 +24959,7 @@ components:
             the ban, if the ban was applied from the moderation review queue
           title: Review Queue Item ID
           type: string
-          x-stream-index: "007"
+          x-stream-index: "008"
         shadow:
           description: Whether the user was shadow banned
           title: Shadow
@@ -24698,7 +24973,7 @@ components:
         total_bans:
           format: int32
           type: integer
-          x-stream-index: "008"
+          x-stream-index: "009"
         type:
           default: user.banned
           description: 'The type of event: "user.banned" in this case'
@@ -26588,7 +26863,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v240.0.4
+  version: v241.2.1
   x-stream-breaking-changes:
     go:
     - CHA-3441 (2026-10-08)
@@ -26607,9 +26882,6 @@ info:
     - MOD2-1482 (2026-10-02)
     - MOD2-789 (2026-10-05)
     wire:
-    - AI-1616 (2026-10-27)
-    - AI-1617 (2026-10-22)
-    - AI-2210 (2026-10-28)
     - CHA-0 (2026-04-14)
     - CHA-2563 (2026-03-24)
     - CHA-3037 (2026-08-06)
@@ -26621,13 +26893,10 @@ info:
     - CHA-4993 (2026-08-28)
     - CHA-5081 (2026-09-02)
     - CHA-5082 (2026-09-02)
-    - CHA-5635 (2026-10-09)
-    - CHA-6139 (2026-10-15)
     - CHA-6186 (2026-10-19)
-    - FEEDS-1339 (2026-03-20)
-    - FEEDS-1590 (2026-10-05)
     - FEEDS-1875 (2026-09-09)
     - FEEDS-1972 (2026-10-06)
+    - FEEDS-1996 (2026-11-03)
     - FEEDS-2162 (2026-10-27)
     - FLU-1103 (2026-10-26)
     - FLU-1105 (2026-10-27)
@@ -30095,6 +30364,23 @@ paths:
       description: |
         Gets an import
       operationId: ListImports
+      parameters:
+      - in: query
+        name: limit
+        schema:
+          format: int32
+          maximum: 300
+          minimum: 0
+          type: integer
+          x-stream-index: "001"
+      - in: query
+        name: offset
+        schema:
+          format: int32
+          maximum: 1000
+          minimum: 0
+          type: integer
+          x-stream-index: "002"
       responses:
         "200":
           content:
@@ -33144,7 +33430,7 @@ paths:
   /retention_policy:
     get:
       description: |
-        Returns all retention policies configured for the app. Server-side only.
+        Returns all retention policies configured for the app. The per-channel-type rules of the 'inactive-channels-by-type' policy are returned in 'channel_type_rules' rather than in 'policies'. Server-side only.
       operationId: GetRetentionPolicy
       responses:
         "200":
@@ -33170,7 +33456,7 @@ paths:
       - product:chat
     post:
       description: |
-        Creates or updates a retention policy for the app. Server-side only.
+        Creates or updates a retention policy for the app. The 'inactive-channels-by-type' policy sets the 'max_age_hours' rule of the channel type given by 'channel_type', which overrides 'inactive-channels' for that type; its response carries the saved rule in 'channel_type_rule'. Server-side only.
       operationId: SetRetentionPolicy
       requestBody:
         content:
@@ -33203,7 +33489,7 @@ paths:
   /retention_policy/delete:
     post:
       description: |
-        Removes a retention policy for the app. Server-side only.
+        Removes a retention policy for the app. For the 'inactive-channels-by-type' policy, 'channel_type' selects the rule to remove. Server-side only.
       operationId: DeleteRetentionPolicy
       requestBody:
         content:
@@ -33236,7 +33522,7 @@ paths:
   /retention_policy/runs:
     post:
       description: |
-        Returns filtered and sorted retention cleanup run history for the app. Supports filter_conditions on 'policy' (possible values: 'old-messages', 'inactive-channels') and 'date' fields. Server-side only.
+        Returns filtered and sorted retention cleanup run history for the app. Supports filter_conditions on 'policy' (possible values: 'old-messages', 'inactive-channels', 'inactive-channels@type:<channel type>', 'inactive-channels@blanket:<channel type>') and 'date' fields. Once the app has a per-channel-type rule, inactive-channels runs are recorded per channel type, under 'inactive-channels@type:<channel type>' for a type with its own rule and 'inactive-channels@blanket:<channel type>' for a type covered by the app-wide rule, and 'policy': 'inactive-channels' no longer matches new runs; filter with '$in' over the pass names of your channel types. Server-side only.
       operationId: GetRetentionPolicyRuns
       requestBody:
         content:
@@ -33638,6 +33924,40 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Search messages
+      tags:
+      - product:chat
+  /search/all:
+    post:
+      description: |
+        Runs one free-text query across messages, users and channels and returns one envelope with a section per requested entity. The server picks the match operator, sort and scope for every section: messages are matched as full text in the channels the caller can read, users by name or username prefix, and channels by name prefix among the channels the caller is a member of. Each section carries its own opaque `next` cursor when more results exist; a section that fails is reported in its `error` field while the other sections return normally.
+      operationId: SearchAll
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchAllRequest'
+        description: Search All Request
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchAllResponse'
+          description: Search All Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Search messages, users, and channels
       tags:
       - product:chat
   /segments:

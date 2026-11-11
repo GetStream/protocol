@@ -3010,7 +3010,7 @@ components:
         reason:
           description: 'Provides information about why the call was rejected. You
             can provide any value, but the Stream API and SDKs use these default values:
-            rejected, cancel, timeout and busy'
+            decline, cancel, timeout and busy'
           title: Reason
           type: string
           x-stream-index: "005"
@@ -3882,6 +3882,10 @@ components:
         encryption:
           $ref: '#/components/schemas/EncryptionSettingsResponse'
           x-stream-index: "017"
+        extra_opts:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "019"
         frame_recording:
           $ref: '#/components/schemas/FrameRecordingSettingsResponse'
           x-stream-index: "008"
@@ -4405,6 +4409,11 @@ components:
           title: The filename of the transcription.
           type: string
           x-stream-index: "001"
+        language:
+          title: The language of the transcription text. Not set when the language
+            is unknown, e.g. for transcriptions made before this field existed.
+          type: string
+          x-stream-index: "006"
         session_id:
           title: The session ID of the transcription.
           type: string
@@ -4414,6 +4423,12 @@ components:
           title: The start time of the transcription.
           type: number
           x-stream-index: "003"
+        translated:
+          title: True when the transcription is a translation of the call's transcription
+            to language, made from translated closed captions. Not set for the original
+            transcription.
+          type: boolean
+          x-stream-index: "007"
         url:
           title: The URL of the transcription.
           type: string
@@ -8349,7 +8364,13 @@ components:
           type: string
           x-stream-index: "013"
         sns_role_arn:
+          deprecated: true
+          description: 'Deprecated: Role auth was never supported; use resource auth.'
+          title: SNS Role ARN
           type: string
+          x-stream-deprecated: true
+          x-stream-deprecated-message: Role auth was never supported; use resource
+            auth.
           x-stream-index: "017"
         sns_secret:
           type: string
@@ -8373,7 +8394,13 @@ components:
           type: string
           x-stream-index: "007"
         sqs_role_arn:
+          deprecated: true
+          description: 'Deprecated: Role auth was never supported; use resource auth.'
+          title: SQS Role ARN
           type: string
+          x-stream-deprecated: true
+          x-stream-deprecated-message: Role auth was never supported; use resource
+            auth.
           x-stream-index: "011"
         sqs_secret:
           type: string
@@ -10110,6 +10137,15 @@ components:
       - duration
       title: Response
       type: object
+    ImportCustomFormat:
+      description: 'How custom fields are read from imported items: root (default)
+        takes unknown root keys as custom data, nested reads them from a custom object
+        and is only supported for feeds imports.'
+      enum:
+      - root
+      - nested
+      title: ImportCustomFormat
+      type: string
     ImportTask:
       properties:
         created_at:
@@ -10209,6 +10245,9 @@ components:
       type: object
     ImportV2TaskSettings:
       properties:
+        custom_format:
+          $ref: '#/components/schemas/ImportCustomFormat'
+          x-stream-index: "011"
         merge_custom:
           type: boolean
           x-stream-index: "007"
@@ -10997,13 +11036,15 @@ components:
           $ref: '#/components/schemas/CallLifecycleMode'
           description: 'Call lifecycle mode. One of: reusable, single_use. A single_use
             call cannot be reused once it has ended; the server ends it when its ring
-            settles without an answer (currently: when the caller cancels the ring).
-            Fixed at call creation'
+            settles without an answer: when the caller cancels the ring, or when the
+            ring times out on the server (missed_call_timeout_ms) without anyone accepting
+            or joining. Fixed at call creation'
           title: Mode
           x-stream-description: 'Call lifecycle mode. One of: reusable, single_use.
             A single_use call cannot be reused once it has ended; the server ends
-            it when its ring settles without an answer (currently: when the caller
-            cancels the ring). Fixed at call creation'
+            it when its ring settles without an answer: when the caller cancels the
+            ring, or when the ring times out on the server (missed_call_timeout_ms)
+            without anyone accepting or joining. Fixed at call creation'
           x-stream-index: "001"
       title: LifecycleSettingsRequest
       type: object
@@ -11014,13 +11055,15 @@ components:
           $ref: '#/components/schemas/CallLifecycleMode'
           description: 'Call lifecycle mode. One of: reusable, single_use. A single_use
             call cannot be reused once it has ended; the server ends it when its ring
-            settles without an answer (currently: when the caller cancels the ring).
-            Fixed at call creation'
+            settles without an answer: when the caller cancels the ring, or when the
+            ring times out on the server (missed_call_timeout_ms) without anyone accepting
+            or joining. Fixed at call creation'
           title: Mode
           x-stream-description: 'Call lifecycle mode. One of: reusable, single_use.
             A single_use call cannot be reused once it has ended; the server ends
-            it when its ring settles without an answer (currently: when the caller
-            cancels the ring). Fixed at call creation'
+            it when its ring settles without an answer: when the caller cancels the
+            ring, or when the ring times out on the server (missed_call_timeout_ms)
+            without anyone accepting or joining. Fixed at call creation'
           x-stream-index: "001"
       required:
       - mode
@@ -20052,6 +20095,13 @@ components:
         information about the user that was banned.
       nullable: true
       properties:
+        ban_from_future_channels:
+          description: Whether the ban also applies to channels created later by the
+            same creator. Without a channel, check user.banned to tell a global ban
+            from a future-channels-only ban
+          title: Ban from future channels
+          type: boolean
+          x-stream-index: "007"
         channel_custom:
           additionalProperties: {}
           type: object
@@ -20114,7 +20164,7 @@ components:
             the ban, if the ban was applied from the moderation review queue
           title: Review Queue Item ID
           type: string
-          x-stream-index: "007"
+          x-stream-index: "008"
         shadow:
           description: Whether the user was shadow banned
           title: Shadow
@@ -20128,7 +20178,7 @@ components:
         total_bans:
           format: int32
           type: integer
-          x-stream-index: "008"
+          x-stream-index: "009"
         type:
           default: user.banned
           description: 'The type of event: "user.banned" in this case'
@@ -21422,7 +21472,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v240.0.4
+  version: v241.2.1
   x-stream-breaking-changes:
     go:
     - CHA-3441 (2026-10-08)
@@ -21441,9 +21491,6 @@ info:
     - MOD2-1482 (2026-10-02)
     - MOD2-789 (2026-10-05)
     wire:
-    - AI-1616 (2026-10-27)
-    - AI-1617 (2026-10-22)
-    - AI-2210 (2026-10-28)
     - CHA-0 (2026-04-14)
     - CHA-2563 (2026-03-24)
     - CHA-3037 (2026-08-06)
@@ -21455,13 +21502,10 @@ info:
     - CHA-4993 (2026-08-28)
     - CHA-5081 (2026-09-02)
     - CHA-5082 (2026-09-02)
-    - CHA-5635 (2026-10-09)
-    - CHA-6139 (2026-10-15)
     - CHA-6186 (2026-10-19)
-    - FEEDS-1339 (2026-03-20)
-    - FEEDS-1590 (2026-10-05)
     - FEEDS-1875 (2026-09-09)
     - FEEDS-1972 (2026-10-06)
+    - FEEDS-1996 (2026-11-03)
     - FEEDS-2162 (2026-10-27)
     - FLU-1103 (2026-10-26)
     - FLU-1105 (2026-10-27)
@@ -22311,6 +22355,23 @@ paths:
       description: |
         Gets an import
       operationId: ListImports
+      parameters:
+      - in: query
+        name: limit
+        schema:
+          format: int32
+          maximum: 300
+          minimum: 0
+          type: integer
+          x-stream-index: "001"
+      - in: query
+        name: offset
+        schema:
+          format: int32
+          maximum: 1000
+          minimum: 0
+          type: integer
+          x-stream-index: "002"
       responses:
         "200":
           content:
