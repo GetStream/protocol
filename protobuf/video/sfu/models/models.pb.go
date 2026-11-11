@@ -1284,8 +1284,8 @@ type Participant struct {
 	// relays the top layer untouched and encodes the rest, and can only describe
 	// the relayed one honestly by repeating what the broadcaster announced for it
 	// - the media carries the size, but neither the rate it was encoded against
-	// nor its frame rate. It travels in call_state and with each track_published;
-	// a layer change on a track already published is not re-sent.
+	// nor its frame rate. The transcoder reads it when it opens the track; what it
+	// encodes then follows the frame rate, bitrate and size it measures.
 	AnnouncedTracks []*TrackInfo `protobuf:"bytes,17,rep,name=announced_tracks,json=announcedTracks,proto3" json:"announced_tracks,omitempty"`
 }
 
