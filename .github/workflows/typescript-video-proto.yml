@@ -7,11 +7,54 @@ concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
 
-permissions: {}
+permissions:
+  contents: read
 
 jobs:
   protoc:
     runs-on: ubuntu-latest
     steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      # Rebuilding the generator takes ~12 minutes; only do it when the image itself changes.
+      - name: Check for generator image changes
+        id: image
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if git diff --name-only "$BASE_SHA"...HEAD -- Dockerfile docker_entrypoint.sh install.sh versions.sh tools | grep -q .; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Docker Buildx
+        if: steps.image.outputs.changed == 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build generator image
+        if: steps.image.outputs.changed == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          load: true
+          tags: protobuf-generate:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Use published generator image
+        if: steps.image.outputs.changed != 'true'
+        run: |
+          docker pull ghcr.io/getstream/protobuf-generate:latest
+          docker tag ghcr.io/getstream/protobuf-generate:latest protobuf-generate:ci
+
+      # The entrypoint clones protocol at --branch, so pass the PR branch to compile the PR's protos
+      # (fork branches do not exist here and fall back to main).
       - name: Compile definitions
-        run: docker run -v $(pwd):/local ghcr.io/getstream/protobuf-generate ts /local/ts-sdk
+        env:
+          BRANCH: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.head_ref || 'main' }}
+        run: docker run --rm --user "$(id -u):$(id -g)" -v "$(pwd):/local" protobuf-generate:ci ts /local/ts-sdk "--branch=$BRANCH"

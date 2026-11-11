@@ -38,4 +38,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends yarn && rm -rf 
 
 COPY . /home/
 RUN ./install.sh
+
+RUN useradd --uid 10001 generator
+ENV HOME=/tmp
+USER generator
 ENTRYPOINT ["/home/docker_entrypoint.sh"]
