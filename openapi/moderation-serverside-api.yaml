@@ -300,6 +300,11 @@ components:
     ActionLogResponse:
       nullable: true
       properties:
+        agent_recommendation:
+          $ref: '#/components/schemas/AgentRecommendationResponse'
+          description: Nora's suggestion. Set only on agent_recommendation logs
+          title: Agent recommendation
+          x-stream-index: "013"
         ai_providers:
           items:
             type: string
@@ -313,7 +318,8 @@ components:
           x-stream-index: "002"
         custom:
           additionalProperties: {}
-          description: Additional metadata about the action
+          description: Additional metadata about the action. An agent_recommendation
+            log keeps the suggested action under recommended_action
           title: Custom
           type: object
           x-stream-index: "008"
@@ -329,7 +335,7 @@ components:
           x-stream-index: "007"
         reporter_type:
           description: Classification of who triggered the action (e.g. user, moderator,
-            automod, api_integration)
+            automod, agent_reviewer, api_integration)
           title: Reporter Type
           type: string
           x-stream-index: "006"
@@ -409,6 +415,313 @@ components:
       - tag
       title: ActivityVisibility
       type: string
+    AgentFeedbackResponse:
+      description: One moderator correction of a Nora review
+      properties:
+        agent_review_id:
+          description: Nora review this correction is about
+          title: Agent review ID
+          type: string
+          x-stream-index: "003"
+        content_excerpt:
+          description: Text of the item when the correction was saved
+          title: Content excerpt
+          type: string
+          x-stream-index: "010"
+        created_at:
+          description: When the correction was first saved
+          format: date-time
+          title: Created at
+          type: number
+          x-stream-index: "012"
+        created_by:
+          description: Moderator who submitted the correction
+          title: Created by
+          type: string
+          x-stream-index: "011"
+        entity_type:
+          description: Entity type of the queue item
+          title: Entity type
+          type: string
+          x-stream-index: "009"
+        id:
+          description: Feedback row id
+          title: ID
+          type: string
+          x-stream-index: "001"
+        improvement:
+          description: How similar cases should be judged
+          title: Improvement
+          type: string
+          x-stream-index: "007"
+        item_id:
+          description: Review queue item the correction is about
+          title: Item ID
+          type: string
+          x-stream-index: "002"
+        labels:
+          description: Labels Nora matched on this review
+          items:
+            type: string
+          title: Labels
+          type: array
+          x-stream-index: "008"
+        moderator_action:
+          description: Action the moderator took
+          title: Moderator action
+          type: string
+          x-stream-index: "005"
+        nora_action:
+          description: Policy action Nora recommended
+          enum:
+          - keep
+          - flag
+          - mask
+          - mask_flag
+          - shadow
+          - remove
+          - bounce
+          - bounce_flag
+          - bounce_remove
+          title: Nora action
+          type: string
+          x-stream-index: "004"
+        reason:
+          description: Why the moderator disagreed
+          title: Reason
+          type: string
+          x-stream-index: "006"
+        updated_at:
+          description: When the correction was last saved
+          format: date-time
+          title: Updated at
+          type: number
+          x-stream-index: "013"
+      required:
+      - id
+      - item_id
+      - agent_review_id
+      - nora_action
+      - moderator_action
+      - reason
+      - improvement
+      - labels
+      - entity_type
+      - content_excerpt
+      - created_by
+      - created_at
+      - updated_at
+      title: AgentFeedbackResponse
+      type: object
+    AgentRecommendationPayload:
+      properties:
+        reason:
+          description: Why Nora suggests this action. Stored on the action log, cut
+            to 500 bytes
+          title: Reason
+          type: string
+          x-stream-index: "002"
+        recommended_action:
+          description: Action Nora suggests for the item
+          enum:
+          - keep
+          - flag
+          - mask
+          - mask_flag
+          - shadow
+          - remove
+          - bounce
+          - bounce_flag
+          - bounce_remove
+          - review
+          title: Recommended action
+          type: string
+          x-stream-index: "001"
+      required:
+      - recommended_action
+      - reason
+      type: object
+    AgentRecommendationResponse:
+      properties:
+        reason:
+          description: Why Nora suggested this action
+          title: Reason
+          type: string
+          x-stream-index: "002"
+        recommended_action:
+          description: Action Nora suggested for the item
+          enum:
+          - keep
+          - flag
+          - mask
+          - mask_flag
+          - shadow
+          - remove
+          - bounce
+          - bounce_flag
+          - bounce_remove
+          - review
+          title: Recommended action
+          type: string
+          x-stream-index: "001"
+      required:
+      - recommended_action
+      - reason
+      type: object
+    AgentReviewJudgmentResponse:
+      properties:
+        evidence:
+          description: Quotes from the content that support the verdict
+          items:
+            type: string
+          title: Evidence
+          type: array
+          x-stream-index: "003"
+        explanation:
+          description: Why the agent matched this label
+          title: Explanation
+          type: string
+          x-stream-index: "004"
+        label:
+          description: Moderation label this judgment is about
+          title: Label
+          type: string
+          x-stream-index: "001"
+        verdict:
+          description: The agent's verdict for this label
+          title: Verdict
+          type: string
+          x-stream-index: "002"
+      type: object
+    AgentReviewResponse:
+      properties:
+        agent_session_id:
+          description: Session id of the agent run that produced this review
+          title: Agent session ID
+          type: string
+          x-stream-index: "008"
+        confidence:
+          description: The agent's confidence in its recommended action, from 0 to
+            1
+          format: double
+          title: Confidence
+          type: number
+          x-stream-index: "005"
+        context_incomplete:
+          description: True when the agent did not have the full context it needed
+          title: Context incomplete
+          type: boolean
+          x-stream-index: "006"
+        created_at:
+          description: When this review was recorded
+          format: date-time
+          title: Created at
+          type: number
+          x-stream-index: "010"
+        flag_assessment:
+          description: Whether the flag is supported, a likely false positive, or
+            uncertain
+          enum:
+          - supported
+          - likely_false_positive
+          - uncertain
+          title: Flag assessment
+          type: string
+          x-stream-index: "003"
+        judgments:
+          description: Per-label judgments, with the evidence the agent quoted
+          items:
+            $ref: '#/components/schemas/AgentReviewJudgmentResponse'
+          title: Judgments
+          type: array
+          x-stream-index: "001"
+        model_route:
+          description: Model route that produced this review
+          title: Model route
+          type: string
+          x-stream-index: "007"
+        reason:
+          description: Why Nora chose the recommended action
+          title: Reason
+          type: string
+          x-stream-index: "013"
+        recommended_action:
+          description: Action the agent recommends for the item
+          enum:
+          - keep
+          - flag
+          - mask
+          - mask_flag
+          - shadow
+          - remove
+          - bounce
+          - bounce_flag
+          - bounce_remove
+          - review
+          title: Recommended action
+          type: string
+          x-stream-index: "004"
+        skip_reason:
+          description: Why the review was skipped or failed. Set when status is skipped
+            or failed
+          title: Skip reason
+          type: string
+          x-stream-index: "012"
+        status:
+          description: Lifecycle status of the review
+          enum:
+          - pending
+          - processing
+          - done
+          - failed
+          - skipped
+          title: Status
+          type: string
+          x-stream-index: "011"
+        summary:
+          description: Short summary of the review
+          title: Summary
+          type: string
+          x-stream-index: "002"
+        usage:
+          description: Token usage reported for this review
+          readOnly: true
+          title: Usage
+          type: object
+          x-stream-index: "009"
+      required:
+      - context_incomplete
+      - created_at
+      - status
+      type: object
+    AgentReviewSummaryResponse:
+      properties:
+        confidence:
+          description: Verdict confidence from 0 to 1
+          format: double
+          title: Confidence
+          type: number
+          x-stream-index: "004"
+        flag_assessment:
+          description: Whether the flag matches the content. Set once the review is
+            done
+          title: Flag assessment
+          type: string
+          x-stream-index: "002"
+        recommended_action:
+          description: The action Nora recommends. Set once the review is done
+          title: Recommended action
+          type: string
+          x-stream-index: "003"
+        status:
+          description: pending, processing, done, failed, or skipped
+          title: Status
+          type: string
+          x-stream-index: "001"
+      required:
+      - status
+      - confidence
+      type: object
     AnalyzeImageField:
       properties:
         action:
@@ -3958,6 +4271,14 @@ components:
           title: Filter
           type: object
           x-stream-filter-fields:
+            agent_review_action:
+              operators:
+              - $eq
+              type: string
+            agent_reviewed:
+              operators:
+              - $eq
+              type: boolean
             ai_text_severity:
               operators:
               - $eq
@@ -6318,6 +6639,41 @@ components:
       - action_config
       - duration
       type: object
+    GetAgentReviewStatusResponse:
+      nullable: true
+      properties:
+        applied:
+          description: Actions Nora took in the last 7 days
+          format: int32
+          title: Applied
+          type: integer
+          x-stream-index: "003"
+        duration:
+          type: string
+          x-stream-index: "005.001"
+        escalated:
+          description: Items Nora escalated in the last 7 days
+          format: int32
+          title: Escalated
+          type: integer
+          x-stream-index: "004"
+        last_error:
+          description: Why the latest review failed. Absent unless that review failed
+          title: Last error
+          type: string
+          x-stream-index: "001"
+        reviewed:
+          description: Reviews that finished in the last 7 days
+          format: int32
+          title: Reviewed
+          type: integer
+          x-stream-index: "002"
+      required:
+      - reviewed
+      - applied
+      - escalated
+      - duration
+      type: object
     GetAppealResponse:
       nullable: true
       properties:
@@ -6419,9 +6775,15 @@ components:
     GetReviewQueueItemResponse:
       nullable: true
       properties:
+        agent_review:
+          $ref: '#/components/schemas/AgentReviewResponse'
+          description: Latest agent review of this item. Absent when the item has
+            not been reviewed
+          title: Agent review
+          x-stream-index: "002"
         duration:
           type: string
-          x-stream-index: "002.001"
+          x-stream-index: "003.001"
         item:
           $ref: '#/components/schemas/ReviewQueueItemResponse'
           description: Current state of the review queue item
@@ -7148,6 +7510,30 @@ components:
       required:
       - recommended_action
       - duration
+      type: object
+    ListAgentFeedbackResponse:
+      description: Moderator corrections, newest first
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "003.001"
+        feedback:
+          description: Corrections, newest first
+          items:
+            $ref: '#/components/schemas/AgentFeedbackResponse'
+          title: Feedback
+          type: array
+          x-stream-index: "001"
+        next:
+          description: Cursor for the next page. Absent when this is the last page
+          title: Next
+          type: string
+          x-stream-index: "002"
+      required:
+      - feedback
+      - duration
+      title: ListAgentFeedbackResponse
       type: object
     ListConfigVersionsResponse:
       nullable: true
@@ -11218,6 +11604,14 @@ components:
           title: Filter
           type: object
           x-stream-filter-fields:
+            agent_review_action:
+              operators:
+              - $eq
+              type: string
+            agent_reviewed:
+              operators:
+              - $eq
+              type: boolean
             ai_text_severity:
               operators:
               - $eq
@@ -12115,6 +12509,12 @@ components:
         activity:
           $ref: '#/components/schemas/EnrichedActivity'
           x-stream-index: "019"
+        agent_review:
+          $ref: '#/components/schemas/AgentReviewSummaryResponse'
+          description: 'Nora''s latest review of this item: status, flag assessment,
+            recommended action, and confidence. Absent when the item has no review'
+          title: Agent review
+          x-stream-index: "037"
         ai_text_severity:
           description: AI-determined text severity
           title: AI Text Severity
@@ -12163,7 +12563,7 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "043"
+          x-stream-index: "044"
         created_at:
           description: When the item was created
           format: date-time
@@ -12194,30 +12594,30 @@ components:
           description: Whether the item has been escalated
           title: Escalated
           type: boolean
-          x-stream-index: "037"
+          x-stream-index: "038"
         escalated_at:
           description: When the item was escalated
           format: date-time
           title: Escalated At
           type: number
-          x-stream-index: "040"
+          x-stream-index: "041"
         escalated_by:
           description: ID of the moderator who escalated the item
           title: Escalated By
           type: string
-          x-stream-index: "039"
+          x-stream-index: "040"
         escalation_metadata:
           $ref: '#/components/schemas/EscalationMetadata'
           description: Escalation details including reason, notes, and priority
           title: Escalation Metadata
-          x-stream-index: "038"
+          x-stream-index: "039"
         false_positive_flags:
           description: IDs of the item's flags a moderator marked as false positives
           items:
             type: string
           title: False Positive Flags
           type: array
-          x-stream-index: "041"
+          x-stream-index: "042"
         feeds_v2_activity:
           $ref: '#/components/schemas/EnrichedActivity'
           description: Associated feed activity
@@ -12266,7 +12666,7 @@ components:
             a reviewer reveals them, resolved from the app's per-label media display
             settings
           title: Media Display
-          x-stream-index: "042"
+          x-stream-index: "043"
         message:
           $ref: '#/components/schemas/ChatMessageResponse'
           description: Associated message details
@@ -12926,7 +13326,7 @@ components:
             delete_message, delete_activity, delete_comment, delete_reaction, delete_poll,
             delete_poll_option, delete_poll_answer, ban, custom, unban, restore, delete_user,
             delete_user_messages, unblock, block, shadow_block, unmask, kick_user,
-            end_call, escalate, de_escalate'
+            end_call, escalate, de_escalate, agent_recommendation'
           enum:
           - flag
           - mark_reviewed
@@ -12953,9 +13353,16 @@ components:
           - escalate
           - de_escalate
           - bypass
+          - agent_recommendation
           title: Action Type
           type: string
           x-stream-index: "002"
+        agent_recommendation:
+          $ref: '#/components/schemas/AgentRecommendationPayload'
+          description: Nora's suggested action. Writes an audit log and leaves the
+            item open.
+          title: Agent recommendation
+          x-stream-index: "027"
         appeal_id:
           description: UUID of the appeal to act on (required for reject_appeal, optional
             for other actions)
@@ -13082,10 +13489,10 @@ components:
           x-stream-index: "018"
         user:
           $ref: '#/components/schemas/UserRequest'
-          x-stream-index: "027.002"
+          x-stream-index: "028.002"
         user_id:
           type: string
-          x-stream-index: "027.001"
+          x-stream-index: "028.001"
       required:
       - action_type
       type: object
@@ -13113,6 +13520,144 @@ components:
           x-stream-index: "001"
       required:
       - duration
+      type: object
+    SubmitAgentFeedbackRequest:
+      description: Moderator correction of Nora's review of one queue item
+      nullable: true
+      properties:
+        improvement:
+          description: How similar cases should be judged, up to 2000 characters
+          title: Improvement
+          type: string
+          x-stream-index: "004"
+        item_id:
+          description: Review queue item Nora reviewed
+          title: Item ID
+          type: string
+          x-stream-index: "001"
+        moderator_action:
+          description: Action the moderator took
+          title: Moderator action
+          type: string
+          x-stream-index: "002"
+        reason:
+          description: Why the moderator disagreed, up to 2000 characters
+          title: Reason
+          type: string
+          x-stream-index: "003"
+        user:
+          $ref: '#/components/schemas/UserRequest'
+          x-stream-index: "005.002"
+        user_id:
+          type: string
+          x-stream-index: "005.001"
+      required:
+      - item_id
+      - moderator_action
+      title: SubmitAgentFeedbackRequest
+      type: object
+    SubmitAgentFeedbackResponse:
+      description: The stored moderator correction
+      nullable: true
+      properties:
+        agent_review_id:
+          description: Nora review this correction is about
+          title: Agent review ID
+          type: string
+          x-stream-index: "001.003"
+        content_excerpt:
+          description: Text of the item when the correction was saved
+          title: Content excerpt
+          type: string
+          x-stream-index: "001.010"
+        created_at:
+          description: When the correction was first saved
+          format: date-time
+          title: Created at
+          type: number
+          x-stream-index: "001.012"
+        created_by:
+          description: Moderator who submitted the correction
+          title: Created by
+          type: string
+          x-stream-index: "001.011"
+        duration:
+          type: string
+          x-stream-index: "002.001"
+        entity_type:
+          description: Entity type of the queue item
+          title: Entity type
+          type: string
+          x-stream-index: "001.009"
+        id:
+          description: Feedback row id
+          title: ID
+          type: string
+          x-stream-index: "001.001"
+        improvement:
+          description: How similar cases should be judged
+          title: Improvement
+          type: string
+          x-stream-index: "001.007"
+        item_id:
+          description: Review queue item the correction is about
+          title: Item ID
+          type: string
+          x-stream-index: "001.002"
+        labels:
+          description: Labels Nora matched on this review
+          items:
+            type: string
+          title: Labels
+          type: array
+          x-stream-index: "001.008"
+        moderator_action:
+          description: Action the moderator took
+          title: Moderator action
+          type: string
+          x-stream-index: "001.005"
+        nora_action:
+          description: Policy action Nora recommended
+          enum:
+          - keep
+          - flag
+          - mask
+          - mask_flag
+          - shadow
+          - remove
+          - bounce
+          - bounce_flag
+          - bounce_remove
+          title: Nora action
+          type: string
+          x-stream-index: "001.004"
+        reason:
+          description: Why the moderator disagreed
+          title: Reason
+          type: string
+          x-stream-index: "001.006"
+        updated_at:
+          description: When the correction was last saved
+          format: date-time
+          title: Updated at
+          type: number
+          x-stream-index: "001.013"
+      required:
+      - id
+      - item_id
+      - agent_review_id
+      - nora_action
+      - moderator_action
+      - reason
+      - improvement
+      - labels
+      - entity_type
+      - content_excerpt
+      - created_by
+      - created_at
+      - updated_at
+      - duration
+      title: SubmitAgentFeedbackResponse
       type: object
     SubmitModerationFeedbackItem:
       nullable: true
@@ -15251,9 +15796,10 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v241.6.0
+  version: v241.6.1
   x-stream-breaking-changes:
     go:
+    - AI-1473 (2026-10-20)
     - CHA-3441 (2026-10-08)
     - CHA-5080 (2026-10-16)
     - CHA-5081 (2026-10-16)
@@ -15270,6 +15816,7 @@ info:
     - MOD2-1482 (2026-10-02)
     - MOD2-789 (2026-10-05)
     wire:
+    - AI-1473 (2026-10-20)
     - CHA-0 (2026-04-14)
     - CHA-2563 (2026-03-24)
     - CHA-3037 (2026-08-06)
@@ -15536,6 +16083,115 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Insert moderation action log
+      tags:
+      - product:moderation
+  /api/v2/moderation/agent_feedback:
+    get:
+      description: |
+        List moderator corrections of Nora's reviews for this app, newest first
+      operationId: list_agent_feedback
+      parameters:
+      - in: query
+        name: limit
+        schema:
+          description: How many rows to return. Defaults to 25, at most 50
+          format: int32
+          maximum: 50
+          minimum: 1
+          title: Limit
+          type: integer
+          writeOnly: true
+          x-stream-index: "001"
+      - in: query
+        name: next
+        schema:
+          description: Cursor from the previous page. Rows strictly older than it
+            are returned
+          maxLength: 200
+          title: Next
+          type: string
+          writeOnly: true
+          x-stream-index: "002"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListAgentFeedbackResponse'
+          description: ListAgentFeedbackResponse
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: List agent feedback
+      tags:
+      - product:moderation
+    post:
+      description: |
+        Record a moderator correction when their action overturns Nora's review of a queue item
+      operationId: submit_agent_feedback
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitAgentFeedbackRequest'
+        description: SubmitAgentFeedbackRequest
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmitAgentFeedbackResponse'
+          description: SubmitAgentFeedbackResponse
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Submit agent feedback
+      tags:
+      - product:moderation
+  /api/v2/moderation/agent_review_status:
+    get:
+      description: |
+        Last error and 7-day counts for the app's agent moderator
+      operationId: get_agent_review_status
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetAgentReviewStatusResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get agent review status
       tags:
       - product:moderation
   /api/v2/moderation/analyze:

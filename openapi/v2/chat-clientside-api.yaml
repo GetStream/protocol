@@ -475,6 +475,11 @@ components:
       type: object
     ActionLogResponse:
       properties:
+        agent_recommendation:
+          $ref: '#/components/schemas/AgentRecommendationResponse'
+          description: Nora's suggestion. Set only on agent_recommendation logs
+          title: Agent recommendation
+          x-stream-index: "013"
         ai_providers:
           items:
             type: string
@@ -488,7 +493,8 @@ components:
           x-stream-index: "002"
         custom:
           additionalProperties: {}
-          description: Additional metadata about the action
+          description: Additional metadata about the action. An agent_recommendation
+            log keeps the suggested action under recommended_action
           title: Custom
           type: object
           x-stream-index: "008"
@@ -504,7 +510,7 @@ components:
           x-stream-index: "007"
         reporter_type:
           description: Classification of who triggered the action (e.g. user, moderator,
-            automod, api_integration)
+            automod, agent_reviewer, api_integration)
           title: Reporter Type
           type: string
           x-stream-index: "006"
@@ -633,6 +639,89 @@ components:
       required:
       - duration
       title: AddUserGroupMembersResponse
+      type: object
+    AgentRecommendationPayload:
+      properties:
+        reason:
+          description: Why Nora suggests this action. Stored on the action log, cut
+            to 500 bytes
+          title: Reason
+          type: string
+          x-stream-index: "002"
+        recommended_action:
+          description: Action Nora suggests for the item
+          enum:
+          - keep
+          - flag
+          - mask
+          - mask_flag
+          - shadow
+          - remove
+          - bounce
+          - bounce_flag
+          - bounce_remove
+          - review
+          title: Recommended action
+          type: string
+          x-stream-index: "001"
+      required:
+      - recommended_action
+      - reason
+      type: object
+    AgentRecommendationResponse:
+      properties:
+        reason:
+          description: Why Nora suggested this action
+          title: Reason
+          type: string
+          x-stream-index: "002"
+        recommended_action:
+          description: Action Nora suggested for the item
+          enum:
+          - keep
+          - flag
+          - mask
+          - mask_flag
+          - shadow
+          - remove
+          - bounce
+          - bounce_flag
+          - bounce_remove
+          - review
+          title: Recommended action
+          type: string
+          x-stream-index: "001"
+      required:
+      - recommended_action
+      - reason
+      type: object
+    AgentReviewSummaryResponse:
+      properties:
+        confidence:
+          description: Verdict confidence from 0 to 1
+          format: double
+          title: Confidence
+          type: number
+          x-stream-index: "004"
+        flag_assessment:
+          description: Whether the flag matches the content. Set once the review is
+            done
+          title: Flag assessment
+          type: string
+          x-stream-index: "002"
+        recommended_action:
+          description: The action Nora recommends. Set once the review is done
+          title: Recommended action
+          type: string
+          x-stream-index: "003"
+        status:
+          description: pending, processing, done, failed, or skipped
+          title: Status
+          type: string
+          x-stream-index: "001"
+      required:
+      - status
+      - confidence
       type: object
     AppChannelCountParameters:
       description: 'app_channel_count params: fires when the app creates at least
@@ -5518,6 +5607,14 @@ components:
           title: Filter
           type: object
           x-stream-filter-fields:
+            agent_review_action:
+              operators:
+              - $eq
+              type: string
+            agent_reviewed:
+              operators:
+              - $eq
+              type: boolean
             ai_text_severity:
               operators:
               - $eq
@@ -17267,6 +17364,14 @@ components:
           title: Filter
           type: object
           x-stream-filter-fields:
+            agent_review_action:
+              operators:
+              - $eq
+              type: string
+            agent_reviewed:
+              operators:
+              - $eq
+              type: boolean
             ai_text_severity:
               operators:
               - $eq
@@ -19238,6 +19343,12 @@ components:
         activity:
           $ref: '#/components/schemas/EnrichedActivity'
           x-stream-index: "019"
+        agent_review:
+          $ref: '#/components/schemas/AgentReviewSummaryResponse'
+          description: 'Nora''s latest review of this item: status, flag assessment,
+            recommended action, and confidence. Absent when the item has no review'
+          title: Agent review
+          x-stream-index: "037"
         ai_text_severity:
           description: AI-determined text severity
           title: AI Text Severity
@@ -19286,7 +19397,7 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "043"
+          x-stream-index: "044"
         created_at:
           description: When the item was created
           format: date-time
@@ -19317,30 +19428,30 @@ components:
           description: Whether the item has been escalated
           title: Escalated
           type: boolean
-          x-stream-index: "037"
+          x-stream-index: "038"
         escalated_at:
           description: When the item was escalated
           format: date-time
           title: Escalated At
           type: number
-          x-stream-index: "040"
+          x-stream-index: "041"
         escalated_by:
           description: ID of the moderator who escalated the item
           title: Escalated By
           type: string
-          x-stream-index: "039"
+          x-stream-index: "040"
         escalation_metadata:
           $ref: '#/components/schemas/EscalationMetadata'
           description: Escalation details including reason, notes, and priority
           title: Escalation Metadata
-          x-stream-index: "038"
+          x-stream-index: "039"
         false_positive_flags:
           description: IDs of the item's flags a moderator marked as false positives
           items:
             type: string
           title: False Positive Flags
           type: array
-          x-stream-index: "041"
+          x-stream-index: "042"
         feeds_v2_activity:
           $ref: '#/components/schemas/EnrichedActivity'
           description: Associated feed activity
@@ -19389,7 +19500,7 @@ components:
             a reviewer reveals them, resolved from the app's per-label media display
             settings
           title: Media Display
-          x-stream-index: "042"
+          x-stream-index: "043"
         message:
           $ref: '#/components/schemas/ChatMessageResponse'
           description: Associated message details
@@ -21846,7 +21957,7 @@ components:
             delete_message, delete_activity, delete_comment, delete_reaction, delete_poll,
             delete_poll_option, delete_poll_answer, ban, custom, unban, restore, delete_user,
             delete_user_messages, unblock, block, shadow_block, unmask, kick_user,
-            end_call, escalate, de_escalate'
+            end_call, escalate, de_escalate, agent_recommendation'
           enum:
           - flag
           - mark_reviewed
@@ -21873,9 +21984,16 @@ components:
           - escalate
           - de_escalate
           - bypass
+          - agent_recommendation
           title: Action Type
           type: string
           x-stream-index: "002"
+        agent_recommendation:
+          $ref: '#/components/schemas/AgentRecommendationPayload'
+          description: Nora's suggested action. Writes an audit log and leaves the
+            item open.
+          title: Agent recommendation
+          x-stream-index: "027"
         appeal_id:
           description: UUID of the appeal to act on (required for reject_appeal, optional
             for other actions)
@@ -26290,9 +26408,10 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v241.6.0
+  version: v241.6.1
   x-stream-breaking-changes:
     go:
+    - AI-1473 (2026-10-20)
     - CHA-3441 (2026-10-08)
     - CHA-5080 (2026-10-16)
     - CHA-5081 (2026-10-16)
@@ -26309,6 +26428,7 @@ info:
     - MOD2-1482 (2026-10-02)
     - MOD2-789 (2026-10-05)
     wire:
+    - AI-1473 (2026-10-20)
     - AI-1616 (2026-10-27)
     - AI-1617 (2026-10-22)
     - AI-2210 (2026-10-28)
