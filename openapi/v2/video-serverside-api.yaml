@@ -370,6 +370,96 @@ components:
       - duration
       title: AddUserGroupMembersResponse
       type: object
+    AgentReviewSettingsPayload:
+      description: Settings for the moderation agent reviewer, which reviews moderation
+        outcomes and proposes or applies an action.
+      properties:
+        agent_config_id:
+          description: The app's Accelerate agent config with role agent_moderator.
+          title: Agent config ID
+          type: string
+          x-stream-index: "005"
+        auto_act_min_confidence:
+          description: Minimum verdict confidence (0-1) for auto_act to apply an action.
+            Defaults to 0.9.
+          format: double
+          title: Auto act min confidence
+          type: number
+          x-stream-index: "008"
+        context_days:
+          description: Days of the user's moderation history given to the agent. Defaults
+            to 7, at most 30.
+          format: int32
+          title: Context days
+          type: integer
+          x-stream-index: "006"
+        context_messages:
+          description: 'Surrounding items given to the agent on each side of the reviewed
+            one: chat messages, Feeds comments, or the author''s other Feeds activities.
+            Defaults to 20, at most 100.'
+          format: int32
+          title: Context messages
+          type: integer
+          x-stream-index: "007"
+        enabled:
+          description: Turns the agent reviewer on. It only runs when agent_config_id
+            is set too.
+          title: Enabled
+          type: boolean
+          x-stream-index: "001"
+        max_concurrency:
+          description: Maximum reviews in flight for the app. Defaults to 10, at most
+            100.
+          format: int32
+          title: Max concurrency
+          type: integer
+          x-stream-index: "009"
+        mode:
+          description: approve_first records the verdict for a moderator to approve;
+            auto_act applies it when its confidence reaches auto_act_min_confidence;
+            export_only changes nothing on the review queue and only exports each
+            verdict for evaluation. Defaults to approve_first.
+          enum:
+          - approve_first
+          - auto_act
+          - export_only
+          title: Mode
+          type: string
+          x-stream-index: "002"
+        review_images:
+          description: Sends the images of the content under review to the agent,
+            so it can judge them alongside the text. The agent config must run on
+            a model that sees images. Defaults to false.
+          title: Review images
+          type: boolean
+          x-stream-index: "010"
+        rule_ids:
+          description: 'Moderation rule IDs: only items flagged by one of these rules
+            are reviewed, and items flagged only by other sources are left to moderators.
+            Empty reviews every flagged item. Only used with scope flagged; at most
+            100.'
+          items:
+            type: string
+          title: Rule IDs
+          type: array
+          x-stream-index: "011"
+        sample_rate:
+          description: Fraction (0-1) of checks reviewed with scope all_checks. Defaults
+            to 1.
+          format: double
+          title: Sample rate
+          type: number
+          x-stream-index: "004"
+        scope:
+          description: 'Which checks are reviewed: flagged ones only, or all_checks
+            sampled by sample_rate. Defaults to flagged.'
+          enum:
+          - flagged
+          - all_checks
+          title: Scope
+          type: string
+          x-stream-index: "003"
+      type: object
     AppResponseFields:
       description: A type representing the app settings.
       properties:
@@ -379,6 +469,12 @@ components:
             type: integer
           type: object
           x-stream-index: "063"
+        agent_review:
+          $ref: '#/components/schemas/AgentReviewSettingsPayload'
+          description: The app's own moderation agent reviewer settings, as Update
+            App writes them. Fields left unset inherit the organization value.
+          title: Agent review
+          x-stream-index: "069"
         allow_multi_user_devices:
           type: boolean
           x-stream-index: "018"
@@ -439,6 +535,14 @@ components:
         disable_permissions_checks:
           type: boolean
           x-stream-index: "014"
+        effective_agent_review:
+          $ref: '#/components/schemas/AgentReviewSettingsPayload'
+          description: 'The agent reviewer settings the app runs with: the organization
+            settings overlaid with the app''s own, with defaults applied. enabled
+            is true only when an agent_config_id is set too. Omitted when neither
+            the app nor its organization uses the agent reviewer.'
+          title: Effective agent review
+          x-stream-index: "070"
         enforce_unique_usernames:
           type: string
           x-stream-index: "027"
@@ -18825,6 +18929,9 @@ components:
             type: integer
           type: object
           x-stream-index: "001.057"
+        agent_review:
+          $ref: '#/components/schemas/AgentReviewSettingsPayload'
+          x-stream-index: "003"
         allowed_flag_reasons:
           items:
             type: string
@@ -21472,9 +21579,10 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v241.6.0
+  version: v241.6.1
   x-stream-breaking-changes:
     go:
+    - AI-1473 (2026-10-20)
     - CHA-3441 (2026-10-08)
     - CHA-5080 (2026-10-16)
     - CHA-5081 (2026-10-16)
@@ -21491,6 +21599,7 @@ info:
     - MOD2-1482 (2026-10-02)
     - MOD2-789 (2026-10-05)
     wire:
+    - AI-1473 (2026-10-20)
     - CHA-0 (2026-04-14)
     - CHA-2563 (2026-03-24)
     - CHA-3037 (2026-08-06)
