@@ -294,6 +294,11 @@ components:
       type: object
     ActionLogResponse:
       properties:
+        agent_recommendation:
+          $ref: '#/components/schemas/AgentRecommendationResponse'
+          description: Nora's suggestion. Set only on agent_recommendation logs
+          title: Agent recommendation
+          x-stream-index: "013"
         ai_providers:
           items:
             type: string
@@ -307,7 +312,8 @@ components:
           x-stream-index: "002"
         custom:
           additionalProperties: {}
-          description: Additional metadata about the action
+          description: Additional metadata about the action. An agent_recommendation
+            log keeps the suggested action under recommended_action
           title: Custom
           type: object
           x-stream-index: "008"
@@ -323,7 +329,7 @@ components:
           x-stream-index: "007"
         reporter_type:
           description: Classification of who triggered the action (e.g. user, moderator,
-            automod, api_integration)
+            automod, agent_reviewer, api_integration)
           title: Reporter Type
           type: string
           x-stream-index: "006"
@@ -411,6 +417,89 @@ components:
       - tag
       title: ActivityVisibility
       type: string
+    AgentRecommendationPayload:
+      properties:
+        reason:
+          description: Why Nora suggests this action. Stored on the action log, cut
+            to 500 bytes
+          title: Reason
+          type: string
+          x-stream-index: "002"
+        recommended_action:
+          description: Action Nora suggests for the item
+          enum:
+          - keep
+          - flag
+          - mask
+          - mask_flag
+          - shadow
+          - remove
+          - bounce
+          - bounce_flag
+          - bounce_remove
+          - review
+          title: Recommended action
+          type: string
+          x-stream-index: "001"
+      required:
+      - recommended_action
+      - reason
+      type: object
+    AgentRecommendationResponse:
+      properties:
+        reason:
+          description: Why Nora suggested this action
+          title: Reason
+          type: string
+          x-stream-index: "002"
+        recommended_action:
+          description: Action Nora suggested for the item
+          enum:
+          - keep
+          - flag
+          - mask
+          - mask_flag
+          - shadow
+          - remove
+          - bounce
+          - bounce_flag
+          - bounce_remove
+          - review
+          title: Recommended action
+          type: string
+          x-stream-index: "001"
+      required:
+      - recommended_action
+      - reason
+      type: object
+    AgentReviewSummaryResponse:
+      properties:
+        confidence:
+          description: Verdict confidence from 0 to 1
+          format: double
+          title: Confidence
+          type: number
+          x-stream-index: "004"
+        flag_assessment:
+          description: Whether the flag matches the content. Set once the review is
+            done
+          title: Flag assessment
+          type: string
+          x-stream-index: "002"
+        recommended_action:
+          description: The action Nora recommends. Set once the review is done
+          title: Recommended action
+          type: string
+          x-stream-index: "003"
+        status:
+          description: pending, processing, done, failed, or skipped
+          title: Status
+          type: string
+          x-stream-index: "001"
+      required:
+      - status
+      - confidence
+      type: object
     AppChannelCountParameters:
       description: 'app_channel_count params: fires when the app creates at least
         threshold distinct channels within time_window'
@@ -3044,6 +3133,404 @@ components:
         property_key:
           type: string
           x-stream-index: "001"
+      type: object
+    CountReviewQueueRequest:
+      nullable: true
+      properties:
+        filter:
+          additionalProperties: {}
+          description: Filter conditions for review queue items, the same filter Query
+            Review Queue takes. The count covers exactly the items that query lists
+            for this filter, ignoring sort, paging and item locks.
+          title: Filter
+          type: object
+          x-stream-filter-fields:
+            agent_review_action:
+              operators:
+              - $eq
+              type: string
+            agent_reviewed:
+              operators:
+              - $eq
+              type: boolean
+            ai_text_severity:
+              operators:
+              - $eq
+              type: string
+            appeal:
+              operators:
+              - $eq
+              type: boolean
+            appeal_id:
+              operators:
+              - $eq
+              type: string
+            appeal_status:
+              operators:
+              - $eq
+              type: string
+            archived_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: date
+            bounce_count:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: number
+            category:
+              operators:
+              - $eq
+              - $in
+              type: string
+            channel_cid:
+              operators:
+              - $eq
+              type: string
+            channel_id:
+              operators:
+              - $eq
+              type: string
+            completed_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: date
+            confidence_score:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: number
+            config_key:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
+            content_text:
+              operators:
+              - $eq
+              - $in
+              - $q
+              type: string
+            country_code:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
+            created_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: date
+            custom:
+              operators:
+              - $autocomplete
+              - $contains
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $q
+              type: object
+            date_range:
+              operators:
+              - $eq
+              type: string
+            entity_creator_id:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
+            entity_creator_name:
+              operators:
+              - $contains
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
+            entity_id:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
+            entity_type:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
+            escalated:
+              operators:
+              - $eq
+              type: boolean
+            escalated_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: date
+            escalated_by:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
+            escalation_priority:
+              operators:
+              - $eq
+              type: string
+            escalation_reason:
+              operators:
+              - $eq
+              type: string
+            flagged_user_id:
+              operators:
+              - $eq
+              type: string
+            flags_count:
+              operators:
+              - $eq
+              type: number
+            has_audio:
+              operators:
+              - $eq
+              type: boolean
+            has_false_positive:
+              operators:
+              - $eq
+              type: boolean
+            has_image:
+              operators:
+              - $eq
+              type: boolean
+            has_text:
+              operators:
+              - $eq
+              type: boolean
+            has_video:
+              operators:
+              - $eq
+              type: boolean
+            id:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
+            label:
+              operators:
+              - $eq
+              - $in
+              type: string
+            language:
+              operators:
+              - $contains
+              - $eq
+              - $in
+              type: string
+            latest_moderator_action:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
+            queue_type:
+              operators:
+              - $eq
+              - $in
+              type: string
+            recommended_action:
+              operators:
+              - $eq
+              - $in
+              type: string
+            reporter_id:
+              operators:
+              - $eq
+              - $in
+              type: string
+            reporter_type:
+              operators:
+              - $eq
+              - $in
+              type: string
+            reviewed:
+              operators:
+              - $eq
+              type: boolean
+            reviewed_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: date
+            severity:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: number
+            status:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
+            teams:
+              operators:
+              - $contains
+              - $eq
+              - $in
+              type: string
+            type:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
+            updated_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: date
+            user_report_reason:
+              operators:
+              - $eq
+              - $in
+              type: string
+          x-stream-index: "001"
+      type: object
+    CountReviewQueueResponse:
+      nullable: true
+      properties:
+        capped:
+          description: Whether more items match than are counted exactly (50,000),
+            so total is a lower bound
+          title: Capped
+          type: boolean
+          x-stream-index: "002"
+        computed_at:
+          description: When the count was computed. Counts are refreshed in the background
+            as the review queue changes.
+          format: date-time
+          title: Computed At
+          type: number
+          x-stream-index: "004"
+        duration:
+          type: string
+          x-stream-index: "005.001"
+        pending:
+          description: Whether the count is missing or out of date because the queue
+            changed since it was computed. A later request may return a fresher count.
+          title: Pending
+          type: boolean
+          x-stream-index: "003"
+        total:
+          description: Number of review queue items matching the filter. When capped
+            is true, at least this many items match.
+          format: int64
+          title: Total
+          type: integer
+          x-stream-index: "001"
+      required:
+      - total
+      - capped
+      - pending
+      - duration
       type: object
     CreateQueueRequest:
       nullable: true
@@ -6215,10 +6702,10 @@ components:
         created_at:
           format: date-time
           type: number
-          x-stream-index: "009"
+          x-stream-index: "011"
         created_by:
           type: string
-          x-stream-index: "008"
+          x-stream-index: "010"
         description:
           type: string
           x-stream-index: "006"
@@ -6233,6 +6720,12 @@ components:
           format: int64
           type: integer
           x-stream-index: "007"
+        item_count_capped:
+          type: boolean
+          x-stream-index: "009"
+        item_count_pending:
+          type: boolean
+          x-stream-index: "008"
         name:
           type: string
           x-stream-index: "002"
@@ -6248,7 +6741,7 @@ components:
         updated_at:
           format: date-time
           type: number
-          x-stream-index: "010"
+          x-stream-index: "012"
       required:
       - id
       - name
@@ -6257,6 +6750,8 @@ components:
       - sort
       - description
       - item_count
+      - item_count_pending
+      - item_count_capped
       - created_by
       - created_at
       - updated_at
@@ -7094,6 +7589,14 @@ components:
           title: Filter
           type: object
           x-stream-filter-fields:
+            agent_review_action:
+              operators:
+              - $eq
+              type: string
+            agent_reviewed:
+              operators:
+              - $eq
+              type: boolean
             ai_text_severity:
               operators:
               - $eq
@@ -7921,6 +8424,12 @@ components:
         activity:
           $ref: '#/components/schemas/EnrichedActivity'
           x-stream-index: "019"
+        agent_review:
+          $ref: '#/components/schemas/AgentReviewSummaryResponse'
+          description: 'Nora''s latest review of this item: status, flag assessment,
+            recommended action, and confidence. Absent when the item has no review'
+          title: Agent review
+          x-stream-index: "037"
         ai_text_severity:
           description: AI-determined text severity
           title: AI Text Severity
@@ -7969,7 +8478,7 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "043"
+          x-stream-index: "044"
         created_at:
           description: When the item was created
           format: date-time
@@ -8000,30 +8509,30 @@ components:
           description: Whether the item has been escalated
           title: Escalated
           type: boolean
-          x-stream-index: "037"
+          x-stream-index: "038"
         escalated_at:
           description: When the item was escalated
           format: date-time
           title: Escalated At
           type: number
-          x-stream-index: "040"
+          x-stream-index: "041"
         escalated_by:
           description: ID of the moderator who escalated the item
           title: Escalated By
           type: string
-          x-stream-index: "039"
+          x-stream-index: "040"
         escalation_metadata:
           $ref: '#/components/schemas/EscalationMetadata'
           description: Escalation details including reason, notes, and priority
           title: Escalation Metadata
-          x-stream-index: "038"
+          x-stream-index: "039"
         false_positive_flags:
           description: IDs of the item's flags a moderator marked as false positives
           items:
             type: string
           title: False Positive Flags
           type: array
-          x-stream-index: "041"
+          x-stream-index: "042"
         feeds_v2_activity:
           $ref: '#/components/schemas/EnrichedActivity'
           description: Associated feed activity
@@ -8072,7 +8581,7 @@ components:
             a reviewer reveals them, resolved from the app's per-label media display
             settings
           title: Media Display
-          x-stream-index: "042"
+          x-stream-index: "043"
         message:
           $ref: '#/components/schemas/ChatMessageResponse'
           description: Associated message details
@@ -8630,7 +9139,7 @@ components:
             delete_message, delete_activity, delete_comment, delete_reaction, delete_poll,
             delete_poll_option, delete_poll_answer, ban, custom, unban, restore, delete_user,
             delete_user_messages, unblock, block, shadow_block, unmask, kick_user,
-            end_call, escalate, de_escalate'
+            end_call, escalate, de_escalate, agent_recommendation'
           enum:
           - flag
           - mark_reviewed
@@ -8657,9 +9166,16 @@ components:
           - escalate
           - de_escalate
           - bypass
+          - agent_recommendation
           title: Action Type
           type: string
           x-stream-index: "002"
+        agent_recommendation:
+          $ref: '#/components/schemas/AgentRecommendationPayload'
+          description: Nora's suggested action. Writes an audit log and leaves the
+            item open.
+          title: Agent recommendation
+          x-stream-index: "027"
         appeal_id:
           description: UUID of the appeal to act on (required for reject_appeal, optional
             for other actions)
@@ -10367,9 +10883,10 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v241.3.0
+  version: v241.6.1
   x-stream-breaking-changes:
     go:
+    - AI-1473 (2026-10-20)
     - CHA-3441 (2026-10-08)
     - CHA-5080 (2026-10-16)
     - CHA-5081 (2026-10-16)
@@ -10386,6 +10903,7 @@ info:
     - MOD2-1482 (2026-10-02)
     - MOD2-789 (2026-10-05)
     wire:
+    - AI-1473 (2026-10-20)
     - AI-1616 (2026-10-27)
     - AI-1617 (2026-10-22)
     - AI-2210 (2026-10-28)
@@ -11422,6 +11940,39 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Query review queue items
+      tags:
+      - product:moderation
+  /api/v2/moderation/review_queue/count:
+    post:
+      description: |
+        Count the review queue items matching a filter, so a moderation dashboard can show a total for a queue or view. Counts are kept up to date in the background while they are being requested.
+      operationId: count_review_queue
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CountReviewQueueRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountReviewQueueResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Count review queue items
       tags:
       - product:moderation
   /api/v2/moderation/submit_action:
