@@ -4673,14 +4673,19 @@ components:
           description: Blend mode settings. Required when mode is 'blend'
           title: Blend
           x-stream-index: "004"
+        diversify:
+          $ref: '#/components/schemas/DiversifyArrangeConfig'
+          description: Diversify mode settings. Required when mode is 'diversify'
+          title: Diversify
+          x-stream-index: "005"
         key:
           description: 'Activity field that defines a source. One of: type, user_id'
           title: Key
           type: string
           x-stream-index: "002"
         mode:
-          description: Arrangement mode. Currently only 'blend' is supported; 'diversify'
-            and 'slot' are reserved
+          description: Arrangement mode. 'blend' and 'diversify' are supported; 'slot'
+            is reserved
           title: Mode
           type: string
           x-stream-index: "001"
@@ -7500,6 +7505,8 @@ components:
       x-stream-ws-base-event-name: VideoEvent
     CallCustomPropertyParameters:
       properties:
+        expected_value:
+          x-stream-index: "003"
         operator:
           type: string
           x-stream-index: "002"
@@ -16616,6 +16623,8 @@ components:
       type: object
     ContentCustomPropertyCountParameters:
       properties:
+        expected_value:
+          x-stream-index: "003"
         operator:
           type: string
           x-stream-index: "002"
@@ -16632,6 +16641,8 @@ components:
       type: object
     ContentCustomPropertyParameters:
       properties:
+        expected_value:
+          x-stream-index: "003"
         operator:
           type: string
           x-stream-index: "002"
@@ -20851,6 +20862,43 @@ components:
       - created_at
       - user_id
       title: DeviceResponse
+      type: object
+    DiversifyArrangeConfig:
+      properties:
+        decay:
+          description: 'Decay strategy: per-repeat score multiplier, greater than
+            0 and less than 1. Defaults to 0.5'
+          format: double
+          title: Decay
+          type: number
+          x-stream-index: "004"
+        floor:
+          description: 'Decay strategy: the lowest multiplier a repeated key can reach,
+            at least 0 and less than 1. Defaults to 0.25'
+          format: double
+          title: Floor
+          type: number
+          x-stream-index: "005"
+        max:
+          description: 'Cap strategy: the most items of one key value allowed in any
+            window of consecutive slots. At least 1'
+          format: int32
+          title: Max
+          type: integer
+          x-stream-index: "002"
+        strategy:
+          description: 'Diversify strategy: ''cap'' (default) or ''decay'''
+          title: Strategy
+          type: string
+          x-stream-index: "001"
+        window:
+          description: 'Cap strategy: window size in slots, greater than max and at
+            most 100. Defaults to max + 1'
+          format: int32
+          title: Window
+          type: integer
+          x-stream-index: "003"
+      title: Diversify Arrange Configuration
       type: object
     DraftPayloadResponse:
       description: Contains the draft message content
@@ -28739,6 +28787,11 @@ components:
             type: string
           type: array
           x-stream-index: "003"
+        severities:
+          items:
+            type: string
+          type: array
+          x-stream-index: "005"
         severity:
           type: string
           x-stream-index: "004"
@@ -36185,6 +36238,11 @@ components:
         label_operator:
           type: string
           x-stream-index: "002"
+        severities:
+          items:
+            type: string
+          type: array
+          x-stream-index: "004"
         severity:
           type: string
           x-stream-index: "003"
@@ -53828,7 +53886,7 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "005"
+          x-stream-index: "006"
         contains_url:
           type: boolean
           x-stream-index: "003"
@@ -53839,22 +53897,27 @@ components:
           x-stream-index: "001"
         label_operator:
           type: string
-          x-stream-index: "006"
+          x-stream-index: "007"
         llm_harm_labels:
           additionalProperties:
             type: string
           type: object
           x-stream-index: "002"
+        severities:
+          items:
+            type: string
+          type: array
+          x-stream-index: "005"
         severity:
           type: string
           x-stream-index: "004"
         text_length:
           format: int32
           type: integer
-          x-stream-index: "007"
+          x-stream-index: "008"
         text_length_operator:
           type: string
-          x-stream-index: "008"
+          x-stream-index: "009"
       type: object
     TextRuleParameters:
       properties:
@@ -53862,7 +53925,7 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "007"
+          x-stream-index: "008"
         contains_url:
           type: boolean
           x-stream-index: "005"
@@ -53879,12 +53942,17 @@ components:
         semantic_filter_min_threshold:
           format: float
           type: number
-          x-stream-index: "009"
+          x-stream-index: "010"
         semantic_filter_names:
           items:
             type: string
           type: array
-          x-stream-index: "008"
+          x-stream-index: "009"
+        severities:
+          items:
+            type: string
+          type: array
+          x-stream-index: "007"
         severity:
           type: string
           x-stream-index: "006"
@@ -60165,6 +60233,8 @@ components:
       type: object
     UserCustomPropertyParameters:
       properties:
+        expected_value:
+          x-stream-index: "003"
         operator:
           type: string
           x-stream-index: "002"
@@ -62639,7 +62709,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v241.6.1
+  version: v241.7.0
   x-stream-breaking-changes:
     go:
     - AI-1473 (2026-10-20)
@@ -63393,7 +63463,7 @@ paths:
       - product:chat
     get:
       description: |
-        Returns a channel by its CID without creating it. Responds with 404 when the channel does not exist, so it doubles as an existence check. Pass state=true to also load messages, read state and watchers, and the messages_id_* parameters to page those messages by message ID.
+        Returns a channel by its CID without creating it. Responds with 404 when the channel does not exist, so it doubles as an existence check. Pass state=true to also load messages, read state and watchers, and the messages_id_* parameters to page those messages by message ID. Server-side requests can set include_soft_deleted_channel to read a soft-deleted channel and the messages its deletion hid; members are not returned for a deleted channel.
       operationId: GetChannel
       parameters:
       - in: path
@@ -63466,11 +63536,16 @@ paths:
           type: string
           x-stream-index: "010"
       - in: query
+        name: include_soft_deleted_channel
+        schema:
+          type: boolean
+          x-stream-index: "011"
+      - in: query
         name: user_id
         schema:
           type: string
           writeOnly: true
-          x-stream-index: "012"
+          x-stream-index: "013"
       responses:
         "200":
           content:
