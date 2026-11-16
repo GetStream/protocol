@@ -4673,14 +4673,19 @@ components:
           description: Blend mode settings. Required when mode is 'blend'
           title: Blend
           x-stream-index: "004"
+        diversify:
+          $ref: '#/components/schemas/DiversifyArrangeConfig'
+          description: Diversify mode settings. Required when mode is 'diversify'
+          title: Diversify
+          x-stream-index: "005"
         key:
           description: 'Activity field that defines a source. One of: type, user_id'
           title: Key
           type: string
           x-stream-index: "002"
         mode:
-          description: Arrangement mode. Currently only 'blend' is supported; 'diversify'
-            and 'slot' are reserved
+          description: Arrangement mode. 'blend' and 'diversify' are supported; 'slot'
+            is reserved
           title: Mode
           type: string
           x-stream-index: "001"
@@ -5281,11 +5286,38 @@ components:
           title: Type
           type: string
           x-stream-index: "001"
+        voice_transcript:
+          $ref: '#/components/schemas/AttachmentTranscriptResponse'
+          description: Speech-to-text transcript of an audio attachment, set by the
+            server when voice transcription is enabled
+          title: Voice transcript
+          x-stream-index: "023"
       required:
       - custom
       title: Attachment
       type: object
       x-stream-docs-page-id: file_uploads
+    AttachmentTranscriptResponse:
+      properties:
+        error:
+          description: 'Why the recording could not be transcribed: unsupported_format,
+            too_large, blocked_url, fetch_failed or invalid_response'
+          title: Error
+          type: string
+          x-stream-index: "003"
+        languages:
+          description: Languages detected in the recording
+          items:
+            $ref: '#/components/schemas/TranscriptLanguageResponse'
+          title: Languages
+          type: array
+          x-stream-index: "002"
+        text:
+          description: Transcribed text of the recording
+          title: Text
+          type: string
+          x-stream-index: "001"
+      type: object
     Audience:
       properties:
         avg_concurrent_viewers:
@@ -7500,6 +7532,8 @@ components:
       x-stream-ws-base-event-name: VideoEvent
     CallCustomPropertyParameters:
       properties:
+        expected_value:
+          x-stream-index: "003"
         operator:
           type: string
           x-stream-index: "002"
@@ -11361,6 +11395,9 @@ components:
         user_message_reminders:
           type: boolean
           x-stream-index: "001.018"
+        voice_transcription:
+          type: boolean
+          x-stream-index: "001.035"
       required:
       - name
       - typing_events
@@ -11387,6 +11424,7 @@ components:
       - automod
       - automod_behavior
       - skip_last_msg_update_for_system_msgs
+      - voice_transcription
       - created_at
       - updated_at
       - commands
@@ -11480,6 +11518,11 @@ components:
           title: User message reminders
           type: boolean
           x-stream-index: "014"
+        voice_transcription:
+          description: Enables or disables transcription of voice recordings
+          title: Voice transcription
+          type: boolean
+          x-stream-index: "017"
       type: object
     ChannelConfigWithInfo:
       properties:
@@ -11650,6 +11693,9 @@ components:
         user_message_reminders:
           type: boolean
           x-stream-index: 001.002.018
+        voice_transcription:
+          type: boolean
+          x-stream-index: 001.002.035
       required:
       - created_at
       - updated_at
@@ -11678,6 +11724,7 @@ components:
       - automod
       - automod_behavior
       - skip_last_msg_update_for_system_msgs
+      - voice_transcription
       - commands
       type: object
     ChannelContextResponse:
@@ -13671,6 +13718,9 @@ components:
         user_message_reminders:
           type: boolean
           x-stream-index: 003.002.018
+        voice_transcription:
+          type: boolean
+          x-stream-index: 003.002.035
       required:
       - permissions
       - grants
@@ -13701,6 +13751,7 @@ components:
       - automod
       - automod_behavior
       - skip_last_msg_update_for_system_msgs
+      - voice_transcription
       - commands
       type: object
     ChannelTypeRuleResponse:
@@ -16413,6 +16464,11 @@ components:
           title: User message reminders
           type: boolean
           x-stream-index: "012"
+        voice_transcription:
+          description: Enable/disable transcription of voice recordings in this channel
+          title: Voice transcription
+          type: boolean
+          x-stream-index: "017"
       title: ConfigOverridesRequest
       type: object
     ConfigResponse:
@@ -16616,6 +16672,8 @@ components:
       type: object
     ContentCustomPropertyCountParameters:
       properties:
+        expected_value:
+          x-stream-index: "003"
         operator:
           type: string
           x-stream-index: "002"
@@ -16632,6 +16690,8 @@ components:
       type: object
     ContentCustomPropertyParameters:
       properties:
+        expected_value:
+          x-stream-index: "003"
         operator:
           type: string
           x-stream-index: "002"
@@ -17566,6 +17626,11 @@ components:
         user_message_reminders:
           type: boolean
           x-stream-index: "018"
+        voice_transcription:
+          description: Transcribe voice recording attachments.
+          title: Voice transcription
+          type: boolean
+          x-stream-index: "038"
       required:
       - name
       - max_message_length
@@ -17720,6 +17785,9 @@ components:
         user_message_reminders:
           type: boolean
           x-stream-index: 001.001.018
+        voice_transcription:
+          type: boolean
+          x-stream-index: 001.001.035
       required:
       - name
       - typing_events
@@ -17746,6 +17814,7 @@ components:
       - automod
       - automod_behavior
       - skip_last_msg_update_for_system_msgs
+      - voice_transcription
       - created_at
       - updated_at
       - commands
@@ -20851,6 +20920,43 @@ components:
       - created_at
       - user_id
       title: DeviceResponse
+      type: object
+    DiversifyArrangeConfig:
+      properties:
+        decay:
+          description: 'Decay strategy: per-repeat score multiplier, greater than
+            0 and less than 1. Defaults to 0.5'
+          format: double
+          title: Decay
+          type: number
+          x-stream-index: "004"
+        floor:
+          description: 'Decay strategy: the lowest multiplier a repeated key can reach,
+            at least 0 and less than 1. Defaults to 0.25'
+          format: double
+          title: Floor
+          type: number
+          x-stream-index: "005"
+        max:
+          description: 'Cap strategy: the most items of one key value allowed in any
+            window of consecutive slots. At least 1'
+          format: int32
+          title: Max
+          type: integer
+          x-stream-index: "002"
+        strategy:
+          description: 'Diversify strategy: ''cap'' (default) or ''decay'''
+          title: Strategy
+          type: string
+          x-stream-index: "001"
+        window:
+          description: 'Cap strategy: window size in slots, greater than max and at
+            most 100. Defaults to max + 1'
+          format: int32
+          title: Window
+          type: integer
+          x-stream-index: "003"
+      title: Diversify Arrange Configuration
       type: object
     DraftPayloadResponse:
       description: Contains the draft message content
@@ -26418,6 +26524,9 @@ components:
         user_message_reminders:
           type: boolean
           x-stream-index: 003.002.018
+        voice_transcription:
+          type: boolean
+          x-stream-index: 003.002.035
       required:
       - permissions
       - grants
@@ -26448,6 +26557,7 @@ components:
       - automod
       - automod_behavior
       - skip_last_msg_update_for_system_msgs
+      - voice_transcription
       - commands
       - duration
       title: Response
@@ -27370,6 +27480,9 @@ components:
           title: Type
           type: string
           x-stream-index: "001.001"
+        voice_transcript:
+          $ref: '#/components/schemas/AttachmentTranscriptResponse'
+          x-stream-index: "001.023"
       required:
       - custom
       - duration
@@ -28739,6 +28852,11 @@ components:
             type: string
           type: array
           x-stream-index: "003"
+        severities:
+          items:
+            type: string
+          type: array
+          x-stream-index: "005"
         severity:
           type: string
           x-stream-index: "004"
@@ -36185,6 +36303,11 @@ components:
         label_operator:
           type: string
           x-stream-index: "002"
+        severities:
+          items:
+            type: string
+          type: array
+          x-stream-index: "004"
         severity:
           type: string
           x-stream-index: "003"
@@ -53828,7 +53951,7 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "005"
+          x-stream-index: "006"
         contains_url:
           type: boolean
           x-stream-index: "003"
@@ -53839,22 +53962,27 @@ components:
           x-stream-index: "001"
         label_operator:
           type: string
-          x-stream-index: "006"
+          x-stream-index: "007"
         llm_harm_labels:
           additionalProperties:
             type: string
           type: object
           x-stream-index: "002"
+        severities:
+          items:
+            type: string
+          type: array
+          x-stream-index: "005"
         severity:
           type: string
           x-stream-index: "004"
         text_length:
           format: int32
           type: integer
-          x-stream-index: "007"
+          x-stream-index: "008"
         text_length_operator:
           type: string
-          x-stream-index: "008"
+          x-stream-index: "009"
       type: object
     TextRuleParameters:
       properties:
@@ -53862,7 +53990,7 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: "007"
+          x-stream-index: "008"
         contains_url:
           type: boolean
           x-stream-index: "005"
@@ -53879,12 +54007,17 @@ components:
         semantic_filter_min_threshold:
           format: float
           type: number
-          x-stream-index: "009"
+          x-stream-index: "010"
         semantic_filter_names:
           items:
             type: string
           type: array
-          x-stream-index: "008"
+          x-stream-index: "009"
+        severities:
+          items:
+            type: string
+          type: array
+          x-stream-index: "007"
         severity:
           type: string
           x-stream-index: "006"
@@ -54581,6 +54714,16 @@ components:
       required:
       - track_type
       - duration_seconds
+      type: object
+    TranscriptLanguageResponse:
+      properties:
+        code:
+          description: Language code, e.g. en
+          title: Code
+          type: string
+          x-stream-index: "001"
+      required:
+      - code
       type: object
     TranscriptionLanguage:
       description: Language a call is transcribed or captioned in.
@@ -56918,6 +57061,9 @@ components:
         user_message_reminders:
           type: boolean
           x-stream-index: 012.001.018
+        voice_transcription:
+          type: boolean
+          x-stream-index: 012.001.035
       type: object
     UpdateChannelTypeResponse:
       description: Basic response information
@@ -57066,6 +57212,9 @@ components:
         user_message_reminders:
           type: boolean
           x-stream-index: 003.001.018
+        voice_transcription:
+          type: boolean
+          x-stream-index: 003.001.035
       required:
       - permissions
       - grants
@@ -57094,6 +57243,7 @@ components:
       - automod
       - automod_behavior
       - skip_last_msg_update_for_system_msgs
+      - voice_transcription
       - created_at
       - updated_at
       - commands
@@ -60165,6 +60315,8 @@ components:
       type: object
     UserCustomPropertyParameters:
       properties:
+        expected_value:
+          x-stream-index: "003"
         operator:
           type: string
           x-stream-index: "002"
@@ -62639,7 +62791,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v241.6.1
+  version: v241.8.0
   x-stream-breaking-changes:
     go:
     - AI-1473 (2026-10-20)
@@ -63393,7 +63545,7 @@ paths:
       - product:chat
     get:
       description: |
-        Returns a channel by its CID without creating it. Responds with 404 when the channel does not exist, so it doubles as an existence check. Pass state=true to also load messages, read state and watchers, and the messages_id_* parameters to page those messages by message ID.
+        Returns a channel by its CID without creating it. Responds with 404 when the channel does not exist, so it doubles as an existence check. Pass state=true to also load messages, read state and watchers, and the messages_id_* parameters to page those messages by message ID. Server-side requests can set include_soft_deleted_channel to read a soft-deleted channel and the messages its deletion hid; members are not returned for a deleted channel.
       operationId: GetChannel
       parameters:
       - in: path
@@ -63466,11 +63618,16 @@ paths:
           type: string
           x-stream-index: "010"
       - in: query
+        name: include_soft_deleted_channel
+        schema:
+          type: boolean
+          x-stream-index: "011"
+      - in: query
         name: user_id
         schema:
           type: string
           writeOnly: true
-          x-stream-index: "012"
+          x-stream-index: "013"
       responses:
         "200":
           content:
