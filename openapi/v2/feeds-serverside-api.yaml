@@ -9780,18 +9780,33 @@ components:
           x-stream-index: "003"
         automod_platform_circumvention_config:
           $ref: '#/components/schemas/AutomodPlatformCircumventionConfig'
-          description: Configuration for platform circumvention detection
+          deprecated: true
+          description: 'Configuration for platform circumvention detection Deprecated:
+            Always null: the engine behind this config is removed.'
           title: Automod Platform Circumvention Config
+          x-stream-deprecated: true
+          x-stream-deprecated-message: 'Always null: the engine behind this config
+            is removed.'
           x-stream-index: "005"
         automod_semantic_filters_config:
           $ref: '#/components/schemas/AutomodSemanticFiltersConfig'
-          description: Configuration for semantic filtering
+          deprecated: true
+          description: 'Configuration for semantic filtering Deprecated: Always null:
+            the engine behind this config is removed.'
           title: Automod Semantic Filters Config
+          x-stream-deprecated: true
+          x-stream-deprecated-message: 'Always null: the engine behind this config
+            is removed.'
           x-stream-index: "006"
         automod_toxicity_config:
           $ref: '#/components/schemas/AutomodToxicityConfig'
-          description: Configuration for toxicity detection
+          deprecated: true
+          description: 'Configuration for toxicity detection Deprecated: Always null:
+            the engine behind this config is removed.'
           title: Automod Toxicity Config
+          x-stream-deprecated: true
+          x-stream-deprecated-message: 'Always null: the engine behind this config
+            is removed.'
           x-stream-index: "004"
         available_bodyguard_profiles:
           description: Names of Bodyguard credential profiles registered on this app.
@@ -16453,6 +16468,12 @@ components:
           title: Preset
           type: string
           x-stream-index: "002"
+        trending:
+          description: Tracks trending tags and turns on the topic_trend ranking variable
+            (0-1, the highest trend over a post's interest tags). Requires enabled
+          title: Trending
+          type: boolean
+          x-stream-index: "006"
       title: For You Configuration
       type: object
     ForYouDwellConfig:
@@ -18218,6 +18239,25 @@ components:
       title: Get Task Response
       type: object
       x-stream-docs-page-id: tasks
+    GetTrendingTopicsResponse:
+      description: Trending topics ranked for the user
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "002.001"
+        topics:
+          description: Topics by descending score, then ascending tag
+          items:
+            $ref: '#/components/schemas/TrendingTopicResponse'
+          title: Topics
+          type: array
+          x-stream-index: "001"
+      required:
+      - topics
+      - duration
+      title: Get Trending Topics Response
+      type: object
     GetUserGroupResponse:
       description: Response for getting a user group
       nullable: true
@@ -19716,6 +19756,25 @@ components:
       - duration
       title: Response
       type: object
+    ListPromotedTopicsResponse:
+      description: The app's active promotions
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "002.001"
+        promoted_topics:
+          description: The active promotions, oldest first
+          items:
+            $ref: '#/components/schemas/PromotedTopicResponse'
+          title: Promoted Topics
+          type: array
+          x-stream-index: "001"
+      required:
+      - promoted_topics
+      - duration
+      title: List Promoted Topics Response
+      type: object
     ListPushProvidersResponse:
       description: Basic response information
       nullable: true
@@ -20884,6 +20943,7 @@ components:
           - gpt-6-luna
           - stream-mammoth-1
           - stream-elephant-1
+          - stream-whale-1
           title: Model
           type: string
           x-stream-index: "002"
@@ -23503,6 +23563,100 @@ components:
           description: The settings for typing indicator events.
           title: Typing indicators
           x-stream-index: "001"
+      type: object
+    PromoteTopicsRequest:
+      description: Promotes topic tags for the trend signal of feed groups with for_you.trending.
+        An app holds at most 20 active promotions.
+      nullable: true
+      properties:
+        tags:
+          description: The tags to promote (1-10, each at most 255 characters)
+          items:
+            type: string
+          maxItems: 10
+          minItems: 1
+          title: Tags
+          type: array
+          x-stream-index: "001"
+        ttl:
+          description: How long the promotion lasts, in seconds (60-86400)
+          format: int32
+          maximum: 86400
+          minimum: 60
+          title: TTL
+          type: integer
+          x-stream-index: "003"
+        weight:
+          description: The trend weight of the tags, above 0 and at most 1. Defaults
+            to 1
+          format: double
+          maximum: 1
+          title: Weight
+          type: number
+          x-stream-index: "002"
+      required:
+      - tags
+      - ttl
+      title: Promote Topics Request
+      type: object
+    PromoteTopicsResponse:
+      description: The created promotion
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "002.001"
+        promoted_topic:
+          $ref: '#/components/schemas/PromotedTopicResponse'
+          description: The created promotion
+          title: Promoted Topic
+          x-stream-index: "001"
+      required:
+      - promoted_topic
+      - duration
+      title: Promote Topics Response
+      type: object
+    PromotedTopicResponse:
+      description: A set of topics promoted for the For You trend signal until it
+        expires
+      properties:
+        expires_at:
+          description: When the promotion expires
+          format: date-time
+          title: Expires At
+          type: number
+          x-stream-index: "005"
+        id:
+          description: The ID of the promotion
+          title: ID
+          type: string
+          x-stream-index: "001"
+        starts_at:
+          description: When the promotion started
+          format: date-time
+          title: Starts At
+          type: number
+          x-stream-index: "004"
+        tags:
+          description: The promoted topic tags
+          items:
+            type: string
+          title: Tags
+          type: array
+          x-stream-index: "002"
+        weight:
+          description: The trend weight the tags get, between 0 and 1
+          format: double
+          title: Weight
+          type: number
+          x-stream-index: "003"
+      required:
+      - id
+      - tags
+      - weight
+      - starts_at
+      - expires_at
+      title: Promoted Topic
       type: object
     PublishConfigVersionRequest:
       nullable: true
@@ -29507,18 +29661,36 @@ components:
           x-stream-index: "001.003"
         automod_platform_circumvention_config:
           $ref: '#/components/schemas/AutomodPlatformCircumventionConfig'
-          description: Configuration for platform circumvention detection
+          deprecated: true
+          description: 'Configuration for platform circumvention detection Deprecated:
+            Ignored: the engine behind this config is removed. An invalid value is
+            still rejected with 400.'
           title: Automod Platform Circumvention Config
+          x-stream-deprecated: true
+          x-stream-deprecated-message: 'Ignored: the engine behind this config is
+            removed. An invalid value is still rejected with 400.'
           x-stream-index: "001.005"
         automod_semantic_filters_config:
           $ref: '#/components/schemas/AutomodSemanticFiltersConfig'
-          description: Configuration for semantic filtering
+          deprecated: true
+          description: 'Configuration for semantic filtering Deprecated: Ignored:
+            the engine behind this config is removed. An invalid value is still rejected
+            with 400.'
           title: Automod Semantic Filters Config
+          x-stream-deprecated: true
+          x-stream-deprecated-message: 'Ignored: the engine behind this config is
+            removed. An invalid value is still rejected with 400.'
           x-stream-index: "001.006"
         automod_toxicity_config:
           $ref: '#/components/schemas/AutomodToxicityConfig'
-          description: Configuration for toxicity detection
+          deprecated: true
+          description: 'Configuration for toxicity detection Deprecated: Ignored:
+            the engine behind this config is removed. An invalid value is still rejected
+            with 400.'
           title: Automod Toxicity Config
+          x-stream-deprecated: true
+          x-stream-deprecated-message: 'Ignored: the engine behind this config is
+            removed. An invalid value is still rejected with 400.'
           x-stream-index: "001.004"
         aws_rekognition_config:
           $ref: '#/components/schemas/AIImageConfig'
@@ -31306,6 +31478,31 @@ components:
       - enabled
       - languages
       type: object
+    TrendingTopicResponse:
+      description: A trending topic with its score for the user
+      properties:
+        promoted:
+          description: Whether an active promotion contains the tag
+          title: Promoted
+          type: boolean
+          x-stream-index: "003"
+        score:
+          description: The trend of the tag scaled by the user's interest in it
+          format: double
+          title: Score
+          type: number
+          x-stream-index: "002"
+        tag:
+          description: The topic tag
+          title: Tag
+          type: string
+          x-stream-index: "001"
+      required:
+      - tag
+      - score
+      - promoted
+      title: Trending Topic
+      type: object
     TriggeredRuleResponse:
       properties:
         actions:
@@ -31625,6 +31822,17 @@ components:
       - user_id
       - duration
       title: Unpin Activity Response
+      type: object
+    UnpromoteTopicsResponse:
+      description: Response after ending a promotion
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      title: Unpromote Topics Response
       type: object
     UpdateActivitiesPartialBatchRequest:
       nullable: true
@@ -33798,18 +34006,36 @@ components:
           x-stream-index: "003"
         automod_platform_circumvention_config:
           $ref: '#/components/schemas/AutomodPlatformCircumventionConfig'
-          description: Configuration for platform circumvention detection
+          deprecated: true
+          description: 'Configuration for platform circumvention detection Deprecated:
+            Ignored: the engine behind this config is removed. An invalid value is
+            still rejected with 400.'
           title: Automod Platform Circumvention Config
+          x-stream-deprecated: true
+          x-stream-deprecated-message: 'Ignored: the engine behind this config is
+            removed. An invalid value is still rejected with 400.'
           x-stream-index: "005"
         automod_semantic_filters_config:
           $ref: '#/components/schemas/AutomodSemanticFiltersConfig'
-          description: Configuration for semantic filtering
+          deprecated: true
+          description: 'Configuration for semantic filtering Deprecated: Ignored:
+            the engine behind this config is removed. An invalid value is still rejected
+            with 400.'
           title: Automod Semantic Filters Config
+          x-stream-deprecated: true
+          x-stream-deprecated-message: 'Ignored: the engine behind this config is
+            removed. An invalid value is still rejected with 400.'
           x-stream-index: "006"
         automod_toxicity_config:
           $ref: '#/components/schemas/AutomodToxicityConfig'
-          description: Configuration for toxicity detection
+          deprecated: true
+          description: 'Configuration for toxicity detection Deprecated: Ignored:
+            the engine behind this config is removed. An invalid value is still rejected
+            with 400.'
           title: Automod Toxicity Config
+          x-stream-deprecated: true
+          x-stream-deprecated-message: 'Ignored: the engine behind this config is
+            removed. An invalid value is still rejected with 400.'
           x-stream-index: "004"
         aws_rekognition_config:
           $ref: '#/components/schemas/AIImageConfig'
@@ -35779,7 +36005,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v241.8.0
+  version: v241.10.0
   x-stream-breaking-changes:
     go:
     - AI-1473 (2026-10-20)
@@ -41369,6 +41595,103 @@ paths:
       summary: Query membership levels
       tags:
       - product:feeds
+  /api/v2/feeds/promoted_topics:
+    get:
+      description: |
+        Lists the app's active promotions, also while for_you.trending is off. Not paginated: an app holds at most 20. Server-side only.
+      operationId: ListPromotedTopics
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListPromotedTopicsResponse'
+          description: List Promoted Topics Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: List promoted topics
+      tags:
+      - product:feeds
+    post:
+      description: |
+        Promotes topic tags for the trend signal of feed groups with for_you.trending until the TTL passes. Clients watching a For You feed receive a feeds.promoted_topics.updated event. An app holds at most 20 active promotions. Server-side only.
+      operationId: PromoteTopics
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromoteTopicsRequest'
+        description: Promote Topics Request
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PromoteTopicsResponse'
+          description: Promote Topics Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Promote topics
+      tags:
+      - product:feeds
+  /api/v2/feeds/promoted_topics/{id}:
+    delete:
+      description: |
+        Ends a promotion before it expires, also while for_you.trending is off. Clients watching a For You feed receive a feeds.promoted_topics.updated event. Returns 404 when the promotion is not active. Server-side only.
+      operationId: UnpromoteTopics
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: The ID of the promotion
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnpromoteTopicsResponse'
+          description: Unpromote Topics Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Unpromote topics
+      tags:
+      - product:feeds
   /api/v2/feeds/retention_policy:
     get:
       description: |
@@ -41880,6 +42203,54 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Set a user's interests
+      tags:
+      - product:feeds
+  /api/v2/feeds/users/{user_id}/trending_topics:
+    get:
+      description: |
+        Returns the topics trending in the app, ranked for the user: the trend of a tag scaled by the user's interest weight in it. Tags the user has a negative weight for are left out. Empty for apps without for_you.trending. Client-side callers may only read their own.
+      operationId: GetTrendingTopics
+      parameters:
+      - in: path
+        name: user_id
+        required: true
+        schema:
+          description: The ID of the user the topics are ranked for
+          title: User ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      - in: query
+        name: limit
+        schema:
+          description: Maximum number of topics to return (default 10, max 50)
+          format: int32
+          maximum: 50
+          minimum: 1
+          title: Limit
+          type: integer
+          writeOnly: true
+          x-stream-index: "002"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetTrendingTopicsResponse'
+          description: Get Trending Topics Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Get trending topics
       tags:
       - product:feeds
   /api/v2/guest:
