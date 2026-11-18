@@ -37246,7 +37246,7 @@ components:
         custom:
           additionalProperties: {}
           type: object
-          x-stream-index: "020"
+          x-stream-index: "021"
         html:
           description: Contains HTML markup of the message
           title: HTML content
@@ -37256,33 +37256,33 @@ components:
           description: Whether the message mentions the whole channel
           title: Mentioned channel
           type: boolean
-          x-stream-index: "012"
+          x-stream-index: "013"
         mentioned_group_ids:
           description: IDs of the user groups mentioned in the message
           items:
             type: string
           title: Mentioned group IDs
           type: array
-          x-stream-index: "011"
+          x-stream-index: "012"
         mentioned_here:
           description: Whether the message mentions the online channel members
           title: Mentioned here
           type: boolean
-          x-stream-index: "013"
+          x-stream-index: "014"
         mentioned_roles:
           description: Roles mentioned in the message
           items:
             type: string
           title: Mentioned roles
           type: array
-          x-stream-index: "010"
+          x-stream-index: "011"
         mentioned_users:
           description: IDs of the users mentioned in the message
           items:
             type: string
           title: Mentioned user IDs
           type: array
-          x-stream-index: "009"
+          x-stream-index: "010"
         mml:
           description: MML content of the message
           title: Messaging Markup Language
@@ -37300,17 +37300,25 @@ components:
           format: date-time
           title: Pin expires
           type: number
-          x-stream-index: "017"
+          x-stream-index: "018"
         pinned:
           description: Whether the message will be pinned when sent
           title: Pinned
           type: boolean
-          x-stream-index: "016"
+          x-stream-index: "017"
         poll_id:
           description: Identifier of the poll to include in the message
           title: Poll ID
           type: string
-          x-stream-index: "018"
+          x-stream-index: "019"
+        quoted_message:
+          $ref: '#/components/schemas/MessageResponse'
+          description: The message quoted_message_id refers to, as the scheduling
+            user sees it. Absent when that message no longer exists or the user cannot
+            see it
+          title: Quoted message
+          x-stream-docs-page-id: threads#quote-message
+          x-stream-index: "009"
         quoted_message_id:
           title: ID of quoted message
           type: string
@@ -37322,12 +37330,12 @@ components:
             type: string
           title: Restricted visibility
           type: array
-          x-stream-index: "014"
+          x-stream-index: "015"
         shared_location:
           $ref: '#/components/schemas/ScheduledMessageLocation'
           description: Location shared in the message
           title: Shared location
-          x-stream-index: "019"
+          x-stream-index: "020"
         show_in_channel:
           description: Whether thread reply should be shown in the channel as well
           title: Show in channel
@@ -37338,7 +37346,7 @@ components:
           description: Whether message is silent or not
           title: Silent
           type: boolean
-          x-stream-index: "015"
+          x-stream-index: "016"
         text:
           description: Text of the message
           title: Text
@@ -46793,7 +46801,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v241.13.0
+  version: v241.13.1
   x-stream-breaking-changes:
     go:
     - AI-1473 (2026-10-20)
@@ -49965,7 +49973,7 @@ paths:
   /api/v2/chat/scheduled_messages/{id}:
     delete:
       description: |
-        Cancels a scheduled message so it is never sent, or removes a failed one. Returns 409 while the message is being sent
+        Cancels a scheduled message so it is never sent, or removes a failed one. Returns 409 while the message is being sent. Returns 400 scheduled_message_already_sent (code 123) when the message was already sent and 400 scheduled_message_canceled (code 124) when it was deleted
 
         Sends events:
         - scheduled_message.deleted
@@ -50005,7 +50013,7 @@ paths:
       - product:chat
     patch:
       description: |
-        Replaces the message and/or the send time of a scheduled message. The scheduling checks run again, and the message is then sent, under the caller's auth mode. A request that changes only scheduled_at keeps the auth mode the message was scheduled with. Returns 409 while the message is being sent
+        Replaces the message and/or the send time of a scheduled message. The scheduling checks run again, and the message is then sent, under the caller's auth mode. A request that changes only scheduled_at keeps the auth mode the message was scheduled with. Returns 409 while the message is being sent. Returns 400 scheduled_message_already_sent (code 123) when the message was already sent and 400 scheduled_message_canceled (code 124) when it was deleted
 
         Sends events:
         - scheduled_message.updated
@@ -50052,7 +50060,7 @@ paths:
   /api/v2/chat/scheduled_messages/{id}/send_now:
     post:
       description: |
-        Moves the send time of a scheduled message to now and queues the send. Every send check runs when it is sent. Returns 409 while the message is being sent
+        Moves the send time of a scheduled message to now and queues the send. Every send check runs when it is sent. Returns 409 while the message is being sent. Returns 400 scheduled_message_already_sent (code 123) when the message was already sent and 400 scheduled_message_canceled (code 124) when it was deleted
 
         Sends events:
         - scheduled_message.updated
