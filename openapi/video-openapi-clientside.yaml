@@ -819,6 +819,68 @@ components:
       x-stream-is-event: true
       x-stream-throttle-group: critical
       x-stream-ws-base-event-name: VideoEvent
+    CallDataEvent:
+      description: |-
+        This event carries a data message that a participant sent to the call. It is delivered to the
+        other joined participants only, best effort: a message can be lost, and messages from different senders have no
+        guaranteed order. Use seq to detect a missing message from a sender
+      properties:
+        call_cid:
+          type: string
+          x-stream-index: "002.001"
+        created_at:
+          format: date-time
+          type: string
+          x-stream-index: "001.002"
+        data:
+          additionalProperties: {}
+          description: The application payload, passed through unchanged
+          title: Data
+          type: object
+          x-stream-index: "007"
+        seq:
+          description: Counter kept by the sender for this topic, passed through unchanged
+          format: int64
+          title: Sequence number
+          type: integer
+          x-stream-index: "004"
+        topic:
+          description: Name the application gave this stream of messages
+          title: Topic
+          type: string
+          x-stream-index: "003"
+        type:
+          default: call.data
+          description: 'The type of event: "call.data" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: "001.001"
+        user_id:
+          description: The user who sent the message, set by the server
+          title: User ID
+          type: string
+          x-stream-index: "005"
+        user_session_id:
+          description: The sender's session in the call, set by the server
+          title: User session ID
+          type: string
+          x-stream-index: "006"
+      required:
+      - type
+      - created_at
+      - call_cid
+      - topic
+      - seq
+      - user_id
+      - user_session_id
+      - data
+      title: CallDataEvent
+      type: object
+      x-stream-event-call-type: true
+      x-stream-event-doc-group: call
+      x-stream-is-event: true
+      x-stream-throttle-group: data
+      x-stream-ws-base-event-name: VideoEvent
     CallDeletedEvent:
       description: This event is sent when a call is deleted. Clients receiving this
         event should leave the call screen
@@ -6336,6 +6398,7 @@ components:
       - screenshare
       - send-audio
       - send-closed-captions-call
+      - send-data
       - send-video
       - start-broadcast-call
       - start-closed-captions-call
@@ -9185,6 +9248,59 @@ components:
       - by_country
       - by_country_reason
       type: object
+    SendCallDataRequest:
+      description: |-
+        Sends a data message to the other joined participants of the call. Delivery is best effort:
+        messages are not stored, not replayed and not retried, and they are not delivered to webhooks. The encoded request body
+        is limited to 8 KB.
+      nullable: true
+      properties:
+        data:
+          additionalProperties: {}
+          description: The application payload, passed through unchanged
+          title: Data
+          type: object
+          x-stream-index: "006"
+        seq:
+          description: Counter kept by the sender for this topic, passed through unchanged.
+            Receivers use it to detect a missing message
+          format: int64
+          minimum: 0
+          title: Sequence number
+          type: integer
+          x-stream-index: "004"
+        topic:
+          description: Name the application gives this stream of messages. Letters,
+            digits, dashes and underscores, up to 64 characters
+          maxLength: 64
+          title: Topic
+          type: string
+          x-stream-index: "003"
+        user_session_id:
+          description: The sender's session ID in the call, as returned when joining.
+            The sender must be joined with this session
+          maxLength: 255
+          title: User session ID
+          type: string
+          x-stream-index: "005"
+      required:
+      - topic
+      - seq
+      - user_session_id
+      title: SendCallDataRequest
+      type: object
+    SendCallDataResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      title: SendCallDataResponse
+      type: object
     SendCallEventRequest:
       description: Send a call event to the other user
       nullable: true
@@ -11221,6 +11337,7 @@ components:
           call.closed_captions_started: '#/components/schemas/CallClosedCaptionsStartedEvent'
           call.closed_captions_stopped: '#/components/schemas/CallClosedCaptionsStoppedEvent'
           call.created: '#/components/schemas/CallCreatedEvent'
+          call.data: '#/components/schemas/CallDataEvent'
           call.deleted: '#/components/schemas/CallDeletedEvent'
           call.dtmf: '#/components/schemas/CallDTMFEvent'
           call.ended: '#/components/schemas/CallEndedEvent'
@@ -11291,6 +11408,7 @@ components:
       - $ref: '#/components/schemas/CallClosedCaptionsStoppedEvent'
       - $ref: '#/components/schemas/CallCreatedEvent'
       - $ref: '#/components/schemas/CallDTMFEvent'
+      - $ref: '#/components/schemas/CallDataEvent'
       - $ref: '#/components/schemas/CallDeletedEvent'
       - $ref: '#/components/schemas/CallEndedEvent'
       - $ref: '#/components/schemas/CallFrameRecordingFailedEvent'
@@ -11595,7 +11713,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v241.15.0
+  version: v241.16.0
   x-stream-breaking-change-lines:
     AI-1473 (2026-10-20):
       go:
@@ -12929,6 +13047,14 @@ info:
       wire:
       - POST /api/v2/blocklists/{id}/import api path removed without deprecation
       - POST /blocklists/{id}/import api path removed without deprecation
+    VID-1835 (2026-11-18):
+      wire:
+      - POST /api/v2/chat/channels/{type}/{id}/event added '#/components/schemas/CallDataEvent'
+        to the 'event' response property 'oneOf' list for the response status '201'
+      - POST /channels/{type}/{id}/event added '#/components/schemas/CallDataEvent'
+        to the 'event' response property 'oneOf' list for the response status '201'
+      - added '#/components/schemas/CallDataEvent' to the 'WSEvent/' response property
+        'oneOf' list
   x-stream-breaking-changes:
     go:
     - AI-1473 (2026-10-20)
@@ -12981,6 +13107,7 @@ info:
     - MOD2-1482 (2026-10-02)
     - MOD2-1486 (2026-10-02)
     - MOD2-789 (2026-10-05)
+    - VID-1835 (2026-11-18)
 openapi: 3.0.3
 paths:
   /video/call/{type}/{id}:
@@ -13421,6 +13548,67 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Block user on a call
+      tags:
+      - product:video
+  /video/call/{type}/{id}/data:
+    post:
+      description: |
+        Sends a data message to the other joined participants of the call. Only a participant who is
+        currently joined can send. Delivery is best effort: messages are not stored, not replayed after a reconnect and not
+        delivered to webhooks, and the sender does not receive its own message. The endpoint has its own rate limits: per user,
+        per call and per app. A refused request returns 429 with a Retry-After header.
+
+        Sends events:
+        - call.data
+      operationId: SendCallData
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          description: The type of call
+          maxLength: 64
+          title: Type
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Call ID
+          maxLength: 64
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendCallDataRequest'
+        description: SendCallDataRequest
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendCallDataResponse'
+          description: SendCallDataResponse
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Send data message
       tags:
       - product:video
   /video/call/{type}/{id}/delete:
