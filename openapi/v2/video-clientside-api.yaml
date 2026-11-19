@@ -4001,30 +4001,30 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: 001.002.028
+          x-stream-index: 001.002.029
         automod:
           $ref: '#/components/schemas/AutomodMode'
-          x-stream-index: 001.002.023
+          x-stream-index: 001.002.024
         automod_behavior:
           $ref: '#/components/schemas/ChannelModerationBehavior'
-          x-stream-index: 001.002.024
+          x-stream-index: 001.002.025
         automod_thresholds:
           $ref: '#/components/schemas/Thresholds'
-          x-stream-index: 001.002.029
+          x-stream-index: 001.002.030
         blocklist:
           type: string
-          x-stream-index: 001.002.025
+          x-stream-index: 001.002.026
         blocklist_behavior:
           $ref: '#/components/schemas/ChannelModerationBehavior'
-          x-stream-index: 001.002.026
+          x-stream-index: 001.002.027
         blocklists:
           items:
             $ref: '#/components/schemas/BlockListOptions'
           type: array
-          x-stream-index: 001.002.027
+          x-stream-index: 001.002.028
         chat_preferences:
           $ref: '#/components/schemas/ChatPreferences'
-          x-stream-index: 001.002.034
+          x-stream-index: 001.002.035
         commands:
           items:
             $ref: '#/components/schemas/Command'
@@ -4056,13 +4056,18 @@ components:
         mark_messages_pending:
           type: boolean
           x-stream-index: 001.002.016
+        mark_types:
+          items:
+            type: string
+          type: array
+          x-stream-index: 001.002.021
         max_message_length:
           format: int32
           type: integer
-          x-stream-index: 001.002.022
+          x-stream-index: 001.002.023
         message_retention:
           type: string
-          x-stream-index: 001.002.021
+          x-stream-index: 001.002.022
         mutes:
           type: boolean
           x-stream-index: 001.002.010
@@ -4072,12 +4077,12 @@ components:
         partition_size:
           format: int32
           type: integer
-          x-stream-index: 001.002.030
+          x-stream-index: 001.002.031
         partition_ttl:
           example: 24h
           format: duration
           type: string
-          x-stream-index: 001.002.031
+          x-stream-index: 001.002.032
         polls:
           type: boolean
           x-stream-index: 001.002.017
@@ -4086,7 +4091,7 @@ components:
           description: Sets the push notification level for a channel type
           title: Push notification level
           x-stream-description: Sets the push notification level for a channel type
-          x-stream-index: 001.002.033
+          x-stream-index: 001.002.034
         push_notifications:
           type: boolean
           x-stream-index: 001.002.014
@@ -4147,7 +4152,7 @@ components:
           x-stream-index: 001.002.019
         skip_last_msg_update_for_system_msgs:
           type: boolean
-          x-stream-index: 001.002.032
+          x-stream-index: 001.002.033
         typing_events:
           type: boolean
           x-stream-index: 001.002.002
@@ -4166,7 +4171,7 @@ components:
           x-stream-index: 001.002.018
         voice_transcription:
           type: boolean
-          x-stream-index: 001.002.035
+          x-stream-index: 001.002.036
       required:
       - created_at
       - updated_at
@@ -4496,6 +4501,7 @@ components:
       - send-custom-events
       - send-links
       - send-message
+      - send-message-mark
       - send-poll
       - send-reaction
       - send-reply
@@ -4542,6 +4548,8 @@ components:
         send-custom-events: Ability to send custom events.
         send-links: Ability to attach links to messages.
         send-message: Ability to send a message.
+        send-message-mark: Ability to send a message mark, for example played on a
+          voice note.
         send-poll: Ability to send a poll.
         send-reaction: Ability to send reactions.
         send-reply: Ability to thread reply to a message.
@@ -8306,6 +8314,30 @@ components:
       - continent_code
       title: Location
       type: object
+    MarkGroupResponse:
+      description: 'The marks of one type on a message the viewer authored: the count
+        of every user who marked it and the newest 100 of them.'
+      nullable: true
+      properties:
+        count:
+          description: Number of users who marked the message with this type
+          format: int32
+          title: Count
+          type: integer
+          x-stream-index: "001"
+        latest_by:
+          description: The users who marked the message with this type, newest first,
+            at most 100
+          items:
+            $ref: '#/components/schemas/MessageMarkerResponse'
+          title: Latest by
+          type: array
+          x-stream-index: "002"
+      required:
+      - count
+      - latest_by
+      title: MarkGroupResponse
+      type: object
     MemberRequest:
       description: MemberRequest is the payload for adding a member to a call.
       properties:
@@ -8373,6 +8405,25 @@ components:
       - updated_at
       title: MemberResponse
       type: object
+    MessageMarkerResponse:
+      description: One user who marked the message, and when.
+      properties:
+        created_at:
+          description: When the mark was written
+          format: date-time
+          title: Created at
+          type: number
+          x-stream-index: "002"
+        user_id:
+          description: The user who marked the message
+          title: User ID
+          type: string
+          x-stream-index: "001"
+      required:
+      - user_id
+      - created_at
+      title: MessageMarkerResponse
+      type: object
     MessageResponse:
       description: Represents any chat message
       properties:
@@ -8413,7 +8464,7 @@ components:
           x-stream-index: "027"
         deleted_for_me:
           type: boolean
-          x-stream-index: "051"
+          x-stream-index: "053"
         deleted_reply_count:
           format: int32
           type: integer
@@ -8457,6 +8508,18 @@ components:
           title: Latest reactions
           type: array
           x-stream-index: "010"
+        mark_groups:
+          additionalProperties:
+            $ref: '#/components/schemas/MarkGroupResponse'
+          description: 'On the viewer''s own messages: who marked them, per mark type
+            (for example played). Omitted when marks are off for the channel type'
+          title: Mark groups
+          type: object
+          x-stream-index: "051"
+          x-stream-map:
+            description: The marks of this type
+            key: type
+            title: Mark group
         member:
           $ref: '#/components/schemas/ChannelMemberPartialResponse'
           description: Channel member data for the message sender including the `channel_role`;
@@ -8476,7 +8539,7 @@ components:
             users enabled, and only for the first two mentioned users of each message
           title: Mentioned members
           type: object
-          x-stream-index: "052"
+          x-stream-index: "054"
           x-stream-map:
             description: Channel member data for that mentioned user, including channel_role
               and custom
@@ -8533,6 +8596,14 @@ components:
         moderation:
           $ref: '#/components/schemas/ModerationV2Response'
           x-stream-index: "046"
+        own_marks:
+          description: The viewer's own marks on this message, for example played.
+            Omitted when marks are off for the channel type
+          items:
+            $ref: '#/components/schemas/OwnMarkResponse'
+          title: Own marks
+          type: array
+          x-stream-index: "052"
         own_reactions:
           description: List of 10 latest reactions of authenticated user to this message
           items:
@@ -8948,6 +9019,25 @@ components:
       - update-call-settings
       title: OwnCapability
       type: string
+    OwnMarkResponse:
+      description: A mark the viewer put on this message.
+      properties:
+        created_at:
+          description: When the mark was written
+          format: date-time
+          title: Created at
+          type: number
+          x-stream-index: "002"
+        type:
+          description: The mark type, for example played
+          title: Type
+          type: string
+          x-stream-index: "001"
+      required:
+      - type
+      - created_at
+      title: OwnMarkResponse
+      type: object
     OwnUserResponse:
       properties:
         avg_response_time:
@@ -16085,7 +16175,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v241.16.0
+  version: v241.16.1
   x-stream-breaking-change-lines:
     AI-1473 (2026-10-20):
       go:
@@ -17070,6 +17160,14 @@ info:
         from 'object'/'' to 'string'/''
       - the 'EnrichedReaction/updated_at' response's property type/format changed
         from 'object'/'' to 'string'/''
+    CHA-6554 (2026-11-06):
+      wire:
+      - POST /api/v2/chat/channels/{type}/{id}/event added '#/components/schemas/MessageMarkAddedEvent'
+        to the 'event' response property 'oneOf' list for the response status '201'
+      - POST /channels/{type}/{id}/event added '#/components/schemas/MessageMarkAddedEvent'
+        to the 'event' response property 'oneOf' list for the response status '201'
+      - added '#/components/schemas/MessageMarkAddedEvent' to the 'WSEvent/' response
+        property 'oneOf' list
     FEEDS-1339 (2026-03-20):
       wire:
       - POST /api/v2/chat/channels/{type}/{id}/event added '#/components/schemas/CommentRestoredEvent'
@@ -17464,6 +17562,7 @@ info:
     - CHA-5635 (2026-10-09)
     - CHA-6139 (2026-10-15)
     - CHA-6186 (2026-10-19)
+    - CHA-6554 (2026-11-06)
     - FEEDS-1339 (2026-03-20)
     - FEEDS-1590 (2026-10-05)
     - FEEDS-1875 (2026-09-09)
