@@ -1023,42 +1023,42 @@ components:
           items:
             type: string
           type: array
-          x-stream-index: 001.002.028
+          x-stream-index: 001.002.029
         automod:
           enum:
           - disabled
           - simple
           - AI
           type: string
-          x-stream-index: 001.002.023
+          x-stream-index: 001.002.024
         automod_behavior:
           enum:
           - flag
           - block
           - shadow_block
           type: string
-          x-stream-index: 001.002.024
+          x-stream-index: 001.002.025
         automod_thresholds:
           $ref: '#/components/schemas/Thresholds'
-          x-stream-index: 001.002.029
+          x-stream-index: 001.002.030
         blocklist:
           type: string
-          x-stream-index: 001.002.025
+          x-stream-index: 001.002.026
         blocklist_behavior:
           enum:
           - flag
           - block
           - shadow_block
           type: string
-          x-stream-index: 001.002.026
+          x-stream-index: 001.002.027
         blocklists:
           items:
             $ref: '#/components/schemas/BlockListOptions'
           type: array
-          x-stream-index: 001.002.027
+          x-stream-index: 001.002.028
         chat_preferences:
           $ref: '#/components/schemas/ChatPreferences'
-          x-stream-index: 001.002.034
+          x-stream-index: 001.002.035
         commands:
           items:
             $ref: '#/components/schemas/Command'
@@ -1090,13 +1090,18 @@ components:
         mark_messages_pending:
           type: boolean
           x-stream-index: 001.002.016
+        mark_types:
+          items:
+            type: string
+          type: array
+          x-stream-index: 001.002.021
         max_message_length:
           format: int32
           type: integer
-          x-stream-index: 001.002.022
+          x-stream-index: 001.002.023
         message_retention:
           type: string
-          x-stream-index: 001.002.021
+          x-stream-index: 001.002.022
         mutes:
           type: boolean
           x-stream-index: 001.002.010
@@ -1106,12 +1111,12 @@ components:
         partition_size:
           format: int32
           type: integer
-          x-stream-index: 001.002.030
+          x-stream-index: 001.002.031
         partition_ttl:
           example: 24h
           format: duration
           type: string
-          x-stream-index: 001.002.031
+          x-stream-index: 001.002.032
         polls:
           type: boolean
           x-stream-index: 001.002.017
@@ -1127,7 +1132,7 @@ components:
           type: string
           x-stream-deprecated-enum-values:
             mentions: direct_mentions
-          x-stream-index: 001.002.033
+          x-stream-index: 001.002.034
         push_notifications:
           type: boolean
           x-stream-index: 001.002.014
@@ -1188,7 +1193,7 @@ components:
           x-stream-index: 001.002.019
         skip_last_msg_update_for_system_msgs:
           type: boolean
-          x-stream-index: 001.002.032
+          x-stream-index: 001.002.033
         typing_events:
           type: boolean
           x-stream-index: 001.002.002
@@ -1207,7 +1212,7 @@ components:
           x-stream-index: 001.002.018
         voice_transcription:
           type: boolean
-          x-stream-index: 001.002.035
+          x-stream-index: 001.002.036
       required:
       - created_at
       - updated_at
@@ -2287,6 +2292,7 @@ components:
       - send-custom-events
       - send-links
       - send-message
+      - send-message-mark
       - send-poll
       - send-reaction
       - send-reply
@@ -2333,6 +2339,8 @@ components:
         send-custom-events: Ability to send custom events.
         send-links: Ability to attach links to messages.
         send-message: Ability to send a message.
+        send-message-mark: Ability to send a message mark, for example played on a
+          voice note.
         send-poll: Ability to send a poll.
         send-reaction: Ability to send reactions.
         send-reply: Ability to thread reply to a message.
@@ -3884,6 +3892,44 @@ components:
       - user
       - access_token
       - duration
+      type: object
+    CreateMessageMarkRequest:
+      nullable: true
+      properties:
+        type:
+          description: 'The mark type: a built-in type such as played (the acting
+            user played the message''s audio, voiceRecording or video attachment)
+            or a type the app defines in its message_marks settings'
+          title: Type
+          type: string
+          x-stream-index: "002"
+      required:
+      - type
+      type: object
+    CreateMessageMarkResponse:
+      description: The mark and whether this request wrote it
+      nullable: true
+      properties:
+        created:
+          description: Whether this request wrote the mark. False on a repeat and
+            on the author's own mark
+          title: Created
+          type: boolean
+          x-stream-index: "002"
+        duration:
+          type: string
+          x-stream-index: "003.001"
+        mark:
+          $ref: '#/components/schemas/MessageMarkResponse'
+          description: 'The mark: its type, message, user and time. On a repeat it
+            is the stored mark with its own time'
+          title: Mark
+          x-stream-index: "001"
+      required:
+      - mark
+      - created
+      - duration
+      title: CreateMessageMarkResponse
       type: object
     CreatePollOptionRequest:
       nullable: true
@@ -5973,6 +6019,30 @@ components:
       - duration
       title: Response
       type: object
+    MarkGroupResponse:
+      description: 'The marks of one type on a message the viewer authored: the count
+        of every user who marked it and the newest 100 of them.'
+      nullable: true
+      properties:
+        count:
+          description: Number of users who marked the message with this type
+          format: int32
+          title: Count
+          type: integer
+          x-stream-index: "001"
+        latest_by:
+          description: The users who marked the message with this type, newest first,
+            at most 100
+          items:
+            $ref: '#/components/schemas/MessageMarkerResponse'
+          title: Latest by
+          type: array
+          x-stream-index: "002"
+      required:
+      - count
+      - latest_by
+      title: MarkGroupResponse
+      type: object
     MarkReadRequest:
       nullable: true
       properties:
@@ -6720,6 +6790,168 @@ components:
       - created_at
       - updated_at
       type: object
+    MessageMarkAddedEvent:
+      description: Emitted when a user marks a message, for example played on a voice
+        note. Delivered to the message author and to the marker only.
+      nullable: true
+      properties:
+        channel_id:
+          description: The ID of the channel holding the marked message
+          title: Channel ID
+          type: string
+          x-stream-index: 001.002.002
+        channel_type:
+          description: The type of the channel holding the marked message
+          title: Channel Type
+          type: string
+          x-stream-index: 001.002.001
+        cid:
+          description: The CID of the channel holding the marked message
+          title: Channel CID
+          type: string
+          x-stream-index: 001.001.002
+        created_at:
+          description: Date/time of creation
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: 001.001.001.003
+        custom:
+          additionalProperties: {}
+          type: object
+          x-stream-index: 001.001.001.007
+        mark:
+          $ref: '#/components/schemas/MessageMarkResponse'
+          description: 'The mark that was written: its type, message, user and time'
+          title: Mark
+          x-stream-index: "005"
+        message_id:
+          description: The marked message
+          title: Message ID
+          type: string
+          x-stream-index: "003"
+        parent_id:
+          description: The ID of the parent message, when the marked message is a
+            thread reply
+          title: Parent ID
+          type: string
+          x-stream-index: "004"
+        received_at:
+          format: date-time
+          type: string
+          x-stream-index: 001.001.001.004
+        type:
+          default: message.mark_added
+          description: 'The type of event: "message.mark_added" in this case'
+          title: Event Type
+          type: string
+          x-stream-index: 001.001.001.002
+        user:
+          $ref: '#/components/schemas/UserResponseCommonFields'
+          description: The user who marked the message
+          title: User
+          x-stream-index: "002.001"
+      required:
+      - type
+      - created_at
+      - custom
+      - message_id
+      - mark
+      title: MessageMarkAddedEvent
+      type: object
+      x-stream-event-client-type: true
+      x-stream-event-doc-group: other
+      x-stream-is-event: true
+      x-stream-throttle-group: ordered
+      x-stream-ws-base-event-name: VideoEvent
+    MessageMarkResponse:
+      description: A mark one user put on one message, for example played on a voice
+        note. A mark is written once and never removed by users.
+      properties:
+        created_at:
+          description: When the mark was written
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: "004"
+        message_id:
+          description: The marked message
+          title: Message ID
+          type: string
+          x-stream-index: "002"
+        type:
+          description: The mark type, for example played
+          title: Type
+          type: string
+          x-stream-index: "001"
+        user_id:
+          description: The user who marked the message
+          title: User ID
+          type: string
+          x-stream-index: "003"
+      required:
+      - type
+      - message_id
+      - user_id
+      - created_at
+      title: MessageMarkResponse
+      type: object
+    MessageMarkWithUserResponse:
+      description: A mark one user put on one message, with that user.
+      properties:
+        created_at:
+          description: When the mark was written
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: "001.004"
+        message_id:
+          description: The marked message
+          title: Message ID
+          type: string
+          x-stream-index: "001.002"
+        type:
+          description: The mark type, for example played
+          title: Type
+          type: string
+          x-stream-index: "001.001"
+        user:
+          $ref: '#/components/schemas/UserResponse'
+          description: The user who marked the message
+          title: User
+          x-stream-index: "002"
+        user_id:
+          description: The user who marked the message
+          title: User ID
+          type: string
+          x-stream-index: "001.003"
+      required:
+      - type
+      - message_id
+      - user_id
+      - created_at
+      - user
+      title: MessageMarkWithUserResponse
+      type: object
+    MessageMarkerResponse:
+      description: One user who marked the message, and when.
+      properties:
+        created_at:
+          description: When the mark was written
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: "002"
+        user_id:
+          description: The user who marked the message
+          title: User ID
+          type: string
+          x-stream-index: "001"
+      required:
+      - user_id
+      - created_at
+      title: MessageMarkerResponse
+      type: object
     MessageModerationResult:
       description: Result of the message moderation
       properties:
@@ -7273,7 +7505,7 @@ components:
           x-stream-index: "027"
         deleted_for_me:
           type: boolean
-          x-stream-index: "051"
+          x-stream-index: "053"
         deleted_reply_count:
           format: int32
           type: integer
@@ -7317,6 +7549,18 @@ components:
           title: Latest reactions
           type: array
           x-stream-index: "010"
+        mark_groups:
+          additionalProperties:
+            $ref: '#/components/schemas/MarkGroupResponse'
+          description: 'On the viewer''s own messages: who marked them, per mark type
+            (for example played). Omitted when marks are off for the channel type'
+          title: Mark groups
+          type: object
+          x-stream-index: "051"
+          x-stream-map:
+            description: The marks of this type
+            key: type
+            title: Mark group
         member:
           $ref: '#/components/schemas/ChannelMemberPartialResponse'
           description: Channel member data for the message sender including the `channel_role`;
@@ -7336,7 +7580,7 @@ components:
             users enabled, and only for the first two mentioned users of each message
           title: Mentioned members
           type: object
-          x-stream-index: "052"
+          x-stream-index: "054"
           x-stream-map:
             description: Channel member data for that mentioned user, including channel_role
               and custom
@@ -7393,6 +7637,14 @@ components:
         moderation:
           $ref: '#/components/schemas/ModerationV2Response'
           x-stream-index: "046"
+        own_marks:
+          description: The viewer's own marks on this message, for example played.
+            Omitted when marks are off for the channel type
+          items:
+            $ref: '#/components/schemas/OwnMarkResponse'
+          title: Own marks
+          type: array
+          x-stream-index: "052"
         own_reactions:
           description: List of 10 latest reactions of authenticated user to this message
           items:
@@ -7799,7 +8051,7 @@ components:
           x-stream-index: "001.027"
         deleted_for_me:
           type: boolean
-          x-stream-index: "001.051"
+          x-stream-index: "001.053"
         deleted_reply_count:
           format: int32
           type: integer
@@ -7843,6 +8095,18 @@ components:
           title: Latest reactions
           type: array
           x-stream-index: "001.010"
+        mark_groups:
+          additionalProperties:
+            $ref: '#/components/schemas/MarkGroupResponse'
+          description: 'On the viewer''s own messages: who marked them, per mark type
+            (for example played). Omitted when marks are off for the channel type'
+          title: Mark groups
+          type: object
+          x-stream-index: "001.051"
+          x-stream-map:
+            description: The marks of this type
+            key: type
+            title: Mark group
         member:
           $ref: '#/components/schemas/ChannelMemberPartialResponse'
           description: Channel member data for the message sender including the `channel_role`;
@@ -7862,7 +8126,7 @@ components:
             users enabled, and only for the first two mentioned users of each message
           title: Mentioned members
           type: object
-          x-stream-index: "001.052"
+          x-stream-index: "001.054"
           x-stream-map:
             description: Channel member data for that mentioned user, including channel_role
               and custom
@@ -7919,6 +8183,14 @@ components:
         moderation:
           $ref: '#/components/schemas/ModerationV2Response'
           x-stream-index: "001.046"
+        own_marks:
+          description: The viewer's own marks on this message, for example played.
+            Omitted when marks are off for the channel type
+          items:
+            $ref: '#/components/schemas/OwnMarkResponse'
+          title: Own marks
+          type: array
+          x-stream-index: "001.052"
         own_reactions:
           description: List of 10 latest reactions of authenticated user to this message
           items:
@@ -9714,6 +9986,25 @@ components:
           x-stream-index: "001"
       required:
       - id
+      type: object
+    OwnMarkResponse:
+      description: A mark the viewer put on this message.
+      properties:
+        created_at:
+          description: When the mark was written
+          format: date-time
+          title: Created at
+          type: string
+          x-stream-index: "002"
+        type:
+          description: The mark type, for example played
+          title: Type
+          type: string
+          x-stream-index: "001"
+      required:
+      - type
+      - created_at
+      title: OwnMarkResponse
       type: object
     OwnUserResponse:
       properties:
@@ -11886,6 +12177,66 @@ components:
       - duration
       title: QueryMessageFlagsResponse
       type: object
+    QueryMessageMarksFilter:
+      description: Filter for listing the marks on a message
+      properties:
+        type:
+          description: Only marks of this type, for example played
+          maxLength: 32
+          title: Type
+          type: string
+          x-stream-index: "001"
+      title: Query Message Marks Filter
+      type: object
+    QueryMessageMarksRequest:
+      nullable: true
+      properties:
+        filter:
+          $ref: '#/components/schemas/QueryMessageMarksFilter'
+          description: Narrows the list to one mark type. Without it every type the
+            channel type lists is returned
+          title: Filter
+          x-stream-index: "002"
+        limit:
+          description: Page size, 1 to 100. Defaults to 25
+          format: int32
+          maximum: 100
+          minimum: 1
+          title: Limit
+          type: integer
+          x-stream-index: "003"
+        next:
+          description: 'Cursor from the previous page''s next field. The order is
+            fixed: newest first'
+          maxLength: 1024
+          title: Next
+          type: string
+          x-stream-index: "004"
+      type: object
+    QueryMessageMarksResponse:
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "003.001"
+        marks:
+          description: The marks of this page, newest first
+          items:
+            $ref: '#/components/schemas/MessageMarkWithUserResponse'
+          title: Marks
+          type: array
+          x-stream-index: "001"
+        next:
+          description: Cursor for the next page; absent on the last page
+          title: Next
+          type: string
+          x-stream-index: "002"
+      required:
+      - marks
+      - duration
+      type: object
     QueryPollVotesRequest:
       nullable: true
       properties:
@@ -13751,6 +14102,20 @@ components:
           title: Image
           type: string
           x-stream-index: "005"
+        member_count:
+          description: Number of members of the channel. 0 when the channel is deleted
+          format: int32
+          title: Member count
+          type: integer
+          x-stream-index: "006"
+        members:
+          description: Up to 4 members of the channel, oldest first. Empty when the
+            channel is deleted
+          items:
+            $ref: '#/components/schemas/ChannelMemberResponse'
+          title: Members
+          type: array
+          x-stream-index: "007"
         name:
           description: Channel name, from its custom data
           title: Name
@@ -13765,6 +14130,8 @@ components:
       - cid
       - type
       - id
+      - member_count
+      - members
       title: Scheduled Message Channel
       type: object
     ScheduledMessageContentResponse:
@@ -14089,7 +14456,9 @@ components:
       properties:
         channel:
           $ref: '#/components/schemas/ScheduledMessageChannelResponse'
-          description: The channel of the scheduled message. Only set in query results
+          description: 'Summary of the channel the message will be sent to: name,
+            image, member count and up to 4 members. Not set when the channel no longer
+            exists'
           title: Channel
           x-stream-index: "010"
         cid:
@@ -14972,7 +15341,7 @@ components:
           x-stream-index: "001.027"
         deleted_for_me:
           type: boolean
-          x-stream-index: "001.051"
+          x-stream-index: "001.053"
         deleted_reply_count:
           format: int32
           type: integer
@@ -15003,6 +15372,11 @@ components:
             $ref: '#/components/schemas/ReactionResponse'
           type: array
           x-stream-index: "001.010"
+        mark_groups:
+          additionalProperties:
+            $ref: '#/components/schemas/MarkGroupResponse'
+          type: object
+          x-stream-index: "001.051"
         member:
           $ref: '#/components/schemas/ChannelMemberPartialResponse'
           x-stream-index: "001.008"
@@ -15013,7 +15387,7 @@ components:
           additionalProperties:
             $ref: '#/components/schemas/ChannelMemberPartialResponse'
           type: object
-          x-stream-index: "001.052"
+          x-stream-index: "001.054"
         mentioned_group_ids:
           items:
             type: string
@@ -15047,6 +15421,11 @@ components:
         moderation:
           $ref: '#/components/schemas/ModerationV2Response'
           x-stream-index: "001.046"
+        own_marks:
+          items:
+            $ref: '#/components/schemas/OwnMarkResponse'
+          type: array
+          x-stream-index: "001.052"
         own_reactions:
           items:
             $ref: '#/components/schemas/ReactionResponse'
@@ -18758,6 +19137,7 @@ components:
           member.updated: '#/components/schemas/MemberUpdatedEvent'
           message.deleted: '#/components/schemas/MessageDeletedEvent'
           message.delivered: '#/components/schemas/MessageDeliveredEvent'
+          message.mark_added: '#/components/schemas/MessageMarkAddedEvent'
           message.new: '#/components/schemas/MessageNewEvent'
           message.pending: '#/components/schemas/PendingMessageEvent'
           message.read: '#/components/schemas/MessageReadEvent'
@@ -18843,6 +19223,7 @@ components:
       - $ref: '#/components/schemas/MemberUpdatedEvent'
       - $ref: '#/components/schemas/MessageDeletedEvent'
       - $ref: '#/components/schemas/MessageDeliveredEvent'
+      - $ref: '#/components/schemas/MessageMarkAddedEvent'
       - $ref: '#/components/schemas/MessageNewEvent'
       - $ref: '#/components/schemas/MessageReadEvent'
       - $ref: '#/components/schemas/MessageUndeletedEvent'
@@ -18933,6 +19314,7 @@ components:
           member.updated: '#/components/schemas/MemberUpdatedEvent'
           message.deleted: '#/components/schemas/MessageDeletedEvent'
           message.delivered: '#/components/schemas/MessageDeliveredEvent'
+          message.mark_added: '#/components/schemas/MessageMarkAddedEvent'
           message.new: '#/components/schemas/MessageNewEvent'
           message.pending: '#/components/schemas/PendingMessageEvent'
           message.read: '#/components/schemas/MessageReadEvent'
@@ -19020,6 +19402,7 @@ components:
       - $ref: '#/components/schemas/MemberUpdatedEvent'
       - $ref: '#/components/schemas/MessageDeletedEvent'
       - $ref: '#/components/schemas/MessageDeliveredEvent'
+      - $ref: '#/components/schemas/MessageMarkAddedEvent'
       - $ref: '#/components/schemas/MessageNewEvent'
       - $ref: '#/components/schemas/MessageReadEvent'
       - $ref: '#/components/schemas/MessageUndeletedEvent'
@@ -19177,7 +19560,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v241.16.0
+  version: v241.16.1
   x-stream-breaking-change-lines:
     AI-1473 (2026-10-20):
       go:
@@ -20162,6 +20545,14 @@ info:
         from 'object'/'' to 'string'/''
       - the 'EnrichedReaction/updated_at' response's property type/format changed
         from 'object'/'' to 'string'/''
+    CHA-6554 (2026-11-06):
+      wire:
+      - POST /api/v2/chat/channels/{type}/{id}/event added '#/components/schemas/MessageMarkAddedEvent'
+        to the 'event' response property 'oneOf' list for the response status '201'
+      - POST /channels/{type}/{id}/event added '#/components/schemas/MessageMarkAddedEvent'
+        to the 'event' response property 'oneOf' list for the response status '201'
+      - added '#/components/schemas/MessageMarkAddedEvent' to the 'WSEvent/' response
+        property 'oneOf' list
     FEEDS-1339 (2026-03-20):
       wire:
       - POST /api/v2/chat/channels/{type}/{id}/event added '#/components/schemas/CommentRestoredEvent'
@@ -20556,6 +20947,7 @@ info:
     - CHA-5635 (2026-10-09)
     - CHA-6139 (2026-10-15)
     - CHA-6186 (2026-10-19)
+    - CHA-6554 (2026-11-06)
     - FEEDS-1339 (2026-03-20)
     - FEEDS-1590 (2026-10-05)
     - FEEDS-1875 (2026-09-09)
@@ -23069,6 +23461,95 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Run message command action
+      tags:
+      - product:chat
+  /messages/{id}/marks:
+    post:
+      description: |
+        Marks a message for the acting user, for example played when the user played a voice note. A mark is written once: a repeat returns created false and the stored mark, and nothing else happens. The message author's own mark is a no-op. A message the user deleted for themselves answers as a first write does, created true, without storing anything. A mark on a message whose author is shadow-banned is stored hidden: the marker keeps it, the author never sees it. Only members of channels whose type lists the mark type can mark, and only messages with a matching attachment; a thread reply is marked like any other message
+
+        Sends events:
+        - message.mark_added
+      operationId: CreateMessageMark
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Message ID to mark
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMessageMarkRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateMessageMarkResponse'
+          description: CreateMessageMarkResponse
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Create message mark
+      tags:
+      - product:chat
+  /messages/{id}/marks/query:
+    post:
+      description: |
+        Lists the marks on a message one page at a time, newest first; the order cannot be changed. The message's mark_groups carry the count and the newest 100 markers per type, this endpoint lists every marker. Only the message author may list client-side; server-side, pass the author's user_id or no user_id. filter.type narrows the list to one mark type; without it every type the channel type lists is returned
+      operationId: QueryMessageMarks
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          description: Message ID whose marks to list
+          title: ID
+          type: string
+          writeOnly: true
+          x-stream-index: "001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryMessageMarksRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryMessageMarksResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Query message marks
       tags:
       - product:chat
   /messages/{id}/reaction:
