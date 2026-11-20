@@ -6848,6 +6848,12 @@ components:
         user_id:
           type: string
           x-stream-index: "010.001"
+        validate:
+          description: For regex block lists, reject any rule that matches 50% or
+            more of a built-in sample dataset as too broad
+          title: Validate
+          type: boolean
+          x-stream-index: "009"
         words:
           description: List of words to block
           items:
@@ -9554,6 +9560,24 @@ components:
       - duration
       title: Response
       type: object
+    GetHookEventsResponse:
+      description: Basic response information
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        events:
+          items:
+            $ref: '#/components/schemas/HookEvents'
+          type: array
+          x-stream-index: "001"
+      required:
+      - events
+      - duration
+      title: Response
+      type: object
     GetImportResponse:
       description: Basic response information
       nullable: true
@@ -10113,6 +10137,24 @@ components:
       - quality_tracks
       - layout
       title: HLSSettingsResponse
+      type: object
+    HookEvents:
+      properties:
+        description:
+          type: string
+          x-stream-index: "002"
+        name:
+          type: string
+          x-stream-index: "001"
+        products:
+          items:
+            type: string
+          type: array
+          x-stream-index: "003"
+      required:
+      - name
+      - description
+      - products
       type: object
     HuaweiConfig:
       properties:
@@ -19414,6 +19456,12 @@ components:
         user_id:
           type: string
           x-stream-index: "009.001"
+        validate:
+          description: For regex block lists, reject any rule that matches 50% or
+            more of a built-in sample dataset as too broad
+          title: Validate
+          type: boolean
+          x-stream-index: "004"
         words:
           description: List of words to block
           items:
@@ -21792,7 +21840,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v241.16.1
+  version: v241.17.1
   x-stream-breaking-change-lines:
     AI-1473 (2026-10-20):
       go:
@@ -23882,6 +23930,42 @@ paths:
       tags:
       - product:common
       x-stream-requires-token: false
+  /api/v2/hook/events:
+    get:
+      description: |2+
+
+      operationId: GetHookEvents
+      parameters:
+      - in: query
+        name: product
+        schema:
+          items:
+            type: string
+          type: array
+          writeOnly: true
+          x-stream-index: "001"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetHookEventsResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Return available events for hooks (webhook, SQS, and SNS)
+      tags:
+      - product:common
   /api/v2/import_urls:
     post:
       description: |
