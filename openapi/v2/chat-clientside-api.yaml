@@ -6175,6 +6175,12 @@ components:
           title: Type
           type: string
           x-stream-index: "007"
+        validate:
+          description: For regex block lists, reject any rule that matches 50% or
+            more of a built-in sample dataset as too broad
+          title: Validate
+          type: boolean
+          x-stream-index: "009"
         words:
           description: List of words to block
           items:
@@ -9179,6 +9185,24 @@ components:
       - duration
       title: Response
       type: object
+    GetHookEventsResponse:
+      description: Basic response information
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "002.001"
+        events:
+          items:
+            $ref: '#/components/schemas/HookEvents'
+          type: array
+          x-stream-index: "001"
+      required:
+      - events
+      - duration
+      title: Response
+      type: object
     GetManyMessagesResponse:
       nullable: true
       properties:
@@ -9664,6 +9688,24 @@ components:
       required:
       - duration
       title: Response
+      type: object
+    HookEvents:
+      properties:
+        description:
+          type: string
+          x-stream-index: "002"
+        name:
+          type: string
+          x-stream-index: "001"
+        products:
+          items:
+            type: string
+          type: array
+          x-stream-index: "003"
+      required:
+      - name
+      - description
+      - products
       type: object
     IPContentCountRuleParameters:
       properties:
@@ -10329,19 +10371,23 @@ components:
       nullable: true
       properties:
         message_id:
-          description: ID of the message from where the channel is marked unread
+          description: 'ID of the message from where the channel is marked unread.
+            Omit message_id, message_timestamp and thread_id to mark the whole channel
+            soft unread: a dot without a counter'
           title: Message ID
           type: string
           x-stream-index: "001"
         message_timestamp:
-          description: Timestamp of the message from where the channel is marked unread
+          description: Timestamp of the message from where the channel is marked unread.
+            Omit message_id, message_timestamp and thread_id to mark the whole channel
+            soft unread
           format: date-time
           title: Message Timestamp
           type: string
           x-stream-index: "004"
         thread_id:
-          description: Mark a thread unread, specify one of the thread, message timestamp,
-            or message id
+          description: Mark a thread unread. Specify at most one of thread_id, message_timestamp,
+            or message_id; omit all three to mark the channel soft unread
           title: Thread ID
           type: string
           x-stream-index: "003"
@@ -14420,7 +14466,7 @@ components:
             format: int32
             type: integer
           type: object
-          x-stream-index: "012"
+          x-stream-index: "013"
         last_read_at:
           description: The time when the channel/thread was marked as unread
           format: date-time
@@ -14436,6 +14482,12 @@ components:
           format: date-time
           type: number
           x-stream-index: 001.001.001.001.004
+        soft_unread:
+          description: 'True when the channel was marked unread without a message:
+            an unread dot with no counter'
+          title: Soft Unread
+          type: boolean
+          x-stream-index: "008"
         team:
           description: The team ID
           title: Team
@@ -14451,7 +14503,7 @@ components:
           format: int32
           title: Total Unread Count
           type: integer
-          x-stream-index: "010"
+          x-stream-index: "011"
         type:
           default: notification.mark_unread
           description: 'The type of event: "notification.mark_unread" in this case'
@@ -14463,31 +14515,31 @@ components:
           format: int32
           title: Unread Channels
           type: integer
-          x-stream-index: "011"
+          x-stream-index: "012"
         unread_count:
           description: The total number of unread messages
           format: int32
           title: Unread Count
           type: integer
-          x-stream-index: "009"
+          x-stream-index: "010"
         unread_messages:
           description: The number of unread messages in the channel/thread after first_unread_message_id
           format: int32
           title: Unread Messages
           type: integer
-          x-stream-index: "008"
+          x-stream-index: "009"
         unread_thread_messages:
           description: The total number of unread messages in the threads
           format: int32
           title: Unread Thread Messages
           type: integer
-          x-stream-index: "014"
+          x-stream-index: "015"
         unread_threads:
           description: The number of unread threads
           format: int32
           title: Unread Threads
           type: integer
-          x-stream-index: "013"
+          x-stream-index: "014"
         user:
           $ref: '#/components/schemas/UserResponseCommonFields'
           description: The user who marked the channel as unread
@@ -19398,6 +19450,9 @@ components:
         last_read_message_id:
           type: string
           x-stream-index: "004"
+        soft_unread:
+          type: boolean
+          x-stream-index: "007"
         unread_messages:
           format: int32
           type: integer
@@ -23597,8 +23652,11 @@ components:
           type: string
           x-stream-index: "001"
         has_unread:
-          description: Whether the channel has messages newer than the user's last
-            read. Large channels have no unread_count and only report this.
+          description: 'Whether the channel counts as unread for the user: it has
+            messages newer than the user''s last read, or the user marked it unread
+            without a message (soft_unread). It is true for soft-unread channels even
+            though unread_count is 0. Large channels have no unread_count and only
+            report this.'
           title: Has unread
           type: boolean
           x-stream-index: "003"
@@ -23608,6 +23666,13 @@ components:
           title: Last read
           type: number
           x-stream-index: "004"
+        soft_unread:
+          description: True when the user marked the channel unread without a message.
+            unread_count stays 0, and the channel adds 1 to total_unread_count; clients
+            should key off has_unread and this field rather than unread_count > 0.
+          title: Soft unread
+          type: boolean
+          x-stream-index: "005"
         unread_count:
           description: The number of unread messages inside the channel.
           format: int32
@@ -23696,6 +23761,12 @@ components:
         team:
           type: string
           x-stream-index: "002"
+        validate:
+          description: For regex block lists, reject any rule that matches 50% or
+            more of a built-in sample dataset as too broad
+          title: Validate
+          type: boolean
+          x-stream-index: "004"
         words:
           description: List of words to block
           items:
@@ -27005,7 +27076,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v241.16.1
+  version: v241.17.1
   x-stream-breaking-change-lines:
     AI-1473 (2026-10-20):
       go:
@@ -30196,7 +30267,7 @@ paths:
   /api/v2/chat/channels/{type}/{id}/unread:
     post:
       description: |
-        Marks channel as unread from a specific message
+        Marks channel as unread from a specific message, or as soft unread (a dot without a counter) when no message_id, message_timestamp or thread_id is given
       operationId: MarkUnread
       parameters:
       - in: path
@@ -32256,6 +32327,42 @@ paths:
       tags:
       - product:common
       x-stream-requires-token: false
+  /api/v2/hook/events:
+    get:
+      description: |2+
+
+      operationId: GetHookEvents
+      parameters:
+      - in: query
+        name: product
+        schema:
+          items:
+            type: string
+          type: array
+          writeOnly: true
+          x-stream-index: "001"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetHookEventsResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Return available events for hooks (webhook, SQS, and SNS)
+      tags:
+      - product:common
   /api/v2/longpoll:
     get:
       description: |
