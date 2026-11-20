@@ -194,6 +194,23 @@ message JoinRequest {
   repeated models.SubscribeOption preferred_subscribe_options = 10;
   repeated models.ClientCapability capabilities = 11;
   models.ParticipantSource source = 12;
+  // transcode_of_user_id is set by a WebRTC transcoder egress and names the
+  // publisher whose stream it transcodes and republishes.
+  //
+  // It is a cross-check, not the source of the target: the SFU takes the target
+  // from the transcoder claim in the signed token, and refuses a join whose
+  // transcode_of_* fields name anything else - a transcoder running against
+  // the wrong task. Nothing in a join request makes a participant a transcoder
+  // or a transcode-mode broadcaster; both come only from the token.
+  string transcode_of_user_id = 15;
+  // transcode_of_user_session_id narrows that to the one session of the
+  // publisher it serves. A publisher can be in a call more than once - a second
+  // tab, or a reconnect whose old session has not timed out - and each
+  // publishing session gets a transcoder of its own, so a transcoder must not
+  // take a sibling session's stream, and a session other than the one being
+  // transcoded may watch the transcoder like any other subscriber. Checked
+  // against the token like transcode_of_user_id.
+  string transcode_of_user_session_id = 16;
 }
 
 message ReconnectDetails {
