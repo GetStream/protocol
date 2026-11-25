@@ -610,6 +610,13 @@ components:
           title: Channel CID
           type: string
           x-stream-index: "006"
+        channel_type:
+          description: Ban the user from every channel of this type, including channels
+            they join later. Cannot be combined with channel_cid, ip_ban, ban_from_future_channels,
+            delete_messages or delete_reactions
+          title: Channel type
+          type: string
+          x-stream-index: "014"
         delete_messages:
           enum:
           - soft
@@ -5288,7 +5295,7 @@ components:
       nullable: true
       properties:
         blocks:
-          description: Array of blocked user object
+          description: Blocked users on this page, oldest block first
           items:
             $ref: '#/components/schemas/BlockedUserResponse'
           title: Blocks
@@ -5299,6 +5306,11 @@ components:
           title: Duration
           type: string
           x-stream-index: "002.001"
+        next:
+          description: Cursor for the next page. Absent on the last page
+          title: Next
+          type: string
+          x-stream-index: "003"
       required:
       - blocks
       - duration
@@ -6030,6 +6042,228 @@ components:
     MarkChannelsReadRequest:
       nullable: true
       properties:
+        filter_conditions:
+          additionalProperties: {}
+          description: Filter conditions to apply to the query
+          title: Filter
+          type: object
+          x-stream-filter-fields:
+            app_banned:
+              operators:
+              - $eq
+              type: string
+            archived:
+              operators:
+              - $eq
+              type: boolean
+            blocked:
+              operators:
+              - $eq
+              type: boolean
+            channel_role:
+              operators:
+              - $eq
+              - $in
+              type: string
+            cid:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
+            created_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: date
+            created_by_id:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
+            custom:
+              operators:
+              - $autocomplete
+              - $contains
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $q
+              type: object
+            disabled:
+              operators:
+              - $eq
+              type: boolean
+            distinct:
+              operators:
+              - $eq
+              type: boolean
+            filter_tags:
+              operators:
+              - $eq
+              - $in
+              type: string
+              value_types:
+                $eq: array
+            frozen:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: boolean
+            has_unread:
+              accepted_values:
+              - true
+              operators:
+              - $eq
+              type: boolean
+            hidden:
+              operators:
+              - $eq
+              type: boolean
+            id:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
+            invite:
+              operators:
+              - $eq
+              type: string
+            joined:
+              operators:
+              - $eq
+              type: boolean
+            last_message_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: date
+            last_updated:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: date
+            member.user.name:
+              operators:
+              - $autocomplete
+              - $eq
+              type: string
+            member_count:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: number
+            members:
+              operators:
+              - $eq
+              - $in
+              type: string
+              value_types:
+                $eq: array
+            message_count:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: number
+            muted:
+              operators:
+              - $eq
+              type: boolean
+            name:
+              operators:
+              - $autocomplete
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              - $q
+              type: string
+            pinned:
+              operators:
+              - $eq
+              type: boolean
+            team:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
+            type:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: string
+            updated_at:
+              operators:
+              - $eq
+              - $exists
+              - $gt
+              - $gte
+              - $in
+              - $lt
+              - $lte
+              type: date
+          x-stream-index: "002"
         read_by_channel:
           additionalProperties:
             type: string
@@ -19632,7 +19866,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v241.20.0
+  version: v241.21.0
   x-stream-breaking-change-lines:
     AI-1473 (2026-10-20):
       go:
@@ -24271,6 +24505,12 @@ paths:
           type: string
           writeOnly: true
           x-stream-index: "007"
+      - in: query
+        name: channel_type
+        schema:
+          type: string
+          writeOnly: true
+          x-stream-index: "008"
       responses:
         "200":
           content:
@@ -26392,8 +26632,29 @@ paths:
   /users/block:
     get:
       description: |
-        Get list of blocked Users
+        Returns users blocked by one user, oldest block first. Page with limit (default 500, max 500) and next.
       operationId: GetBlockedUsers
+      parameters:
+      - in: query
+        name: limit
+        schema:
+          description: Page size. Defaults to 500. Cannot exceed 500
+          format: int32
+          maximum: 500
+          minimum: 1
+          title: Limit
+          type: integer
+          writeOnly: true
+          x-stream-index: "003"
+      - in: query
+        name: next
+        schema:
+          description: Cursor from the previous page
+          maxLength: 1024
+          title: Next
+          type: string
+          writeOnly: true
+          x-stream-index: "004"
       responses:
         "200":
           content:
