@@ -153,6 +153,9 @@ components:
         async:
           type: boolean
           x-stream-index: "001"
+        audio_config:
+          $ref: '#/components/schemas/AIAudioConfigRequest'
+          x-stream-index: "007"
         enabled:
           type: boolean
           x-stream-index: "002"
@@ -177,6 +180,9 @@ components:
         async:
           type: boolean
           x-stream-index: "001"
+        audio_config:
+          $ref: '#/components/schemas/AIAudioConfigResponse'
+          x-stream-index: "007"
         enabled:
           type: boolean
           x-stream-index: "002"
@@ -12118,7 +12124,7 @@ components:
       nullable: true
       properties:
         blocks:
-          description: Array of blocked user object
+          description: Blocked users on this page, oldest block first
           items:
             $ref: '#/components/schemas/BlockedUserResponse'
           title: Blocks
@@ -12129,6 +12135,11 @@ components:
           title: Duration
           type: string
           x-stream-index: "002.001"
+        next:
+          description: Cursor for the next page. Absent on the last page
+          title: Next
+          type: string
+          x-stream-index: "003"
       required:
       - blocks
       - duration
@@ -23968,7 +23979,9 @@ components:
       description: An interest tag to set on a user with its ranking weight
       properties:
         tag:
-          description: The interest tag; trimmed and lower-cased like activity interest_tags
+          description: 'The interest tag; trimmed and lower-cased like activity interest_tags.
+            Avoid commas: removing interests takes a comma-separated list, so a tag
+            that contains a comma cannot be removed'
           maxLength: 255
           title: Tag
           type: string
@@ -25050,7 +25063,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v241.20.0
+  version: v241.21.0
   x-stream-breaking-change-lines:
     AI-1473 (2026-10-20):
       go:
@@ -30720,7 +30733,8 @@ paths:
         name: tags
         required: true
         schema:
-          description: Interest tags to remove (1-50)
+          description: Interest tags to remove (1-50), sent as a comma-separated list.
+            A tag that contains a comma cannot be removed
           items:
             type: string
           maxItems: 50
@@ -33398,8 +33412,29 @@ paths:
   /api/v2/users/block:
     get:
       description: |
-        Get list of blocked Users
+        Returns users blocked by one user, oldest block first. Page with limit (default 500, max 500) and next.
       operationId: GetBlockedUsers
+      parameters:
+      - in: query
+        name: limit
+        schema:
+          description: Page size. Defaults to 500. Cannot exceed 500
+          format: int32
+          maximum: 500
+          minimum: 1
+          title: Limit
+          type: integer
+          writeOnly: true
+          x-stream-index: "003"
+      - in: query
+        name: next
+        schema:
+          description: Cursor from the previous page
+          maxLength: 1024
+          title: Next
+          type: string
+          writeOnly: true
+          x-stream-index: "004"
       responses:
         "200":
           content:
