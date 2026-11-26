@@ -7098,6 +7098,155 @@ components:
           type: string
           x-stream-index: "002"
       type: object
+    BudgetStatusResponse:
+      properties:
+        enforced:
+          description: Whether exhausting the budget rejects requests with HTTP 429.
+            False when the budget is only measured, or while enforcement is temporarily
+            suspended
+          title: Enforced
+          type: boolean
+          x-stream-index: "006"
+        limit_ms:
+          description: Database time in milliseconds the endpoint may use per sliding
+            window
+          format: int64
+          title: Limit (ms)
+          type: integer
+          x-stream-index: "001"
+        remaining_ms:
+          description: Database time in milliseconds left in the current sliding window,
+            never negative
+          format: int64
+          title: Remaining (ms)
+          type: integer
+          x-stream-index: "003"
+        reset:
+          description: The Unix timestamp at which all usage currently in the window
+            will have expired, if no new usage is added. The current time when no
+            usage is recorded in the window. Can be in the future while used_ms is
+            0, when earlier usage was refunded
+          format: int64
+          title: Reset
+          type: integer
+          x-stream-index: "005"
+        used_ms:
+          description: Database time in milliseconds used in the current sliding window,
+            including requests still in flight
+          format: int64
+          title: Used (ms)
+          type: integer
+          x-stream-index: "002"
+        window_seconds:
+          description: Length of the sliding window in seconds
+          format: int64
+          title: Window (seconds)
+          type: integer
+          x-stream-index: "004"
+      required:
+      - limit_ms
+      - used_ms
+      - remaining_ms
+      - window_seconds
+      - reset
+      - enforced
+      title: Budget status
+      type: object
+      x-stream-docs-page-id: rate_limits
+    BudgetsResponse:
+      properties:
+        all:
+          additionalProperties:
+            $ref: '#/components/schemas/BudgetStatusResponse'
+          description: Map of endpoint budgets shared by all platforms. Set when budgets
+            are not tracked per platform
+          title: All platforms
+          type: object
+          x-stream-index: "001"
+          x-stream-map:
+            description: The name of the endpoint the budget applies to
+            key: endpoint
+            title: Endpoint name
+        android:
+          additionalProperties:
+            $ref: '#/components/schemas/BudgetStatusResponse'
+          description: Map of endpoint budgets for the Android platform
+          title: Android
+          type: object
+          x-stream-index: "003"
+          x-stream-map:
+            description: The name of the endpoint the budget applies to
+            key: endpoint
+            title: Endpoint name
+        ios:
+          additionalProperties:
+            $ref: '#/components/schemas/BudgetStatusResponse'
+          description: Map of endpoint budgets for the iOS platform
+          title: iOS
+          type: object
+          x-stream-index: "004"
+          x-stream-map:
+            description: The name of the endpoint the budget applies to
+            key: endpoint
+            title: Endpoint name
+        server_side:
+          additionalProperties:
+            $ref: '#/components/schemas/BudgetStatusResponse'
+          description: Map of endpoint budgets for the server-side platform
+          title: Server-side
+          type: object
+          x-stream-index: "002"
+          x-stream-map:
+            description: The name of the endpoint the budget applies to
+            key: endpoint
+            title: Endpoint name
+        unity:
+          additionalProperties:
+            $ref: '#/components/schemas/BudgetStatusResponse'
+          description: Map of endpoint budgets for the Unity platform
+          title: Unity
+          type: object
+          x-stream-index: "006"
+          x-stream-map:
+            description: The name of the endpoint the budget applies to
+            key: endpoint
+            title: Endpoint name
+        unity_console:
+          additionalProperties:
+            $ref: '#/components/schemas/BudgetStatusResponse'
+          description: Map of endpoint budgets for the Unity console platform
+          title: Unity console
+          type: object
+          x-stream-index: "008"
+          x-stream-map:
+            description: The name of the endpoint the budget applies to
+            key: endpoint
+            title: Endpoint name
+        unity_desktop:
+          additionalProperties:
+            $ref: '#/components/schemas/BudgetStatusResponse'
+          description: Map of endpoint budgets for the Unity desktop platform
+          title: Unity desktop
+          type: object
+          x-stream-index: "007"
+          x-stream-map:
+            description: The name of the endpoint the budget applies to
+            key: endpoint
+            title: Endpoint name
+        web:
+          additionalProperties:
+            $ref: '#/components/schemas/BudgetStatusResponse'
+          description: Map of endpoint budgets for the web platform
+          title: Web
+          type: object
+          x-stream-index: "005"
+          x-stream-map:
+            description: The name of the endpoint the budget applies to
+            key: endpoint
+            title: Endpoint name
+      title: Budgets
+      type: object
+      x-stream-docs-page-id: rate_limits
     BulkActionAppealsRequest:
       nullable: true
       properties:
@@ -28362,9 +28511,15 @@ components:
             description: The name of the endpoint for which the limits apply
             key: endpoint
             title: Endpoint name
+        budgets:
+          $ref: '#/components/schemas/BudgetsResponse'
+          description: Current query budget status of budgeted endpoints. Omitted
+            when the app has no tracked query budget or the status could not be read
+          title: Budgets
+          x-stream-index: "008"
         duration:
           type: string
-          x-stream-index: "008.001"
+          x-stream-index: "009.001"
         ios:
           additionalProperties:
             $ref: '#/components/schemas/LimitInfoResponse'
@@ -64757,7 +64912,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v241.25.0
+  version: v241.25.1
   x-stream-breaking-change-lines:
     AI-1473 (2026-10-20):
       go:
@@ -81540,7 +81695,7 @@ paths:
   /api/v2/rate_limits:
     get:
       description: |
-        Get rate limits usage and quotas
+        Get rate limits usage and quotas, and the query budget status of budgeted endpoints
       operationId: GetRateLimits
       parameters:
       - in: query
