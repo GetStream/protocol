@@ -102,6 +102,26 @@ message Participant {
   google.protobuf.Struct custom = 12;
   repeated string roles = 13;
   ParticipantSource source = 14;
+  // announced_tracks is what this participant declared for each track it has
+  // published, layers included: the size, bitrate and frame rate it means to
+  // send. published_tracks says which types are live, this says what they were
+  // announced as.
+  //
+  // Set only on a broadcaster in WebRTC transcode mode, for the transcoder
+  // egress that republishes it as a quality ladder; viewers never receive that
+  // participant. The transcoder relays the top layer untouched and encodes
+  // the rest, and can only describe the relayed one honestly by repeating what
+  // the broadcaster announced for it: the media carries the size, but neither
+  // the rate it was encoded against nor its frame rate. The transcoder reads it
+  // when it opens the track; what it encodes then follows the frame rate,
+  // bitrate and size it measures.
+  repeated TrackInfo announced_tracks = 15;
+  // webrtc_transcode_mode marks a broadcaster the backend granted WebRTC
+  // transcode mode: it publishes one layer, and a transcoder egress republishes
+  // it to viewers as a quality ladder. Only the broadcaster itself, its
+  // transcoder and recording egresses receive that participant, so this is the
+  // broadcaster's own confirmation that the mode it asked for was granted.
+  bool webrtc_transcode_mode = 16;
 }
 
 message StreamQuality {

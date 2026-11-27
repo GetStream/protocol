@@ -242,6 +242,30 @@ func (m *Participant) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.WebrtcTranscodeMode {
+		i--
+		if m.WebrtcTranscodeMode {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0x80
+	}
+	if len(m.AnnouncedTracks) > 0 {
+		for iNdEx := len(m.AnnouncedTracks) - 1; iNdEx >= 0; iNdEx-- {
+			size, err := m.AnnouncedTracks[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarint(dAtA, i, uint64(size))
+			i--
+			dAtA[i] = 0x7a
+		}
+	}
 	if m.Source != 0 {
 		i = encodeVarint(dAtA, i, uint64(m.Source))
 		i--
@@ -2330,6 +2354,15 @@ func (m *Participant) SizeVT() (n int) {
 	if m.Source != 0 {
 		n += 1 + sov(uint64(m.Source))
 	}
+	if len(m.AnnouncedTracks) > 0 {
+		for _, e := range m.AnnouncedTracks {
+			l = e.SizeVT()
+			n += 1 + l + sov(uint64(l))
+		}
+	}
+	if m.WebrtcTranscodeMode {
+		n += 3
+	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
 	}
@@ -3985,6 +4018,60 @@ func (m *Participant) UnmarshalVT(dAtA []byte) error {
 					break
 				}
 			}
+		case 15:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AnnouncedTracks", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.AnnouncedTracks = append(m.AnnouncedTracks, &TrackInfo{})
+			if err := m.AnnouncedTracks[len(m.AnnouncedTracks)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 16:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field WebrtcTranscodeMode", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.WebrtcTranscodeMode = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])
