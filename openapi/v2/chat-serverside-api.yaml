@@ -1476,6 +1476,12 @@ components:
             when the app has none and runs on the built-in types
           title: Message marks
           x-stream-index: "071"
+        message_schema:
+          $ref: '#/components/schemas/MessageSchemaSettings'
+          description: The app's message schema settings, as Update App wrote them.
+            Omitted when never set
+          title: Message schema
+          x-stream-index: "072"
         moderation_audio_call_moderation_enabled:
           type: boolean
           x-stream-index: "060"
@@ -19743,6 +19749,40 @@ components:
       title: Message
       type: object
       x-stream-docs-page-id: send_message
+    MessageSchemaSettings:
+      description: 'The app''s message schema settings: how strictly messages and
+        reactions are checked, and the JSON Schemas they are checked against.'
+      properties:
+        document_version:
+          description: The settings document version to use. When omitted, the latest
+            version is used; an unknown version is rejected
+          format: int32
+          title: Document version
+          type: integer
+          x-stream-index: "002"
+        message:
+          $ref: '#/components/schemas/MessageValidation'
+          description: Validation rules for messages
+          title: Message
+          x-stream-index: "003"
+        mode:
+          description: 'How violations are handled: off does not check, report checks
+            and records violations without rejecting the write, enforce rejects writes
+            that violate the schema. Defaults to off'
+          enum:
+          - "off"
+          - report
+          - enforce
+          title: Mode
+          type: string
+          x-stream-index: "001"
+        reaction:
+          $ref: '#/components/schemas/ReactionValidation'
+          description: Validation rules for reactions
+          title: Reaction
+          x-stream-index: "004"
+      title: MessageSchemaSettings
+      type: object
     MessageUnblockedEvent:
       description: Emitted when a message is unblocked.
       nullable: true
@@ -19977,6 +20017,25 @@ components:
       x-stream-event-doc-group: other
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    MessageValidation:
+      description: The rules a message is checked against.
+      properties:
+        frozen_fields:
+          description: Message document paths that cannot change after the message
+            is created
+          items:
+            type: string
+          title: Frozen fields
+          type: array
+          x-stream-index: "002"
+        schema:
+          additionalProperties: {}
+          description: A JSON Schema 2020-12 object validating {message, user}
+          title: Schema
+          type: object
+          x-stream-index: "001"
+      title: MessageValidation
+      type: object
     MessageWithChannelResponse:
       description: Represents any chat message
       properties:
@@ -29602,6 +29661,17 @@ components:
       x-stream-event-doc-group: other
       x-stream-is-event: true
       x-stream-ws-base-event-name: VideoEvent
+    ReactionValidation:
+      description: The rules a reaction is checked against.
+      properties:
+        schema:
+          additionalProperties: {}
+          description: A JSON Schema 2020-12 object validating {reaction, user}
+          title: Schema
+          type: object
+          x-stream-index: "001"
+      title: ReactionValidation
+      type: object
     ReactivateUserRequest:
       nullable: true
       properties:
@@ -35330,6 +35400,13 @@ components:
           nullable: true
           title: Message marks
           x-stream-index: "004"
+        message_schema:
+          $ref: '#/components/schemas/MessageSchemaSettings'
+          description: 'The app''s message schema settings. Replaces the stored settings
+            as a whole; an omitted field leaves them unchanged, and {"mode": "off"}
+            turns checking off'
+          title: Message schema
+          x-stream-index: "005"
         migrate_permissions_to_v2:
           type: boolean
           x-stream-index: "001.038"
@@ -40106,7 +40183,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v241.26.0
+  version: v241.26.1
   x-stream-breaking-change-lines:
     AI-1473 (2026-10-20):
       go:
@@ -41368,6 +41445,7 @@ info:
     - MOD2-1119 (2026-10-13)
     - MOD2-1482 (2026-10-02)
     - MOD2-789 (2026-10-05)
+    sdk: []
     wire:
     - AI-1473 (2026-10-20)
     - CHA-0 (2026-04-14)
