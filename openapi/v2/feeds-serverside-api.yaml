@@ -817,6 +817,12 @@ components:
           title: bool
           type: boolean
           x-stream-index: "003"
+        request_id:
+          description: From the feed response; attributes the hide to the feed's view
+          maxLength: 2048
+          title: string
+          type: string
+          x-stream-index: "005"
         show_less:
           description: Whether to show less content like this
           title: bool
@@ -829,10 +835,10 @@ components:
           x-stream-index: "004"
         user:
           $ref: '#/components/schemas/UserRequest'
-          x-stream-index: "005.002"
+          x-stream-index: "006.002"
         user_id:
           type: string
-          x-stream-index: "005.001"
+          x-stream-index: "006.001"
       title: Activity Feedback Request
       type: object
     ActivityFeedbackResponse:
@@ -4041,6 +4047,12 @@ components:
             when the app has none and runs on the built-in types
           title: Message marks
           x-stream-index: "071"
+        message_schema:
+          $ref: '#/components/schemas/MessageSchemaSettings'
+          description: The app's message schema settings, as Update App wrote them.
+            Omitted when never set
+          title: Message schema
+          x-stream-index: "072"
         moderation_audio_call_moderation_enabled:
           type: boolean
           x-stream-index: "060"
@@ -12986,6 +12998,74 @@ components:
       - last_30_days
       - month_to_date
       type: object
+    EngagementRates:
+      properties:
+        avg_dwell_ms:
+          description: dwell_ms / dwell_count, in milliseconds
+          format: double
+          title: Average dwell
+          type: number
+          x-stream-index: "002"
+        clicks_per_user:
+          description: clicks / users (user-days)
+          format: double
+          title: Clicks per user
+          type: number
+          x-stream-index: "005"
+        ctr:
+          description: clicks / impressions
+          format: double
+          title: CTR
+          type: number
+          x-stream-index: "001"
+        hide_rate:
+          description: hides / impressions
+          format: double
+          title: Hide rate
+          type: number
+          x-stream-index: "003"
+        impressions_per_user:
+          description: impressions / users (user-days)
+          format: double
+          title: Impressions per user
+          type: number
+          x-stream-index: "004"
+      type: object
+    EngagementStatsResult:
+      properties:
+        experiment_id:
+          description: Empty outside an experiment
+          title: Experiment ID
+          type: string
+          x-stream-index: "003"
+        group_id:
+          title: Group ID
+          type: string
+          x-stream-index: "001"
+        metrics:
+          additionalProperties:
+            $ref: '#/components/schemas/DailyMetricStatsResponse'
+          description: 'Daily values and total per metric: reads, users, impressions,
+            clicks, dwell_ms, dwell_count, hides. users.total counts user-days'
+          title: Metrics
+          type: object
+          x-stream-index: "004"
+        rates:
+          $ref: '#/components/schemas/EngagementRates'
+          description: Rates over the range
+          title: Rates
+          x-stream-index: "005"
+        view_id:
+          title: View ID
+          type: string
+          x-stream-index: "002"
+      required:
+      - group_id
+      - view_id
+      - experiment_id
+      - metrics
+      - rates
+      type: object
     EnrichedActivity:
       properties:
         actor:
@@ -15407,6 +15487,25 @@ components:
             type: string
           type: array
           x-stream-index: "002"
+        filter_conditions:
+          additionalProperties: {}
+          description: Activities must match every condition to be deleted.
+          title: Filter conditions
+          type: object
+          x-stream-filter-fields:
+            activity_type:
+              operators:
+              - $in
+              type: string
+            expires_at:
+              operators:
+              - $exists
+              type: date
+            filter_tags:
+              operators:
+              - $in
+              type: string
+          x-stream-index: "003"
         max_age_hours:
           format: int32
           type: integer
@@ -16751,6 +16850,12 @@ components:
       x-stream-ws-base-event-name: VideoEvent
     ForYouConfig:
       properties:
+        analytics:
+          description: Counts engagement per feed view and experiment. Requires enabled
+            and a plan with activity metrics
+          title: Analytics
+          type: boolean
+          x-stream-index: "008"
         dwell:
           $ref: '#/components/schemas/ForYouDwellConfig'
           description: 'Long dwells: which dwell metric events count as a long view.
@@ -16763,6 +16868,11 @@ components:
           title: Enabled
           type: boolean
           x-stream-index: "001"
+        experiment:
+          $ref: '#/components/schemas/ForYouExperimentConfig'
+          description: Splits users across feed views by weight. Requires analytics
+          title: Experiment
+          x-stream-index: "009"
         exploration:
           $ref: '#/components/schemas/ForYouExplorationConfig'
           description: 'Exploration slot: places a recent, lightly-seen activity at
@@ -16799,6 +16909,38 @@ components:
           type: integer
           x-stream-index: "002"
       title: For You Dwell Configuration
+      type: object
+    ForYouExperimentConfig:
+      properties:
+        id:
+          description: Experiment identifier, 1 to 64 letters, digits, dashes or underscores
+          title: ID
+          type: string
+          x-stream-index: "001"
+        variants:
+          description: 2 to 4 feed views with distinct ids; weights are percents summing
+            to 100
+          items:
+            $ref: '#/components/schemas/ForYouExperimentVariant'
+          title: Variants
+          type: array
+          x-stream-index: "002"
+      title: For You Experiment Configuration
+      type: object
+    ForYouExperimentVariant:
+      properties:
+        view:
+          description: ID of an existing feed view
+          title: View
+          type: string
+          x-stream-index: "001"
+        weight:
+          description: Share of users in percent, 1 to 100
+          format: int32
+          title: Weight
+          type: integer
+          x-stream-index: "002"
+      title: For You Experiment Variant
       type: object
     ForYouExplorationConfig:
       properties:
@@ -18232,7 +18374,8 @@ components:
           description: Signed token identifying this read. Pass it with activity metrics
             events to attribute them to this read. Only set on feed reads for paid
             plans with an authenticated user, when the app uses feed impressions (For
-            You exploration, or a For You ranking that uses impressions_bucket)
+            You exploration, or a For You ranking that uses impressions_bucket) or
+            For You engagement analytics
           title: Request ID
           type: string
           x-stream-index: "014"
@@ -20960,6 +21103,59 @@ components:
       title: Message
       type: object
       x-stream-docs-page-id: send_message
+    MessageSchemaSettings:
+      description: 'The app''s message schema settings: how strictly messages and
+        reactions are checked, and the JSON Schemas they are checked against.'
+      properties:
+        document_version:
+          description: The settings document version to use. When omitted, the latest
+            version is used; an unknown version is rejected
+          format: int32
+          title: Document version
+          type: integer
+          x-stream-index: "002"
+        message:
+          $ref: '#/components/schemas/MessageValidation'
+          description: Validation rules for messages
+          title: Message
+          x-stream-index: "003"
+        mode:
+          description: 'How violations are handled: off does not check, report checks
+            and records violations without rejecting the write, enforce rejects writes
+            that violate the schema. Defaults to off'
+          enum:
+          - "off"
+          - report
+          - enforce
+          title: Mode
+          type: string
+          x-stream-index: "001"
+        reaction:
+          $ref: '#/components/schemas/ReactionValidation'
+          description: Validation rules for reactions
+          title: Reaction
+          x-stream-index: "004"
+      title: MessageSchemaSettings
+      type: object
+    MessageValidation:
+      description: The rules a message is checked against.
+      properties:
+        frozen_fields:
+          description: Message document paths that cannot change after the message
+            is created
+          items:
+            type: string
+          title: Frozen fields
+          type: array
+          x-stream-index: "002"
+        schema:
+          additionalProperties: {}
+          description: A JSON Schema 2020-12 object validating {message, user}
+          title: Schema
+          type: object
+          x-stream-index: "001"
+      title: MessageValidation
+      type: object
     ModerationAction:
       description: What a moderation rule does when it matches.
       enum:
@@ -26108,6 +26304,72 @@ components:
       - templates
       - duration
       type: object
+    QueryFeedsEngagementStatsRequest:
+      nullable: true
+      properties:
+        experiment_id:
+          description: Only this experiment (optional)
+          maxLength: 255
+          title: Experiment ID
+          type: string
+          x-stream-index: "006"
+        from:
+          description: Start date in YYYY-MM-DD format (optional, defaults to 29 days
+            before to, so a 30-day range)
+          title: From
+          type: string
+          x-stream-index: "003"
+        group_id:
+          description: Feed group to report on
+          maxLength: 255
+          title: Group ID
+          type: string
+          x-stream-index: "002"
+        limit:
+          description: Maximum number of series (one per group, view and experiment),
+            not rows, 1 to 100 (optional, defaults to 100, or 10,000 / days for ranges
+            over 100 days). The limit never cuts a series; a metric's days with no
+            events are omitted from its daily values. limit x days must not exceed
+            10,000
+          format: int32
+          maximum: 100
+          minimum: 1
+          title: Limit
+          type: integer
+          x-stream-index: "007"
+        to:
+          description: End date in YYYY-MM-DD format (optional, defaults to today
+            UTC). The range is at most 396 days
+          title: To
+          type: string
+          x-stream-index: "004"
+        view_id:
+          description: Only this view (optional)
+          maxLength: 255
+          title: View ID
+          type: string
+          x-stream-index: "005"
+      required:
+      - group_id
+      type: object
+    QueryFeedsEngagementStatsResponse:
+      nullable: true
+      properties:
+        duration:
+          type: string
+          x-stream-index: "001.001"
+        results:
+          description: One series per (group, view, experiment), in byte order of
+            experiment, view, then group
+          items:
+            $ref: '#/components/schemas/EngagementStatsResult'
+          title: Results
+          type: array
+          x-stream-index: "002"
+      required:
+      - duration
+      - results
+      type: object
     QueryFeedsReactionsRequest:
       nullable: true
       properties:
@@ -29195,6 +29457,17 @@ components:
       - updated_at
       - custom
       type: object
+    ReactionValidation:
+      description: The rules a reaction is checked against.
+      properties:
+        schema:
+          additionalProperties: {}
+          description: A JSON Schema 2020-12 object validating {reaction, user}
+          title: Schema
+          type: object
+          x-stream-index: "001"
+      title: ReactionValidation
+      type: object
     ReactivateUserRequest:
       nullable: true
       properties:
@@ -31132,13 +31405,35 @@ components:
       properties:
         enabled:
           type: boolean
-          x-stream-index: "004"
+          x-stream-index: "005"
         feed_groups:
           items:
             type: string
           maxItems: 20
           type: array
           x-stream-index: "003"
+        filter_conditions:
+          additionalProperties: {}
+          description: 'Limits deletion to activities matching every condition; expires_at
+            supports only $exists: true. Not allowed on old-activities. Omitted or
+            null keeps the stored filter; {} removes it.'
+          title: Filter conditions
+          type: object
+          x-stream-filter-fields:
+            activity_type:
+              operators:
+              - $in
+              type: string
+            expires_at:
+              operators:
+              - $exists
+              type: date
+            filter_tags:
+              operators:
+              - $in
+              type: string
+          x-stream-go-pointer: true
+          x-stream-index: "004"
         max_age_hours:
           format: int32
           minimum: 24
@@ -32443,8 +32738,10 @@ components:
           description: The request_id returned by the feed read that showed the activity.
             An invalid, expired (older than 48h) or future-dated (more than 5 minutes
             ahead) value fails only this event. Impressions sent with a valid request_id
-            feed ranking, are not added to the activity's metrics.impressions, and
-            must use a delta of 1.
+            must use a delta of 1 and feed For You engagement analytics. In apps that
+            use feed impressions (exploration or impressions_bucket) they feed ranking
+            and are not added to the activity's metrics.impressions; with For You
+            analytics on and no feed impressions they are added as without a request_id.
           title: Request ID
           type: string
           x-stream-index: "004"
@@ -33604,6 +33901,13 @@ components:
           nullable: true
           title: Message marks
           x-stream-index: "004"
+        message_schema:
+          $ref: '#/components/schemas/MessageSchemaSettings'
+          description: 'The app''s message schema settings. Replaces the stored settings
+            as a whole; an omitted field leaves them unchanged, and {"mode": "off"}
+            turns checking off'
+          title: Message schema
+          x-stream-index: "005"
         migrate_permissions_to_v2:
           type: boolean
           x-stream-index: "001.038"
@@ -37342,7 +37646,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v241.26.0
+  version: v241.26.1
   x-stream-breaking-change-lines:
     AI-1473 (2026-10-20):
       go:
@@ -38604,6 +38908,7 @@ info:
     - MOD2-1119 (2026-10-13)
     - MOD2-1482 (2026-10-02)
     - MOD2-789 (2026-10-05)
+    sdk: []
     wire:
     - AI-1473 (2026-10-20)
     - CHA-0 (2026-04-14)
@@ -44342,7 +44647,7 @@ paths:
       - product:feeds
     post:
       description: |
-        Creates or updates a feeds retention policy for the app (an app may have multiple, each scoped to feed groups). Server-side only.
+        Creates or updates a feeds retention policy for the app (an app may have multiple, each scoped to feed groups and, except old-activities, optionally narrowed by filter_conditions). Server-side only.
       operationId: FeedsSetRetentionPolicy
       requestBody:
         content:
@@ -44686,6 +44991,44 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Query scheduled activities
+      tags:
+      - product:feeds
+  /api/v2/feeds/stats/engagement:
+    post:
+      description: |
+        Retrieve For You engagement statistics (reads, users, impressions, clicks, dwell, hides) per view and experiment, aggregated by day.
+        users.total counts user-days.
+        Requires a paid Feeds plan (403 otherwise).
+        limit is the maximum number of series (one per group, view and experiment), not rows; it never cuts a series. A metric's days with no events are omitted from its daily values.
+        This endpoint is not paginated: it is a bounded report over one group's views and experiments for at most 396 days, and limit x days must not exceed 10,000 (the default limit always fits).
+        This endpoint is server-side only.
+      operationId: QueryFeedsEngagementStats
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryFeedsEngagementStatsRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryFeedsEngagementStatsResponse'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Query Feed Engagement Statistics
       tags:
       - product:feeds
   /api/v2/feeds/stats/usage:
