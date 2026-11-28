@@ -5193,6 +5193,92 @@ components:
       - name
       - unique
       type: object
+    HLSPlaybackStats:
+      properties:
+        bitrate_kbps:
+          format: int32
+          minimum: 0
+          type: integer
+          x-stream-index: "006"
+        buffer_length_ms:
+          format: int32
+          minimum: 0
+          type: integer
+          x-stream-index: "007"
+        dropped_frames:
+          format: int32
+          minimum: 0
+          type: integer
+          x-stream-index: "005"
+        height:
+          format: int32
+          minimum: 0
+          type: integer
+          x-stream-index: "010"
+        live_latency_ms:
+          format: int32
+          minimum: 0
+          type: integer
+          x-stream-index: "008"
+        max_stall_duration_ms:
+          format: int64
+          minimum: 0
+          type: integer
+          x-stream-index: "004"
+        stall_count:
+          format: int32
+          minimum: 0
+          type: integer
+          x-stream-index: "002"
+        stall_duration_ms:
+          format: int64
+          minimum: 0
+          type: integer
+          x-stream-index: "003"
+        watch_duration_ms:
+          format: int64
+          minimum: 0
+          type: integer
+          x-stream-index: "001"
+        width:
+          format: int32
+          minimum: 0
+          type: integer
+          x-stream-index: "009"
+      required:
+      - watch_duration_ms
+      - stall_count
+      - stall_duration_ms
+      - max_stall_duration_ms
+      - dropped_frames
+      - bitrate_kbps
+      - buffer_length_ms
+      - live_latency_ms
+      - width
+      - height
+      type: object
+    HLSPlayerEvent:
+      properties:
+        data:
+          additionalProperties: {}
+          type: object
+          x-stream-index: "003"
+        timestamp:
+          description: Unix time in milliseconds when the event happened
+          format: int64
+          title: Timestamp
+          type: integer
+          x-stream-index: "002"
+        type:
+          description: Event type, e.g. stall_start, stall_end, quality_change, error
+          maxLength: 64
+          title: Type
+          type: string
+          x-stream-index: "001"
+      required:
+      - type
+      - timestamp
+      type: object
     HLSSettingsRequest:
       properties:
         auto_on:
@@ -5817,6 +5903,13 @@ components:
           title: Ring
           type: boolean
           x-stream-index: "004"
+        unified_session_id:
+          description: SDK session ID for this call, the same value the SDK sends
+            for its WebRTC sessions and HLS stats reports
+          maxLength: 64
+          title: UnifiedSessionID
+          type: string
+          x-stream-index: "016"
         video:
           type: boolean
           x-stream-index: "006"
@@ -6935,6 +7028,12 @@ components:
           title: Reason
           type: string
           x-stream-index: "003"
+        stats_token:
+          description: Token to send as stats_token on HLS stats reports for this
+            call session
+          title: StatsToken
+          type: string
+          x-stream-index: "004"
         type:
           description: 'Playback mode. One of: hls'
           enum:
@@ -8453,6 +8552,130 @@ components:
       - duration
       title: ReportClientEventResponse
       type: object
+    ReportHLSStatsRequest:
+      nullable: true
+      properties:
+        browser:
+          maxLength: 64
+          type: string
+          x-stream-index: "011"
+        browser_version:
+          maxLength: 64
+          type: string
+          x-stream-index: "012"
+        call_session_id:
+          description: Call session the viewer is watching
+          maxLength: 64
+          title: CallSessionID
+          type: string
+          x-stream-index: "004"
+        end_reason:
+          description: 'Why playback ended, on an ended report. One of: left, error.
+            Defaults to left'
+          enum:
+          - left
+          - error
+          title: EndReason
+          type: string
+          x-stream-index: "015"
+        error_code:
+          description: Player error code when end_reason is error
+          maxLength: 128
+          title: ErrorCode
+          type: string
+          x-stream-index: "016"
+        events:
+          description: Player events since the previous report, shown on the participant
+            timeline
+          items:
+            $ref: '#/components/schemas/HLSPlayerEvent'
+          maxItems: 100
+          title: Events
+          type: array
+          x-stream-index: "018"
+        os:
+          maxLength: 64
+          type: string
+          x-stream-index: "013"
+        os_version:
+          maxLength: 64
+          type: string
+          x-stream-index: "014"
+        sdk:
+          maxLength: 50
+          type: string
+          x-stream-index: "009"
+        sdk_version:
+          maxLength: 50
+          type: string
+          x-stream-index: "010"
+        stats:
+          $ref: '#/components/schemas/HLSPlaybackStats'
+          description: 'Playback stats for this playback session: a full snapshot,
+            so the latest report replaces earlier ones'
+          title: Stats
+          x-stream-index: "017"
+        stats_token:
+          description: playback.stats_token from the join call response that sent
+            the viewer to HLS
+          maxLength: 2048
+          title: StatsToken
+          type: string
+          x-stream-index: "003"
+        timestamp:
+          description: When the reported state happened on the client, Unix time in
+            milliseconds (UTC). Defaults to the time the server receives the report;
+            a time in the future is capped to it
+          format: int64
+          minimum: 0
+          title: Timestamp
+          type: integer
+          x-stream-index: "008"
+        type:
+          description: 'Report type. One of: started, stats, ended'
+          enum:
+          - started
+          - stats
+          - ended
+          title: Type
+          type: string
+          x-stream-index: "007"
+        unified_session_id:
+          description: SDK session ID for this call, the same value the SDK sends
+            for its WebRTC sessions. Links the viewer's HLS and WebRTC sessions in
+            call stats
+          maxLength: 64
+          title: UnifiedSessionID
+          type: string
+          x-stream-index: "006"
+        user_session_id:
+          description: Client-generated ID of this playback session, constant from
+            started to ended
+          maxLength: 64
+          title: UserSessionID
+          type: string
+          x-stream-index: "005"
+      required:
+      - stats_token
+      - call_session_id
+      - user_session_id
+      - unified_session_id
+      - type
+      - timestamp
+      type: object
+    ReportHLSStatsResponse:
+      description: Basic response information
+      nullable: true
+      properties:
+        duration:
+          description: Duration of the request in milliseconds
+          title: Duration
+          type: string
+          x-stream-index: "001.001"
+      required:
+      - duration
+      title: Response
+      type: object
     ReportResponse:
       properties:
         call:
@@ -9786,16 +10009,34 @@ components:
       type: object
     StatsOptions:
       properties:
+        enable_hls_stats:
+          description: Whether to send HLS stats reports when playing the call over
+            HLS (beta)
+          title: EnableHLSStats
+          type: boolean
+          x-stream-index: "003"
         enable_rtc_stats:
+          description: Whether to send WebRTC stats reports
+          title: EnableRTCStats
           type: boolean
           x-stream-index: "002"
-        reporting_interval_ms:
+        reporting_hls_interval_ms:
+          description: How often to send HLS stats reports when playing the call over
+            HLS, in milliseconds (beta)
           format: int32
+          title: ReportingHLSIntervalMs
+          type: integer
+          x-stream-index: "004"
+        reporting_interval_ms:
+          description: How often to send WebRTC stats reports, in milliseconds
+          format: int32
+          title: ReportingIntervalMs
           type: integer
           x-stream-index: "001"
       required:
       - reporting_interval_ms
       - enable_rtc_stats
+      title: StatsOptions
       type: object
     StopAllRTMPBroadcastsResponse:
       nullable: true
@@ -11715,7 +11956,7 @@ components:
       type: apiKey
 info:
   title: Stream API
-  version: v241.26.2
+  version: v241.27.0
   x-stream-breaking-change-lines:
     AI-1473 (2026-10-20):
       go:
@@ -13846,6 +14087,58 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Too many requests
       summary: Set call as live
+      tags:
+      - product:video
+  /video/call/{type}/{id}/hls_stats:
+    post:
+      description: |
+        Reports HLS player lifecycle and playback stats for a viewer that join call sent to HLS playback
+      operationId: ReportHLSStats
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          description: 'Report type. One of: started, stats, ended'
+          maxLength: 64
+          title: Type
+          type: string
+          writeOnly: true
+          x-stream-index: "001.001"
+      - in: path
+        name: id
+        required: true
+        schema:
+          maxLength: 64
+          type: string
+          writeOnly: true
+          x-stream-index: "001.002"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportHLSStatsRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportHLSStatsResponse'
+          description: Response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Too many requests
+      summary: Report HLS playback stats
       tags:
       - product:video
   /video/call/{type}/{id}/join:
